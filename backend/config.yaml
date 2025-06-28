@@ -1,0 +1,9 @@
+database:
+    # IP or DNS entry for MySQL instance
+    address: "localhost"
+    # Database that will be used
+    database: "fdc"
+    # User who has full credentials to the above DB
+    user: "fdc"
+    # Password of said user
+    password: "fdc"
