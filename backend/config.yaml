@@ -1,9 +1,20 @@
 database:
-    # IP or DNS entry for MySQL instance
-    address: "localhost"
-    # Database that will be used
-    database: "fdc"
-    # User who has full credentials to the above DB
-    user: "fdc"
-    # Password of said user
-    password: "fdc"
+  # IP or DNS entry for MySQL instance
+  address: "localhost"
+  # Database that will be used
+  database: "fdc"
+  # User who has full credentials to the above DB
+  user: "fdc"
+  # Password of said user
+  password: "fdc"
+
+# Instance-wide secret key for cookie signing. Change this to something long and random. If you
+# change this on an existing instance all existing login sessions will be invalidated.
+cookie_key: "you_should_type_something_long_and_random_here"
+
+# Instance-wide pepper for hashing passwords. Change this to something long and random. If you
+# chnage this on an existing instance, all existing accounts will need their password reset.
+password_key: "you_should_also_change_this_to_something_long_and_random"
+
+# The name of the instance.
+name: "Federated Derg Chat Instance"

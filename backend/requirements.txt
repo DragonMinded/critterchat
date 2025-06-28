@@ -12,9 +12,13 @@ emoji
 webcolors
 pillow
 requests
+pycryptodome
+passlib
 sqlalchemy-stubs
+python-dateutil
 types-emoji
 types-pyyaml
 types-requests
+types-python-dateutil
 mypy
 flake8

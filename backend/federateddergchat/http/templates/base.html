@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+    <head>
+		{% if title %}
+		<title>{{ title }}</title>
+		{% endif %}
+	</head>
+	<body>
+        <div class="messages-anchor"></div>
+        <div class="messages">
+            <ul class="messages">
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                        <li class="{{ category }}">
+                            {{ message }}
+                        </li>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+            </ul>
+        </div>
+        <div class="container">
+    	    {% block content %}{% endblock %}
+        </div>
+	</body>
+</html>

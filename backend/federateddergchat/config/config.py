@@ -53,3 +53,15 @@ class Config(dict[str, Any]):
             clone["database"]["engine"] = engine
 
         return clone
+
+    @property
+    def cookie_key(self) -> str:
+        return str(self.get("cookie_key", "thedergsaysyoureallyneedtochangethis"))
+
+    @property
+    def password_key(self) -> str:
+        return str(self.get("password_key", "thisisanotherthingyoureallyshouldchange"))
+
+    @property
+    def name(self) -> str:
+        return str(self.get("name", "Federated Derg Chat Instance"))

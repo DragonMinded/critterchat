@@ -12,7 +12,7 @@ class CommandException(Exception):
     pass
 
 
-def create(config: Config) -> None:
+def create_db(config: Config) -> None:
     """
     Given a config pointing at a valid MySQL DB, initializes that DB by creating all required tables.
     """
@@ -22,7 +22,18 @@ def create(config: Config) -> None:
     data.close()
 
 
-def generate(config: Config, message: str, allow_empty: bool) -> None:
+def upgrade_db(config: Config) -> None:
+    """
+    Given a config pointing at a valid MySQL DB that's been created already, runs any pending migrations
+    that were checked in since you last ran create or migrate.
+    """
+
+    data = Data(config)
+    data.upgrade()
+    data.close()
+
+
+def generate_migration(config: Config, message: str, allow_empty: bool) -> None:
     """
     Given some changes to the table definitions in the SQL files of this repo, and a config pointing
     at a valid MySQL DB that has previously been initialized and then upgraded to the base revision
@@ -35,14 +46,23 @@ def generate(config: Config, message: str, allow_empty: bool) -> None:
     data.close()
 
 
-def upgrade(config: Config) -> None:
+def create_user(config: Config, username: str, password: str) -> None:
     """
     Given a config pointing at a valid MySQL DB that's been created already, runs any pending migrations
     that were checked in since you last ran create or migrate.
     """
 
     data = Data(config)
-    data.upgrade()
+
+    existing_id = data.user.from_username(username)
+    if existing_id:
+        raise CommandException("User already exists in the database!")
+
+    new_id = data.user.create_account(username, password)
+    if not new_id:
+        raise CommandException("User could not be created!")
+    print(f"User created with user ID {new_id}")
+
     data.close()
 
 
@@ -99,6 +119,35 @@ def main() -> None:
         description="Apply pending migrations to a DB.",
     )
 
+    # Another subcommand here.
+    user_parser = commands.add_parser(
+        "user",
+        help="modify backing DB for this network",
+        description="Modify backing DB for this network.",
+    )
+    user_commands = user_parser.add_subparsers(dest="user")
+
+    # Only a few params for this one
+    create_parser = user_commands.add_parser(
+        "create",
+        help="create a new user that can log in",
+        description="Create a new user that can log in.",
+    )
+    create_parser.add_argument(
+        "-u",
+        "--username",
+        required=True,
+        type=str,
+        help="username that the user will use to login with",
+    )
+    create_parser.add_argument(
+        "-p",
+        "--password",
+        required=True,
+        type=str,
+        help="password that the user will use to login with",
+    )
+
     args = parser.parse_args()
 
     config = Config()
@@ -111,13 +160,21 @@ def main() -> None:
             if args.database is None:
                 raise CLIException("Unuspecified database operation!")
             elif args.database == "create":
-                create(config)
+                create_db(config)
             elif args.database == "generate":
-                generate(config, args.message, args.allow_empty)
+                generate_migration(config, args.message, args.allow_empty)
             elif args.database == "upgrade":
-                upgrade(config)
+                upgrade_db(config)
             else:
                 raise CLIException(f"Unknown database operation '{args.database}'")
+
+        elif args.operation == "user":
+            if args.user is None:
+                raise CLIException("Unspecified user operation1")
+            elif args.user == "create":
+                create_user(config, args.username, args.password)
+            else:
+                raise CLIException(f"Unknown user operation '{args.user}'")
 
         else:
             raise CLIException(f"Unknown operation '{args.operation}'")
