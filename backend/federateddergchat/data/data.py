@@ -13,6 +13,7 @@ from sqlalchemy.exc import ProgrammingError
 from ..config import Config
 from .base import metadata
 from .user import UserData
+from .room import RoomData
 
 
 __all__ = [
@@ -49,6 +50,7 @@ class Data:
         self.__url = Data.sqlalchemy_url(config)
 
         self.user = UserData(config, self.__session)
+        self.room = RoomData(config, self.__session)
 
     @classmethod
     def sqlalchemy_url(cls, config: Config) -> str:

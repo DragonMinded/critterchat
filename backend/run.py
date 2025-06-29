@@ -10,6 +10,7 @@ from federateddergchat.config import load_config
 import federateddergchat.http.welcome  # noqa
 import federateddergchat.http.chat  # noqa
 import federateddergchat.http.account  # noqa
+import federateddergchat.http.socket  # noqa
 
 
 if __name__ == '__main__':

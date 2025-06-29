@@ -2,7 +2,7 @@ import random
 import string
 
 from sqlalchemy import Table, Column
-from sqlalchemy.types import String, Integer
+from sqlalchemy.types import String, Integer, Text
 from typing import Optional, Tuple
 from typing_extensions import Final
 from passlib.hash import pbkdf2_sha512  # type: ignore
@@ -36,6 +36,18 @@ session = Table(
     Column("session", String(32), nullable=False, unique=True),
     Column("expiration", Integer),
     mysql_charset="utf8mb4",
+)
+
+"""
+Table representing a user's profile.
+"""
+profile = Table(
+    "profile",
+    metadata,
+    Column("id", Integer, nullable=False),
+    Column("user_id", Integer, nullable=False, unique=True),
+    Column("nickname", String(255)),
+    Column("about", Text),
 )
 
 

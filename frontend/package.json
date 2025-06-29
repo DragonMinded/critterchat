@@ -1,0 +1,21 @@
+{
+  "name": "Federated Derg Chat Frontend",
+  "version": "1.0.0",
+  "description": "JS frontend for the derg chat system.",
+  "main": "chat.js",
+  "scripts": {
+    "build": "webpack",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "webpack": "^5.99.9",
+    "webpack-cli": "^6.0.1"
+  },
+  "dependencies": {
+    "jquery": "^3.7.1",
+    "socket.io-client": "^4.8.1"
+  }
+}

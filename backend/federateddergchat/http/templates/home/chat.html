@@ -1,6 +1,373 @@
 {% extends "base.html" %}
+{% block includes %}
+  <script src="{{ url_for('static', filename='chat.js') }}"></script>
+  <script src="{{ url_for('static', filename='twemoji-14.0.2.min.js') }}"></script>
+  <link href="{{ url_for('static', filename='chat.css') }}" rel="stylesheet" />
+  <script>
+    window.twemojiOptions = { base: "{{ url_for('static', filename='twemoji/') }}" }
+    window.emojis = {{ emojis|tojson|safe }};
+    window.emotes = {{ emotes|tojson|safe }};
+  </script>
+{% endblock %}
 {% block content %}
-    <div class="section">
-        Hello, world.
+    <div class="menu">
+        <div class="conversations">
+        </div>
+        <div class="actions">
+            <div class="item">
+                <button>&#127381;</button>
+            </div>
+            <div class="item">
+                <button>&#128269;</button>
+            </div>
+        </div>
+    </div>
+    <div class="chat">
+        <div class="conversation">
+            <div class="item">
+                <div class="icon">
+                    <img src="{{ url_for('static', filename='avi.png') }}" />
+                </div>
+                <div class="contentwrapper">
+                    <div class="metawrapper">
+                        <div class="name">
+                            kirakira
+                        </div>
+                        <div class="timestamp">
+                            12:34 pm
+                        </div>
+                    </div>
+                    <div class="message">
+                        this is a stupid long message and it keeps going and going and going and going and going and going and going and going and going and going and going and going and going and going and going and going and going and going and going and going and going and going and going and going and going and going and going and going and going and going and going and going and going and going and going and going and going and going.
+                    </div>
+                    <div class="message">
+                        this is a test message
+                    </div>
+                    <div class="message">
+                        this is a test message
+                    </div>
+                </div>
+            </div>
+            <div class="item">
+                <div class="icon">
+                    <img src="{{ url_for('static', filename='avi.png') }}" />
+                </div>
+                <div class="contentwrapper">
+                    <div class="metawrapper">
+                        <div class="name">
+                            kirakira
+                        </div>
+                        <div class="timestamp">
+                            12:34 pm
+                        </div>
+                    </div>
+                    <div class="message">
+                        this is a test message
+                    </div>
+                </div>
+            </div>
+            <div class="item">
+                <div class="icon">
+                    <img src="{{ url_for('static', filename='avi.png') }}" />
+                </div>
+                <div class="contentwrapper">
+                    <div class="metawrapper">
+                        <div class="name">
+                            kirakira
+                        </div>
+                        <div class="timestamp">
+                            12:34 pm
+                        </div>
+                    </div>
+                    <div class="message">
+                        this is a test message
+                    </div>
+                    <div class="message">
+                        this is a test message
+                    </div>
+                    <div class="message">
+                        this is a test message
+                    </div>
+                </div>
+            </div>
+            <div class="item">
+                <div class="icon">
+                    <img src="{{ url_for('static', filename='avi.png') }}" />
+                </div>
+                <div class="contentwrapper">
+                    <div class="metawrapper">
+                        <div class="name">
+                            kirakira
+                        </div>
+                        <div class="timestamp">
+                            12:34 pm
+                        </div>
+                    </div>
+                    <div class="message">
+                        this is a test message
+                    </div>
+                </div>
+            </div>
+            <div class="item">
+                <div class="icon">
+                    <img src="{{ url_for('static', filename='avi.png') }}" />
+                </div>
+                <div class="contentwrapper">
+                    <div class="metawrapper">
+                        <div class="name">
+                            kirakira
+                        </div>
+                        <div class="timestamp">
+                            12:34 pm
+                        </div>
+                    </div>
+                    <div class="message">
+                        this is a test message
+                    </div>
+                    <div class="message">
+                        this is a test message
+                    </div>
+                    <div class="message">
+                        this is a test message
+                    </div>
+                </div>
+            </div>
+            <div class="item">
+                <div class="icon">
+                    <img src="{{ url_for('static', filename='avi.png') }}" />
+                </div>
+                <div class="contentwrapper">
+                    <div class="metawrapper">
+                        <div class="name">
+                            kirakira
+                        </div>
+                        <div class="timestamp">
+                            12:34 pm
+                        </div>
+                    </div>
+                    <div class="message">
+                        this is a test message
+                    </div>
+                </div>
+            </div>
+            <div class="item">
+                <div class="icon">
+                    <img src="{{ url_for('static', filename='avi.png') }}" />
+                </div>
+                <div class="contentwrapper">
+                    <div class="metawrapper">
+                        <div class="name">
+                            kirakira
+                        </div>
+                        <div class="timestamp">
+                            12:34 pm
+                        </div>
+                    </div>
+                    <div class="message">
+                        this is a test message
+                    </div>
+                    <div class="message">
+                        this is a test message
+                    </div>
+                    <div class="message">
+                        this is a test message
+                    </div>
+                </div>
+            </div>
+            <div class="item">
+                <div class="icon">
+                    <img src="{{ url_for('static', filename='avi.png') }}" />
+                </div>
+                <div class="contentwrapper">
+                    <div class="metawrapper">
+                        <div class="name">
+                            kirakira
+                        </div>
+                        <div class="timestamp">
+                            12:34 pm
+                        </div>
+                    </div>
+                    <div class="message">
+                        this is a test message
+                    </div>
+                </div>
+            </div>
+            <div class="item">
+                <div class="icon">
+                    <img src="{{ url_for('static', filename='avi.png') }}" />
+                </div>
+                <div class="contentwrapper">
+                    <div class="metawrapper">
+                        <div class="name">
+                            kirakira
+                        </div>
+                        <div class="timestamp">
+                            12:34 pm
+                        </div>
+                    </div>
+                    <div class="message">
+                        this is a test message
+                    </div>
+                    <div class="message">
+                        this is a test message
+                    </div>
+                    <div class="message">
+                        this is a test message
+                    </div>
+                </div>
+            </div>
+            <div class="item">
+                <div class="icon">
+                    <img src="{{ url_for('static', filename='avi.png') }}" />
+                </div>
+                <div class="contentwrapper">
+                    <div class="metawrapper">
+                        <div class="name">
+                            kirakira
+                        </div>
+                        <div class="timestamp">
+                            12:34 pm
+                        </div>
+                    </div>
+                    <div class="message">
+                        this is a test message
+                    </div>
+                </div>
+            </div>
+            <div class="item">
+                <div class="icon">
+                    <img src="{{ url_for('static', filename='avi.png') }}" />
+                </div>
+                <div class="contentwrapper">
+                    <div class="metawrapper">
+                        <div class="name">
+                            kirakira
+                        </div>
+                        <div class="timestamp">
+                            12:34 pm
+                        </div>
+                    </div>
+                    <div class="message">
+                        this is a test message
+                    </div>
+                    <div class="message">
+                        this is a test message
+                    </div>
+                    <div class="message">
+                        this is a test message
+                    </div>
+                </div>
+            </div>
+            <div class="item">
+                <div class="icon">
+                    <img src="{{ url_for('static', filename='avi.png') }}" />
+                </div>
+                <div class="contentwrapper">
+                    <div class="metawrapper">
+                        <div class="name">
+                            kirakira
+                        </div>
+                        <div class="timestamp">
+                            12:34 pm
+                        </div>
+                    </div>
+                    <div class="message">
+                        this is a test message
+                    </div>
+                </div>
+            </div>
+            <div class="item">
+                <div class="icon">
+                    <img src="{{ url_for('static', filename='avi.png') }}" />
+                </div>
+                <div class="contentwrapper">
+                    <div class="metawrapper">
+                        <div class="name">
+                            kirakira
+                        </div>
+                        <div class="timestamp">
+                            12:34 pm
+                        </div>
+                    </div>
+                    <div class="message">
+                        this is a test message
+                    </div>
+                    <div class="message">
+                        this is a test message
+                    </div>
+                    <div class="message">
+                        this is a test message
+                    </div>
+                </div>
+            </div>
+            <div class="item">
+                <div class="icon">
+                    <img src="{{ url_for('static', filename='avi.png') }}" />
+                </div>
+                <div class="contentwrapper">
+                    <div class="metawrapper">
+                        <div class="name">
+                            kirakira
+                        </div>
+                        <div class="timestamp">
+                            12:34 pm
+                        </div>
+                    </div>
+                    <div class="message">
+                        this is a test message
+                    </div>
+                </div>
+            </div>
+            <div class="item">
+                <div class="icon">
+                    <img src="{{ url_for('static', filename='avi.png') }}" />
+                </div>
+                <div class="contentwrapper">
+                    <div class="metawrapper">
+                        <div class="name">
+                            kirakira
+                        </div>
+                        <div class="timestamp">
+                            12:34 pm
+                        </div>
+                    </div>
+                    <div class="message">
+                        this is a test message
+                    </div>
+                    <div class="message">
+                        this is a test message
+                    </div>
+                    <div class="message">
+                        this is a test message
+                    </div>
+                </div>
+            </div>
+            <div class="item">
+                <div class="icon">
+                    <img src="{{ url_for('static', filename='avi.png') }}" />
+                </div>
+                <div class="contentwrapper">
+                    <div class="metawrapper">
+                        <div class="name">
+                            kirakira
+                        </div>
+                        <div class="timestamp">
+                            12:34 pm
+                        </div>
+                    </div>
+                    <div class="message">
+                        this is a test message
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="actions">
+            <div class="newmessage">
+                <input type="text" />
+            </div>
+            <div class="send">
+                <button>send</button>
+            </div>
+        </div>
     </div>
 {% endblock %}
