@@ -2,11 +2,11 @@ database:
   # IP or DNS entry for MySQL instance
   address: "localhost"
   # Database that will be used
-  database: "fdc"
+  database: "critterchat"
   # User who has full credentials to the above DB
-  user: "fdc"
+  user: "critterchat"
   # Password of said user
-  password: "fdc"
+  password: "critterchat"
 
 # Instance-wide secret key for cookie signing. Change this to something long and random. If you
 # change this on an existing instance all existing login sessions will be invalidated.
