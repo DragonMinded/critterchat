@@ -1,19 +1,45 @@
+import { EventEmitter } from "events";
 import { Menu } from "./menu.js";
+import { Messages } from "./messages.js";
 
 export function manager(socket) {
-    var menuInst = new Menu(socket);
+    var eventBus = new EventEmitter();
+    var menuInst = new Menu(eventBus);
+    var messagesInst = new Messages(eventBus);
+    var settings = {};
 
-    socket.on('connect', function() {
+    socket.on('connect', () => {
         // Ask for our list of rooms that we're in.
         socket.emit('roomlist', {});
+
+        // Ask for our last settings so we can refresh where we left off.
+        socket.emit('lastsettings', {});
     });
 
-    socket.on('reload', function() {
+    socket.on('reload', () => {
         // Server wants us to reload, probably to de-auth ourselves after a remote logout.
         window.location.reload();
     });
 
-    socket.on('roomlist', function(msg) {
+    socket.on('roomlist', (msg) => {
         menuInst.setRooms(msg.rooms);
+    });
+
+    socket.on('lastsettings', (msg) => {
+        settings = msg;
+        menuInst.setLastSettings(msg);
+        messagesInst.setLastSettings(msg);
+    });
+
+    socket.on('chathistory', (msg) => {
+        messagesInst.updateHistory(msg.roomid, msg.history);
+    });
+
+    eventBus.on('room', (roomid) => {
+        settings.roomid = roomid;
+
+        messagesInst.setRoom(roomid);
+        socket.emit('updatesettings', settings);
+        socket.emit('chathistory', {roomid: roomid});
     });
 }

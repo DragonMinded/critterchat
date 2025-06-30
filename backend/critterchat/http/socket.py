@@ -1,8 +1,8 @@
 from typing import Any, Dict, Optional
 
 from .app import socketio, config, request
-from ..common import AESCipher
-from ..data import Data, Room, UserID
+from ..common import AESCipher, Time
+from ..data import Data, Action, Occupant, Room, ActionID, OccupantID, RoomID, UserID
 
 
 class SocketInfo:
@@ -85,9 +85,60 @@ def roomlist(json: Dict[str, object]) -> None:
 
     # Grab all rooms that the user is in, based on their user ID.
     rooms = data.room.get_joined_rooms(userid)
-    rooms.append(Room(12345, "This is a test"))
-    rooms.append(Room(23456, "This is another test"))
-    rooms.append(Room(12345, "This should rename"))
+    rooms.append(Room(RoomID(12345), "This is a test"))
+    rooms.append(Room(RoomID(23456), "This is another test"))
+    rooms.append(Room(RoomID(12345), "This should rename"))
     socketio.emit('roomlist', {
         'rooms': [room.to_dict() for room in rooms],
     })
+
+
+@socketio.on('lastsettings')  # type: ignore
+def lastsettings(json: Dict[str, object]) -> None:
+    data = Data(config)
+
+    # Try to associate with a user if there is one.
+    userid = recover_userid(data, request.sid)
+    if userid is None:
+        return
+
+    # TODO: Look up last settings for this user.
+    socketio.emit('lastsettings', {
+        'roomid': Room.from_id(RoomID(12345)),
+    })
+
+
+@socketio.on('updatesettings')  # type: ignore
+def updatesettings(json: Dict[str, object]) -> None:
+    data = Data(config)
+
+    # Try to associate with a user if there is one.
+    userid = recover_userid(data, request.sid)
+    if userid is None:
+        return
+
+    # TODO: Save settings for this user.
+    print(json)
+
+
+@socketio.on('chathistory')  # type: ignore
+def chathistory(json: Dict[str, object]) -> None:
+    data = Data(config)
+
+    # Try to associate with a user if there is one.
+    userid = recover_userid(data, request.sid)
+    if userid is None:
+        return
+
+    roomid = Room.to_id(str(json.get('roomid')))
+    if roomid:
+        # TODO: Need to look up nicknames in profiles for anyone who hasn't set their name custom.
+        history = data.room.get_room_history(roomid)
+        history.append(Action(ActionID(2222), Time.now(), Occupant(OccupantID(100), UserID(userid), "kirakira"), "message", "this is a test message for room " + str(roomid)))
+        history.append(Action(ActionID(2223), Time.now(), Occupant(OccupantID(100), UserID(userid), "kirakira"), "message", "this is a test message again"))
+        history.append(Action(ActionID(2224), Time.now(), Occupant(OccupantID(100), UserID(userid), "kirakira"), "message", "this is a test message a third time"))
+        history.append(Action(ActionID(2225), Time.now(), Occupant(OccupantID(100), UserID(userid), "kirakira"), "message", "this is a test message a fourth time with an edit"))
+        socketio.emit('chathistory', {
+            'roomid': Room.from_id(roomid),
+            'history': [action.to_dict() for action in history],
+        })

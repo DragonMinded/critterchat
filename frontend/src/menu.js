@@ -1,11 +1,11 @@
 import $ from "jquery";
 import { escapehtml } from "./utils.js";
 
-
 class Menu {
-    constructor( socket ) {
-        this.socket = socket;
+    constructor( eventBus ) {
+        this.eventBus = eventBus;
         this.rooms = [];
+        this.selected = "";
         this.lastSettings = {};
         this.roomsLoaded = false;
         this.lastSettingsLoaded = false;
@@ -16,11 +16,19 @@ class Menu {
         this.roomsLoaded = true;
 
         this.rooms.forEach((room, i) => this.drawRoom(room));
+
+        if (this.lastSettingsLoaded) {
+            this.selectRoom(this.lastSettings.roomid);
+        }
     }
 
     setLastSettings( settings ) {
         this.lastSettings = settings;
         this.lastSettingsLoaded = true;
+
+        if (this.roomsLoaded) {
+            this.selectRoom(this.lastSettings.roomid);
+        }
     }
 
     drawRoom( room ) {
@@ -32,15 +40,49 @@ class Menu {
             drawnRoom.find('.name').html(escapehtml(room.name));
         } else {
             // Now, draw it fresh since it's not an update.
-            var html  = '<div class="item" id="' + room.id + '">';
-            html += '  <div class="icon">';
-            html += '    <img src="' + room.icon + '" />';
-            html += '    <div class="badge empty">';
-            html += '    </div>';
-            html += '  </div>';
-            html += '  <div class="name">' + escapehtml(room.name) + '</div>';
-            html += '</div>';
+            var html = '<div class="item" id="' + room.id + '">';
+            html    += '  <div class="icon">';
+            html    += '    <img src="' + room.icon + '" />';
+            html    += '    <div class="badge empty">';
+            html    += '    </div>';
+            html    += '  </div>';
+            html    += '  <div class="name">' + escapehtml(room.name) + '</div>';
+            html    += '</div>';
             conversations.append(html);
+
+            $('div.menu > div.conversations div.item#' + room.id).on('click', (event) => {
+                event.stopPropagation();
+                event.stopImmediatePropagation();
+
+                var id = $(event.currentTarget).attr('id')
+                this.selectRoom( id );
+            });
+        }
+
+        this.updateSelected();
+    }
+
+    selectRoom( roomid ) {
+        var found = false;
+        for (const room of this.rooms) {
+            if (room.id == roomid) {
+                found = true;
+                break;
+            }
+        }
+
+        if (found && roomid != this.selected) {
+            this.selected = roomid;
+            this.updateSelected();
+
+            this.eventBus.emit('room', roomid);
+        }
+    }
+
+    updateSelected() {
+        $('div.menu > div.conversations div.item').removeClass('selected');
+        if (this.selected) {
+            $('div.menu > div.conversations div.item#' + this.selected).addClass('selected');
         }
     }
 }

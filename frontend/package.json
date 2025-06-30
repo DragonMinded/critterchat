@@ -16,6 +16,7 @@
     "webpack-cli": "^6.0.1"
   },
   "dependencies": {
+    "events": "^3.3.0",
     "jquery": "^3.7.1",
     "socket.io-client": "^4.8.1"
   }
