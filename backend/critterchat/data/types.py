@@ -7,6 +7,66 @@ OccupantID = NewType("OccupantID", int)
 ActionID = NewType("ActionID", int)
 
 
+class User:
+    def __ini__(self, userid: UserID) -> None:
+        self.id = userid
+
+    def to_dict(self) -> Dict[str, object]:
+        return {
+            "id": User.from_id(self.id),
+        }
+
+    @staticmethod
+    def from_id(userid: UserID) -> str:
+        return f"u{userid}"
+
+    @staticmethod
+    def to_id(idstr: str) -> Optional[UserID]:
+        if idstr[0] != 'u':
+            return None
+
+        try:
+            return UserID(int(idstr[1:]))
+        except ValueError:
+            return None
+
+
+class UserSettings:
+    def __init__(self, userid: UserID, roomid: Optional[RoomID]) -> None:
+        self.id = userid
+        self.roomid = roomid
+
+    def to_dict(self) -> Dict[str, object]:
+        return {
+            "id": User.from_id(self.id),
+            "roomid": Room.from_id(self.roomid) if self.roomid is not None else None,
+        }
+
+    @staticmethod
+    def from_dict(userid: UserID, values: Dict[str, object]) -> "UserSettings":
+        room = values.get("roomid")
+        roomid = Room.to_id(str(room)) if room is not None else None
+
+        return UserSettings(
+            userid=userid,
+            roomid=roomid,
+        )
+
+    @staticmethod
+    def from_id(roomid: RoomID) -> str:
+        return f"r{roomid}"
+
+    @staticmethod
+    def to_id(idstr: str) -> Optional[RoomID]:
+        if idstr[0] != 'r':
+            return None
+
+        try:
+            return RoomID(int(idstr[1:]))
+        except ValueError:
+            return None
+
+
 class Room:
     def __init__(self, roomid: RoomID, name: str) -> None:
         self.id = roomid
@@ -47,7 +107,7 @@ class Occupant:
     def to_dict(self) -> Dict[str, object]:
         return {
             "id": Occupant.from_id(self.id),
-            "userid": f"u{self.userid}",
+            "userid": User.from_id(self.userid),
             "nickname": self.nickname,
             "icon": self.icon,
         }

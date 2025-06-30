@@ -2,7 +2,8 @@ from typing import Any, Dict, Optional
 
 from .app import socketio, config, request
 from ..common import AESCipher, Time
-from ..data import Data, Action, Occupant, Room, ActionID, OccupantID, RoomID, UserID
+from ..service import UserService
+from ..data import Data, Action, Occupant, Room, UserSettings, ActionID, OccupantID, UserID
 
 
 class SocketInfo:
@@ -67,7 +68,6 @@ def connect() -> None:
 @socketio.on('disconnect')  # type: ignore
 def disconnect() -> None:
     if request.sid in socket_to_info:
-        info = socket_to_info[request.sid]
         del socket_to_info[request.sid]
 
     # Explicitly kill the presence since we know they're gone.
@@ -77,6 +77,7 @@ def disconnect() -> None:
 @socketio.on('roomlist')  # type: ignore
 def roomlist(json: Dict[str, object]) -> None:
     data = Data(config)
+    userservice = UserService(data)
 
     # Try to associate with a user if there is one.
     userid = recover_userid(data, request.sid)
@@ -84,10 +85,7 @@ def roomlist(json: Dict[str, object]) -> None:
         return
 
     # Grab all rooms that the user is in, based on their user ID.
-    rooms = data.room.get_joined_rooms(userid)
-    rooms.append(Room(RoomID(12345), "This is a test"))
-    rooms.append(Room(RoomID(23456), "This is another test"))
-    rooms.append(Room(RoomID(12345), "This should rename"))
+    rooms = userservice.get_joined_rooms(userid)
     socketio.emit('roomlist', {
         'rooms': [room.to_dict() for room in rooms],
     })
@@ -96,29 +94,29 @@ def roomlist(json: Dict[str, object]) -> None:
 @socketio.on('lastsettings')  # type: ignore
 def lastsettings(json: Dict[str, object]) -> None:
     data = Data(config)
+    userservice = UserService(data)
 
     # Try to associate with a user if there is one.
     userid = recover_userid(data, request.sid)
     if userid is None:
         return
 
-    # TODO: Look up last settings for this user.
-    socketio.emit('lastsettings', {
-        'roomid': Room.from_id(RoomID(12345)),
-    })
+    # Look up last settings for this user.
+    socketio.emit('lastsettings', userservice.get_settings(userid).to_dict())
 
 
 @socketio.on('updatesettings')  # type: ignore
 def updatesettings(json: Dict[str, object]) -> None:
     data = Data(config)
+    userservice = UserService(data)
 
     # Try to associate with a user if there is one.
     userid = recover_userid(data, request.sid)
     if userid is None:
         return
 
-    # TODO: Save settings for this user.
-    print(json)
+    # Save last settings for this user.
+    userservice.update_settings(userid, UserSettings.from_dict(userid, json))
 
 
 @socketio.on('chathistory')  # type: ignore

@@ -9,7 +9,7 @@ from passlib.hash import pbkdf2_sha512  # type: ignore
 
 from ..common import Time
 from .base import BaseData, metadata
-from .types import UserID
+from .types import UserSettings, UserID, RoomID
 
 """
 Table representing a user.
@@ -17,8 +17,8 @@ Table representing a user.
 user = Table(
     "user",
     metadata,
-    Column("id", Integer, nullable=False, primary_key=True),
-    Column("username", String(255), unique=True),
+    Column("id", Integer, nullable=False, primary_key=True, autoincrement=True),
+    Column("username", String(255), unique=True, index=True),
     Column("password", String(1024)),
     Column("salt", String(64)),
     Column("permissions", Integer),
@@ -33,7 +33,7 @@ session = Table(
     metadata,
     Column("id", Integer, nullable=False),
     Column("type", String(32), nullable=False),
-    Column("session", String(32), nullable=False, unique=True),
+    Column("session", String(32), nullable=False, unique=True, index=True),
     Column("expiration", Integer),
     mysql_charset="utf8mb4",
 )
@@ -44,10 +44,19 @@ Table representing a user's profile.
 profile = Table(
     "profile",
     metadata,
-    Column("id", Integer, nullable=False),
-    Column("user_id", Integer, nullable=False, unique=True),
+    Column("user_id", Integer, nullable=False, unique=True, index=True),
     Column("nickname", String(255)),
     Column("about", Text),
+)
+
+"""
+Table representing a user's settings.
+"""
+settings = Table(
+    "settings",
+    metadata,
+    Column("user_id", Integer, nullable=False, unique=True, index=True),
+    Column("last_room", Integer),
 )
 
 
@@ -224,3 +233,40 @@ class UserData(BaseData):
         if cursor.rowcount != 1:
             return None
         return UserID(cursor.lastrowid)
+
+    def get_settings(self, userid: UserID) -> Optional[UserSettings]:
+        """
+        Look up a user's settings if they exist.
+
+        Parameters:
+            userid - The ID of the user we want to grab settings for.
+        """
+
+        sql = "SELECT * FROM settings WHERE user_id = :userid"
+        cursor = self.execute(sql, {"userid": userid})
+        if cursor.rowcount != 1:
+            return None
+
+        result = cursor.mappings().fetchone()
+        return UserSettings(
+            userid=userid,
+            roomid=RoomID(result['last_room']) if result['last_room'] is not None else None,
+        )
+
+    def put_settings(self, userid: UserID, settings: UserSettings) -> None:
+        """
+        Write a new settings blob to the specified user.
+
+        Parameters:
+            userid - The user ID that we should update settings for.
+            settings - The new settings bundle we should persist.
+        """
+
+        sql = """
+            INSERT INTO `settings`
+                (`user_id`, `last_room`)
+            VALUES (:userid, :roomid)
+            ON DUPLICATE KEY UPDATE
+            `last_room` = :roomid
+        """
+        self.execute(sql, {"roomid": settings.roomid, "userid": userid})

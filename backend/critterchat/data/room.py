@@ -12,7 +12,7 @@ Table representing a chat room.
 room = Table(
     "room",
     metadata,
-    Column("id", Integer, nullable=False, primary_key=True),
+    Column("id", Integer, nullable=False, primary_key=True, autoincrement=True),
     Column("name", String(255), unique=True),
     mysql_charset="utf8mb4",
 )
@@ -23,7 +23,7 @@ Table representing a chat room's occupants.
 occupant = Table(
     "occupant",
     metadata,
-    Column("id", Integer, nullable=False, primary_key=True),
+    Column("id", Integer, nullable=False, primary_key=True, autoincrement=True),
     Column("user_id", Integer, nullable=False),
     Column("room_id", Integer, nullable=False, index=True),
     Column("nickname", String(255)),
@@ -37,7 +37,7 @@ Table representing a chat room's actions taken by occupants.
 action = Table(
     "action",
     metadata,
-    Column("id", Integer, nullable=False, primary_key=True),
+    Column("id", Integer, nullable=False, primary_key=True, autoincrement=True),
     Column("timestamp", Integer, nullable=False),
     Column("room_id", Integer, nullable=False, index=True),
     Column("occupant_id", Integer, nullable=False),

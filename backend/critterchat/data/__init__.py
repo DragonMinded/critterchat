@@ -1,5 +1,5 @@
 from .data import Data, DBCreateException
-from .types import Action, Occupant, Room, ActionID, OccupantID, RoomID, UserID
+from .types import Action, Occupant, Room, User, UserSettings, ActionID, OccupantID, RoomID, UserID
 
 
 __all__ = [
@@ -10,6 +10,8 @@ __all__ = [
     "RoomID",
     "UserID",
     "Action",
+    "User",
+    "UserSettings",
     "Occupant",
     "Room",
 ]
