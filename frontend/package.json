@@ -4,7 +4,8 @@
   "description": "JS frontend for the critter chat software package.",
   "main": "chat.js",
   "scripts": {
-    "build": "webpack",
+    "build": "webpack --mode production",
+    "debug": "webpack --mode development",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
