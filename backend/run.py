@@ -1,16 +1,16 @@
 import argparse
 from werkzeug.middleware.proxy_fix import ProxyFix
 
-from federateddergchat.http import app, config, socketio
+from critterchat.http import app, config, socketio
 
-from federateddergchat.config import load_config
+from critterchat.config import load_config
 
 
 # Since the sockets and REST files use decorators for hooking, simply importing these hooks the desired functions
-import federateddergchat.http.welcome  # noqa
-import federateddergchat.http.chat  # noqa
-import federateddergchat.http.account  # noqa
-import federateddergchat.http.socket  # noqa
+import critterchat.http.welcome  # noqa
+import critterchat.http.chat  # noqa
+import critterchat.http.account  # noqa
+import critterchat.http.socket  # noqa
 
 
 if __name__ == '__main__':

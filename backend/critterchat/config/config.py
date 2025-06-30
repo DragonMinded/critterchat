@@ -64,4 +64,4 @@ class Config(dict[str, Any]):
 
     @property
     def name(self) -> str:
-        return str(self.get("name", "Federated Derg Chat Instance"))
+        return str(self.get("name", "Critter Chat Instance"))

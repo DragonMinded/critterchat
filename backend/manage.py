@@ -1,7 +1,7 @@
 import argparse
 import sys
-from federateddergchat.data import Data, DBCreateException
-from federateddergchat.config import Config, load_config
+from critterchat.data import Data, DBCreateException
+from critterchat.config import Config, load_config
 
 
 class CLIException(Exception):

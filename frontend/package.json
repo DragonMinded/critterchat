@@ -1,7 +1,7 @@
 {
-  "name": "Federated Derg Chat Frontend",
+  "name": "Critter Chat Frontend",
   "version": "1.0.0",
-  "description": "JS frontend for the derg chat system.",
+  "description": "JS frontend for the critter chat software package.",
   "main": "chat.js",
   "scripts": {
     "build": "webpack",

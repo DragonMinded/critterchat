@@ -1,5 +1,5 @@
 *.swp
 __pycache__/
-backend/federateddergchat/http/static/chat.*
+backend/critterchat/http/static/chat.*
 frontend/dist/
 frontend/node_modules/

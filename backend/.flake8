@@ -1,4 +1,4 @@
 [flake8]
 extend-ignore = E501
 exclude =
-    federateddergchat/data/migrations
+    critterchat/data/migrations

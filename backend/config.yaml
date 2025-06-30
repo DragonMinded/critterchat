@@ -17,4 +17,4 @@ cookie_key: "you_should_type_something_long_and_random_here"
 password_key: "you_should_also_change_this_to_something_long_and_random"
 
 # The name of the instance.
-name: "Federated Derg Chat Instance"
+name: "Critter Chat Instance"
