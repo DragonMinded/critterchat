@@ -1,34 +1,83 @@
+from threading import Lock
 from typing import Any, Dict, Optional
 
 from .app import socketio, config, request
 from ..common import AESCipher
 from ..service import UserService, MessageService
-from ..data import Data, Room, UserSettings, UserID
+from ..data import Data, Room, UserSettings, NewActionID, ActionID, RoomID, UserID
 
 
 class SocketInfo:
     def __init__(self, sid: Any, sessionid: Optional[str]) -> None:
         self.sid = sid
         self.sessionid = sessionid
+        self.fetchlimit: Dict[RoomID, Optional[ActionID]] = {}
 
 
+socket_lock: Lock = Lock()
 socket_to_info: Dict[Any, SocketInfo] = {}
+background_thread: Optional[object] = None
+
+
+def background_thread_proc() -> None:
+    """
+    The background polling thread that manages asynchronous messages from the database.
+    """
+
+    while True:
+        # Just yield to the async system.
+        socketio.sleep(0.25)
+
+        # Look for any new actions that should be relayed.
+        data = Data(config)
+        messageservice = MessageService(data)
+
+        with socket_lock:
+            if not socket_to_info:
+                print("Shutting down message pump thread due to no more client sockets.")
+
+                global background_thread
+                background_thread = None
+
+                return
+
+            for _, info in socket_to_info.items():
+                for roomid, fetchlimit in info.fetchlimit.items():
+                    # Only fetch deltas for clients that have gotten an initial fetch for a room.
+                    if fetchlimit is not None:
+                        actions = messageservice.get_room_updates(roomid, after=fetchlimit)
+                        for action in actions:
+                            fetchlimit = action.id if fetchlimit is None else max(fetchlimit, action.id)
+                        info.fetchlimit[roomid] = fetchlimit
+
+                        socketio.emit('chathistory', {
+                            'roomid': Room.from_id(roomid),
+                            'history': [action.to_dict() for action in actions],
+                        }, room=info.sid)
 
 
 def register_sid(sid: Any, sessionid: Optional[str]) -> None:
-    socket_to_info[sid] = SocketInfo(sid, sessionid)
+    with socket_lock:
+        global background_thread
+        if background_thread is None:
+            print("Starting message pump thread due to first client socket connection.")
+            background_thread = socketio.start_background_task(background_thread_proc)
+
+        socket_to_info[sid] = SocketInfo(sid, sessionid)
 
 
 def unregister_sid(sid: Any) -> None:
-    if sid in socket_to_info:
-        del socket_to_info[sid]
+    with socket_lock:
+        if sid in socket_to_info:
+            del socket_to_info[sid]
 
 
 def recover_info(sid: Any) -> SocketInfo:
-    if sid not in socket_to_info:
-        return SocketInfo(sid, None)
+    with socket_lock:
+        if sid not in socket_to_info:
+            return SocketInfo(sid, None)
 
-    return socket_to_info[sid]
+        return socket_to_info[sid]
 
 
 def recover_userid(data: Data, sid: Any) -> Optional[UserID]:
@@ -67,9 +116,6 @@ def connect() -> None:
 
 @socketio.on('disconnect')  # type: ignore
 def disconnect() -> None:
-    if request.sid in socket_to_info:
-        del socket_to_info[request.sid]
-
     # Explicitly kill the presence since we know they're gone.
     unregister_sid(request.sid)
 
@@ -78,14 +124,26 @@ def disconnect() -> None:
 def roomlist(json: Dict[str, object]) -> None:
     data = Data(config)
     userservice = UserService(data)
+    messageservice = MessageService(data)
 
     # Try to associate with a user if there is one.
     userid = recover_userid(data, request.sid)
-    if userid is None:
+    info = recover_info(request.sid)
+    if userid is None or info is None:
         return
 
-    # Grab all rooms that the user is in, based on their user ID.
-    rooms = userservice.get_joined_rooms(userid)
+    with socket_lock:
+        # Grab all rooms that the user is in, based on their user ID.
+        rooms = userservice.get_joined_rooms(userid)
+
+        # Pre-charge the delta fetches for all rooms this user is in.
+        for room in rooms:
+            action = messageservice.get_last_room_action(room.id)
+            if action:
+                info.fetchlimit[room.id] = action.id
+            else:
+                info.fetchlimit[room.id] = NewActionID
+
     socketio.emit('roomlist', {
         'rooms': [room.to_dict() for room in rooms],
     }, room=request.sid)
@@ -126,15 +184,27 @@ def chathistory(json: Dict[str, object]) -> None:
 
     # Try to associate with a user if there is one.
     userid = recover_userid(data, request.sid)
-    if userid is None:
+    info = recover_info(request.sid)
+    if userid is None or info is None:
         return
 
-    roomid = Room.to_id(str(json.get('roomid')))
-    if roomid:
-        socketio.emit('chathistory', {
-            'roomid': Room.from_id(roomid),
-            'history': [action.to_dict() for action in messageservice.get_room_history(roomid)],
-        }, room=request.sid)
+    # Locking our socket info so we can keep track of what history we've seen,
+    # so that we can send deltas afterwards to the client when new chats happen.
+    with socket_lock:
+        roomid = Room.to_id(str(json.get('roomid')))
+        if roomid:
+            actions = messageservice.get_room_history(roomid)
+
+            # Starting from scratch here since this messages clears the chat pane on the client.
+            fetchlimit = None
+            for action in actions:
+                fetchlimit = action.id if fetchlimit is None else max(fetchlimit, action.id)
+            info.fetchlimit[roomid] = fetchlimit
+
+            socketio.emit('chathistory', {
+                'roomid': Room.from_id(roomid),
+                'history': [action.to_dict() for action in actions],
+            }, room=request.sid)
 
 
 @socketio.on('message')  # type: ignore

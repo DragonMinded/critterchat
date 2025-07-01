@@ -115,7 +115,42 @@ class RoomData(BaseData):
         cursor = self.execute(sql, {"roomid": roomid})
         return [self.__to_occupant(o) for o in cursor.mappings()]
 
-    def get_room_history(self, roomid: RoomID, before: Optional[ActionID] = None, after: Optional[ActionID] = None) -> List[Action]:
+    def get_room_occupant(self, occupantid: OccupantID) -> Optional[Occupant]:
+        """
+        Given an occupant ID, look up that occupant.
+
+        Parameters:
+            occupantid - The ID of the occupant we're curious about.
+        """
+        if occupantid is NewOccupantID:
+            return None
+
+        sql = """
+            SELECT
+                occupant.id AS id,
+                occupant.user_id AS user_id,
+                occupant.nickname AS onick,
+                profile.nickname AS pnick,
+                user.username AS unick
+            FROM occupant
+            LEFT JOIN profile ON occupant.user_id = profile.user_id
+            LEFT JOIN user ON occupant.user_id = user.id
+            WHERE occupant.id = :occupantid
+        """
+        cursor = self.execute(sql, {"occupantid": occupantid})
+        if cursor.rowcount != 1:
+            return None
+
+        result = cursor.mappings().fetchone()
+        return self.__to_occupant(result)
+
+    def get_room_history(
+        self,
+        roomid: RoomID,
+        before: Optional[ActionID] = None,
+        after: Optional[ActionID] = None,
+        limit: Optional[int] = None,
+    ) -> List[Action]:
         """
         Given a room ID, and possibly a pagination offset, fetch recent room history.
 
@@ -130,8 +165,20 @@ class RoomData(BaseData):
             return []
 
         # First, grab all the actions we can.
-        sql = "SELECT id, timestamp, occupant_id, action, details FROM action WHERE room_id = :roomid ORDER BY id DESC LIMIT :limit"
-        cursor = self.execute(sql, {"roomid": roomid, "limit": self.MAX_HISTORY})
+        limitclauses = ""
+        if before:
+            limitclauses += " AND id < :before"
+        if after:
+            limitclauses += " AND id > :after"
+
+        sql = f"""
+            SELECT id, timestamp, occupant_id, action, details
+            FROM action
+            WHERE room_id = :roomid
+            {limitclauses}
+            ORDER BY id DESC LIMIT :limit
+        """
+        cursor = self.execute(sql, {"roomid": roomid, "limit": limit or self.MAX_HISTORY, 'before': before, 'after': after})
         data = [x for x in cursor.mappings()]
 
         if not data:
@@ -182,7 +229,7 @@ class RoomData(BaseData):
             raise Exception("Logic error, cannot insert already-persisted action as a new action!")
 
         # First, find the occupant ID.
-        sql = "SELECT id, nickname FROM occupant WHERE room_id = :roomid AND user_id = :userid LIMIT 1"
+        sql = "SELECT id FROM occupant WHERE room_id = :roomid AND user_id = :userid LIMIT 1"
         cursor = self.execute(sql, {"roomid": roomid, "userid": action.occupant.userid})
         if cursor.rowcount != 1:
             # Trying to send a message and we're not in the room?
@@ -190,7 +237,6 @@ class RoomData(BaseData):
 
         result = cursor.mappings().fetchone()
         occupant = result['id']
-        nickname = result['nickname']
 
         if action.occupant.id is not NewOccupantID:
             if action.occupant.id != OccupantID(occupant):
@@ -210,6 +256,11 @@ class RoomData(BaseData):
         if cursor.rowcount != 1:
             return
 
+        # Hydrate what we've just persisted.
         action.id = ActionID(cursor.lastrowid)
         action.occupant.id = OccupantID(occupant)
-        action.occupant.nickname = nickname
+
+        # Now, hydrate the occupant itself so the nickname is present on the response.
+        newoccupant = self.get_room_occupant(action.occupant.id)
+        if newoccupant:
+            action.occupant.nickname = newoccupant.nickname
