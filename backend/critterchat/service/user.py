@@ -1,6 +1,6 @@
 from typing import List
 
-from ..data import Data, UserSettings, UserID, Room, RoomID
+from ..data import Data, UserSettings, UserID, Room
 
 
 class UserServiceException(Exception):
@@ -29,7 +29,29 @@ class UserService:
 
     def get_joined_rooms(self, userid: UserID) -> List[Room]:
         rooms = self.__data.room.get_joined_rooms(userid)
-        rooms.append(Room(RoomID(12345), "This is a test"))
-        rooms.append(Room(RoomID(23456), "This is another test"))
-        rooms.append(Room(RoomID(12345), "This should rename"))
+
+        # Figure out any rooms that don't have a set name, and infer the name of the room.
+        for room in rooms:
+            if not room.name:
+                if room.public:
+                    room.name = "Unnamed Public Chat"
+                else:
+                    # Figure out how many people are in the chat, name it after them.
+                    occupants = self.__data.room.get_room_occupants(room.id)
+                    if not occupants:
+                        # This shouldn't happen, since we would have to be the sole occupant,
+                        # but I guess there could be a race between grabbing the rooms and occupants,
+                        # so let's just throw in a funny easter egg.
+                        room.name = "An Empty Cavern"
+                    elif len(occupants) == 1:
+                        room.name = "Chat with Myself"
+                    elif len(occupants) == 2:
+                        not_me = [o for o in occupants if o.userid != userid]
+                        if len(not_me) == 1:
+                            room.name = f"Chat with {not_me[0].nickname}"
+                        else:
+                            room.name = "Unnamed Private Chat"
+                    else:
+                        room.name = "Unnamed Private Chat"
+
         return rooms

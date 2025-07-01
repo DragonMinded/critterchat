@@ -8,6 +8,18 @@ class Messages {
         this.roomid = "";
         this.lastSettings = {};
         this.lastSettingsLoaded = false;
+
+        $( '#message-actions' ).on( 'submit', (event) => {
+            event.preventDefault();
+
+            var roomid = $( '#message-actions' ).attr('roomid');
+            var message = $( 'input#message' ).val();
+            $( 'input#message' ).val( '' );
+
+            if (message) {
+                this.eventBus.emit('message', {'roomid': roomid, 'message': message});
+            }
+        } );
     }
 
     setLastSettings( settings ) {
@@ -23,6 +35,9 @@ class Messages {
         if (roomid != this.roomid) {
             this.messages = [];
             this.roomid = roomid;
+
+            $('div.chat > div.conversation').empty();
+            $( '#message-actions' ).attr('roomid', roomid);
         }
     }
 
@@ -79,8 +94,8 @@ class Messages {
             html    += '  <div class="icon" id="' + message.occupant.id + '">';
             html    += '    <img src="' + message.occupant.icon + '" />';
             html    += '  </div>';
-            html    += '  <div class="contentwrapper">';
-            html    += '    <div class="metawrapper">';
+            html    += '  <div class="content-wrapper">';
+            html    += '    <div class="meta-wrapper">';
             html    += '      <div class="name" id="' + message.occupant.id + '">' + message.occupant.nickname + '</div>';
             html    += '      <div class="timestamp" id="' + message.id + '">' + message.timestamp + '</div>';
             html    += '    </div>';

@@ -15,9 +15,6 @@
         </div>
         <div class="actions">
             <div class="item">
-                <button id="newchat">&#127381;</button>
-            </div>
-            <div class="item">
                 <button id="searchchat">&#128269;</button>
             </div>
         </div>
@@ -25,13 +22,13 @@
     <div class="chat">
         <div class="conversation">
         </div>
-        <div class="actions">
+        <form class="actions" action="" method="POST" id="message-actions">
             <div class="newmessage">
-                <input type="text" id="message" />
+                <input type="text" id="message" autocomplete="off" placeholder="Type a message..." />
             </div>
             <div class="send">
                 <button id="sendmessage">send</button>
             </div>
-        </div>
+        </form>
     </div>
 {% endblock %}

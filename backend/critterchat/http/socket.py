@@ -1,9 +1,9 @@
 from typing import Any, Dict, Optional
 
 from .app import socketio, config, request
-from ..common import AESCipher, Time
-from ..service import UserService
-from ..data import Data, Action, Occupant, Room, UserSettings, ActionID, OccupantID, UserID
+from ..common import AESCipher
+from ..service import UserService, MessageService
+from ..data import Data, Room, UserSettings, UserID
 
 
 class SocketInfo:
@@ -35,13 +35,13 @@ def recover_userid(data: Data, sid: Any) -> Optional[UserID]:
     info = recover_info(sid)
     if info.sessionid is None:
         # Session was de-authed, tell the client to refresh.
-        socketio.emit('reload', {})
+        socketio.emit('reload', {}, room=sid)
         return None
 
     userid = data.user.from_session(info.sessionid)
     if userid is None:
         # Session was de-authed, tell the client to refresh.
-        socketio.emit('reload', {})
+        socketio.emit('reload', {}, room=sid)
         return None
 
     return userid
@@ -88,7 +88,7 @@ def roomlist(json: Dict[str, object]) -> None:
     rooms = userservice.get_joined_rooms(userid)
     socketio.emit('roomlist', {
         'rooms': [room.to_dict() for room in rooms],
-    })
+    }, room=request.sid)
 
 
 @socketio.on('lastsettings')  # type: ignore
@@ -102,7 +102,7 @@ def lastsettings(json: Dict[str, object]) -> None:
         return
 
     # Look up last settings for this user.
-    socketio.emit('lastsettings', userservice.get_settings(userid).to_dict())
+    socketio.emit('lastsettings', userservice.get_settings(userid).to_dict(), room=request.sid)
 
 
 @socketio.on('updatesettings')  # type: ignore
@@ -122,6 +122,7 @@ def updatesettings(json: Dict[str, object]) -> None:
 @socketio.on('chathistory')  # type: ignore
 def chathistory(json: Dict[str, object]) -> None:
     data = Data(config)
+    messageservice = MessageService(data)
 
     # Try to associate with a user if there is one.
     userid = recover_userid(data, request.sid)
@@ -130,13 +131,30 @@ def chathistory(json: Dict[str, object]) -> None:
 
     roomid = Room.to_id(str(json.get('roomid')))
     if roomid:
-        # TODO: Need to look up nicknames in profiles for anyone who hasn't set their name custom.
-        history = data.room.get_room_history(roomid)
-        history.append(Action(ActionID(2222), Time.now(), Occupant(OccupantID(100), UserID(userid), "kirakira"), "message", "this is a test message for room " + str(roomid)))
-        history.append(Action(ActionID(2223), Time.now(), Occupant(OccupantID(100), UserID(userid), "kirakira"), "message", "this is a test message again"))
-        history.append(Action(ActionID(2224), Time.now(), Occupant(OccupantID(100), UserID(userid), "kirakira"), "message", "this is a test message a third time"))
-        history.append(Action(ActionID(2225), Time.now(), Occupant(OccupantID(100), UserID(userid), "kirakira"), "message", "this is a test message a fourth time with an edit"))
         socketio.emit('chathistory', {
             'roomid': Room.from_id(roomid),
-            'history': [action.to_dict() for action in history],
-        })
+            'history': [action.to_dict() for action in messageservice.get_room_history(roomid)],
+        }, room=request.sid)
+
+
+@socketio.on('message')  # type: ignore
+def message(json: Dict[str, object]) -> None:
+    data = Data(config)
+    messageservice = MessageService(data)
+
+    # Try to associate with a user if there is one.
+    userid = recover_userid(data, request.sid)
+    if userid is None:
+        return
+
+    roomid = Room.to_id(str(json.get('roomid')))
+    message = json.get('message')
+    if roomid and message:
+        action = messageservice.add_message(roomid, userid, str(message))
+        if action:
+            # We don't update our last fetched action here because it could be newer than
+            # some other messages, so we don't want to hide those until refresh.
+            socketio.emit('chatactions', {
+                'roomid': Room.from_id(roomid),
+                'actions': [action.to_dict()],
+            }, room=request.sid)

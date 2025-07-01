@@ -9,7 +9,7 @@ from passlib.hash import pbkdf2_sha512  # type: ignore
 
 from ..common import Time
 from .base import BaseData, metadata
-from .types import UserSettings, UserID, RoomID
+from .types import UserSettings, NewUserID, UserID, RoomID
 
 """
 Table representing a user.
@@ -95,6 +95,9 @@ class UserData(BaseData):
         Returns:
             True if password is valid, False otherwise.
         """
+        if userid is NewUserID:
+            return False
+
         sql = "SELECT password, salt FROM user WHERE id = :userid"
         cursor = self.execute(sql, {"userid": userid})
         if cursor.rowcount != 1:
@@ -112,6 +115,9 @@ class UserData(BaseData):
             userid - Integer user ID, as looked up by one of the above functions.
             password - String, plaintext password that will be hashed
         """
+        if userid is NewUserID:
+            raise Exception("Logic error, should not try to update password for a new user ID!")
+
         passhash, salt = self.__compute_password(password=password)
         sql = "UPDATE user SET password = :hash, salt = :salt WHERE id = :userid"
         self.execute(sql, {"hash": passhash, "salt": salt, "userid": userid})
@@ -170,6 +176,9 @@ class UserData(BaseData):
         Returns:
             A string that can be used as a session ID.
         """
+        if userid is NewUserID:
+            raise Exception("Logic error, should not try to create session for a new user ID!")
+
         # Create a new session that is unique
         while True:
             session = "".join(
@@ -241,6 +250,8 @@ class UserData(BaseData):
         Parameters:
             userid - The ID of the user we want to grab settings for.
         """
+        if userid is NewUserID:
+            raise Exception("Logic error, should not try to fetch settings for a new user ID!")
 
         sql = "SELECT * FROM settings WHERE user_id = :userid"
         cursor = self.execute(sql, {"userid": userid})
@@ -261,6 +272,8 @@ class UserData(BaseData):
             userid - The user ID that we should update settings for.
             settings - The new settings bundle we should persist.
         """
+        if userid is NewUserID:
+            raise Exception("Logic error, should not try to update settings for a new user ID!")
 
         sql = """
             INSERT INTO `settings`

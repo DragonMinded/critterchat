@@ -46,7 +46,7 @@ class Menu {
             html    += '    <div class="badge empty">';
             html    += '    </div>';
             html    += '  </div>';
-            html    += '  <div class="name">' + escapehtml(room.name) + '</div>';
+            html    += '  <div class="name-wrapper"><div class="name">' + escapehtml(room.name) + '</div></div>';
             html    += '</div>';
             conversations.append(html);
 
@@ -85,6 +85,11 @@ class Menu {
             $('div.menu > div.conversations div.item#' + this.selected).addClass('selected');
         }
     }
+
+    updateBadges( roomid, actions ) {
+        // TODO: Need to figure out if this is for a room we're not in and update the
+        // badge for any new entries received.
+    };
 }
 
 export { Menu };

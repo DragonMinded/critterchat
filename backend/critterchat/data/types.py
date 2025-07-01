@@ -7,6 +7,12 @@ OccupantID = NewType("OccupantID", int)
 ActionID = NewType("ActionID", int)
 
 
+NewUserID = UserID(-1)
+NewRoomID = RoomID(-1)
+NewOccupantID = OccupantID(-1)
+NewActionID = ActionID(-1)
+
+
 class User:
     def __ini__(self, userid: UserID) -> None:
         self.id = userid
@@ -68,9 +74,10 @@ class UserSettings:
 
 
 class Room:
-    def __init__(self, roomid: RoomID, name: str) -> None:
+    def __init__(self, roomid: RoomID, name: str, public: bool) -> None:
         self.id = roomid
         self.name = name
+        self.public = public
         # TODO: Hook this into attachments.
         self.icon = "/static/avi.png"
 
@@ -78,6 +85,7 @@ class Room:
         return {
             "id": Room.from_id(self.id),
             "name": self.name,
+            "public": self.public,
             "icon": self.icon,
         }
 
@@ -97,7 +105,7 @@ class Room:
 
 
 class Occupant:
-    def __init__(self, occupantid: OccupantID, userid: UserID, nickname: str) -> None:
+    def __init__(self, occupantid: OccupantID, userid: UserID, nickname: str = "") -> None:
         self.id = occupantid
         self.userid = userid
         self.nickname = nickname

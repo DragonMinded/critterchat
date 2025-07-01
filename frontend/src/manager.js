@@ -35,11 +35,20 @@ export function manager(socket) {
         messagesInst.updateHistory(msg.roomid, msg.history);
     });
 
+    socket.on('chatactions', (msg) => {
+        messagesInst.updateHistory(msg.roomid, msg.actions);
+        menuInst.updateBadges(msg.roomid, msg.actions);
+    });
+
     eventBus.on('room', (roomid) => {
         settings.roomid = roomid;
 
         messagesInst.setRoom(roomid);
         socket.emit('updatesettings', settings);
         socket.emit('chathistory', {roomid: roomid});
+    });
+
+    eventBus.on('message', (msg) => {
+        socket.emit('message', msg);
     });
 }
