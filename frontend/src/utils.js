@@ -9,7 +9,7 @@ var entityMap = {
   '=': '&#x3D;'
 };
 
-var escapehtml = function(str) {
+var escapehtml = function( str ) {
   str = String(str);
   str = str.replace(/[&<>"'`=\/]/g, function (s) {
     return entityMap[s];
@@ -24,5 +24,22 @@ var escapehtml = function(str) {
   return str;
 }
 
+var formattime = function( ts, showseconds, twentyfour ) {
+    var date = new Date(ts * 1000);
+    var hours = date.getHours();
+    var ampm = "";
+    if (!twentyfour) {
+        if (hours == 24) { hours = 0; }
 
-export { escapehtml };
+        ampm = hours >= 12 ? " pm" : " am";
+
+        if (hours > 12) { hours -= 12; }
+        if (hours < 1) { hours += 12; }
+    }
+    var minutes = "0" + date.getMinutes();
+    var seconds = "0" + date.getSeconds();
+    var formattedTime = hours + ':' + minutes.substr(-2) + (showseconds ? ':' + seconds.substr(-2) : '') + ampm;
+    return formattedTime
+}
+
+export { escapehtml, formattime };

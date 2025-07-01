@@ -1,5 +1,5 @@
 import $ from "jquery";
-import { escapehtml } from "./utils.js";
+import { escapehtml, formattime } from "./utils.js";
 
 class Messages {
     constructor( eventBus ) {
@@ -97,7 +97,7 @@ class Messages {
             html    += '  <div class="content-wrapper">';
             html    += '    <div class="meta-wrapper">';
             html    += '      <div class="name" id="' + message.occupant.id + '">' + message.occupant.nickname + '</div>';
-            html    += '      <div class="timestamp" id="' + message.id + '">' + message.timestamp + '</div>';
+            html    += '      <div class="timestamp" id="' + message.id + '">' + formattime(message.timestamp) + '</div>';
             html    += '    </div>';
             html    += '    <div class="message" id="' + message.id + '">' + escapehtml(message.details) + '</div>';
             html    += '  </div>';
