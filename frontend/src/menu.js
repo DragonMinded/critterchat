@@ -43,7 +43,7 @@ class Menu {
             var html = '<div class="item" id="' + room.id + '">';
             html    += '  <div class="icon">';
             html    += '    <img src="' + room.icon + '" />';
-            html    += '    <div class="badge empty">';
+            html    += '    <div class="badge empty"><div class="count"></div>';
             html    += '    </div>';
             html    += '  </div>';
             html    += '  <div class="name-wrapper"><div class="name">' + escapeHtml(room.name) + '</div></div>';
@@ -74,6 +74,7 @@ class Menu {
         if (found && roomid != this.selected) {
             this.selected = roomid;
             this.updateSelected();
+            this.clearBadges(roomid);
 
             this.eventBus.emit('room', roomid);
         }
@@ -87,9 +88,44 @@ class Menu {
     }
 
     updateBadges( roomid, actions ) {
-        // TODO: Need to figure out if this is for a room we're not in and update the
-        // badge for any new entries received.
-    };
+        if (roomid == this.selected) {
+            return;
+        }
+
+        // Find the room to update
+        var conversations = $('div.menu > div.conversations');
+        var drawnRoom = conversations.find('div.item#' + roomid);
+        if (drawnRoom.length > 0) {
+            drawnRoom.find('.icon .badge').removeClass('empty');
+
+            var badge = drawnRoom.find('.icon .badge .count');
+            var count = badge.text().trim();
+            if (count == "!!") {
+                // Already at the max.
+                return;
+            }
+            if (count == "") {
+                count = "0";
+            }
+
+            var intCount = parseInt(count) + actions.length;
+            if (intCount > 9) {
+                badge.text('!!');
+            } else {
+                badge.text(intCount.toString());
+            }
+        }
+    }
+
+    clearBadges( roomid ) {
+        // Find the room to update
+        var conversations = $('div.menu > div.conversations');
+        var drawnRoom = conversations.find('div.item#' + roomid);
+        if (drawnRoom.length > 0) {
+            drawnRoom.find('.icon .badge').addClass('empty');
+            drawnRoom.find('.icon .badge .count').text("");
+        }
+    }
 }
 
 export { Menu };

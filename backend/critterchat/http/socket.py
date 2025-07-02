@@ -46,14 +46,16 @@ def background_thread_proc() -> None:
                     # Only fetch deltas for clients that have gotten an initial fetch for a room.
                     if fetchlimit is not None:
                         actions = messageservice.get_room_updates(roomid, after=fetchlimit)
-                        for action in actions:
-                            fetchlimit = action.id if fetchlimit is None else max(fetchlimit, action.id)
-                        info.fetchlimit[roomid] = fetchlimit
 
-                        socketio.emit('chathistory', {
-                            'roomid': Room.from_id(roomid),
-                            'history': [action.to_dict() for action in actions],
-                        }, room=info.sid)
+                        if actions:
+                            for action in actions:
+                                fetchlimit = action.id if fetchlimit is None else max(fetchlimit, action.id)
+                            info.fetchlimit[roomid] = fetchlimit or NewActionID
+
+                            socketio.emit('chatactions', {
+                                'roomid': Room.from_id(roomid),
+                                'actions': [action.to_dict() for action in actions],
+                            }, room=info.sid)
 
 
 def register_sid(sid: Any, sessionid: Optional[str]) -> None:
@@ -199,7 +201,7 @@ def chathistory(json: Dict[str, object]) -> None:
             fetchlimit = None
             for action in actions:
                 fetchlimit = action.id if fetchlimit is None else max(fetchlimit, action.id)
-            info.fetchlimit[roomid] = fetchlimit
+            info.fetchlimit[roomid] = fetchlimit or NewActionID
 
             socketio.emit('chathistory', {
                 'roomid': Room.from_id(roomid),
