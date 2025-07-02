@@ -1,0 +1,42 @@
+TODO For First Test Build
+=========================
+Keep track of last seen message per-user, use that to load badges on first load.
+Clear badges on all clients if cleared for a chat on one client.
+Display "--new--" bar for messages that have come in since you last looked at the chat.
+Search for and join a room.
+Leave a room, keeping your occupantid reserved for re-joining and to display history.
+Close-by message coalescing into one group of lines.
+Start on attachment system for custom avatars.
+Intelligently select avatar for rooms that aren't set to have one.
+Start on profile view/editor to look at a person's profile.
+Support editing your nickname on the profile page.
+Support setting your custom color on the profile page.
+Support setting a custom avatar on the profile page.
+Support editing your nickname per-chat.
+Custom emote support ported from PyStreaming.
+Emote/emoji typeahead when chatting ported from PyStreaming.
+Emote/emoji search pane ported from PyStreaming.
+Support editing a chat's custom name.
+Support for setting a chat's custom avatar/picture.
+Bit of work on the welcome page and login.
+Support creating an account flow with ability to disable instance-side.
+README for contributing/setting up/etc.
+
+Long-Term TODOs
+===============
+Message editing.
+Message deleting.
+Photo attachments, both uploaded and pasted from clipboard.
+Users in a particular chat list pane.
+Arbitrary file attachments.
+Chat reordering in the menu list.
+Per-chat CSS themeing.
+Ability to set a personal nickname for a user that only you can see.
+Port Myno's Pictochat over from PyStreaming, allow remixing.
+Message reactions.
+Reply to message.
+
+
+Begin to Think About
+====================
+Federating with other instances.
