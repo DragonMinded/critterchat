@@ -1,11 +1,12 @@
 import $ from "jquery";
-import { escapehtml, formattime } from "./utils.js";
+import { escapeHtml, formatTime, scrollTop, scrollTopMax } from "./utils.js";
 
 class Messages {
     constructor( eventBus ) {
         this.eventBus = eventBus;
         this.messages = [];
         this.roomid = "";
+        this.autoscroll = true;
         this.lastSettings = {};
         this.lastSettingsLoaded = false;
 
@@ -19,7 +20,28 @@ class Messages {
             if (message) {
                 this.eventBus.emit('message', {'roomid': roomid, 'message': message});
             }
-        } );
+        });
+
+        $( 'div.chat > div.conversation' ).scroll(() => {
+            var box = $( 'div.chat > div.conversation' );
+            this.autoscroll = scrollTop(box[0]) >= scrollTopMax(box[0]);
+            if (this.autoscroll) {
+                $( 'div.new-messages-alert' ).css( 'display', 'none' );
+            }
+        });
+
+        $(window).resize(() => {
+            var box = $( 'div.chat > div.conversation' );
+            if (this.autoscroll) {
+                box[0].scrollTop = scrollTopMax(box[0]) + 1;
+            }
+
+            // Recalculate autoscroll since it could have been enabled by a resize.
+            this.autoscroll = scrollTop(box[0]) >= scrollTopMax(box[0]);
+            if (this.autoscroll) {
+                $( 'div.new-messages-alert' ).css( 'display', 'none' );
+            }
+        });
     }
 
     setLastSettings( settings ) {
@@ -35,9 +57,19 @@ class Messages {
         if (roomid != this.roomid) {
             this.messages = [];
             this.roomid = roomid;
+            this.autoscroll = true;
 
             $('div.chat > div.conversation').empty();
             $( '#message-actions' ).attr('roomid', roomid);
+        }
+    }
+
+    ensureScrolled() {
+        var box = $( 'div.chat > div.conversation' );
+        if (this.autoscroll) {
+            box[0].scrollTop = scrollTopMax(box[0]) + 1;
+        } else {
+            $( 'div.new-messages-alert' ).css( 'display', 'inline-block' );
         }
     }
 
@@ -79,7 +111,6 @@ class Messages {
 
         prepend.forEach((message, i) => this.drawMessage(message, 'before'));
         append.forEach((message, i) => this.drawMessage(message, 'after'));
-
     }
 
     drawMessage( message, location ) {
@@ -87,7 +118,7 @@ class Messages {
         var messages = $('div.chat > div.conversation');
         var drawnMessage = messages.find('div.message#' + message.id);
         if (drawnMessage.length > 0) {
-            drawnMessage.html(escapehtml(message.details));
+            drawnMessage.html(escapeHtml(message.details));
         } else {
             // Now, draw it fresh since it's not an update.
             var html = '<div class="item">';
@@ -97,9 +128,9 @@ class Messages {
             html    += '  <div class="content-wrapper">';
             html    += '    <div class="meta-wrapper">';
             html    += '      <div class="name" id="' + message.occupant.id + '">' + message.occupant.nickname + '</div>';
-            html    += '      <div class="timestamp" id="' + message.id + '">' + formattime(message.timestamp) + '</div>';
+            html    += '      <div class="timestamp" id="' + message.id + '">' + formatTime(message.timestamp) + '</div>';
             html    += '    </div>';
-            html    += '    <div class="message" id="' + message.id + '">' + escapehtml(message.details) + '</div>';
+            html    += '    <div class="message" id="' + message.id + '">' + escapeHtml(message.details) + '</div>';
             html    += '  </div>';
             html    += '</div>';
 
@@ -109,6 +140,8 @@ class Messages {
                 messages.prepend(html);
             }
         }
+
+        this.ensureScrolled();
     }
 }
 

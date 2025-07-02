@@ -1,5 +1,5 @@
 import $ from "jquery";
-import { escapehtml } from "./utils.js";
+import { escapeHtml } from "./utils.js";
 
 class Menu {
     constructor( eventBus ) {
@@ -37,7 +37,7 @@ class Menu {
         var drawnRoom = conversations.find('div.item#' + room.id);
         if (drawnRoom.length > 0) {
             drawnRoom.find('.icon img').attr('src', room.icon);
-            drawnRoom.find('.name').html(escapehtml(room.name));
+            drawnRoom.find('.name').html(escapeHtml(room.name));
         } else {
             // Now, draw it fresh since it's not an update.
             var html = '<div class="item" id="' + room.id + '">';
@@ -46,7 +46,7 @@ class Menu {
             html    += '    <div class="badge empty">';
             html    += '    </div>';
             html    += '  </div>';
-            html    += '  <div class="name-wrapper"><div class="name">' + escapehtml(room.name) + '</div></div>';
+            html    += '  <div class="name-wrapper"><div class="name">' + escapeHtml(room.name) + '</div></div>';
             html    += '</div>';
             conversations.append(html);
 
