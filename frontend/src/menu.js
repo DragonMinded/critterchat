@@ -45,12 +45,14 @@ class Menu {
         });
 
         // If we re-arranged anything, nuke our existing.
+        var scrollPos = $('div.menu > div.conversations').scrollTop();
         if (needsEmpty) {
             $('div.menu > div.conversations').empty();
         }
 
         // Draw, and then select the room.
         this.rooms.forEach((room, i) => this.drawRoom(room));
+        $('div.menu > div.conversations').scrollTop(scrollPos);
 
         if (this.lastSettingsLoaded) {
             this.selectRoom(this.lastSettings.roomid);

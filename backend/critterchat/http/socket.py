@@ -8,9 +8,10 @@ from ..data import Data, Room, User, UserSettings, NewActionID, ActionID, RoomID
 
 
 class SocketInfo:
-    def __init__(self, sid: Any, sessionid: Optional[str]) -> None:
+    def __init__(self, sid: Any, sessionid: Optional[str], userid: Optional[UserID]) -> None:
         self.sid = sid
         self.sessionid = sessionid
+        self.userid = userid
         self.fetchlimit: Dict[RoomID, Optional[ActionID]] = {}
 
 
@@ -42,6 +43,7 @@ def background_thread_proc() -> None:
                 return
 
             for _, info in socket_to_info.items():
+                updated = False
                 for roomid, fetchlimit in info.fetchlimit.items():
                     # Only fetch deltas for clients that have gotten an initial fetch for a room.
                     if fetchlimit is not None:
@@ -56,16 +58,38 @@ def background_thread_proc() -> None:
                                 'roomid': Room.from_id(roomid),
                                 'actions': [action.to_dict() for action in actions],
                             }, room=info.sid)
+                            updated = True
+
+                # Figure out if this user has been joined to a new chat.
+                if info.userid is not None:
+                    # Figure out if rooms have changed, so we can start monitoring.
+                    rooms = messageservice.get_joined_rooms(info.userid)
+
+                    for room in rooms:
+                        if room.id not in info.fetchlimit:
+                            updated = True
+                            lastaction = messageservice.get_last_room_action(room.id)
+                            if lastaction:
+                                info.fetchlimit[room.id] = lastaction.id
+                            else:
+                                info.fetchlimit[room.id] = NewActionID
+
+                    if updated:
+                        # Notify the client of any room rearranges, or any new rooms.
+                        socketio.emit('roomlist', {
+                            'rooms': [room.to_dict() for room in rooms],
+                        }, room=info.sid)
 
 
-def register_sid(sid: Any, sessionid: Optional[str]) -> None:
+def register_sid(data: Data, sid: Any, sessionid: Optional[str]) -> None:
     with socket_lock:
         global background_thread
         if background_thread is None:
             print("Starting message pump thread due to first client socket connection.")
             background_thread = socketio.start_background_task(background_thread_proc)
 
-        socket_to_info[sid] = SocketInfo(sid, sessionid)
+        userid = None if sessionid is None else data.user.from_session(sessionid)
+        socket_to_info[sid] = SocketInfo(sid, sessionid, userid)
 
 
 def unregister_sid(sid: Any) -> None:
@@ -77,7 +101,7 @@ def unregister_sid(sid: Any) -> None:
 def recover_info(sid: Any) -> SocketInfo:
     with socket_lock:
         if sid not in socket_to_info:
-            return SocketInfo(sid, None)
+            return SocketInfo(sid, None, None)
 
         return socket_to_info[sid]
 
@@ -92,6 +116,11 @@ def recover_userid(data: Data, sid: Any) -> Optional[UserID]:
     userid = data.user.from_session(info.sessionid)
     if userid is None:
         # Session was de-authed, tell the client to refresh.
+        socketio.emit('reload', {}, room=sid)
+        return None
+
+    if info.userid != userid:
+        # Session is invalid, tell the client to refresh.
         socketio.emit('reload', {}, room=sid)
         return None
 
@@ -113,7 +142,8 @@ def connect() -> None:
         sessionID = None
 
     # Make sure we track this client so we don't get a premature hang-up.
-    register_sid(request.sid, sessionID)
+    data = Data(config)
+    register_sid(data, request.sid, sessionID)
 
 
 @socketio.on('disconnect')  # type: ignore

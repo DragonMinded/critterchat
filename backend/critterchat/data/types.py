@@ -87,11 +87,12 @@ class RoomType(StrEnum):
 
 
 class Room:
-    def __init__(self, roomid: RoomID, name: str, public: bool) -> None:
+    def __init__(self, roomid: RoomID, name: str, public: bool, last_action: int = 0) -> None:
         self.id = roomid
         self.type = RoomType.UNKNOWN
         self.name = name
         self.public = public
+        self.last_action = last_action
         # TODO: Hook this into attachments.
         self.icon = "/static/avi.png"
 
@@ -101,6 +102,7 @@ class Room:
             "type": self.type,
             "name": self.name,
             "public": self.public,
+            "last_action": self.last_action,
             "icon": self.icon,
         }
 
@@ -173,6 +175,8 @@ class Occupant:
 
 class ActionType(StrEnum):
     MESSAGE = 'message'
+    JOIN = 'join'
+    LEAVE = 'leave'
 
 
 class Action:

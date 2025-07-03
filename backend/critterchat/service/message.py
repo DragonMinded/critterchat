@@ -135,7 +135,7 @@ class MessageService:
         for room in rooms:
             self.__infer_room_info(userid, room)
 
-        return rooms
+        return sorted(rooms, key=lambda r: r.last_action, reverse=True)
 
     def get_matching_rooms(self, userid: UserID, *, name: Optional[str] = None) -> List[RoomSearchResult]:
         # First get the list of rooms that we can see based on our userID (joined rooms).

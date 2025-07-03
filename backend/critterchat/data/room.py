@@ -5,9 +5,11 @@ from sqlalchemy import Table, Column
 from sqlalchemy.schema import UniqueConstraint
 from sqlalchemy.types import String, Integer, Boolean, Text
 
+from ..common import Time
 from .base import BaseData, metadata
 from .types import (
     Action,
+    ActionType,
     Occupant,
     Room,
     NewUserID,
@@ -29,6 +31,7 @@ room = Table(
     Column("id", Integer, nullable=False, primary_key=True, autoincrement=True),
     Column("name", String(255)),
     Column("public", Boolean),
+    Column("last_action", Integer, nullable=False),
     mysql_charset="utf8mb4",
 )
 
@@ -85,7 +88,7 @@ class RoomData(BaseData):
             extra = "AND inactive != TRUE"
 
         sql = f"""
-            SELECT id, name, public FROM room WHERE id in (
+            SELECT id, name, public, last_action FROM room WHERE id in (
                 SELECT room_id FROM occupant WHERE user_id = :userid {extra}
             )
         """
@@ -95,6 +98,7 @@ class RoomData(BaseData):
                 roomid=RoomID(result['id']),
                 name=result['name'],
                 public=result['public'],
+                last_action=result['last_action'],
             )
             for result in cursor.mappings()
         ]
@@ -116,7 +120,7 @@ class RoomData(BaseData):
             return []
 
         sql = """
-            SELECT id, name, public FROM room WHERE id in (
+            SELECT id, name, public, last_action FROM room WHERE id in (
                 SELECT room_id FROM occupant WHERE user_id = :userid AND inactive != TRUE
             )
         """
@@ -129,6 +133,7 @@ class RoomData(BaseData):
                 roomid=RoomID(result['id']),
                 name=result['name'],
                 public=result['public'],
+                last_action=result['last_action'],
             )
             for result in cursor.mappings()
         ]
@@ -150,7 +155,7 @@ class RoomData(BaseData):
             return []
 
         sql = """
-            SELECT id, name, public FROM room WHERE public = TRUE
+            SELECT id, name, public, last_action FROM room WHERE public = TRUE
         """
         if name is not None:
             sql += " AND (name IS NULL OR name = '' OR name COLLATE utf8mb4_general_ci LIKE :name)"
@@ -161,6 +166,7 @@ class RoomData(BaseData):
                 roomid=RoomID(result['id']),
                 name=result['name'],
                 public=result['public'],
+                last_action=result['last_action'],
             )
             for result in cursor.mappings()
         ]
@@ -187,6 +193,7 @@ class RoomData(BaseData):
             roomid=RoomID(result['id']),
             name=result['name'],
             public=result['public'],
+            last_action=result['last_action'],
         )
 
     def create_room(self, room: Room) -> None:
@@ -200,10 +207,11 @@ class RoomData(BaseData):
         if room.id is not NewRoomID:
             raise Exception("Logic error, cannot insert already-persisted room as a new room!")
 
+        timestamp = Time.now()
         sql = """
-            INSERT INTO room (`name`, `public`) VALUES (:name, :public)
+            INSERT INTO room (`name`, `public`, `last_action`) VALUES (:name, :public, :ts)
         """
-        cursor = self.execute(sql, {"name": room.name, "public": room.public})
+        cursor = self.execute(sql, {"name": room.name, "public": room.public, "timestamp": timestamp})
         if cursor.rowcount != 1:
             return None
         newroom = self.get_room(RoomID(cursor.lastrowid))
@@ -211,8 +219,9 @@ class RoomData(BaseData):
             room.id = newroom.id
             room.name = newroom.name
             room.public = newroom.public
+            room.last_action = timestamp
 
-    def join_room(self, roomid: RoomID, userid: UserID) -> Optional[Occupant]:
+    def join_room(self, roomid: RoomID, userid: UserID) -> None:
         """
         Given a room to join and a user who wants to join, try joining that room.
 
@@ -223,14 +232,32 @@ class RoomData(BaseData):
         if userid is NewUserID or roomid is NewRoomID:
             return None
 
+        # First, figure out if we're already joined.
+        sql = """
+            SELECT id FROM occupant WHERE `user_id` = :userid AND `room_id` = :roomid AND `inactive` != TRUE
+        """
+        cursor = self.execute(sql, {"userid": userid, "roomid": roomid})
+        already_joined = cursor.rowcount > 0
+
         sql = """
             INSERT INTO occupant (`user_id`, `room_id`, `inactive`) VALUES (:userid, :roomid, FALSE)
             ON DUPLICATE KEY UPDATE `inactive` = FALSE
         """
-        cursor = self.execute(sql, {"userid": userid, "roomid": roomid})
-        if cursor.rowcount != 1:
-            return None
-        return self.get_room_occupant(OccupantID(cursor.lastrowid))
+        self.execute(sql, {"userid": userid, "roomid": roomid})
+
+        if not already_joined:
+            occupant = Occupant(
+                occupantid=NewOccupantID,
+                userid=userid,
+            )
+            action = Action(
+                actionid=NewActionID,
+                timestamp=Time.now(),
+                occupant=occupant,
+                action=ActionType.JOIN,
+                details="",
+            )
+            self.insert_action(roomid, action)
 
     def leave_room(self, roomid: RoomID, userid: UserID) -> None:
         """
@@ -242,6 +269,20 @@ class RoomData(BaseData):
         """
         if userid is NewUserID or roomid is NewRoomID:
             return
+
+        # insert_action will ignore actions for anyone already out of the room.
+        occupant = Occupant(
+            occupantid=NewOccupantID,
+            userid=userid,
+        )
+        action = Action(
+            actionid=NewActionID,
+            timestamp=Time.now(),
+            occupant=occupant,
+            action=ActionType.LEAVE,
+            details="",
+        )
+        self.insert_action(roomid, action)
 
         sql = """
             UPDATE occupant SET inactive = TRUE WHERE `user_id` = :userid AND `room_id` = :roomid
@@ -416,7 +457,7 @@ class RoomData(BaseData):
         sql = "SELECT id FROM occupant WHERE room_id = :roomid AND user_id = :userid AND inactive != TRUE LIMIT 1"
         cursor = self.execute(sql, {"roomid": roomid, "userid": action.occupant.userid})
         if cursor.rowcount != 1:
-            # Trying to send a message and we're not in the room?
+            # Trying to insert an action and we're not in the room?
             return
 
         result = cursor.mappings().fetchone()
@@ -449,3 +490,9 @@ class RoomData(BaseData):
         if newoccupant:
             action.occupant.nickname = newoccupant.nickname
             action.occupant.inactive = newoccupant.inactive
+
+        # Finally, record the action timestamp into the room.
+        sql = """
+            UPDATE room SET `last_action` = :ts WHERE `id` = :roomid AND `last_action` < :ts
+        """
+        self.execute(sql, {"roomid": roomid, "ts": action.timestamp})
