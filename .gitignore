@@ -1,5 +1,6 @@
 *.swp
 __pycache__/
-backend/critterchat/http/static/chat.*
+backend/critterchat/http/static/chat.js
+backend/critterchat/http/static/chat.js.LICENSE.txt
 frontend/dist/
 frontend/node_modules/

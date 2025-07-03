@@ -1,0 +1,303 @@
+html, body {
+    font-family: "Atkinson Hyperlegible", Arial, Helvetica, sans-serif;
+    margin: 0px;
+    padding: 0px;
+    width: 100vw;
+    height: 100vh;
+    background: #ffffff;
+    overflow: hidden;
+}
+
+/* TODO: Get this to be floating so anything we need can be put above the top */
+div.errors {
+    display: none;
+}
+
+div.container {
+    display: flex;
+    width: 100vw;
+    height: 100vh;
+}
+
+div.container > div.menu {
+    border: 10px solid #dddddd;
+    width: 250px;
+    background: #dddddd;
+    overflow: hidden;
+    display: flex;
+    gap: 10px;
+    flex-direction: column;
+}
+
+div.menu > div.conversations {
+    flex-grow: 1;
+    flex-direction: column;
+    display: flex;
+    gap: 5px;
+    overflow-y: scroll;
+    padding-right: 10px;
+}
+
+div.conversations div.item, div.results div.item {
+    flex-direction: row;
+    display: flex;
+    padding: 5px;
+    border-radius: 5px;
+    cursor: default;
+    border: 1px solid transparent;
+}
+
+div.conversations div.item.selected, div.results div.item:hover {
+    background: #bcbcbc;
+    border: 1px solid #bcbcbc;
+}
+
+div.conversations div.item:hover {
+    border: 1px solid #bcbcbc;
+}
+
+div.icon div.badge.empty {
+    display: none;
+}
+
+div.conversations div.item div.icon, div.results div.item div.icon {
+    position: relative;
+}
+
+div.icon div.badge {
+    position: absolute;
+    top: 0px;
+    left: 22px;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    color: #ffffff;
+    background: #ff0000;
+    padding: 0px;
+    margin: 0px;
+    overflow: hidden;
+    display: flex;
+    justify-content: center
+}
+
+div.badge > div.count {
+    font-size: 10px;
+    position: absolute;
+    top: 2px;
+    left: 5px;
+}
+
+div.conversations div.item div.icon img, div.results div.item div.icon img {
+    display: block;
+    border-radius: 50%;
+    width: 36px;
+    height: 36px;
+    margin: 0px;
+}
+
+div.conversations div.item div.name-wrapper, div.results div.item div.name-wrapper {
+    width: 100%;
+    height: 100%;
+    padding-left: 5px;
+    display: flex;
+    font-size: 14px;
+    height: 36px;
+    align-items: center;
+}
+
+div.name-wrapper div.name {
+    max-height: 36px;
+    overflow: hidden;
+}
+
+div.results div.item div.action-wrapper {
+    height: 100%;
+    display: flex;
+    height: 36px;
+    align-items: center;
+}
+
+div.results div.item div.action {
+    border-radius: 5px;
+    background: #d372fd;
+    max-height: 36px;
+    padding: 5px;
+    font-size: 12px;
+}
+
+div.menu > div.actions, div.info > div.actions {
+    display: flex;
+    gap: 10px;
+}
+
+div.actions div.item {
+    height: 40px;
+    overflow: hidden;
+}
+
+div.actions div.item button {
+    background: #dddddd;
+    border: 1px solid #cccccc;
+    width: 100%;
+    height: 100%;
+    font-size: 12px;
+}
+
+div.actions div.item button:hover {
+    background: #aaaaaa;
+    border: 1px solid #989898;
+}
+
+div.container > div.chat {
+    border: 10px solid #efefef;
+    background: #efefef;
+    overflow: hidden;
+    flex-grow: 1;
+    flex-basis: 0;
+    flex-shrink: 1;
+    width: 0px;
+    display: flex;
+    gap: 10px;
+    flex-direction: column;
+}
+
+div.chat > div.conversation {
+    flex-grow: 1;
+    overflow-y: scroll;
+    padding-right: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+div.chat > form.actions {
+    display: flex;
+    flex-direction: row;
+    gap: 5px;
+}
+
+div.chat form.actions div.newmessage {
+    flex-grow: 1;
+    padding-right: 10px;
+    position: relative;
+}
+
+div.newmessage input {
+    width: 100%;
+}
+
+div.chat > div.conversation div.item {
+    display: flex;
+    flex-direction: row;
+    gap: 5px;
+}
+
+div.conversation div.item div.content-wrapper {
+    display: flex;
+    flex-direction: column;
+}
+
+div.conversation div.item div.meta-wrapper {
+    display: flex;
+    flex-direction: row;
+    gap: 5px;
+}
+
+div.conversation div.item div.name {
+    font-size: 16px;
+}
+
+div.conversation div.item div.timestamp {
+    color: #666666;
+    font-size: 12px;
+    padding-top: 4px;
+}
+
+div.conversation div.item div.message {
+    font-size: 14px;
+}
+
+div.chat div.item div.icon img {
+    display: block;
+    border-radius: 50%;
+    width: 36px;
+    height: 36px;
+    margin: 0px;
+}
+
+div.new-messages-alert {
+  display: none;
+  position: absolute;
+  top: -35px;
+  width: 125px;
+  margin-left: auto;
+  margin-right: auto;
+  left: 0;
+  right: 0;
+  text-align: center;
+  background-color: #bf32a9;
+  color: #fff;
+  border-radius: 10px;
+}
+
+div.container > div.info {
+    border: 10px solid #dddddd;
+    width: 250px;
+    background: #dddddd;
+    overflow: hidden;
+    display: flex;
+    gap: 10px;
+    flex-direction: column;
+}
+
+div.container > div.info.hidden {
+    display: none;
+}
+
+div.info > div.occupants {
+    flex-grow: 1;
+    flex-direction: column;
+    display: flex;
+    gap: 5px;
+    overflow-y: scroll;
+    padding-right: 10px;
+}
+
+div.occupants div.item {
+    flex-direction: row;
+    display: flex;
+    padding: 5px;
+    border-radius: 5px;
+    cursor: default;
+    border: 1px solid transparent;
+}
+
+div.search {
+    height: 300px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+div.search > div.actions {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+}
+
+div.search > div.actions div.searchbox {
+    flex-grow: 1;
+}
+
+div.searchbox input {
+    width: 100%;
+}
+
+div.search > div.results {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    flex-grow: 1;
+    overflow-y: scroll;
+    padding-right: 10px;
+}

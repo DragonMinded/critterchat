@@ -6,13 +6,9 @@ Display "--new--" bar for messages that have come in since you last looked at th
 Display users in room on info pane.
 Update users in room list when a user joins or leaves.
 Notify other user when they're added to a private chat.
-Close-by message coalescing into one group of lines.
+Search should also search private chats that you used to be a member of, to rejoin.
 Start on attachment system for custom avatars.
 Intelligently select avatar for rooms that aren't set to have one.
-Start on profile view/editor to look at a person's profile.
-Support editing your nickname on the profile page.
-Support setting your custom color on the profile page.
-Support setting a custom avatar on the profile page.
 Support editing your nickname per-chat.
 Custom emote support ported from PyStreaming.
 Emote/emoji typeahead when chatting ported from PyStreaming.
@@ -20,6 +16,14 @@ Emote/emoji search pane ported from PyStreaming.
 Support editing a chat's custom name.
 Support for setting a chat's custom avatar/picture.
 Bit of work on the welcome page and login.
+
+TODO For Post Test Build
+========================
+Close-by message coalescing into one group of lines.
+Start on profile view/editor to look at a person's profile.
+Support editing your nickname on the profile page.
+Support setting your custom color on the profile page.
+Support setting a custom avatar on the profile page.
 Support creating an account flow with ability to disable instance-side.
 README for contributing/setting up/etc.
 
