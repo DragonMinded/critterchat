@@ -1,6 +1,7 @@
 from .data import Data, DBCreateException
 from .types import (
     Action,
+    ActionType,
     Occupant,
     Room,
     RoomSearchResult,
@@ -29,6 +30,7 @@ __all__ = [
     "RoomID",
     "UserID",
     "Action",
+    "ActionType",
     "User",
     "UserSettings",
     "Occupant",

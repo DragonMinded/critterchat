@@ -1,7 +1,20 @@
 from typing import List, Optional
 
 from ..common import Time
-from ..data import Data, Action, Occupant, Room, RoomSearchResult, NewOccupantID, NewActionID, NewRoomID, ActionID, RoomID, UserID
+from ..data import (
+    Data,
+    Action,
+    ActionType,
+    Occupant,
+    Room,
+    RoomSearchResult,
+    NewOccupantID,
+    NewActionID,
+    NewRoomID,
+    ActionID,
+    RoomID,
+    UserID,
+)
 
 
 class MessageServiceException(Exception):
@@ -18,12 +31,12 @@ class MessageService:
 
     def get_room_history(self, roomid: RoomID) -> List[Action]:
         history = self.__data.room.get_room_history(roomid)
-        history = [e for e in history if e.action in {"message"}]
+        history = [e for e in history if e.action in {ActionType.MESSAGE}]
         return history
 
     def get_room_updates(self, roomid: RoomID, after: ActionID) -> List[Action]:
         history = self.__data.room.get_room_history(roomid, after=after)
-        history = [e for e in history if e.action in {"message"}]
+        history = [e for e in history if e.action in {ActionType.MESSAGE}]
         return history
 
     def add_message(self, roomid: RoomID, userid: UserID, message: str) -> Optional[Action]:
@@ -36,7 +49,7 @@ class MessageService:
             actionid=NewActionID,
             timestamp=Time.now(),
             occupant=occupant,
-            action="message",
+            action=ActionType.MESSAGE,
             details=message,
         )
 

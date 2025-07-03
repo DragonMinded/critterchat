@@ -1,11 +1,25 @@
-from sqlalchemy import Table, Column
-from sqlalchemy.schema import UniqueConstraint
-from sqlalchemy.types import String, Integer, Boolean, Text
 from typing import Any, List, Optional
 from typing_extensions import Final
 
+from sqlalchemy import Table, Column
+from sqlalchemy.schema import UniqueConstraint
+from sqlalchemy.types import String, Integer, Boolean, Text
+
 from .base import BaseData, metadata
-from .types import Action, Occupant, Room, NewUserID, NewActionID, NewOccupantID, NewRoomID, ActionID, OccupantID, RoomID, UserID
+from .types import (
+    Action,
+    ActionType,
+    Occupant,
+    Room,
+    NewUserID,
+    NewActionID,
+    NewOccupantID,
+    NewRoomID,
+    ActionID,
+    OccupantID,
+    RoomID,
+    UserID,
+)
 
 """
 Table representing a chat room.

@@ -1,3 +1,4 @@
+from enum import StrEnum
 from typing import Dict, NewType, Optional
 
 
@@ -162,8 +163,12 @@ class Occupant:
             return None
 
 
+class ActionType(StrEnum):
+    MESSAGE = 'message'
+
+
 class Action:
-    def __init__(self, actionid: ActionID, timestamp: int, occupant: Occupant, action: str, details: str) -> None:
+    def __init__(self, actionid: ActionID, timestamp: int, occupant: Occupant, action: ActionType, details: str) -> None:
         self.id = actionid
         self.timestamp = timestamp
         self.occupant = occupant
