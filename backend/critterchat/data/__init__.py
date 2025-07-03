@@ -3,6 +3,7 @@ from .types import (
     Action,
     Occupant,
     Room,
+    RoomSearchResult,
     User,
     UserSettings,
     NewActionID,
@@ -32,4 +33,5 @@ __all__ = [
     "UserSettings",
     "Occupant",
     "Room",
+    "RoomSearchResult",
 ]

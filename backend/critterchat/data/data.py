@@ -140,6 +140,18 @@ class Data:
             'head',
         )
 
+    def downgrade(self, tag: str) -> None:
+        """
+        Downgrade an existing db to a specific model. Accepts a hash or relative syntax.
+        """
+        if not self.__exists():
+            raise DBCreateException('Tables have not been created yet, use create to create them!')
+
+        self.__alembic_cmd(
+            'downgrade',
+            tag,
+        )
+
     def close(self) -> None:
         """
         Close any open data connection.

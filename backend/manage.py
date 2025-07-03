@@ -33,6 +33,17 @@ def upgrade_db(config: Config) -> None:
     data.close()
 
 
+def downgrade_db(config: Config, tag: str) -> None:
+    """
+    Given a config pointing at a valid MySQL DB that's been created already, undoes any migrations down
+    to the given tag.
+    """
+
+    data = Data(config)
+    data.downgrade(tag)
+    data.close()
+
+
 def generate_migration(config: Config, message: str, allow_empty: bool) -> None:
     """
     Given some changes to the table definitions in the SQL files of this repo, and a config pointing
@@ -119,6 +130,19 @@ def main() -> None:
         description="Apply pending migrations to a DB.",
     )
 
+    downgrade_parser = database_commands.add_parser(
+        "downgrade",
+        help="unapply migrations to a specific tag",
+        description="Unapply migrations to a specific tag.",
+    )
+    downgrade_parser.add_argument(
+        "-t",
+        "--tag",
+        required=True,
+        type=str,
+        help="tag that we should downgrade to",
+    )
+
     # Another subcommand here.
     user_parser = commands.add_parser(
         "user",
@@ -165,6 +189,8 @@ def main() -> None:
                 generate_migration(config, args.message, args.allow_empty)
             elif args.database == "upgrade":
                 upgrade_db(config)
+            elif args.database == "downgrade":
+                downgrade_db(config, args.tag)
             else:
                 raise CLIException(f"Unknown database operation '{args.database}'")
 

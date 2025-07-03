@@ -1,4 +1,5 @@
 import $ from "jquery";
+import { modal } from "jquery-modal";
 import { io } from "socket.io-client";
 
 import { manager } from "./manager.js";

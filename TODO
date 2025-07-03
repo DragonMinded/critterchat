@@ -3,8 +3,9 @@ TODO For First Test Build
 Keep track of last seen message per-user, use that to load badges on first load.
 Clear badges on all clients if cleared for a chat on one client.
 Display "--new--" bar for messages that have come in since you last looked at the chat.
-Search for and join a room.
-Leave a room, keeping your occupantid reserved for re-joining and to display history.
+Display users in room on info pane.
+Update users in room list when a user joins or leaves.
+Notify other user when they're added to a private chat.
 Close-by message coalescing into one group of lines.
 Start on attachment system for custom avatars.
 Intelligently select avatar for rooms that aren't set to have one.
@@ -37,6 +38,7 @@ Message reactions.
 Reply to message.
 Read receipts.
 Now typing indicators.
+Pin message, show pinned.
 
 Begin to Think About
 ====================

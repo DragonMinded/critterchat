@@ -9,6 +9,11 @@ class Menu {
         this.lastSettings = {};
         this.roomsLoaded = false;
         this.lastSettingsLoaded = false;
+
+        $( '#search-chat' ).on( 'click', (event) => {
+            event.preventDefault();
+            $('#search-form').modal();
+        });
     }
 
     setRooms( rooms ) {
@@ -78,6 +83,24 @@ class Menu {
 
             this.eventBus.emit('room', roomid);
         }
+    }
+
+    closeRoom( roomid ) {
+        if (this.selected == roomid ) {
+            this.selected = "";
+
+            var conversations = $('div.menu > div.conversations');
+            conversations.find('div.item#' + roomid).remove();
+
+            for (var i = 0; i < this.rooms.length; i++) {
+                if (this.rooms[i].id == roomid) {
+                    this.rooms.splice(i, 1);
+                    break;
+                }
+            }
+        }
+
+        this.updateSelected();
     }
 
     updateSelected() {

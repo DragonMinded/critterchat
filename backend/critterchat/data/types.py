@@ -14,12 +14,14 @@ NewActionID = ActionID(-1)
 
 
 class User:
-    def __ini__(self, userid: UserID) -> None:
+    def __init__(self, userid: UserID, name: str) -> None:
         self.id = userid
+        self.name = name
 
     def to_dict(self) -> Dict[str, object]:
         return {
             "id": User.from_id(self.id),
+            "name": self.name,
         }
 
     @staticmethod
@@ -38,24 +40,28 @@ class User:
 
 
 class UserSettings:
-    def __init__(self, userid: UserID, roomid: Optional[RoomID]) -> None:
+    def __init__(self, userid: UserID, roomid: Optional[RoomID], info: Optional[str]) -> None:
         self.id = userid
         self.roomid = roomid
+        self.info = info
 
     def to_dict(self) -> Dict[str, object]:
         return {
             "id": User.from_id(self.id),
             "roomid": Room.from_id(self.roomid) if self.roomid is not None else None,
+            "info": self.info if self.info else "hidden",
         }
 
     @staticmethod
     def from_dict(userid: UserID, values: Dict[str, object]) -> "UserSettings":
         room = values.get("roomid")
         roomid = Room.to_id(str(room)) if room is not None else None
+        info: str = str(values['info']) if values.get("info") else "hidden"
 
         return UserSettings(
             userid=userid,
             roomid=roomid,
+            info=info,
         )
 
     @staticmethod
@@ -104,11 +110,31 @@ class Room:
             return None
 
 
+class RoomSearchResult:
+    def __init__(self, name: str, joined: bool, roomid: Optional[RoomID], userid: Optional[UserID]) -> None:
+        self.name = name
+        self.joined = joined
+        self.roomid = roomid
+        self.userid = userid
+        # TODO: Hook this into attachments.
+        self.icon = "/static/avi.png"
+
+    def to_dict(self) -> Dict[str, object]:
+        return {
+            "name": self.name,
+            "icon": self.icon,
+            "joined": self.joined,
+            "roomid": Room.from_id(self.roomid) if self.roomid else None,
+            "userid": User.from_id(self.userid) if self.userid else None,
+        }
+
+
 class Occupant:
-    def __init__(self, occupantid: OccupantID, userid: UserID, nickname: str = "") -> None:
+    def __init__(self, occupantid: OccupantID, userid: UserID, nickname: str = "", inactive: bool = False) -> None:
         self.id = occupantid
         self.userid = userid
         self.nickname = nickname
+        self.inactive = inactive
         # TODO: Hook this into attachments.
         self.icon = "/static/avi.png"
 
@@ -117,6 +143,7 @@ class Occupant:
             "id": Occupant.from_id(self.id),
             "userid": User.from_id(self.userid),
             "nickname": self.nickname,
+            "inactive": self.inactive,
             "icon": self.icon,
         }
 

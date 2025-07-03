@@ -14,11 +14,14 @@ class Messages {
             event.preventDefault();
 
             var roomid = $( '#message-actions' ).attr('roomid');
-            var message = $( 'input#message' ).val();
-            $( 'input#message' ).val( '' );
 
-            if (message) {
-                this.eventBus.emit('message', {'roomid': roomid, 'message': message});
+            if (roomid) {
+                var message = $( 'input#message' ).val();
+                $( 'input#message' ).val( '' );
+
+                if (message) {
+                    this.eventBus.emit('message', {'roomid': roomid, 'message': message});
+                }
             }
         });
 
@@ -61,6 +64,16 @@ class Messages {
 
             $('div.chat > div.conversation').empty();
             $( '#message-actions' ).attr('roomid', roomid);
+        }
+    }
+
+    closeRoom( roomid ) {
+        if (roomid == this.roomid) {
+            this.message = [];
+            this.roomid = "";
+            this.autoscroll = true;
+            $('div.chat > div.conversation').empty();
+            $( '#message-actions' ).attr('roomid', '');
         }
     }
 

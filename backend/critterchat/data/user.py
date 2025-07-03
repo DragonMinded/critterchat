@@ -3,13 +3,13 @@ import string
 
 from sqlalchemy import Table, Column
 from sqlalchemy.types import String, Integer, Text
-from typing import Optional, Tuple
+from typing import Any, List, Optional, Tuple
 from typing_extensions import Final
 from passlib.hash import pbkdf2_sha512  # type: ignore
 
 from ..common import Time
 from .base import BaseData, metadata
-from .types import UserSettings, NewUserID, UserID, RoomID
+from .types import User, UserSettings, NewUserID, UserID, RoomID
 
 """
 Table representing a user.
@@ -57,6 +57,7 @@ settings = Table(
     metadata,
     Column("user_id", Integer, nullable=False, unique=True, index=True),
     Column("last_room", Integer),
+    Column("info", String(8)),
 )
 
 
@@ -262,6 +263,7 @@ class UserData(BaseData):
         return UserSettings(
             userid=userid,
             roomid=RoomID(result['last_room']) if result['last_room'] is not None else None,
+            info=result['info'],
         )
 
     def put_settings(self, userid: UserID, settings: UserSettings) -> None:
@@ -277,9 +279,50 @@ class UserData(BaseData):
 
         sql = """
             INSERT INTO `settings`
-                (`user_id`, `last_room`)
-            VALUES (:userid, :roomid)
+                (`user_id`, `last_room`, `info`)
+            VALUES (:userid, :roomid, :info)
             ON DUPLICATE KEY UPDATE
-            `last_room` = :roomid
+            `last_room` = :roomid, `info` = :info
         """
-        self.execute(sql, {"roomid": settings.roomid, "userid": userid})
+        self.execute(sql, {"roomid": settings.roomid, "info": settings.info, "userid": userid})
+
+    def __to_user(self, result: Any) -> User:
+        """
+        Given a result set, spawn a user for that result.
+        """
+        name = result['pname']
+        if not name:
+            name = result['uname']
+
+        return User(
+            UserID(result['id']),
+            name,
+        )
+
+    def get_visible_users(self, userid: UserID, name: Optional[str] = None) -> List[User]:
+        """
+        Given a user searching, return a list of visible users (users that haven't blocked the
+        user, etc). If the name is specified, returns all users with that name.
+        """
+        if userid is NewUserID:
+            return []
+
+        sql = """
+            SELECT user.id AS id, user.username AS uname, profile.nickname AS pname
+            FROM user
+            LEFT JOIN profile ON profile.user_id = user.id
+            WHERE user.id = :myid
+        """
+
+        if name is not None:
+            sql += " OR (user.username COLLATE utf8mb4_general_ci LIKE :name OR profile.nickname COLLATE utf8mb4_general_ci LIKE :name)"
+        cursor = self.execute(sql, {"myid": userid, "name": f"%{name}%"})
+        users = [self.__to_user(u) for u in cursor.mappings()]
+
+        # Now, postfilter because if we selected a user by username that has a nickname
+        # we could leak username info otherwise
+        if name is not None:
+            namelower = name.lower()
+            users = [u for u in users if namelower in u.name.lower()]
+
+        return users

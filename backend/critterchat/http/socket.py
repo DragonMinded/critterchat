@@ -4,7 +4,7 @@ from typing import Any, Dict, Optional
 from .app import socketio, config, request
 from ..common import AESCipher
 from ..service import UserService, MessageService
-from ..data import Data, Room, UserSettings, NewActionID, ActionID, RoomID, UserID
+from ..data import Data, Room, User, UserSettings, NewActionID, ActionID, RoomID, UserID
 
 
 class SocketInfo:
@@ -125,7 +125,6 @@ def disconnect() -> None:
 @socketio.on('roomlist')  # type: ignore
 def roomlist(json: Dict[str, object]) -> None:
     data = Data(config)
-    userservice = UserService(data)
     messageservice = MessageService(data)
 
     # Try to associate with a user if there is one.
@@ -136,7 +135,7 @@ def roomlist(json: Dict[str, object]) -> None:
 
     with socket_lock:
         # Grab all rooms that the user is in, based on their user ID.
-        rooms = userservice.get_joined_rooms(userid)
+        rooms = messageservice.get_joined_rooms(userid)
 
         # Pre-charge the delta fetches for all rooms this user is in.
         for room in rooms:
@@ -230,3 +229,84 @@ def message(json: Dict[str, object]) -> None:
                 'roomid': Room.from_id(roomid),
                 'actions': [action.to_dict()],
             }, room=request.sid)
+
+
+@socketio.on('leaveroom')  # type: ignore
+def leaveroom(json: Dict[str, object]) -> None:
+    data = Data(config)
+    messageservice = MessageService(data)
+
+    # Try to associate with a user if there is one.
+    userid = recover_userid(data, request.sid)
+    info = recover_info(request.sid)
+    if userid is None or info is None:
+        return
+
+    # Locking our socket info so we can remove this chat from our monitoring.
+    with socket_lock:
+        roomid = Room.to_id(str(json.get('roomid')))
+        if roomid:
+            if roomid in info.fetchlimit:
+                del info.fetchlimit[roomid]
+
+            messageservice.leave_room(roomid, userid)
+
+
+@socketio.on('searchrooms')  # type: ignore
+def searchrooms(json: Dict[str, object]) -> None:
+    data = Data(config)
+    messageservice = MessageService(data)
+
+    # Try to associate with a user if there is one.
+    userid = recover_userid(data, request.sid)
+    if userid is None:
+        return
+
+    # Grab all rooms that match this search result
+    rooms = messageservice.get_matching_rooms(userid, name=str(json.get('name')))
+    socketio.emit('searchrooms', {
+        'rooms': [room.to_dict() for room in rooms],
+    }, room=request.sid)
+
+
+@socketio.on('joinroom')  # type: ignore
+def joinroom(json: Dict[str, object]) -> None:
+    data = Data(config)
+    messageservice = MessageService(data)
+
+    # Try to associate with a user if there is one.
+    userid = recover_userid(data, request.sid)
+    info = recover_info(request.sid)
+    if userid is None or info is None:
+        return
+
+    # Locking our socket info so we can add this chat to our monitoring.
+    actual_id: Optional[RoomID] = None
+    with socket_lock:
+        roomid = Room.to_id(str(json.get('roomid')))
+        if roomid:
+            messageservice.join_room(roomid, userid)
+            actual_id = roomid
+
+        otherid = User.to_id(str(json.get('roomid')))
+        if otherid:
+            room = messageservice.create_chat(userid, otherid)
+            if room:
+                actual_id = room.id
+
+        # Grab all rooms that the user is in, based on their user ID.
+        rooms = messageservice.get_joined_rooms(userid)
+
+        # Pre-charge the delta fetches for all rooms this user is in.
+        for room in rooms:
+            action = messageservice.get_last_room_action(room.id)
+            if action:
+                info.fetchlimit[room.id] = action.id
+            else:
+                info.fetchlimit[room.id] = NewActionID
+
+    if actual_id:
+        socketio.emit('roomlist', {
+            'rooms': [room.to_dict() for room in rooms],
+            'selected': Room.from_id(actual_id),
+        }, room=request.sid)
