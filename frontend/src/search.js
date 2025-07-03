@@ -36,11 +36,19 @@ class Search {
 
         results.forEach((result) => {
             var id = result.roomid || result.userid;
+            var action = "";
+            if (result.roomid) {
+                action = result.joined ? "jump" : "join";
+            } else {
+                action = "message";
+            }
+
             var html = '<div class="item" id="' + id + '">';
             html    += '  <div class="icon">';
             html    += '    <img src="' + result.icon + '" />';
             html    += '  </div>';
             html    += '  <div class="name-wrapper"><div class="name">' + escapeHtml(result.name) + '</div></div>';
+            html    += '  <div class="action-wrapper"><div class="action">' + action + '</div></div>';
             html    += '</div>';
             resultdom.append(html);
 
@@ -56,6 +64,8 @@ class Search {
 
     joinRoom( id ) {
         $.modal.close();
+        $( '#search' ).val("");
+        this.populateResults([]);
         this.eventBus.emit('joinroom', id);
     }
 }
