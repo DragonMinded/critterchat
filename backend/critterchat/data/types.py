@@ -169,18 +169,20 @@ class Room:
 
 class RoomSearchResult:
     def __init__(
-        self, name: str, joined: bool, roomid: Optional[RoomID], userid: Optional[UserID], icon: str,
+        self, name: str, joined: bool, public: bool, roomid: Optional[RoomID], userid: Optional[UserID], icon: str,
     ) -> None:
         self.name = name
         self.joined = joined
         self.roomid = roomid
         self.userid = userid
+        self.public = public
         self.icon = icon
 
     def to_dict(self) -> Dict[str, object]:
         return {
             "name": self.name,
             "icon": self.icon,
+            "public": self.public,
             "joined": self.joined,
             "roomid": Room.from_id(self.roomid) if self.roomid else None,
             "userid": User.from_id(self.userid) if self.userid else None,

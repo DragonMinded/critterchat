@@ -204,13 +204,13 @@ class MessageService:
             if not icon:
                 raise Exception("Logic error, should have been inferred above!")
             if room.id in memberof:
-                results.append(RoomSearchResult(room.name, True, room.id, None, icon))
+                results.append(RoomSearchResult(room.name, True, room.public, room.id, None, icon))
             else:
-                results.append(RoomSearchResult(room.name, False, room.id, None, icon))
+                results.append(RoomSearchResult(room.name, False, room.public, room.id, None, icon))
         for user in potentialusers:
             icon = user.icon
             if not icon:
                 raise Exception("Logic error, should have been inferred above!")
-            results.append(RoomSearchResult(user.nickname, False, None, user.id, icon))
+            results.append(RoomSearchResult(user.nickname, False, False, None, user.id, icon))
 
         return results

@@ -146,7 +146,7 @@ class Messages {
             var html = "";
             if (message.action == "message") {
                 html  = '<div class="item">';
-                html += '  <div class="icon" id="' + message.occupant.id + '">';
+                html += '  <div class="icon avatar" id="' + message.occupant.id + '">';
                 html += '    <img src="' + message.occupant.icon + '" />';
                 html += '  </div>';
                 html += '  <div class="content-wrapper">';

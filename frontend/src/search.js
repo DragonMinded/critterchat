@@ -42,9 +42,10 @@ class Search {
             } else {
                 action = "message";
             }
+            var type = result['public'] ? 'room' : 'avatar';
 
             var html = '<div class="item" id="' + id + '">';
-            html    += '  <div class="icon">';
+            html    += '  <div class="icon ' + type + '">';
             html    += '    <img src="' + result.icon + '" />';
             html    += '  </div>';
             html    += '  <div class="name-wrapper"><div class="name">' + escapeHtml(result.name) + '</div></div>';

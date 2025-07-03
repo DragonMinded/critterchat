@@ -77,8 +77,9 @@ class Menu {
             drawnRoom.find('.name').html(escapeHtml(room.name));
         } else {
             // Now, draw it fresh since it's not an update.
+            var type = room['public'] ? 'room' : 'avatar';
             var html = '<div class="item" id="' + room.id + '">';
-            html    += '  <div class="icon">';
+            html    += '  <div class="icon ' + type + '">';
             html    += '    <img src="' + room.icon + '" />';
             if (room.count) {
                 html    += '    <div class="badge"><div class="count">' + room.count + '</div>';

@@ -89,7 +89,6 @@ div.badge > div.count {
 
 div.conversations div.item div.icon img, div.results div.item div.icon img, div.occupants div.item div.icon img {
     display: block;
-    border-radius: 50%;
     width: 36px;
     height: 36px;
     margin: 0px;
@@ -219,10 +218,17 @@ div.conversation div.item div.message {
 
 div.chat div.item div.icon img {
     display: block;
-    border-radius: 50%;
     width: 36px;
     height: 36px;
     margin: 0px;
+}
+
+div.icon.avatar img {
+    border-radius: 50%;
+}
+
+div.icon.room img {
+    border-radius: 10px;
 }
 
 div.new-messages-alert {

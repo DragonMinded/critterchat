@@ -110,7 +110,7 @@ class Info {
         this.occupants.forEach((occupant) => {
             // Now, draw it fresh since it's not an update.
             var html = '<div class="item" id="' + occupant.id + '">';
-            html    += '  <div class="icon">';
+            html    += '  <div class="icon avatar">';
             html    += '    <img src="' + occupant.icon + '" />';
             html    += '  </div>';
             html    += '  <div class="name-wrapper"><div class="name">' + escapeHtml(occupant.nickname) + '</div></div>';
