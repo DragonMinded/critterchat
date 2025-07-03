@@ -2,12 +2,8 @@ TODO For First Test Build
 =========================
 Keep track of last seen message per-user, use that to load badges on first load.
 Clear badges on all clients if cleared for a chat on one client.
-Display "--new--" bar for messages that have come in since you last looked at the chat.
-Search should also search private chats that you used to be a member of, to rejoin.
 Display user name next to nickname in search as well as on profiles.
 Differentiate between public and private rooms using avatar shape and put in info.
-Start on attachment system for custom avatars.
-Intelligently select avatar for rooms that aren't set to have one.
 Support editing your nickname per-chat.
 Custom emote support ported from PyStreaming.
 Emote/emoji typeahead when chatting ported from PyStreaming.
@@ -15,6 +11,11 @@ Emote/emoji search pane ported from PyStreaming.
 Support editing a chat's custom name.
 Support for setting a chat's custom avatar/picture.
 Bit of work on the welcome page and login.
+
+Polish for Test Build
+=====================
+Search should also search private chats that you used to be a member of, to rejoin.
+Display "--new--" bar for messages that have come in since you last looked at the chat.
 
 TODO For Post Test Build
 ========================

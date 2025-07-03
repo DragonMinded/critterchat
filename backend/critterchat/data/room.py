@@ -17,6 +17,7 @@ from .types import (
     NewOccupantID,
     NewRoomID,
     ActionID,
+    AttachmentID,
     OccupantID,
     RoomID,
     UserID,
@@ -30,6 +31,7 @@ room = Table(
     metadata,
     Column("id", Integer, nullable=False, primary_key=True, autoincrement=True),
     Column("name", String(255)),
+    Column("icon", Integer),
     Column("public", Boolean),
     Column("last_action", Integer, nullable=False),
     mysql_charset="utf8mb4",
@@ -46,6 +48,7 @@ occupant = Table(
     Column("room_id", Integer, nullable=False, index=True),
     Column("inactive", Boolean, default=False),
     Column("nickname", String(255)),
+    Column("icon", Integer),
     UniqueConstraint("user_id", "room_id", name='uidrid'),
     mysql_charset="utf8mb4",
 )
@@ -88,7 +91,7 @@ class RoomData(BaseData):
             extra = "AND inactive != TRUE"
 
         sql = f"""
-            SELECT id, name, public, last_action FROM room WHERE id in (
+            SELECT id, name, icon, public, last_action FROM room WHERE id in (
                 SELECT room_id FROM occupant WHERE user_id = :userid {extra}
             )
         """
@@ -99,6 +102,7 @@ class RoomData(BaseData):
                 name=result['name'],
                 public=result['public'],
                 last_action=result['last_action'],
+                iconid=AttachmentID(result['icon']) if result['icon'] else None,
             )
             for result in cursor.mappings()
         ]
@@ -120,7 +124,7 @@ class RoomData(BaseData):
             return []
 
         sql = """
-            SELECT id, name, public, last_action FROM room WHERE id in (
+            SELECT id, name, icon, public, last_action FROM room WHERE id in (
                 SELECT room_id FROM occupant WHERE user_id = :userid AND inactive != TRUE
             )
         """
@@ -134,6 +138,7 @@ class RoomData(BaseData):
                 name=result['name'],
                 public=result['public'],
                 last_action=result['last_action'],
+                iconid=AttachmentID(result['icon']) if result['icon'] else None,
             )
             for result in cursor.mappings()
         ]
@@ -155,7 +160,7 @@ class RoomData(BaseData):
             return []
 
         sql = """
-            SELECT id, name, public, last_action FROM room WHERE public = TRUE
+            SELECT id, name, icon, public, last_action FROM room WHERE public = TRUE
         """
         if name is not None:
             sql += " AND (name IS NULL OR name = '' OR name COLLATE utf8mb4_general_ci LIKE :name)"
@@ -167,6 +172,7 @@ class RoomData(BaseData):
                 name=result['name'],
                 public=result['public'],
                 last_action=result['last_action'],
+                iconid=AttachmentID(result['icon']) if result['icon'] else None,
             )
             for result in cursor.mappings()
         ]
@@ -194,6 +200,7 @@ class RoomData(BaseData):
             name=result['name'],
             public=result['public'],
             last_action=result['last_action'],
+            iconid=AttachmentID(result['icon']) if result['icon'] else None,
         )
 
     def create_room(self, room: Room) -> None:
@@ -209,9 +216,9 @@ class RoomData(BaseData):
 
         timestamp = Time.now()
         sql = """
-            INSERT INTO room (`name`, `public`, `last_action`) VALUES (:name, :public, :ts)
+            INSERT INTO room (`name`, `public`, `last_action`, `icon`) VALUES (:name, :public, :ts, :icon)
         """
-        cursor = self.execute(sql, {"name": room.name, "public": room.public, "timestamp": timestamp})
+        cursor = self.execute(sql, {"name": room.name, "public": room.public, "timestamp": timestamp, "icon": room.iconid})
         if cursor.rowcount != 1:
             return None
         newroom = self.get_room(RoomID(cursor.lastrowid))
@@ -219,6 +226,7 @@ class RoomData(BaseData):
             room.id = newroom.id
             room.name = newroom.name
             room.public = newroom.public
+            room.iconid = newroom.iconid
             room.last_action = timestamp
 
     def join_room(self, roomid: RoomID, userid: UserID) -> None:
@@ -299,11 +307,16 @@ class RoomData(BaseData):
         if not nickname:
             nickname = result['unick']
 
+        icon = result['oicon']
+        if not icon:
+            icon = result['picon']
+
         return Occupant(
             OccupantID(result['id']),
             UserID(result['user_id']),
             nickname,
             inactive=result['inactive'],
+            iconid=AttachmentID(icon) if icon else None,
         )
 
     def get_room_occupants(self, roomid: RoomID, include_left: bool = False) -> List[Occupant]:
@@ -327,7 +340,9 @@ class RoomData(BaseData):
                 occupant.user_id AS user_id,
                 occupant.nickname AS onick,
                 occupant.inactive AS inactive,
+                occupant.icon AS oicon,
                 profile.nickname AS pnick,
+                profile.icon AS picon,
                 user.username AS unick
             FROM occupant
             LEFT JOIN profile ON occupant.user_id = profile.user_id
@@ -354,7 +369,9 @@ class RoomData(BaseData):
                 occupant.user_id AS user_id,
                 occupant.nickname AS onick,
                 occupant.inactive AS inactive,
+                occupant.icon AS oicon,
                 profile.nickname AS pnick,
+                profile.icon AS picon,
                 user.username AS unick
             FROM occupant
             LEFT JOIN profile ON occupant.user_id = profile.user_id
@@ -416,7 +433,9 @@ class RoomData(BaseData):
                 occupant.user_id AS user_id,
                 occupant.nickname AS onick,
                 occupant.inactive AS inactive,
+                occupant.icon AS oicon,
                 profile.nickname AS pnick,
+                profile.icon AS picon,
                 user.username AS unick
             FROM occupant
             LEFT JOIN profile ON occupant.user_id = profile.user_id
@@ -490,6 +509,7 @@ class RoomData(BaseData):
         if newoccupant:
             action.occupant.nickname = newoccupant.nickname
             action.occupant.inactive = newoccupant.inactive
+            action.occupant.iconid = newoccupant.iconid
 
         # Finally, record the action timestamp into the room.
         sql = """

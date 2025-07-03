@@ -1,5 +1,6 @@
 from typing import List, Optional
 
+from ..config import Config
 from ..common import Time
 from ..data import (
     Data,
@@ -9,6 +10,8 @@ from ..data import (
     Room,
     RoomType,
     RoomSearchResult,
+    DefaultAvatarID,
+    DefaultRoomID,
     NewOccupantID,
     NewActionID,
     NewRoomID,
@@ -16,6 +19,7 @@ from ..data import (
     RoomID,
     UserID,
 )
+from .attachment import AttachmentService
 
 
 class MessageServiceException(Exception):
@@ -23,21 +27,31 @@ class MessageServiceException(Exception):
 
 
 class MessageService:
-    def __init__(self, data: Data) -> None:
+    def __init__(self, config: Config, data: Data) -> None:
+        self.__config = config
         self.__data = data
+        self.__attachments = AttachmentService(self.__config, self.__data)
 
     def get_last_room_action(self, roomid: RoomID) -> Optional[Action]:
         history = self.__data.room.get_room_history(roomid, limit=1)
-        return history[0] if history else None
+        return self.__attachments.resolve_action_icon(history[0]) if history else None
 
     def get_room_history(self, roomid: RoomID) -> List[Action]:
         history = self.__data.room.get_room_history(roomid)
-        history = [e for e in history if e.action in {ActionType.MESSAGE, ActionType.JOIN, ActionType.LEAVE}]
+        history = [
+            self.__attachments.resolve_action_icon(e)
+            for e in history
+            if e.action in {ActionType.MESSAGE, ActionType.JOIN, ActionType.LEAVE}
+        ]
         return history
 
     def get_room_updates(self, roomid: RoomID, after: ActionID) -> List[Action]:
         history = self.__data.room.get_room_history(roomid, after=after)
-        history = [e for e in history if e.action in {ActionType.MESSAGE, ActionType.JOIN, ActionType.LEAVE}]
+        history = [
+            self.__attachments.resolve_action_icon(e)
+            for e in history
+            if e.action in {ActionType.MESSAGE, ActionType.JOIN, ActionType.LEAVE}
+        ]
         return history
 
     def add_message(self, roomid: RoomID, userid: UserID, message: str) -> Optional[Action]:
@@ -56,7 +70,7 @@ class MessageService:
 
         self.__data.room.insert_action(roomid, action)
         if action.id is not NewActionID:
-            return action
+            return self.__attachments.resolve_action_icon(action)
         return None
 
     def __infer_room_info(self, userid: UserID, room: Room) -> None:
@@ -75,11 +89,15 @@ class MessageService:
             elif len(occupants) == 1:
                 room_name = "Chat with Myself"
                 room_type = RoomType.CHAT
+                if room.iconid is None or room.iconid in {DefaultAvatarID, DefaultRoomID}:
+                    room.iconid = occupants[0].iconid
             elif len(occupants) == 2:
                 not_me = [o for o in occupants if o.userid != userid]
                 if len(not_me) == 1:
                     room_name = f"Chat with {not_me[0].nickname}"
                     room_type = RoomType.CHAT
+                    if room.iconid is None or room.iconid in {DefaultAvatarID, DefaultRoomID}:
+                        room.iconid = not_me[0].iconid
                 else:
                     room_name = "Unnamed Private Chat"
                     room_type = RoomType.ROOM
@@ -90,6 +108,11 @@ class MessageService:
         room.type = room_type
         if not room.name:
             room.name = room_name
+
+        if room_type == RoomType.CHAT:
+            self.__attachments.resolve_chat_icon(room)
+        if room_type == RoomType.ROOM:
+            self.__attachments.resolve_room_icon(room)
 
     def create_chat(self, userid: UserID, otherid: UserID) -> Room:
         # First, find all rooms that the first user is in or was ever in.
@@ -115,7 +138,7 @@ class MessageService:
                     return room
 
         # Now, create a new room since we don't have an existing one.
-        room = Room(NewRoomID, "", False)
+        room = Room(NewRoomID, "", False, None)
         self.__data.room.create_room(room)
         self.join_room(room.id, userid)
         self.join_room(room.id, otherid)
@@ -138,7 +161,7 @@ class MessageService:
         return sorted(rooms, key=lambda r: r.last_action, reverse=True)
 
     def get_room_occupants(self, roomid: RoomID) -> List[Occupant]:
-        occupants = self.__data.room.get_room_occupants(roomid)
+        occupants = [self.__attachments.resolve_occupant_icon(o) for o in self.__data.room.get_room_occupants(roomid)]
         return sorted(occupants, key=lambda o: o.nickname)
 
     def get_matching_rooms(self, userid: UserID, *, name: Optional[str] = None) -> List[RoomSearchResult]:
@@ -171,14 +194,23 @@ class MessageService:
             key=lambda u: u.nickname,
         )
 
+        for user in potentialusers:
+            self.__attachments.resolve_user_icon(user)
+
         # Now, combined the two.
         results: List[RoomSearchResult] = []
         for room in rooms:
+            icon = room.icon
+            if not icon:
+                raise Exception("Logic error, should have been inferred above!")
             if room.id in memberof:
-                results.append(RoomSearchResult(room.name, True, room.id, None))
+                results.append(RoomSearchResult(room.name, True, room.id, None, icon))
             else:
-                results.append(RoomSearchResult(room.name, False, room.id, None))
+                results.append(RoomSearchResult(room.name, False, room.id, None, icon))
         for user in potentialusers:
-            results.append(RoomSearchResult(user.nickname, False, None, user.id))
+            icon = user.icon
+            if not icon:
+                raise Exception("Logic error, should have been inferred above!")
+            results.append(RoomSearchResult(user.nickname, False, None, user.id, icon))
 
         return results

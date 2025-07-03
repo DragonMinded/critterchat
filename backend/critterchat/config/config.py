@@ -1,6 +1,6 @@
 import copy
 from sqlalchemy.engine import Engine
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 
 class Database:
@@ -13,15 +13,15 @@ class Database:
 
     @property
     def database(self) -> str:
-        return str(self.__config.get("database", {}).get("database", "fdc"))
+        return str(self.__config.get("database", {}).get("database", "critterchat"))
 
     @property
     def user(self) -> str:
-        return str(self.__config.get("database", {}).get("user", "fdc"))
+        return str(self.__config.get("database", {}).get("user", "critterchat"))
 
     @property
     def password(self) -> str:
-        return str(self.__config.get("database", {}).get("password", "fdc"))
+        return str(self.__config.get("database", {}).get("password", "critterchat"))
 
     @property
     def engine(self) -> Engine:
@@ -33,11 +33,30 @@ class Database:
         return engine
 
 
+class Attachments:
+    def __init__(self, parent_config: "Config") -> None:
+        self.__config = parent_config
+
+    @property
+    def prefix(self) -> str:
+        return str(self.__config.get("attachments", {}).get("prefix", "/attachments/"))
+
+    @property
+    def system(self) -> str:
+        return str(self.__config.get("attachments", {}).get("system", "local"))
+
+    @property
+    def directory(self) -> Optional[str]:
+        directory = self.__config.get("attachments", {}).get("directory")
+        return str(directory) if directory else None
+
+
 class Config(dict[str, Any]):
     def __init__(self, existing_contents: Dict[str, Any] = {}) -> None:
         super().__init__(existing_contents or {})
 
         self.database = Database(self)
+        self.attachments = Attachments(self)
 
     def clone(self) -> "Config":
         # Somehow its not possible to clone this object if an instantiated Engine is present,

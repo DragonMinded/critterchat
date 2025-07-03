@@ -12,6 +12,9 @@ import critterchat.http.chat  # noqa
 import critterchat.http.account  # noqa
 import critterchat.http.socket  # noqa
 
+# This is only hooked when local storage is enabled.
+from critterchat.http.attachments import attachments
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Run the chat application backend.")
@@ -23,6 +26,10 @@ if __name__ == '__main__':
 
     load_config(args.config, config)
     app.secret_key = config.cookie_key
+
+    # Attach local storage handler if we're local attachment type.
+    if config.attachments.system == "local":
+        app.register_blueprint(attachments)
 
     if args.nginx_proxy > 0:
         app.wsgi_app = ProxyFix(app.wsgi_app, x_host=args.nginx_proxy, x_proto=args.nginx_proxy, x_for=args.nginx_proxy)  # type: ignore

@@ -47,6 +47,7 @@ profile = Table(
     Column("user_id", Integer, nullable=False, unique=True, index=True),
     Column("nickname", String(255)),
     Column("about", Text),
+    Column("icon", Integer),
 )
 
 """
@@ -298,6 +299,7 @@ class UserData(BaseData):
             UserID(result['id']),
             result['uname'],
             nickname,
+            result['icon'],
         )
 
     def get_visible_users(self, userid: UserID, name: Optional[str] = None) -> List[User]:
@@ -309,7 +311,7 @@ class UserData(BaseData):
             return []
 
         sql = """
-            SELECT user.id AS id, user.username AS uname, profile.nickname AS pname
+            SELECT user.id AS id, user.username AS uname, profile.nickname AS pname, profile.icon AS icon
             FROM user
             LEFT JOIN profile ON profile.user_id = user.id
             WHERE user.id = :myid

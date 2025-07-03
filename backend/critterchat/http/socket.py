@@ -31,7 +31,7 @@ def background_thread_proc() -> None:
 
         # Look for any new actions that should be relayed.
         data = Data(config)
-        messageservice = MessageService(data)
+        messageservice = MessageService(config, data)
 
         with socket_lock:
             if not socket_to_info:
@@ -155,7 +155,7 @@ def disconnect() -> None:
 @socketio.on('roomlist')  # type: ignore
 def roomlist(json: Dict[str, object]) -> None:
     data = Data(config)
-    messageservice = MessageService(data)
+    messageservice = MessageService(config, data)
 
     # Try to associate with a user if there is one.
     userid = recover_userid(data, request.sid)
@@ -183,7 +183,7 @@ def roomlist(json: Dict[str, object]) -> None:
 @socketio.on('lastsettings')  # type: ignore
 def lastsettings(json: Dict[str, object]) -> None:
     data = Data(config)
-    userservice = UserService(data)
+    userservice = UserService(config, data)
 
     # Try to associate with a user if there is one.
     userid = recover_userid(data, request.sid)
@@ -197,7 +197,7 @@ def lastsettings(json: Dict[str, object]) -> None:
 @socketio.on('updatesettings')  # type: ignore
 def updatesettings(json: Dict[str, object]) -> None:
     data = Data(config)
-    userservice = UserService(data)
+    userservice = UserService(config, data)
 
     # Try to associate with a user if there is one.
     userid = recover_userid(data, request.sid)
@@ -211,7 +211,7 @@ def updatesettings(json: Dict[str, object]) -> None:
 @socketio.on('chathistory')  # type: ignore
 def chathistory(json: Dict[str, object]) -> None:
     data = Data(config)
-    messageservice = MessageService(data)
+    messageservice = MessageService(config, data)
 
     # Try to associate with a user if there is one.
     userid = recover_userid(data, request.sid)
@@ -243,7 +243,7 @@ def chathistory(json: Dict[str, object]) -> None:
 @socketio.on('message')  # type: ignore
 def message(json: Dict[str, object]) -> None:
     data = Data(config)
-    messageservice = MessageService(data)
+    messageservice = MessageService(config, data)
 
     # Try to associate with a user if there is one.
     userid = recover_userid(data, request.sid)
@@ -266,7 +266,7 @@ def message(json: Dict[str, object]) -> None:
 @socketio.on('leaveroom')  # type: ignore
 def leaveroom(json: Dict[str, object]) -> None:
     data = Data(config)
-    messageservice = MessageService(data)
+    messageservice = MessageService(config, data)
 
     # Try to associate with a user if there is one.
     userid = recover_userid(data, request.sid)
@@ -287,7 +287,7 @@ def leaveroom(json: Dict[str, object]) -> None:
 @socketio.on('searchrooms')  # type: ignore
 def searchrooms(json: Dict[str, object]) -> None:
     data = Data(config)
-    messageservice = MessageService(data)
+    messageservice = MessageService(config, data)
 
     # Try to associate with a user if there is one.
     userid = recover_userid(data, request.sid)
@@ -304,7 +304,7 @@ def searchrooms(json: Dict[str, object]) -> None:
 @socketio.on('joinroom')  # type: ignore
 def joinroom(json: Dict[str, object]) -> None:
     data = Data(config)
-    messageservice = MessageService(data)
+    messageservice = MessageService(config, data)
 
     # Try to associate with a user if there is one.
     userid = recover_userid(data, request.sid)

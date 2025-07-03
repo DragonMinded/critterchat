@@ -1,3 +1,4 @@
+from ..config import Config
 from ..data import Data, UserSettings, UserID
 
 
@@ -6,7 +7,8 @@ class UserServiceException(Exception):
 
 
 class UserService:
-    def __init__(self, data: Data) -> None:
+    def __init__(self, config: Config, data: Data) -> None:
+        self.__config = config
         self.__data = data
 
     def get_settings(self, userid: UserID) -> UserSettings:

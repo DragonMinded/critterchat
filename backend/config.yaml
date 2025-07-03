@@ -18,3 +18,13 @@ password_key: "you_should_also_change_this_to_something_long_and_random"
 
 # The name of the instance.
 name: "Critter Chat Instance"
+
+attachments:
+  # The URL prefix of the attachment store.
+  prefix: "/attachments/"
+
+  # The attachment system that is used for attachment storage.
+  system: "local"
+
+  # The local directory where attachments are stored, if the system is "local".
+  directory: "/tmp"

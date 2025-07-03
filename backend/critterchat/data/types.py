@@ -6,25 +6,32 @@ UserID = NewType("UserID", int)
 RoomID = NewType("RoomID", int)
 OccupantID = NewType("OccupantID", int)
 ActionID = NewType("ActionID", int)
+AttachmentID = NewType("AttachmentID", int)
 
 
 NewUserID = UserID(-1)
 NewRoomID = RoomID(-1)
 NewOccupantID = OccupantID(-1)
 NewActionID = ActionID(-1)
+NewAttachmentID = AttachmentID(-1)
+DefaultAvatarID = AttachmentID(-100)
+DefaultRoomID = AttachmentID(-200)
 
 
 class User:
-    def __init__(self, userid: UserID, username: str, nickname: str) -> None:
+    def __init__(self, userid: UserID, username: str, nickname: str, iconid: Optional[AttachmentID]) -> None:
         self.id = userid
         self.username = username
         self.nickname = nickname
+        self.iconid = iconid
+        self.icon: Optional[str] = None
 
     def to_dict(self) -> Dict[str, object]:
         return {
             "id": User.from_id(self.id),
             "username": self.username,
             "nickname": self.nickname,
+            "icon": self.icon,
         }
 
     @staticmethod
@@ -82,6 +89,43 @@ class UserSettings:
             return None
 
 
+class Attachment:
+    def __init__(self, attachmentid: AttachmentID, uri: str, mimetype: str) -> None:
+        self.id = attachmentid
+        self.uri = uri
+        self.mimetype = mimetype
+
+    def to_dict(self) -> Dict[str, object]:
+        return {
+            "id": Attachment.from_id(self.id),
+            "uri": self.uri,
+            "mimetype": self.mimetype,
+        }
+
+    @staticmethod
+    def from_id(attachmentid: AttachmentID) -> str:
+        if attachmentid == DefaultAvatarID:
+            return "defavi"
+        if attachmentid == DefaultRoomID:
+            return "defroom"
+        return f"d{attachmentid}"
+
+    @staticmethod
+    def to_id(idstr: str) -> Optional[AttachmentID]:
+        if idstr == "defavi":
+            return DefaultAvatarID
+        if idstr == "defroom":
+            return DefaultRoomID
+
+        if idstr[0] != 'd':
+            return None
+
+        try:
+            return AttachmentID(int(idstr[1:]))
+        except ValueError:
+            return None
+
+
 class RoomType(StrEnum):
     UNKNOWN = 'unknown'
     CHAT = 'chat'
@@ -89,14 +133,14 @@ class RoomType(StrEnum):
 
 
 class Room:
-    def __init__(self, roomid: RoomID, name: str, public: bool, last_action: int = 0) -> None:
+    def __init__(self, roomid: RoomID, name: str, public: bool, iconid: Optional[AttachmentID], last_action: int = 0) -> None:
         self.id = roomid
         self.type = RoomType.UNKNOWN
         self.name = name
         self.public = public
         self.last_action = last_action
-        # TODO: Hook this into attachments.
-        self.icon = "/static/avi.png"
+        self.iconid = iconid
+        self.icon: Optional[str] = None
 
     def to_dict(self) -> Dict[str, object]:
         return {
@@ -124,13 +168,14 @@ class Room:
 
 
 class RoomSearchResult:
-    def __init__(self, name: str, joined: bool, roomid: Optional[RoomID], userid: Optional[UserID]) -> None:
+    def __init__(
+        self, name: str, joined: bool, roomid: Optional[RoomID], userid: Optional[UserID], icon: str,
+    ) -> None:
         self.name = name
         self.joined = joined
         self.roomid = roomid
         self.userid = userid
-        # TODO: Hook this into attachments.
-        self.icon = "/static/avi.png"
+        self.icon = icon
 
     def to_dict(self) -> Dict[str, object]:
         return {
@@ -143,13 +188,20 @@ class RoomSearchResult:
 
 
 class Occupant:
-    def __init__(self, occupantid: OccupantID, userid: UserID, nickname: str = "", inactive: bool = False) -> None:
+    def __init__(
+        self,
+        occupantid: OccupantID,
+        userid: UserID,
+        nickname: str = "",
+        iconid: Optional[AttachmentID] = None,
+        inactive: bool = False,
+    ) -> None:
         self.id = occupantid
         self.userid = userid
         self.nickname = nickname
         self.inactive = inactive
-        # TODO: Hook this into attachments.
-        self.icon = "/static/avi.png"
+        self.iconid = iconid
+        self.icon: Optional[str] = None
 
     def to_dict(self) -> Dict[str, object]:
         return {

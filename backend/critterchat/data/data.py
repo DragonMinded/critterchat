@@ -14,6 +14,7 @@ from ..config import Config
 from .base import metadata
 from .user import UserData
 from .room import RoomData
+from .attachment import AttachmentData
 
 
 __all__ = [
@@ -51,6 +52,7 @@ class Data:
 
         self.user = UserData(config, self.__session)
         self.room = RoomData(config, self.__session)
+        self.attachment = AttachmentData(config, self.__session)
 
     @classmethod
     def sqlalchemy_url(cls, config: Config) -> str:
