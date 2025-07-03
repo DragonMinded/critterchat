@@ -4,6 +4,7 @@ from .types import (
     ActionType,
     Occupant,
     Room,
+    RoomType,
     RoomSearchResult,
     User,
     UserSettings,
@@ -35,5 +36,6 @@ __all__ = [
     "UserSettings",
     "Occupant",
     "Room",
+    "RoomType",
     "RoomSearchResult",
 ]

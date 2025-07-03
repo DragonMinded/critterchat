@@ -41,7 +41,7 @@
         </div>
         <div class="actions">
             <div class="item">
-                <button id="leave-room">&#128682; leave chat</button>
+                <button id="leave-room">&#128682; leave <span id="leave-type">chat</span></button>
             </div>
         </div>
     </div>
@@ -53,6 +53,38 @@
                 </div>
             </div>
             <div class="results">
+        </div>
+    </form>
+    <form id="leave-chat-form" class="modal">
+        <div class="warning">
+            <div class="leave-warning">
+                Leaving this chat will mean you no longer receive messages from the other chatter. You can still
+                re-join this chat in the future by searching for the chatter's name and clicking "message".
+            </div>
+            <div class="actions">
+                <div class="item">
+                    <button id="confirm-leave-chat">yes, leave</button>
+                </div>
+                <div class="item">
+                    <button id="cancel-leave-chat">no, stay here</button>
+                </div>
+            </div>
+        </div>
+    </form>
+    <form id="leave-room-form" class="modal">
+        <div class="warning">
+            <div class="leave-warning">
+                Leaving this room will mean you no longer receive messages from the other members. You can still
+                re-join this room in the future by searching for the room's name and clicking "join".
+            </div>
+            <div class="actions">
+                <div class="item">
+                    <button id="confirm-leave-room">yes, leave</button>
+                </div>
+                <div class="item">
+                    <button id="cancel-leave-room">no, stay here</button>
+                </div>
+            </div>
         </div>
     </form>
 {% endblock %}

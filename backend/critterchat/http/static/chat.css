@@ -272,17 +272,22 @@ div.occupants div.item {
     border: 1px solid transparent;
 }
 
-div.search {
+div.search, div.warning {
     height: 300px;
     display: flex;
     flex-direction: column;
     gap: 10px;
 }
 
-div.search > div.actions {
+div.search > div.actions, div.warning > div.actions {
     display: flex;
     flex-direction: row;
     width: 100%;
+    gap: 10px;
+}
+
+div.warning > div.leave-warning {
+    flex-grow: 1;
 }
 
 div.search > div.actions div.searchbox {

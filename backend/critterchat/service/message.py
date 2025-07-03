@@ -7,6 +7,7 @@ from ..data import (
     ActionType,
     Occupant,
     Room,
+    RoomType,
     RoomSearchResult,
     NewOccupantID,
     NewActionID,
@@ -58,6 +59,38 @@ class MessageService:
             return action
         return None
 
+    def __infer_room_info(self, userid: UserID, room: Room) -> None:
+        if room.public:
+            room_name = "Unnamed Public Chat"
+            room_type = RoomType.ROOM
+        else:
+            # Figure out how many people are in the chat, name it after them.
+            occupants = self.__data.room.get_room_occupants(room.id, include_left=True)
+            if not occupants:
+                # This shouldn't happen, since we would have to be the sole occupant,
+                # but I guess there could be a race between grabbing the rooms and occupants,
+                # so let's just throw in a funny easter egg.
+                room_name = "An Empty Cavern"
+                room_type = RoomType.UNKNOWN
+            elif len(occupants) == 1:
+                room_name = "Chat with Myself"
+                room_type = RoomType.CHAT
+            elif len(occupants) == 2:
+                not_me = [o for o in occupants if o.userid != userid]
+                if len(not_me) == 1:
+                    room_name = f"Chat with {not_me[0].nickname}"
+                    room_type = RoomType.CHAT
+                else:
+                    room_name = "Unnamed Private Chat"
+                    room_type = RoomType.ROOM
+            else:
+                room_name = "Unnamed Private Chat"
+                room_type = RoomType.ROOM
+
+        room.type = room_type
+        if not room.name:
+            room.name = room_name
+
     def create_chat(self, userid: UserID, otherid: UserID) -> Room:
         # First, find all rooms that the first user is in or was ever in.
         rooms = self.__data.room.get_joined_rooms(userid, include_left=True)
@@ -78,7 +111,7 @@ class MessageService:
                     # Found the room, just return this room after making both parties join it.
                     self.join_room(room.id, userid)
                     self.join_room(room.id, otherid)
-                    self.__infer_room_name(userid, room)
+                    self.__infer_room_info(userid, room)
                     return room
 
         # Now, create a new room since we don't have an existing one.
@@ -86,7 +119,7 @@ class MessageService:
         self.__data.room.create_room(room)
         self.join_room(room.id, userid)
         self.join_room(room.id, otherid)
-        self.__infer_room_name(userid, room)
+        self.__infer_room_info(userid, room)
         return room
 
     def join_room(self, roomid: RoomID, userid: UserID) -> None:
@@ -95,35 +128,12 @@ class MessageService:
     def leave_room(self, roomid: RoomID, userid: UserID) -> None:
         self.__data.room.leave_room(roomid, userid)
 
-    def __infer_room_name(self, userid: UserID, room: Room) -> None:
-        if not room.name:
-            if room.public:
-                room.name = "Unnamed Public Chat"
-            else:
-                # Figure out how many people are in the chat, name it after them.
-                occupants = self.__data.room.get_room_occupants(room.id, include_left=True)
-                if not occupants:
-                    # This shouldn't happen, since we would have to be the sole occupant,
-                    # but I guess there could be a race between grabbing the rooms and occupants,
-                    # so let's just throw in a funny easter egg.
-                    room.name = "An Empty Cavern"
-                elif len(occupants) == 1:
-                    room.name = "Chat with Myself"
-                elif len(occupants) == 2:
-                    not_me = [o for o in occupants if o.userid != userid]
-                    if len(not_me) == 1:
-                        room.name = f"Chat with {not_me[0].nickname}"
-                    else:
-                        room.name = "Unnamed Private Chat"
-                else:
-                    room.name = "Unnamed Private Chat"
-
     def get_joined_rooms(self, userid: UserID) -> List[Room]:
         rooms = self.__data.room.get_joined_rooms(userid)
 
         # Figure out any rooms that don't have a set name, and infer the name of the room.
         for room in rooms:
-            self.__infer_room_name(userid, room)
+            self.__infer_room_info(userid, room)
 
         return rooms
 
@@ -143,7 +153,7 @@ class MessageService:
 
         # Figure out any rooms that don't have a set name, and infer the name of the room.
         for room in rooms:
-            self.__infer_room_name(userid, room)
+            self.__infer_room_info(userid, room)
 
         # Now, filter out any rooms that still don't meet our criteria.
         if name:

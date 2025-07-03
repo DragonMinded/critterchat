@@ -80,9 +80,16 @@ class UserSettings:
             return None
 
 
+class RoomType(StrEnum):
+    UNKNOWN = 'unknown'
+    CHAT = 'chat'
+    ROOM = 'room'
+
+
 class Room:
     def __init__(self, roomid: RoomID, name: str, public: bool) -> None:
         self.id = roomid
+        self.type = RoomType.UNKNOWN
         self.name = name
         self.public = public
         # TODO: Hook this into attachments.
@@ -91,6 +98,7 @@ class Room:
     def to_dict(self) -> Dict[str, object]:
         return {
             "id": Room.from_id(self.id),
+            "type": self.type,
             "name": self.name,
             "public": self.public,
             "icon": self.icon,
