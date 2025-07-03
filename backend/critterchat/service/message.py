@@ -101,7 +101,7 @@ class MessageService:
                 room.name = "Unnamed Public Chat"
             else:
                 # Figure out how many people are in the chat, name it after them.
-                occupants = self.__data.room.get_room_occupants(room.id)
+                occupants = self.__data.room.get_room_occupants(room.id, include_left=True)
                 if not occupants:
                     # This shouldn't happen, since we would have to be the sole occupant,
                     # but I guess there could be a race between grabbing the rooms and occupants,

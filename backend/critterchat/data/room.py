@@ -8,7 +8,6 @@ from sqlalchemy.types import String, Integer, Boolean, Text
 from .base import BaseData, metadata
 from .types import (
     Action,
-    ActionType,
     Occupant,
     Room,
     NewUserID,

@@ -17,9 +17,39 @@ class Menu {
     }
 
     setRooms( rooms ) {
+        // Redraw if the room length or ordering changed, otherwise refresh in place.
+        var needsEmpty = false;
+        if (rooms.length == this.rooms.length) {
+            for (var i = 0; i < rooms.length; i++) {
+                if (rooms[i].id != this.rooms[i].id) {
+                    needsEmpty = true;
+                    break;
+                }
+            }
+        } else {
+            needsEmpty = true;
+        }
+
+        // Make sure to preserve badge counts.
+        var counts = {};
+        this.rooms.forEach((room) => {
+            counts[room.id] = room.count;
+        });
+
         this.rooms = rooms;
         this.roomsLoaded = true;
 
+        // Copy badge counts over.
+        this.rooms.forEach((room) => {
+            room.count = counts[room.id];
+        });
+
+        // If we re-arranged anything, nuke our existing.
+        if (needsEmpty) {
+            $('div.menu > div.conversations').empty();
+        }
+
+        // Draw, and then select the room.
         this.rooms.forEach((room, i) => this.drawRoom(room));
 
         if (this.lastSettingsLoaded) {
@@ -48,7 +78,11 @@ class Menu {
             var html = '<div class="item" id="' + room.id + '">';
             html    += '  <div class="icon">';
             html    += '    <img src="' + room.icon + '" />';
-            html    += '    <div class="badge empty"><div class="count"></div>';
+            if (room.count) {
+                html    += '    <div class="badge"><div class="count">' + room.count + '</div>';
+            } else {
+                html    += '    <div class="badge empty"><div class="count"></div>';
+            }
             html    += '    </div>';
             html    += '  </div>';
             html    += '  <div class="name-wrapper"><div class="name">' + escapeHtml(room.name) + '</div></div>';
@@ -132,11 +166,19 @@ class Menu {
             }
 
             var intCount = parseInt(count) + actions.length;
+            var text;
             if (intCount > 9) {
-                badge.text('!!');
+                text = '!!';
             } else {
-                badge.text(intCount.toString());
+                text = intCount.toString();
             }
+
+            badge.text(text);
+            this.rooms.forEach((room) => {
+                if (room.id == roomid) {
+                    room.count = text;
+                }
+            });
         }
     }
 
@@ -147,6 +189,11 @@ class Menu {
         if (drawnRoom.length > 0) {
             drawnRoom.find('.icon .badge').addClass('empty');
             drawnRoom.find('.icon .badge .count').text("");
+            this.rooms.forEach((room) => {
+                if (room.id == roomid) {
+                    room.count = '';
+                }
+            });
         }
     }
 }

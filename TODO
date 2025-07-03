@@ -6,7 +6,6 @@ Display "--new--" bar for messages that have come in since you last looked at th
 Display users in room on info pane.
 Update users in room list when a user joins or leaves.
 Notify other user when they're added to a private chat.
-Need to make both parties leave when leaving a 1 or 2 person private chat.
 Search should also search private chats that you used to be a member of, to rejoin.
 Start on attachment system for custom avatars.
 Intelligently select avatar for rooms that aren't set to have one.
