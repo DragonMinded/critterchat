@@ -290,13 +290,14 @@ class UserData(BaseData):
         """
         Given a result set, spawn a user for that result.
         """
-        name = result['pname']
-        if not name:
-            name = result['uname']
+        nickname = result['pname']
+        if not nickname:
+            nickname = result['uname']
 
         return User(
             UserID(result['id']),
-            name,
+            result['uname'],
+            nickname,
         )
 
     def get_visible_users(self, userid: UserID, name: Optional[str] = None) -> List[User]:
@@ -318,11 +319,5 @@ class UserData(BaseData):
             sql += " OR (user.username COLLATE utf8mb4_general_ci LIKE :name OR profile.nickname COLLATE utf8mb4_general_ci LIKE :name)"
         cursor = self.execute(sql, {"myid": userid, "name": f"%{name}%"})
         users = [self.__to_user(u) for u in cursor.mappings()]
-
-        # Now, postfilter because if we selected a user by username that has a nickname
-        # we could leak username info otherwise
-        if name is not None:
-            namelower = name.lower()
-            users = [u for u in users if namelower in u.name.lower()]
 
         return users

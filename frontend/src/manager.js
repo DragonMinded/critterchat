@@ -41,12 +41,15 @@ export function manager(socket) {
     });
 
     socket.on('chathistory', (msg) => {
+        messagesInst.setOccupants(msg.roomid, msg.occupants);
+        infoInst.setOccupants(msg.roomid, msg.occupants);
         messagesInst.updateHistory(msg.roomid, msg.history);
     });
 
     socket.on('chatactions', (msg) => {
         messagesInst.updateHistory(msg.roomid, msg.actions);
-        menuInst.updateBadges(msg.roomid, msg.actions);
+        menuInst.updateHistory(msg.roomid, msg.actions);
+        infoInst.updateHistory(msg.roomid, msg.actions);
     });
 
     socket.on('searchrooms', (msg) => {

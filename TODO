@@ -3,11 +3,8 @@ TODO For First Test Build
 Keep track of last seen message per-user, use that to load badges on first load.
 Clear badges on all clients if cleared for a chat on one client.
 Display "--new--" bar for messages that have come in since you last looked at the chat.
-Display users in room on info pane.
-Update users in room list when a user joins or leaves.
-Notify other user when they're added to a private chat.
 Search should also search private chats that you used to be a member of, to rejoin.
-Revise search logic to allow you to search for usernames as well as nicknames, display those in search.
+Display user name next to nickname in search as well as on profiles.
 Differentiate between public and private rooms using avatar shape and put in info.
 Start on attachment system for custom avatars.
 Intelligently select avatar for rooms that aren't set to have one.

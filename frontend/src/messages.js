@@ -5,10 +5,12 @@ class Messages {
     constructor( eventBus ) {
         this.eventBus = eventBus;
         this.messages = [];
+        this.occupants = [];
         this.roomid = "";
         this.autoscroll = true;
         this.lastSettings = {};
         this.lastSettingsLoaded = false;
+        this.occupantsLoaded = false;
 
         $( '#message-actions' ).on( 'submit', (event) => {
             event.preventDefault();
@@ -54,6 +56,11 @@ class Messages {
         if (this.roomsLoaded) {
             this.selectRoom(this.lastSettings.roomid);
         }
+    }
+
+    setOccupants( occupants ) {
+        this.occupants = occupants;
+        this.occupantsLoaded = true;
     }
 
     setRoom( roomid ) {
@@ -131,21 +138,46 @@ class Messages {
         var messages = $('div.chat > div.conversation');
         var drawnMessage = messages.find('div.message#' + message.id);
         if (drawnMessage.length > 0) {
-            drawnMessage.html(escapeHtml(message.details));
+            if (message.action == "message") {
+                drawnMessage.html(escapeHtml(message.details));
+            }
         } else {
             // Now, draw it fresh since it's not an update.
-            var html = '<div class="item">';
-            html    += '  <div class="icon" id="' + message.occupant.id + '">';
-            html    += '    <img src="' + message.occupant.icon + '" />';
-            html    += '  </div>';
-            html    += '  <div class="content-wrapper">';
-            html    += '    <div class="meta-wrapper">';
-            html    += '      <div class="name" id="' + message.occupant.id + '">' + message.occupant.nickname + '</div>';
-            html    += '      <div class="timestamp" id="' + message.id + '">' + formatTime(message.timestamp) + '</div>';
-            html    += '    </div>';
-            html    += '    <div class="message" id="' + message.id + '">' + escapeHtml(message.details) + '</div>';
-            html    += '  </div>';
-            html    += '</div>';
+            var html = "";
+            if (message.action == "message") {
+                html  = '<div class="item">';
+                html += '  <div class="icon" id="' + message.occupant.id + '">';
+                html += '    <img src="' + message.occupant.icon + '" />';
+                html += '  </div>';
+                html += '  <div class="content-wrapper">';
+                html += '    <div class="meta-wrapper">';
+                html += '      <div class="name" id="' + message.occupant.id + '">' + message.occupant.nickname + '</div>';
+                html += '      <div class="timestamp" id="' + message.id + '">' + formatTime(message.timestamp) + '</div>';
+                html += '    </div>';
+                html += '    <div class="message" id="' + message.id + '">' + escapeHtml(message.details) + '</div>';
+                html += '  </div>';
+                html += '</div>';
+            } else if (message.action == "join") {
+                html  = '<div class="item">';
+                html += '  <div class="content-wrapper">';
+                html += '    <div class="meta-wrapper">';
+                html += '      <div class="name" id="' + message.occupant.id + '">' + message.occupant.nickname + '</div>';
+                html += '      <div class="joinmessage">has joined!</div>';
+                html += '      <div class="timestamp" id="' + message.id + '">' + formatTime(message.timestamp) + '</div>';
+                html += '    </div>';
+                html += '  </div>';
+                html += '</div>';
+            } else if (message.action == "leave") {
+                html  = '<div class="item">';
+                html += '  <div class="content-wrapper">';
+                html += '    <div class="meta-wrapper">';
+                html += '      <div class="name" id="' + message.occupant.id + '">' + message.occupant.nickname + '</div>';
+                html += '      <div class="joinmessage">has left!</div>';
+                html += '      <div class="timestamp" id="' + message.id + '">' + formatTime(message.timestamp) + '</div>';
+                html += '    </div>';
+                html += '  </div>';
+                html += '</div>';
+            }
 
             if (location == 'after') {
                 messages.append(html);

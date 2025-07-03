@@ -15,14 +15,16 @@ NewActionID = ActionID(-1)
 
 
 class User:
-    def __init__(self, userid: UserID, name: str) -> None:
+    def __init__(self, userid: UserID, username: str, nickname: str) -> None:
         self.id = userid
-        self.name = name
+        self.username = username
+        self.nickname = nickname
 
     def to_dict(self) -> Dict[str, object]:
         return {
             "id": User.from_id(self.id),
-            "name": self.name,
+            "username": self.username,
+            "nickname": self.nickname,
         }
 
     @staticmethod

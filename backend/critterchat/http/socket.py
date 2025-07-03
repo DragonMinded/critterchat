@@ -225,6 +225,7 @@ def chathistory(json: Dict[str, object]) -> None:
         roomid = Room.to_id(str(json.get('roomid')))
         if roomid:
             actions = messageservice.get_room_history(roomid)
+            occupants = messageservice.get_room_occupants(roomid)
 
             # Starting from scratch here since this messages clears the chat pane on the client.
             fetchlimit = None
@@ -235,6 +236,7 @@ def chathistory(json: Dict[str, object]) -> None:
             socketio.emit('chathistory', {
                 'roomid': Room.from_id(roomid),
                 'history': [action.to_dict() for action in actions],
+                'occupants': [occupant.to_dict() for occupant in occupants],
             }, room=request.sid)
 
 

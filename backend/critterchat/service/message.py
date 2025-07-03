@@ -32,12 +32,12 @@ class MessageService:
 
     def get_room_history(self, roomid: RoomID) -> List[Action]:
         history = self.__data.room.get_room_history(roomid)
-        history = [e for e in history if e.action in {ActionType.MESSAGE}]
+        history = [e for e in history if e.action in {ActionType.MESSAGE, ActionType.JOIN, ActionType.LEAVE}]
         return history
 
     def get_room_updates(self, roomid: RoomID, after: ActionID) -> List[Action]:
         history = self.__data.room.get_room_history(roomid, after=after)
-        history = [e for e in history if e.action in {ActionType.MESSAGE}]
+        history = [e for e in history if e.action in {ActionType.MESSAGE, ActionType.JOIN, ActionType.LEAVE}]
         return history
 
     def add_message(self, roomid: RoomID, userid: UserID, message: str) -> Optional[Action]:
@@ -137,6 +137,10 @@ class MessageService:
 
         return sorted(rooms, key=lambda r: r.last_action, reverse=True)
 
+    def get_room_occupants(self, roomid: RoomID) -> List[Occupant]:
+        occupants = self.__data.room.get_room_occupants(roomid)
+        return sorted(occupants, key=lambda o: o.nickname)
+
     def get_matching_rooms(self, userid: UserID, *, name: Optional[str] = None) -> List[RoomSearchResult]:
         # First get the list of rooms that we can see based on our userID (joined rooms).
         inrooms = self.__data.room.get_matching_rooms(userid, name=name)
@@ -164,7 +168,7 @@ class MessageService:
         # Now, look up all users we could chat with, given our criteria.
         potentialusers = sorted(
             self.__data.user.get_visible_users(userid, name=name),
-            key=lambda u: u.name,
+            key=lambda u: u.nickname,
         )
 
         # Now, combined the two.
@@ -175,6 +179,6 @@ class MessageService:
             else:
                 results.append(RoomSearchResult(room.name, False, room.id, None))
         for user in potentialusers:
-            results.append(RoomSearchResult(user.name, False, None, user.id))
+            results.append(RoomSearchResult(user.nickname, False, None, user.id))
 
         return results

@@ -146,7 +146,7 @@ class Menu {
         }
     }
 
-    updateBadges( roomid, actions ) {
+    updateHistory( roomid, actions ) {
         if (roomid == this.selected) {
             return;
         }
