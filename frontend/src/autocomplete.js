@@ -1,3 +1,5 @@
+import $ from "jquery";
+
 function getCursorPosition(element) {
     var el = $(element).get(0);
     if ('selectionStart' in el) {
@@ -78,7 +80,7 @@ export function autocomplete(state, selector, items) {
         }
     });
 
-    $(selector).on('keyup focus click', function(event) {
+    $(selector).on('keyup focus click', function() {
         if (handled) {
             handled = false;
             return;
@@ -98,9 +100,6 @@ export function autocomplete(state, selector, items) {
         var word = "";
         var text = $(selector).val();
         var curpos = pos;
-        var curstart = 0;
-        var curend = 0;
-        var reWhiteSpace = new RegExp("/\s/");
 
         while(curpos > 0) {
             if(text[curpos - 1].trim() === '') {
@@ -108,7 +107,6 @@ export function autocomplete(state, selector, items) {
             }
             curpos --;
         }
-        curstart = curpos;
 
         while(curpos < text.length) {
             if(text[curpos].trim() === '') {
@@ -118,7 +116,6 @@ export function autocomplete(state, selector, items) {
             word += text[curpos];
             curpos ++;
         }
-        curend = curpos;
 
         // Show if we are @ing somebody, or if we have at least 2 characters matching an emote.
         if((word.startsWith(":") && !word.endsWith(":") && word.length > 2) || word.startsWith('@'))
@@ -126,13 +123,13 @@ export function autocomplete(state, selector, items) {
             word = word.toLowerCase();
 
             // First, give us our exact matches.
-            matches = items.filter(function(item) {
+            var matches = items.filter(function(item) {
                 return item.text.toLowerCase().startsWith(word);
             });
 
             // Now, look up any partial matches if we're doing emoji lookup.
             var noColonPrefix = word.substring(1);
-            partials = (word.startsWith(":") && !word.endsWith(":") && noColonPrefix.length > 0) ? items.filter(function(item) {
+            var partials = (word.startsWith(":") && !word.endsWith(":") && noColonPrefix.length > 0) ? items.filter(function(item) {
                 // First, ignore anything that isn't an emoji.
                 if (!item.text.startsWith(":") || !item.text.endsWith(":")) {
                     return false;
@@ -180,12 +177,10 @@ export function autocomplete(state, selector, items) {
         }
 
         // Figure out if we have anything to display.
-        var word = "";
         var text = $(selector).val();
         var curpos = pos;
         var curstart = 0;
         var curend = 0;
-        var reWhiteSpace = new RegExp("/\s/");
 
         while(curpos > 0) {
             if(text[curpos - 1].trim() === '') {
@@ -200,7 +195,6 @@ export function autocomplete(state, selector, items) {
                 break;
             }
 
-            word += text[curpos];
             curpos ++;
         }
         curend = curpos;
@@ -291,10 +285,10 @@ export function autocomplete(state, selector, items) {
         const offset = $(selector).offset();
         const width = $(selector).outerWidth();
         var height = 0;
-        $('div.autocomplete-element').each(function(i) {
+        $('div.autocomplete-element').each(function() {
             height += $(this).height();
         });
-        $('div.autocomplete-additional').each(function(i) {
+        $('div.autocomplete-additional').each(function() {
             height += $(this).height();
         });
 
@@ -312,7 +306,7 @@ export function autocomplete(state, selector, items) {
         }
 
         // Just select the last element if we looped around or have no selection.
-        var element = $('div.autocomplete-element.selected');
+        element = $('div.autocomplete-element.selected');
         if (element.length == 0) {
             var elements = $('div.autocomplete-element');
             $(elements[elements.length - 1]).addClass('selected');
@@ -328,7 +322,7 @@ export function autocomplete(state, selector, items) {
         }
 
         // Just select the last element if we looped around or have no selection.
-        var element = $('div.autocomplete-element.selected');
+        element = $('div.autocomplete-element.selected');
         if (element.length == 0) {
             var elements = $('div.autocomplete-element');
             $(elements[0]).addClass('selected');

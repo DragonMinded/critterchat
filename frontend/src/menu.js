@@ -51,7 +51,7 @@ class Menu {
         }
 
         // Draw, and then select the room.
-        this.rooms.forEach((room, i) => this.drawRoom(room));
+        this.rooms.forEach((room) => this.drawRoom(room));
         $('div.menu > div.conversations').scrollTop(scrollPos);
 
         if (this.lastSettingsLoaded) {

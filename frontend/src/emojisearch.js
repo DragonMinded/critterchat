@@ -1,3 +1,5 @@
+import $ from "jquery";
+
 function getCursorStart(element) {
     var el = $(element).get(0);
     if ('selectionStart' in el) {
@@ -42,14 +44,14 @@ export function emojisearch(state, button, textbox, items) {
             categories[category] = [];
 
             Object.keys(window.emojicategories[category]).forEach(function(subcategory) {
-                window.emojicategories[category][subcategory].forEach(function(emoji, i) {
+                window.emojicategories[category][subcategory].forEach(function(emoji) {
                     categories[category].push(":" + emoji.toLowerCase() + ":");
                 });
             });
         });
 
         // Add custom emoji if they exist.
-        entries.forEach(function(entry, i) {
+        entries.forEach(function(entry) {
             if (entry.type != "emote") {
                 return;
             }
@@ -69,7 +71,7 @@ export function emojisearch(state, button, textbox, items) {
 
         // Make a mapping of the emojis and emotes.
         var emojimapping = {}
-        entries.forEach(function(entry, i) {
+        entries.forEach(function(entry) {
             var text = entry.text.toLowerCase();
             if (catkeys.hasOwnProperty(text)) {
                 catkeys[text] = entry.preview;
@@ -85,7 +87,7 @@ export function emojisearch(state, button, textbox, items) {
         var emojisearchContent = $('div.emojisearch-content');
 
         // Actually render the categories.
-        Object.keys(categories).forEach(function(category, i) {
+        Object.keys(categories).forEach(function(category) {
             var first = categories[category][0];
             var preview = catkeys[first];
 
@@ -101,7 +103,7 @@ export function emojisearch(state, button, textbox, items) {
                 catList = catList.toSorted((a, b) => emojimapping[a].text.localeCompare(emojimapping[b].text));
             }
 
-            catList.forEach(function(entry, i) {
+            catList.forEach(function(entry) {
                 if (emojimapping.hasOwnProperty(entry)) {
                     emojisearchContent.append(
                         $('<div class="emojisearch-element"></div>')

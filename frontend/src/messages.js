@@ -129,8 +129,8 @@ class Messages {
         prepend.sort((a, b) => b.order - a.order);
         append.sort((a, b) => a.order - b.order);
 
-        prepend.forEach((message, i) => this.drawMessage(message, 'before'));
-        append.forEach((message, i) => this.drawMessage(message, 'after'));
+        prepend.forEach((message) => this.drawMessage(message, 'before'));
+        append.forEach((message) => this.drawMessage(message, 'after'));
     }
 
     drawMessage( message, location ) {

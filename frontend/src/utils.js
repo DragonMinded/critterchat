@@ -10,18 +10,18 @@ var entityMap = {
 };
 
 var escapeHtml = function( str ) {
-  str = String(str);
-  str = str.replace(/[&<>"'`=\/]/g, function (s) {
-    return entityMap[s];
-  });
-  Object.keys(emojis).forEach(function(emoji) {
-      str = str.replaceAll(emoji, emojis[emoji]);
-  });
-  str = twemoji.parse(str, twemojiOptions);
-  Object.keys(emotes).forEach(function(emote) {
-      str = str.replaceAll(emote, "<img src='" + emotes[emote] + "' class='emote' alt='" + emote + "' />");
-  });
-  return str;
+    str = String(str);
+        str = str.replace(/[&<>"'`=/]/g, function (s) {
+        return entityMap[s];
+    });
+    Object.keys(emojis).forEach(function(emoji) {
+        str = str.replaceAll(emoji, emojis[emoji]);
+    });
+    str = twemoji.parse(str, twemojiOptions);
+    Object.keys(emotes).forEach(function(emote) {
+        str = str.replaceAll(emote, "<img src='" + emotes[emote] + "' class='emote' alt='" + emote + "' />");
+    });
+    return str;
 }
 
 var formatTime = function( ts, showseconds, twentyfour ) {

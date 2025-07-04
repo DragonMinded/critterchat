@@ -1,6 +1,8 @@
 import $ from "jquery";
-import { modal } from "jquery-modal";
 import { io } from "socket.io-client";
+
+// Importing this hooks it into jQuery.
+import { modal } from "jquery-modal"; // eslint-disable-line no-unused-vars
 
 import { manager } from "./manager.js";
 
