@@ -1,5 +1,7 @@
 import json
-from typing import Dict, Optional, cast
+import random
+from contextlib import contextmanager
+from typing import Dict, Iterator, List, Optional, cast
 
 from sqlalchemy import MetaData
 from sqlalchemy.orm import scoped_session
@@ -33,6 +35,7 @@ class BaseData:
         """
         self.__config = config
         self.__session = session
+        self.__depth: List[int] = []
 
     @property
     def config(self) -> Config:
@@ -74,6 +77,20 @@ class BaseData:
 
         return cast(Dict[str, object], fix(json.loads(data)))
 
+    @contextmanager
+    def transaction(self) -> Iterator[None]:
+        with self.__session.begin():
+            nonce = random.randint(0, 2 ** 31)
+            self.__depth.append(nonce)
+
+            yield
+
+            newnonce = self.__depth.pop()
+            if nonce != newnonce:
+                raise Exception("Logic error, nonce order issue!")
+
+            self.__session.commit()
+
     def execute(
         self,
         sql: str,
@@ -96,5 +113,7 @@ class BaseData:
             text(sql),
             params if params is not None else {},
         )
-        self.__session.commit()
+
+        if not self.__depth:
+            self.__session.commit()
         return result

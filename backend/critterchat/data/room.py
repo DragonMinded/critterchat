@@ -66,6 +66,7 @@ action = Table(
     Column("occupant_id", Integer, nullable=False),
     Column("action", String(32)),
     Column("details", Text),
+    mysql_charset="utf8mb4",
 )
 
 

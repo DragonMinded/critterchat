@@ -8,6 +8,7 @@ class Messages {
         this.occupants = [];
         this.roomid = "";
         this.autoscroll = true;
+        this.lastAction = {};
         this.lastSettings = {};
         this.lastSettingsLoaded = false;
         this.occupantsLoaded = false;
@@ -49,6 +50,16 @@ class Messages {
         });
     }
 
+    updateLastAction( action ) {
+        if (!this.lastAction?.order) {
+            this.lastAction = action;
+        } else {
+            if (action.order > this.lastAction.order) {
+                this.lastAction = action;
+            }
+        }
+    }
+
     setLastSettings( settings ) {
         this.lastSettings = settings;
         this.lastSettingsLoaded = true;
@@ -67,6 +78,7 @@ class Messages {
         if (roomid != this.roomid) {
             this.messages = [];
             this.roomid = roomid;
+            this.lastAction = {};
             this.autoscroll = true;
 
             $('div.chat > div.conversation').empty();
@@ -78,6 +90,7 @@ class Messages {
         if (roomid == this.roomid) {
             this.message = [];
             this.roomid = "";
+            this.lastAction = {};
             this.autoscroll = true;
             $('div.chat > div.conversation').empty();
             $( '#message-actions' ).attr('roomid', '');
@@ -129,11 +142,17 @@ class Messages {
         prepend.sort((a, b) => b.order - a.order);
         append.sort((a, b) => a.order - b.order);
 
+        var oldactionid = this.lastAction?.id;
+
         prepend.forEach((message) => this.drawMessage(message, 'before'));
         append.forEach((message) => this.drawMessage(message, 'after'));
+
+        if (this.lastAction.id != oldactionid) {
+            this.eventBus.emit("lastaction", {"roomid": this.roomid, "actionid": this.lastAction.id})
+        }
     }
 
-    drawMessage( message, location ) {
+    drawMessage( message, loc ) {
         // First, see if this is an update.
         var messages = $('div.chat > div.conversation');
         var drawnMessage = messages.find('div.message#' + message.id);
@@ -179,13 +198,14 @@ class Messages {
                 html += '</div>';
             }
 
-            if (location == 'after') {
+            if (loc == 'after') {
                 messages.append(html);
             } else {
                 messages.prepend(html);
             }
         }
 
+        this.updateLastAction(message);
         this.ensureScrolled();
     }
 }

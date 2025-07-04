@@ -2,6 +2,7 @@ import random
 import string
 
 from sqlalchemy import Table, Column
+from sqlalchemy.schema import UniqueConstraint
 from sqlalchemy.types import String, Integer, Text
 from typing import Any, List, Optional, Tuple
 from typing_extensions import Final
@@ -9,7 +10,7 @@ from passlib.hash import pbkdf2_sha512  # type: ignore
 
 from ..common import Time
 from .base import BaseData, metadata
-from .types import User, UserSettings, NewUserID, UserID, RoomID
+from .types import User, UserSettings, NewActionID, NewRoomID, NewUserID, ActionID, RoomID, UserID
 
 """
 Table representing a user.
@@ -48,6 +49,7 @@ profile = Table(
     Column("nickname", String(255)),
     Column("about", Text),
     Column("icon", Integer),
+    mysql_charset="utf8mb4",
 )
 
 """
@@ -59,6 +61,21 @@ settings = Table(
     Column("user_id", Integer, nullable=False, unique=True, index=True),
     Column("last_room", Integer),
     Column("info", String(8)),
+    mysql_charset="utf8mb4",
+)
+
+"""
+Table representing a user's last seen message/action for a given room they're in.
+"""
+lastseen = Table(
+    "lastseen",
+    metadata,
+    Column("id", Integer, nullable=False, primary_key=True, autoincrement=True),
+    Column("user_id", Integer, nullable=False),
+    Column("room_id", Integer, nullable=False),
+    Column("action_id", Integer, nullable=False),
+    UniqueConstraint("user_id", "room_id", name='uidrid'),
+    mysql_charset="utf8mb4",
 )
 
 
@@ -323,3 +340,35 @@ class UserData(BaseData):
         users = [self.__to_user(u) for u in cursor.mappings()]
 
         return users
+
+    def mark_last_seen(self, userid: UserID, roomid: RoomID, actionid: ActionID) -> None:
+        """
+        Given a user, a room they're in and an action they've seen, mark this action as
+        having been seen by this user for this room.
+        """
+
+        if userid is NewUserID or roomid is NewRoomID or actionid is NewActionID:
+            return
+
+        with self.transaction():
+            sql = """
+                SELECT action_id FROM lastseen WHERE user_id = :userid AND room_id = :roomid LIMIT 1
+            """
+            cursor = self.execute(sql, {"userid": userid, "roomid": roomid})
+            if cursor.rowcount != 1:
+                last = ActionID(0)
+            else:
+                result = cursor.mappings().fetchone()
+                last = ActionID(int(result['action_id']))
+
+            if actionid <= last:
+                # Nothing to do, this is older than our newest message.
+                return
+
+            sql = """
+                INSERT INTO lastseen (`user_id`, `room_id`, `action_id`)
+                VALUES (:userid, :roomid, :actionid)
+                ON DUPLICATE KEY UPDATE
+                `action_id` = :actionid
+            """
+            self.execute(sql, {"userid": userid, "roomid": roomid, "actionid": actionid})

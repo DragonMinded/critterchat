@@ -89,5 +89,9 @@ export function manager(socket) {
 
     eventBus.on('searchrooms', (value) => {
         socket.emit('searchrooms', {'name': value})
-    })
+    });
+
+    eventBus.on('lastaction', (value) => {
+        socket.emit('lastaction', value);
+    });
 }

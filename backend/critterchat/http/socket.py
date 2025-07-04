@@ -4,7 +4,7 @@ from typing import Any, Dict, Optional
 from .app import socketio, config, request
 from ..common import AESCipher
 from ..service import UserService, MessageService
-from ..data import Data, Room, User, UserSettings, NewActionID, ActionID, RoomID, UserID
+from ..data import Data, Action, Room, User, UserSettings, NewActionID, ActionID, RoomID, UserID
 
 
 class SocketInfo:
@@ -253,14 +253,7 @@ def message(json: Dict[str, object]) -> None:
     roomid = Room.to_id(str(json.get('roomid')))
     message = json.get('message')
     if roomid and message:
-        action = messageservice.add_message(roomid, userid, str(message))
-        if action:
-            # We don't update our last fetched action here because it could be newer than
-            # some other messages, so we don't want to hide those until refresh.
-            socketio.emit('chatactions', {
-                'roomid': Room.from_id(roomid),
-                'actions': [action.to_dict()],
-            }, room=request.sid)
+        messageservice.add_message(roomid, userid, str(message))
 
 
 @socketio.on('leaveroom')  # type: ignore
@@ -342,3 +335,20 @@ def joinroom(json: Dict[str, object]) -> None:
             'rooms': [room.to_dict() for room in rooms],
             'selected': Room.from_id(actual_id),
         }, room=request.sid)
+
+
+@socketio.on('lastaction')  # type: ignore
+def lastaction(json: Dict[str, object]) -> None:
+    data = Data(config)
+    userservice = UserService(config, data)
+
+    # Try to associate with a user if there is one.
+    userid = recover_userid(data, request.sid)
+    if userid is None:
+        return
+
+    # Grab all rooms that match this search result
+    roomid = Room.to_id(str(json.get('roomid')))
+    actionid = Action.to_id(str(json.get('actionid')))
+    if roomid is not None and actionid is not None:
+        userservice.mark_last_seen(userid, roomid, actionid)
