@@ -320,3 +320,16 @@ div.info > div.occupants {
     overflow-y: scroll;
     padding-right: 10px;
 }
+
+div.info > div.title-wrapper {
+    font-size: 14px;
+    gap: 5px;
+}
+
+div.title-wrapper span.title {
+    font-weight: bold;
+}
+
+div.title-wrapper span.desc {
+    flex-grow: 1
+}

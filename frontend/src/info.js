@@ -142,6 +142,21 @@ class Info {
             $( '#leave-room' ).attr('roomid', roomid);
             this.rooms.forEach((room) => {
                 if (room.id == roomid) {
+                    var title;
+                    if (room.type == "chat") {
+                        if (room['public']) {
+                            title = "Public group chat";
+                        } else {
+                            title = "Private chat";
+                        }
+                    } else {
+                        if (room['public']) {
+                            title = "Public room";
+                        } else {
+                            title = "Private room";
+                        }
+                    }
+                    $( '#room-title' ).text(title);
                     if (room.type == 'room') {
                         $( '#leave-type' ).text('room');
                     } else {

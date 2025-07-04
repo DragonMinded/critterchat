@@ -100,7 +100,7 @@ class RoomData(BaseData):
             Room(
                 roomid=RoomID(result['id']),
                 name=result['name'],
-                public=result['public'],
+                public=bool(result['public']),
                 last_action=result['last_action'],
                 iconid=AttachmentID(result['icon']) if result['icon'] else None,
             )
@@ -136,7 +136,7 @@ class RoomData(BaseData):
             Room(
                 roomid=RoomID(result['id']),
                 name=result['name'],
-                public=result['public'],
+                public=bool(result['public']),
                 last_action=result['last_action'],
                 iconid=AttachmentID(result['icon']) if result['icon'] else None,
             )
@@ -170,7 +170,7 @@ class RoomData(BaseData):
             Room(
                 roomid=RoomID(result['id']),
                 name=result['name'],
-                public=result['public'],
+                public=bool(result['public']),
                 last_action=result['last_action'],
                 iconid=AttachmentID(result['icon']) if result['icon'] else None,
             )
@@ -198,7 +198,7 @@ class RoomData(BaseData):
         return Room(
             roomid=RoomID(result['id']),
             name=result['name'],
-            public=result['public'],
+            public=bool(result['public']),
             last_action=result['last_action'],
             iconid=AttachmentID(result['icon']) if result['icon'] else None,
         )
