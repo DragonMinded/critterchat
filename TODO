@@ -1,7 +1,5 @@
 TODO For First Test Build
 =========================
-Display user name next to nickname in search as well as on profiles.
-Support editing your nickname per-chat.
 Custom emote support ported from PyStreaming.
 Emote/emoji typeahead when chatting ported from PyStreaming.
 Emote/emoji search pane ported from PyStreaming.
@@ -18,10 +16,12 @@ TODO For Post Test Build
 ========================
 Close-by message coalescing into one group of lines.
 Start on profile view/editor to look at a person's profile.
+Display user name next to nickname in search as well as on profiles.
 Support editing your nickname on the profile page.
 Support setting your custom color on the profile page.
 Support setting a custom avatar on the profile page.
 Support creating an account flow with ability to disable instance-side.
+Support editing your nickname per-chat.
 README for contributing/setting up/etc.
 Protocol documentation.
 
