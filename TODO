@@ -1,6 +1,5 @@
 TODO For First Test Build
 =========================
-Clear badges on all clients if cleared for a chat on one client.
 Display user name next to nickname in search as well as on profiles.
 Support editing your nickname per-chat.
 Custom emote support ported from PyStreaming.
@@ -31,7 +30,6 @@ Long-Term TODOs
 Message editing.
 Message deleting.
 Photo attachments, both uploaded and pasted from clipboard.
-Users in a particular chat list pane.
 Arbitrary file attachments.
 Per-chat CSS themeing.
 Ability to set a personal nickname for a user that only you can see.
@@ -40,7 +38,8 @@ Message reactions.
 Reply to message.
 Read receipts.
 Now typing indicators.
-Pin message, show pinned.
+Link auto-sanitization.
+Message pinning.
 
 Begin to Think About
 ====================

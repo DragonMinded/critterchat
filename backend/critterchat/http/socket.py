@@ -33,6 +33,7 @@ def background_thread_proc() -> None:
         # Look for any new actions that should be relayed.
         data = Data(config)
         messageservice = MessageService(config, data)
+        userservice = UserService(config, data)
 
         with socket_lock:
             if not socket_to_info:
@@ -75,10 +76,20 @@ def background_thread_proc() -> None:
                             else:
                                 info.fetchlimit[room.id] = NewActionID
 
+                    # Calculate any badge updates that the client needs to know about.
+                    lastseen = userservice.get_last_seen_counts(info.userid)
+                    counts: Dict[RoomID, int] = {}
+                    for roomid, count in lastseen.items():
+                        if count < info.lastseen.get(roomid, 0):
+                            counts[roomid] = count
+                            updated = True
+                        info.lastseen[roomid] = count
+
                     if updated:
                         # Notify the client of any room rearranges, or any new rooms.
                         socketio.emit('roomlist', {
                             'rooms': [room.to_dict() for room in rooms],
+                            'counts': [{'roomid': Room.from_id(k), 'count': v} for k, v in counts.items()],
                         }, room=info.sid)
 
 

@@ -192,8 +192,8 @@ class Menu {
     setBadges( badges ) {
         if (this.roomsLoaded) {
             badges.forEach((obj) => {
+                this.clearBadges(obj.roomid);
                 if (obj.count) {
-                    this.clearBadges(obj.roomid);
                     this.updateBadges(obj.roomid, obj.count);
                 }
             });
