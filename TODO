@@ -1,6 +1,5 @@
 TODO For First Test Build
 =========================
-Keep track of last seen message per-user, use that to load badges on first load.
 Clear badges on all clients if cleared for a chat on one client.
 Display user name next to nickname in search as well as on profiles.
 Support editing your nickname per-chat.

@@ -27,6 +27,9 @@ export function manager(socket) {
 
     socket.on('roomlist', (msg) => {
         menuInst.setRooms(msg.rooms);
+        if (msg.counts) {
+            menuInst.setBadges(msg.counts);
+        }
         infoInst.setRooms(msg.rooms);
         if (msg.selected) {
             menuInst.selectRoom(msg.selected);

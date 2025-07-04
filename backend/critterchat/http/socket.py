@@ -13,6 +13,7 @@ class SocketInfo:
         self.sessionid = sessionid
         self.userid = userid
         self.fetchlimit: Dict[RoomID, Optional[ActionID]] = {}
+        self.lastseen: Dict[RoomID, int] = {}
 
 
 socket_lock: Lock = Lock()
@@ -156,6 +157,7 @@ def disconnect() -> None:
 def roomlist(json: Dict[str, object]) -> None:
     data = Data(config)
     messageservice = MessageService(config, data)
+    userservice = UserService(config, data)
 
     # Try to associate with a user if there is one.
     userid = recover_userid(data, request.sid)
@@ -166,6 +168,7 @@ def roomlist(json: Dict[str, object]) -> None:
     with socket_lock:
         # Grab all rooms that the user is in, based on their user ID.
         rooms = messageservice.get_joined_rooms(userid)
+        lastseen = userservice.get_last_seen_counts(userid)
 
         # Pre-charge the delta fetches for all rooms this user is in.
         for room in rooms:
@@ -175,8 +178,11 @@ def roomlist(json: Dict[str, object]) -> None:
             else:
                 info.fetchlimit[room.id] = NewActionID
 
+            info.lastseen[room.id] = lastseen.get(room.id, 0)
+
     socketio.emit('roomlist', {
         'rooms': [room.to_dict() for room in rooms],
+        'counts': [{'roomid': Room.from_id(k), 'count': v} for k, v in lastseen.items()],
     }, room=request.sid)
 
 

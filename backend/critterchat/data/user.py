@@ -359,7 +359,7 @@ class UserData(BaseData):
                 last = ActionID(0)
             else:
                 result = cursor.mappings().fetchone()
-                last = ActionID(int(result['action_id']))
+                last = ActionID(result['action_id'])
 
             if actionid <= last:
                 # Nothing to do, this is older than our newest message.
@@ -372,3 +372,34 @@ class UserData(BaseData):
                 `action_id` = :actionid
             """
             self.execute(sql, {"userid": userid, "roomid": roomid, "actionid": actionid})
+
+    def get_last_seen_counts(self, userid: UserID) -> List[Tuple[RoomID, int]]:
+        """
+        Given a user, grab all of the last seen room/action counts.
+        """
+
+        if userid is NewUserID:
+            return []
+
+        sql = """
+            SELECT room_id, action_id FROM lastseen WHERE user_id = :userid
+        """
+        cursor = self.execute(sql, {"userid": userid})
+        counts = [
+            (RoomID(result['room_id']), ActionID(result['action_id']))
+            for result in cursor.mappings()
+        ]
+
+        def hydrate_count(roomid: RoomID, actionid: ActionID) -> int:
+            sql = """
+                SELECT COUNT(id) AS count FROM action WHERE `room_id` = :roomid AND `id` > :actionid
+            """
+            cursor = self.execute(sql, {"roomid": roomid, "actionid": actionid})
+            if cursor.rowcount != 1:
+                return 0
+            result = cursor.mappings().fetchone()
+            return int(result["count"])
+
+        # There's probably a SQL way to do this, but I don't want to bang my head against
+        # it right now, so it can come in a future improvement.
+        return [(c[0], hydrate_count(c[0], c[1])) for c in counts]

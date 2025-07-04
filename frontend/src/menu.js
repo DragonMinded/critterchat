@@ -148,6 +148,10 @@ class Menu {
     }
 
     updateHistory( roomid, actions ) {
+        this.updateBadges( roomid, actions.length );
+    }
+
+    updateBadges( roomid, newactions ) {
         if (roomid == this.selected) {
             return;
         }
@@ -168,7 +172,7 @@ class Menu {
                 count = "0";
             }
 
-            var intCount = parseInt(count) + actions.length;
+            var intCount = parseInt(count) + newactions;
             var text;
             if (intCount > 9) {
                 text = '!!';
@@ -180,6 +184,17 @@ class Menu {
             this.rooms.forEach((room) => {
                 if (room.id == roomid) {
                     room.count = text;
+                }
+            });
+        }
+    }
+
+    setBadges( badges ) {
+        if (this.roomsLoaded) {
+            badges.forEach((obj) => {
+                if (obj.count) {
+                    this.clearBadges(obj.roomid);
+                    this.updateBadges(obj.roomid, obj.count);
                 }
             });
         }

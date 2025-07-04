@@ -1,3 +1,5 @@
+from typing import Dict
+
 from ..config import Config
 from ..data import Data, UserSettings, ActionID, RoomID, UserID
 
@@ -30,3 +32,7 @@ class UserService:
 
     def mark_last_seen(self, userid: UserID, roomid: RoomID, actionid: ActionID) -> None:
         self.__data.user.mark_last_seen(userid, roomid, actionid)
+
+    def get_last_seen_counts(self, userid: UserID) -> Dict[RoomID, int]:
+        lastseen = self.__data.user.get_last_seen_counts(userid)
+        return {ls[0]: ls[1] for ls in lastseen}
