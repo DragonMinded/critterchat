@@ -104,9 +104,10 @@ export function emojisearch(state, button, textbox, items) {
                 catList = catList.toSorted((a, b) => emojimapping[a].text.localeCompare(emojimapping[b].text));
             }
 
+            var appendList = [];
             catList.forEach(function(entry) {
                 if (emojimapping.hasOwnProperty(entry)) {
-                    emojisearchContent.append(
+                    appendList.push(
                         $('<div class="emojisearch-element"></div>')
                             .attr("text", emojimapping[entry].text)
                             .attr("category", category)
@@ -114,6 +115,8 @@ export function emojisearch(state, button, textbox, items) {
                     );
                 }
             });
+
+            emojisearchContent.append(appendList);
         });
     }
 

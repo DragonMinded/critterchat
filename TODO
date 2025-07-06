@@ -1,5 +1,7 @@
 TODO For First Test Build
 =========================
+Fix InputState handling so that clicking other buttons or whatever closes searches.
+Embiggening emojis/emotes when they're on their own line ported.
 Custom emote support ported from PyStreaming.
 Support editing a chat's custom name.
 Support for setting a chat's custom avatar/picture.
