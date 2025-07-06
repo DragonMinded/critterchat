@@ -177,12 +177,13 @@ div.chat > form.actions {
 
 div.chat form.actions div.newmessage {
     flex-grow: 1;
-    padding-right: 10px;
     position: relative;
+    display: inherit;
 }
 
 div.newmessage input {
     width: 100%;
+    padding-right: 20px;
 }
 
 div.chat > div.conversation div.item {
@@ -332,4 +333,29 @@ div.title-wrapper span.title {
 
 div.title-wrapper span.desc {
     flex-grow: 1
+}
+
+img.emote, img.emoji {
+    display: inline-block;
+    max-width: 48px;
+    height: 16px;
+    width: auto;
+}
+
+img.emote-big, img.emoji-big {
+    display: inline-block;
+    max-width: 96px;
+    height: 32px;
+    width: auto;
+}
+
+div.emoji-search {
+    position: absolute;
+    right: 4px;
+    padding-top: 3px;
+    filter: grayscale(100%);
+}
+
+div.emoji-search:hover, div.emoji-search.opened {
+    filter: none;
 }

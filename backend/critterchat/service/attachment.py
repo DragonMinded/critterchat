@@ -1,9 +1,14 @@
+import mimetypes
 import os
 from typing import Optional, Tuple
 
 from ..config import Config
 from ..data import Data, Attachment, Action, User, Occupant, Room, AttachmentID, DefaultAvatarID, DefaultRoomID
 from ..http.static import default_avatar, default_room
+
+
+# Guess we need to init this. Feel like I'm doing embedded again.
+mimetypes.init()
 
 
 class AttachmentServiceException(Exception):
@@ -20,18 +25,25 @@ class AttachmentService:
         if attachmentid == DefaultAvatarID:
             with open(default_avatar, "rb") as bfp:
                 data = bfp.read()
-                return "image/png", data
+                try:
+                    enc = mimetypes.types_map[os.path.splitext(default_avatar)[1]]
+                except Exception:
+                    enc = "application/octet-stream"
+                return enc, data
         if attachmentid == DefaultRoomID:
             with open(default_room, "rb") as bfp:
                 data = bfp.read()
-                return "image/png", data
+                try:
+                    enc = mimetypes.types_map[os.path.splitext(default_room)[1]]
+                except Exception:
+                    enc = "application/octet-stream"
+                return enc, data
 
         attachment = self.__data.attachment.lookup_attachment(attachmentid)
         if not attachment:
             return None
 
-        system, content_type = attachment
-        if system == "local":
+        if attachment.system == "local":
             # Local storage, look up the storage directory and return that data.
             directory = self.__config.attachments.directory
             if not directory:
@@ -41,9 +53,27 @@ class AttachmentService:
             try:
                 with open(path, "rb") as bfp:
                     data = bfp.read()
-                    return content_type, data
+                    return attachment.content_type, data
             except FileNotFoundError:
                 return None
+        else:
+            # Unknown backend, throw.
+            raise AttachmentServiceException("Unrecognized backend system!")
+
+    def put_attachment_data(self, attachmentid: AttachmentID, data: bytes) -> None:
+        attachment = self.__data.attachment.lookup_attachment(attachmentid)
+        if not attachment:
+            return
+
+        if attachment.system == "local":
+            # Local storage, look up the storage directory and write the data.
+            directory = self.__config.attachments.directory
+            if not directory:
+                raise AttachmentServiceException("Cannot find directory for local attachment storage!")
+
+            path = os.path.join(directory, str(attachmentid))
+            with open(path, "wb") as bfp:
+                bfp.write(data)
         else:
             # Unknown backend, throw.
             raise AttachmentServiceException("Unrecognized backend system!")

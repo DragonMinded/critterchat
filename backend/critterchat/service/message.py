@@ -1,3 +1,4 @@
+import emoji
 from typing import List, Optional
 
 from ..config import Config
@@ -55,6 +56,7 @@ class MessageService:
         return history
 
     def add_message(self, roomid: RoomID, userid: UserID, message: str) -> Optional[Action]:
+        message = emoji.emojize(emoji.emojize(message, language="alias"), language="en")
         occupant = Occupant(
             occupantid=NewOccupantID,
             userid=userid,

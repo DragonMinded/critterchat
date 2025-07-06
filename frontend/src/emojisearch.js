@@ -1,4 +1,5 @@
 import $ from "jquery";
+import { emojicategories } from "./emojicategories.js"
 
 function getCursorStart(element) {
     var el = $(element).get(0);
@@ -40,11 +41,11 @@ export function emojisearch(state, button, textbox, items) {
     function populate(entries) {
         // Filter out categories.
         var categories = {};
-        Object.keys(window.emojicategories).forEach(function(category) {
+        Object.keys(emojicategories).forEach(function(category) {
             categories[category] = [];
 
-            Object.keys(window.emojicategories[category]).forEach(function(subcategory) {
-                window.emojicategories[category][subcategory].forEach(function(emoji) {
+            Object.keys(emojicategories[category]).forEach(function(subcategory) {
+                emojicategories[category][subcategory].forEach(function(emoji) {
                     categories[category].push(":" + emoji.toLowerCase() + ":");
                 });
             });

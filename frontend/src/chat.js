@@ -5,6 +5,10 @@ import { io } from "socket.io-client";
 import { modal } from "jquery-modal"; // eslint-disable-line no-unused-vars
 
 import { manager } from "./manager.js";
+import { hook } from "./extensions.js";
+
+// Hook jQuery extensions immediately.
+hook();
 
 $( document ).ready(function () {
     // Connect to the backend.

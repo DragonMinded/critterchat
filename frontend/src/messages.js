@@ -1,5 +1,8 @@
 import $ from "jquery";
 import { escapeHtml, formatTime, scrollTop, scrollTopMax } from "./utils.js";
+import { InputState } from "./inputstate.js";
+import { emojisearch } from "./emojisearch.js";
+import { autocomplete } from "./autocomplete.js";
 
 class Messages {
     constructor( eventBus ) {
@@ -48,6 +51,25 @@ class Messages {
                 $( 'div.new-messages-alert' ).css( 'display', 'none' );
             }
         });
+
+        // Set up custom emotes, as well as normal emoji typeahead.
+        this.inputState = new InputState();
+
+        // Configure defaults based on what we're told exists by the server.
+        this.options = [];
+        for (const [key, value] of Object.entries(emojis)) {
+          this.options.push({text: key, type: "emoji", preview: twemoji.parse(value, twemojiOptions)});
+        }
+        for (const [key, value] of Object.entries(emotes)) {
+          this.options.push({text: key, type: "emote", preview: "<img class=\"emoji-preview\" src=\"" + value + "\" />"});
+        }
+        this.emojiSearchUpdate = emojisearch(this.inputState, '.emoji-search', '#message', this.options);
+
+        // Support tab-completing users as well.
+        this.autocompleteUpdate = autocomplete(this.inputState, '#message', this.options);
+
+        // Set up the emoji search itself.
+        $(".emoji-search").html(twemoji.parse(String.fromCodePoint(0x1F600), twemojiOptions));
     }
 
     updateLastAction( action ) {
@@ -150,6 +172,42 @@ class Messages {
         if (this.lastAction.id != oldactionid) {
             this.eventBus.emit("lastaction", {"roomid": this.roomid, "actionid": this.lastAction.id})
         }
+    }
+
+    // Whenever user changes occur (joins/parts/renames), update the autocomplete typeahead for those names.
+    updateUsers() {
+        var acusers = this.occupants.map(function(user) {
+            return {text: "@" + user.username, type: "user", preview: "<span>" + escapeHtml(user.nickname) + "</span>"};
+        });
+        this.autocompleteUpdate(this.options.concat(acusers));
+    }
+
+    // Whenever an emote is live-added, update the autocomplete typeahead for that emote.
+    addEmote(key, uri) {
+        emotes[key] = uri;
+        this.options.push({text: key, type: "emote", preview: "<img class=\"emoji-preview\" src=\"" + uri + "\" />"});
+        this.emojisearchUpdate(this.options);
+        this.updateUsers();
+
+        // Also be sure to reload the image.
+        var box = $( 'div.emote-preload' );
+        box.append( '<img src="' + uri + '" />' );
+    }
+
+    // Whenever an emote is live-removed, update the autocomplet typeahead to remove that emote.
+    delelteEmote(key) {
+        delete emotes[key];
+
+        var loc = 0;
+        while( loc < this.options.length ) {
+            if (this.options[loc].type == "emote" && this.options[loc].text == key) {
+                this.options.splice(loc, 1);
+            } else {
+                loc ++;
+            }
+        }
+        this.emojisearchUpdate(this.options);
+        this.updateUsers();
     }
 
     drawMessage( message, loc ) {

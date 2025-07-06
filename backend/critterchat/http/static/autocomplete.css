@@ -1,0 +1,33 @@
+.autocomplete {
+    position: aboslute;
+    margin: 0px;
+    border: 1px solid gray;
+    background: #ffffff;
+    z-index: 200;
+}
+
+.autocomplete-element {
+    overflow: hidden;
+    white-space: nowrap;
+    margin: 0px;
+    display: flex;
+    align-items: center;
+    cursor: default;
+}
+
+.autocomplete-additional {
+    overflow: hidden;
+    white-space: nowrap;
+    margin: 0px;
+    text-align: center;
+    cursor: default;
+}
+
+.autocomplete-element.selected {
+    background: #aaaaaa;
+}
+
+.emoji-preview {
+    max-width: 48px;
+    max-height: 16px;
+}
