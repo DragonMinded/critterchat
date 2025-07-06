@@ -1,4 +1,5 @@
 import traceback
+from typing import Optional
 
 from flask import (
     Flask,
@@ -41,7 +42,16 @@ __all__ = [
     "cacheable",
 ]
 
-app = Flask(__name__)
+
+class CritterChatFlask(Flask):
+    # Makes develpment slightly less hell, since this will cache Twemoji stuff for us.
+    def get_send_file_max_age(self, name: Optional[str]) -> Optional[int]:
+        if name and name.startswith("twemoji/"):
+            return 86400
+        return Flask.get_send_file_max_age(self, name)
+
+
+app = CritterChatFlask(__name__)
 CORS(app)
 socketio = SocketIO(app, cors_allowed_origins='*')
 config: Config = Config()
