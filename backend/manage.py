@@ -1,7 +1,11 @@
 import argparse
+import os
 import sys
+from typing import Optional
+
 from critterchat.data import Data, DBCreateException
 from critterchat.config import Config, load_config
+from critterchat.service import AttachmentService, EmoteService, EmoteServiceException
 
 
 class CLIException(Exception):
@@ -75,6 +79,78 @@ def create_user(config: Config, username: str, password: str) -> None:
     print(f"User created with user ID {new_id}")
 
     data.close()
+
+
+def list_emotes(config: Config) -> None:
+    """
+    List all of the custom emotes enabled on this network right now.
+    """
+
+    data = Data(config)
+    emoteservice = EmoteService(config, data)
+    emotes = emoteservice.get_all_emotes()
+    names = sorted([e for e in emotes])
+    for name in names:
+        print(f"{name}")
+
+
+def add_emote(config: Config, alias: Optional[str], filename_or_directory: str) -> None:
+    """
+    Given a filename or a directory, and optionally an alias, add emotes to the system.
+    """
+
+    data = Data(config)
+    emoteservice = EmoteService(config, data)
+    attachmentservice = AttachmentService(config, data)
+
+    if os.path.isdir(filename_or_directory):
+        if alias:
+            raise CommandException("Cannot provide an alias when importing an entire directory!")
+
+        # Add all files in this directory.
+        for filename in os.listdir(filename_or_directory):
+            alias, ext = os.path.splitext(filename)
+            if ext.lower() not in {".png", ".gif", ".jpg", ".jpeg", ".webp"}:
+                print(f"Skipping {filename} because it is not a recognized type!")
+
+            full_file = os.path.join(filename_or_directory, filename)
+            content_type = attachmentservice.get_content_type(full_file)
+            with open(full_file, "rb") as bfp:
+                emotedata = bfp.read()
+
+            try:
+                emoteservice.add_emote(alias, content_type, emotedata)
+                print(f"Emote added to system with alias '{alias}'")
+            except EmoteServiceException:
+                print(f"Emote with alias '{alias}' not added to system")
+
+    else:
+        content_type = attachmentservice.get_content_type(filename_or_directory)
+        with open(filename_or_directory, "rb") as bfp:
+            emotedata = bfp.read()
+
+        if not alias:
+            alias = os.path.splitext(os.path.basename(filename_or_directory))[0]
+
+        try:
+            emoteservice.add_emote(alias, content_type, emotedata)
+            print(f"Emote added to system with alias '{alias}'")
+        except EmoteServiceException as e:
+            raise CommandException(str(e))
+
+
+def drop_emote(config: Config, alias: str) -> None:
+    """
+    Given an alias of an existing emote, drop it from the network.
+    """
+
+    data = Data(config)
+    emoteservice = EmoteService(config, data)
+    try:
+        emoteservice.drop_emote(alias)
+        print(f"Emote with alias '{alias}' removed from system")
+    except EmoteServiceException as e:
+        raise CommandException(str(e))
 
 
 def main() -> None:
@@ -172,6 +248,55 @@ def main() -> None:
         help="password that the user will use to login with",
     )
 
+    # Another subcommand here.
+    emote_parser = commands.add_parser(
+        "emote",
+        help="modify custom emotes on the network",
+        description="Modify custom emotes on the network.",
+    )
+    emote_commands = emote_parser.add_subparsers(dest="emote")
+
+    # No params for this one
+    emote_commands.add_parser(
+        "list",
+        help="list all custom emotes",
+        description="List all custom emotes.",
+    )
+
+    # A few params for this one
+    addemote_parser = emote_commands.add_parser(
+        "add",
+        help="add a custom emote",
+        description="Add a custom emote.",
+    )
+    addemote_parser.add_argument(
+        "-a",
+        "--alias",
+        type=str,
+        help="alias to use for the emote you're adding, containing only alphanumberic characters, dashes and underscores",
+    )
+    addemote_parser.add_argument(
+        "-f",
+        "--file",
+        type=str,
+        required=True,
+        help="file of the emote you're adding, and the name of the emote (without extension) if no alias is provided",
+    )
+
+    # A few params for this one
+    dropemote_parser = emote_commands.add_parser(
+        "drop",
+        help="drop a custom emote",
+        description="Drop a custom emote.",
+    )
+    dropemote_parser.add_argument(
+        "-a",
+        "--alias",
+        type=str,
+        required=True,
+        help="alias of the emote you're dropping, containing only alphanumberic characters, dashes and underscores",
+    )
+
     args = parser.parse_args()
 
     config = Config()
@@ -201,6 +326,18 @@ def main() -> None:
                 create_user(config, args.username, args.password)
             else:
                 raise CLIException(f"Unknown user operation '{args.user}'")
+
+        elif args.operation == "emote":
+            if args.emote is None:
+                raise CLIException("Unspecified emote operation1")
+            elif args.emote == "list":
+                list_emotes(config)
+            elif args.emote == "add":
+                add_emote(config, args.alias, args.file)
+            elif args.emote == "drop":
+                drop_emote(config, args.alias)
+            else:
+                raise CLIException(f"Unknown emote operation '{args.emote}'")
 
         else:
             raise CLIException(f"Unknown operation '{args.operation}'")

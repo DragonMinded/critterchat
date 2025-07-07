@@ -340,6 +340,9 @@ img.emote, img.emoji {
     max-width: 48px;
     height: 16px;
     width: auto;
+}
+
+div.item img.emote, div.item img.emoji {
     margin-bottom: -3px;
 }
 

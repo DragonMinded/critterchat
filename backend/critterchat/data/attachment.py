@@ -31,16 +31,16 @@ emote = Table(
 
 
 class Attachment:
-    def __init__(self, attachment_id: AttachmentID, system: str, content_type: str) -> None:
-        self.id = attachment_id
+    def __init__(self, attachmentid: AttachmentID, system: str, content_type: str) -> None:
+        self.id = attachmentid
         self.system = system
         self.content_type = content_type
 
 
 class Emote:
-    def __init__(self, alias: str, attachment_id: AttachmentID, system: str, content_type: str) -> None:
+    def __init__(self, alias: str, attachmentid: AttachmentID, system: str, content_type: str) -> None:
         self.alias = alias
-        self.attachment_id = attachment_id
+        self.attachmentid = attachmentid
         self.system = system
         self.content_type = content_type
 
@@ -120,6 +120,31 @@ class AttachmentData(BaseData):
                 result['content_type'],
             ) for result in cursor.mappings()
         ]
+
+    def get_emote(self, alias: str) -> Optional[Emote]:
+        """
+        Look up a custom emote by alias in the DB.
+        """
+
+        sql = """
+            SELECT
+                attachment.id AS attachment_id, attachment.system AS `system`, attachment.content_type AS content_type,
+                emote.alias AS alias
+            FROM emote
+            JOIN attachment ON attachment.id = emote.attachment_id
+            WHERE emote.alias = :alias
+        """
+        cursor = self.execute(sql, {"alias": alias})
+        if cursor.rowcount != 1:
+            return None
+
+        result = cursor.mappings().fetchone()
+        return Emote(
+            result['alias'],
+            AttachmentID(result['attachment_id']),
+            result['system'],
+            result['content_type'],
+        )
 
     def add_emote(self, alias: str, attachmentid: AttachmentID) -> None:
         """

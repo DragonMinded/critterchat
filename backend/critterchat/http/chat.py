@@ -25,7 +25,7 @@ def home() -> Response:
         **get_aliases_unicode_dict(),
     }
     emojis = {key: emojis[key] for key in emojis if "__" not in key}
-    emotes = emoteservice.get_all_emotes()
+    emotes = {f":{key}:": val for key, val in emoteservice.get_all_emotes().items()}
 
     return Response(render_template(
         "home/chat.html",

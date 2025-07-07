@@ -20,23 +20,23 @@ class AttachmentService:
         self.__config = config
         self.__data = data
 
+    def get_content_type(self, filename: str) -> str:
+        try:
+            return mimetypes.types_map[os.path.splitext(filename)[1]]
+        except Exception:
+            return "application/octet-stream"
+
     def get_attachment_data(self, attachmentid: AttachmentID) -> Optional[Tuple[str, bytes]]:
         # Check for default avatar.
         if attachmentid == DefaultAvatarID:
             with open(default_avatar, "rb") as bfp:
                 data = bfp.read()
-                try:
-                    enc = mimetypes.types_map[os.path.splitext(default_avatar)[1]]
-                except Exception:
-                    enc = "application/octet-stream"
+                enc = self.get_content_type(default_avatar)
                 return enc, data
         if attachmentid == DefaultRoomID:
             with open(default_room, "rb") as bfp:
                 data = bfp.read()
-                try:
-                    enc = mimetypes.types_map[os.path.splitext(default_room)[1]]
-                except Exception:
-                    enc = "application/octet-stream"
+                enc = self.get_content_type(default_room)
                 return enc, data
 
         attachment = self.__data.attachment.lookup_attachment(attachmentid)
@@ -74,6 +74,23 @@ class AttachmentService:
             path = os.path.join(directory, str(attachmentid))
             with open(path, "wb") as bfp:
                 bfp.write(data)
+        else:
+            # Unknown backend, throw.
+            raise AttachmentServiceException("Unrecognized backend system!")
+
+    def delete_attachment_data(self, attachmentid: AttachmentID) -> None:
+        attachment = self.__data.attachment.lookup_attachment(attachmentid)
+        if not attachment:
+            return
+
+        if attachment.system == "local":
+            # Local storage, look up the storage directory and write the data.
+            directory = self.__config.attachments.directory
+            if not directory:
+                raise AttachmentServiceException("Cannot find directory for local attachment storage!")
+
+            path = os.path.join(directory, str(attachmentid))
+            os.remove(path)
         else:
             # Unknown backend, throw.
             raise AttachmentServiceException("Unrecognized backend system!")

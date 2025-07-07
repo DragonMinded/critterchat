@@ -1,6 +1,7 @@
 TODO For First Test Build
 =========================
-Custom emote support ported from PyStreaming.
+Auto-update frontend when a custom emote is added or removed.
+Hook up @tagging to username list.
 Support editing a chat's custom name.
 Support for setting a chat's custom avatar/picture.
 Bit of work on the welcome page and login.

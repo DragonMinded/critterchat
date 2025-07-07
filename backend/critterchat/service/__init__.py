@@ -1,11 +1,15 @@
-from .attachment import AttachmentService
-from .emote import EmoteService
-from .message import MessageService
-from .user import UserService
+from .attachment import AttachmentService, AttachmentServiceException
+from .emote import EmoteService, EmoteServiceException
+from .message import MessageService, MessageServiceException
+from .user import UserService, UserServiceException
 
 __all__ = [
     "AttachmentService",
+    "AttachmentServiceException",
     "EmoteService",
+    "EmoteServiceException",
     "MessageService",
+    "MessageServiceException",
     "UserService",
+    "UserServiceException",
 ]
