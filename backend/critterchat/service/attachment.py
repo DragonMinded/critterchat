@@ -80,16 +80,16 @@ class AttachmentService:
 
     def resolve_user_icon(self, user: User) -> User:
         if user.iconid is None:
-            user.icon = self.get_attachment_url("avi", DefaultAvatarID)
+            user.icon = self.get_attachment_url(DefaultAvatarID)
         else:
-            user.icon = self.get_attachment_url("avi", user.iconid)
+            user.icon = self.get_attachment_url(user.iconid)
         return user
 
     def resolve_occupant_icon(self, occupant: Occupant) -> Occupant:
         if occupant.iconid is None:
-            occupant.icon = self.get_attachment_url("avi", DefaultAvatarID)
+            occupant.icon = self.get_attachment_url(DefaultAvatarID)
         else:
-            occupant.icon = self.get_attachment_url("avi", occupant.iconid)
+            occupant.icon = self.get_attachment_url(occupant.iconid)
         return occupant
 
     def resolve_action_icon(self, action: Action) -> Action:
@@ -98,20 +98,20 @@ class AttachmentService:
 
     def resolve_chat_icon(self, room: Room) -> Room:
         if room.iconid is None:
-            room.icon = self.get_attachment_url("room", DefaultAvatarID)
+            room.icon = self.get_attachment_url(DefaultAvatarID)
         else:
-            room.icon = self.get_attachment_url("room", room.iconid)
+            room.icon = self.get_attachment_url(room.iconid)
         return room
 
     def resolve_room_icon(self, room: Room) -> Room:
         if room.iconid is None:
-            room.icon = self.get_attachment_url("room", DefaultRoomID)
+            room.icon = self.get_attachment_url(DefaultRoomID)
         else:
-            room.icon = self.get_attachment_url("room", room.iconid)
+            room.icon = self.get_attachment_url(room.iconid)
         return room
 
-    def get_attachment_url(self, purpose: str, attachmentid: AttachmentID) -> str:
+    def get_attachment_url(self, attachmentid: AttachmentID) -> str:
         prefix = self.__config.attachments.prefix
         if prefix[-1] == "/":
             prefix = prefix[:-1]
-        return f"{prefix}/{purpose}_{Attachment.from_id(attachmentid)}"
+        return f"{prefix}/{Attachment.from_id(attachmentid)}"

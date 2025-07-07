@@ -16,18 +16,14 @@ attachments = Blueprint(
 @attachments.route("/attachments/<attachment>")
 @cacheable(86400)
 def get_attachment(attachment: str) -> Response:
-    if "_" not in attachment:
-        return Response("Attachment not found", 404)
-
-    _, aid = attachment.split("_", 1)
-    if "." in aid:
-        aid, _ = attachment.split(".", 1)
+    if "." in attachment:
+        attachment, _ = attachment.split(".", 1)
 
     # Look up and return data for attachment.
     data = Data(g.config)
     attachmentservice = AttachmentService(g.config, data)
 
-    attachmentid = Attachment.to_id(aid)
+    attachmentid = Attachment.to_id(attachment)
     if attachmentid is not None:
         response = attachmentservice.get_attachment_data(attachmentid)
         if response:

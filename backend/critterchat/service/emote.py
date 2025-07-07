@@ -20,6 +20,6 @@ class EmoteService:
         results: Dict[str, str] = {}
 
         for emote in emotes:
-            url = self.__attachments.get_attachment_url("emote", emote.attachment_id)
+            url = self.__attachments.get_attachment_url(emote.attachment_id)
             results[emote.alias] = url
         return results
