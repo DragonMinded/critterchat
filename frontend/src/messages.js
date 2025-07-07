@@ -1,12 +1,12 @@
 import $ from "jquery";
 import { escapeHtml, formatTime, scrollTop, scrollTopMax } from "./utils.js";
-import { InputState } from "./inputstate.js";
 import { emojisearch } from "./emojisearch.js";
 import { autocomplete } from "./autocomplete.js";
 
 class Messages {
-    constructor( eventBus ) {
+    constructor( eventBus, inputState ) {
         this.eventBus = eventBus;
+        this.inputState = inputState;
         this.messages = [];
         this.occupants = [];
         this.roomid = "";
@@ -19,6 +19,7 @@ class Messages {
         $( '#message-actions' ).on( 'submit', (event) => {
             event.preventDefault();
 
+            this.inputState.setState("empty");
             var roomid = $( '#message-actions' ).attr('roomid');
 
             if (roomid) {
@@ -29,6 +30,10 @@ class Messages {
                     this.eventBus.emit('message', {'roomid': roomid, 'message': message});
                 }
             }
+        });
+
+        $( 'div.chat > div.conversation' ).on( 'click', () => {
+            this.inputState.setState("empty");
         });
 
         $( 'div.chat > div.conversation' ).scroll(() => {
@@ -53,9 +58,6 @@ class Messages {
         });
 
         // Set up custom emotes, as well as normal emoji typeahead.
-        this.inputState = new InputState();
-
-        // Configure defaults based on what we're told exists by the server.
         this.options = [];
         for (const [key, value] of Object.entries(emojis)) {
           this.options.push({text: key, type: "emoji", preview: twemoji.parse(value, twemojiOptions)});
@@ -280,7 +282,14 @@ class Messages {
 
         var domentry = $('<span class="wrapperelement">' + msg + '</span>');
         var text = domentry.text().trim();
-        if (text.length == 0 && msg.length > 0) {
+        var variationCount = 0;
+        for (var i = 0; i < text.length; i++) {
+            var code = text.charCodeAt(i);
+            if (code >= 0xFE00 && code <= 0xFE0F) {
+                variationCount ++;
+            }
+        }
+        if ((text.length - variationCount) == 0 && msg.length > 0) {
             // Emoji only, embiggen the pictures.
             domentry.find('.emoji').addClass('emoji-big').removeClass('emoji');
             domentry.find('.emote').addClass('emote-big').removeClass('emote');

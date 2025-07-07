@@ -2,8 +2,9 @@ import $ from "jquery";
 import { escapeHtml } from "./utils.js";
 
 class Menu {
-    constructor( eventBus ) {
+    constructor( eventBus, inputState ) {
         this.eventBus = eventBus;
+        this.inputState = inputState;
         this.rooms = [];
         this.selected = "";
         this.lastSettings = {};
@@ -12,7 +13,12 @@ class Menu {
 
         $( '#search-chat' ).on( 'click', (event) => {
             event.preventDefault();
+            this.inputState.setState("empty");
             $('#search-form').modal();
+        });
+
+        $( 'div.menu > div.conversations' ).on( 'click', () => {
+            this.inputState.setState("empty");
         });
     }
 
@@ -95,6 +101,8 @@ class Menu {
             $('div.menu > div.conversations div.item#' + room.id).on('click', (event) => {
                 event.stopPropagation();
                 event.stopImmediatePropagation();
+
+                this.inputState.setState("empty");
 
                 var id = $(event.currentTarget).attr('id')
                 this.selectRoom( id );

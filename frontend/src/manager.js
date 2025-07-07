@@ -3,13 +3,15 @@ import { Menu } from "./menu.js";
 import { Messages } from "./messages.js";
 import { Info } from "./info.js";
 import { Search } from "./search.js";
+import { InputState } from "./inputstate.js";
 
 export function manager(socket) {
     var eventBus = new EventEmitter();
-    var menuInst = new Menu(eventBus);
-    var messagesInst = new Messages(eventBus);
-    var infoInst = new Info(eventBus);
-    var searchInst = new Search(eventBus);
+    var inputState = new InputState();
+    var menuInst = new Menu(eventBus, inputState);
+    var messagesInst = new Messages(eventBus, inputState);
+    var infoInst = new Info(eventBus, inputState);
+    var searchInst = new Search(eventBus, inputState);
     var settings = {};
 
     socket.on('connect', () => {

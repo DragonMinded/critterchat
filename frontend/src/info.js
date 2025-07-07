@@ -2,8 +2,9 @@ import $ from "jquery";
 import { escapeHtml } from "./utils.js";
 
 class Info {
-    constructor( eventBus ) {
+    constructor( eventBus, inputState ) {
         this.eventBus = eventBus;
+        this.inputState = inputState;
         this.roomid = "";
         this.occupants = [];
         this.rooms = [];
@@ -15,6 +16,7 @@ class Info {
         $( '#infotoggle' ).on( 'click', (event) => {
             event.preventDefault();
 
+            this.inputState.setState("empty");
             if ($('div.container > div.info').hasClass('hidden')) {
                 $('div.container > div.info').removeClass('hidden');
                 this.lastSettings.info = "shown";
@@ -42,6 +44,7 @@ class Info {
         $( '#leave-room' ).on( 'click', (event) => {
             event.preventDefault();
 
+            this.inputState.setState("empty");
             var roomid = $( '#leave-room' ).attr('roomid');
             this.rooms.forEach((room) => {
                 if (room.id == roomid) {
@@ -52,6 +55,10 @@ class Info {
                     }
                 }
             });
+        });
+
+        $( 'div.info > div.occupants' ).on( 'click', () => {
+            this.inputState.setState("empty");
         });
     }
 
