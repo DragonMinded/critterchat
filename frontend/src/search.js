@@ -12,11 +12,22 @@ class Search {
             event.preventDefault();
 
             var searchValue = $('#search').val();
-            if (!searchValue) {
-                this.populateResults([]);
-            } else {
-                this.eventBus.emit('searchrooms', searchValue);
-            }
+            this.eventBus.emit('searchrooms', searchValue);
+        });
+
+        $( '#search-chat' ).on( 'click', (event) => {
+            event.preventDefault();
+            this.inputState.setState("empty");
+            $( '#search' ).val("");
+            this.populateResults([]);
+
+            this.eventBus.emit('searchrooms', "")
+            $('#search-form').modal();
+            $('#search').focus();
+        });
+
+        $( '#search-form' ).on( 'submit', (event) => {
+            event.preventDefault();
         });
     }
 

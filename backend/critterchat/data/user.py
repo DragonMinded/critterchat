@@ -359,6 +359,10 @@ class UserData(BaseData):
         cursor = self.execute(sql, {"myid": userid, "name": f"%{name}%"})
         users = [self.__to_user(u) for u in cursor.mappings()]
 
+        # Post-filter by name if requested, so we don't find ourselves all the time.
+        if name:
+            users = [u for u in users if (name in u.username) or (name in u.nickname)]
+
         return users
 
     def mark_last_seen(self, userid: UserID, roomid: RoomID, actionid: ActionID) -> None:

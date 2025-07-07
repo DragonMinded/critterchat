@@ -11,12 +11,6 @@ class Menu {
         this.roomsLoaded = false;
         this.lastSettingsLoaded = false;
 
-        $( '#search-chat' ).on( 'click', (event) => {
-            event.preventDefault();
-            this.inputState.setState("empty");
-            $('#search-form').modal();
-        });
-
         $( 'div.menu > div.conversations' ).on( 'click', () => {
             this.inputState.setState("empty");
         });
