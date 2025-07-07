@@ -42,7 +42,8 @@ class Menu {
             counts[room.id] = room.count;
         });
 
-        this.rooms = rooms;
+        // Make a copy instead of holding onto a reference, so we can mutate.
+        this.rooms = rooms.filter(() => true);
         this.roomsLoaded = true;
 
         // Copy badge counts over.
@@ -137,12 +138,7 @@ class Menu {
             var conversations = $('div.menu > div.conversations');
             conversations.find('div.item#' + roomid).remove();
 
-            for (var i = 0; i < this.rooms.length; i++) {
-                if (this.rooms[i].id == roomid) {
-                    this.rooms.splice(i, 1);
-                    break;
-                }
-            }
+            this.rooms = this.rooms.filter((room) => room.id != roomid);
         }
 
         this.updateSelected();
@@ -155,7 +151,7 @@ class Menu {
         }
     }
 
-    updateHistory( roomid, actions ) {
+    updateActions( roomid, actions ) {
         this.updateBadges( roomid, actions.length );
     }
 

@@ -31,3 +31,9 @@
     max-width: 48px;
     max-height: 16px;
 }
+
+.icon-preview {
+    max-width: 48px;
+    max-height: 16px;
+    border-radius: 50%;
+}

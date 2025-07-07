@@ -52,9 +52,9 @@ export function manager(socket) {
     });
 
     socket.on('chatactions', (msg) => {
-        messagesInst.updateHistory(msg.roomid, msg.actions);
-        menuInst.updateHistory(msg.roomid, msg.actions);
-        infoInst.updateHistory(msg.roomid, msg.actions);
+        messagesInst.updateActions(msg.roomid, msg.actions);
+        menuInst.updateActions(msg.roomid, msg.actions);
+        infoInst.updateActions(msg.roomid, msg.actions);
     });
 
     socket.on('searchrooms', (msg) => {

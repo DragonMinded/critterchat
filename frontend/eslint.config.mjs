@@ -21,6 +21,7 @@ export default defineConfig([
                 twemojiOptions: "readonly",
                 emojis: "readonly",
                 emotes: "readonly",
+                username: "readonly",
             },
         },
     },

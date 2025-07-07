@@ -315,8 +315,9 @@ class RoomData(BaseData):
         return Occupant(
             OccupantID(result['id']),
             UserID(result['user_id']),
-            nickname,
-            inactive=result['inactive'],
+            username=result['unick'],
+            nickname=nickname,
+            inactive=bool(result['inactive']),
             iconid=AttachmentID(icon) if icon else None,
         )
 

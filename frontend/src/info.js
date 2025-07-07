@@ -63,13 +63,15 @@ class Info {
     }
 
     setRooms( rooms ) {
-        this.rooms = rooms;
+        // Make a copy instead of keeping a reference, so we can safely mutate.
+        this.rooms = rooms.filter(() => true);
         this.roomsLoaded = true;
     }
 
     setOccupants( roomid, occupants ) {
         if (roomid == this.roomid) {
-            this.occupants = occupants;
+            this.occupants = occupants.filter((occupant) => !occupant.inactive);
+            this.occupants.sort((a, b) => { return a.nickname.localeCompare(b.nickname); });
             this.occupantsLoaded = true;
 
             if (this.roomsLoaded && this.occupantsLoaded) {
@@ -78,7 +80,7 @@ class Info {
         }
     }
 
-    updateHistory( roomid, history ) {
+    updateActions( roomid, history ) {
         if (roomid != this.roomid) {
             // Must be an out of date lookup, ignore it.
             return;
@@ -90,29 +92,24 @@ class Info {
             history.forEach((entry) => {
                 if (entry.action == "join") {
                     this.occupants.push(entry.occupant);
-                    this.occupants.sort((a, b) => { return a.nickname.localeCompare(b.nickname); });
                     changed = true;
                 } else if (entry.action == "leave") {
-                    for (var i = 0; i < this.occupants.length; i++) {
-                        if (this.occupants[i].id == entry.occupant.id) {
-                            this.occupants.splice(i, 1);
-                            changed = true;
-                            break;
-                        }
-                    }
+                    this.occupants = this.occupants.filter((occupant) => occupant.id != entry.occupant.id);
+                    changed = true;
                 }
             });
         }
 
         if (changed) {
+            this.occupants.sort((a, b) => { return a.nickname.localeCompare(b.nickname); });
             this.drawOccupants();
         }
     }
 
     drawOccupants() {
-        var occupants = $('div.info > div.occupants')
-        var scrollPos = occupants.scrollTop();
-        occupants.empty();
+        var occupantElement = $('div.info > div.occupants')
+        var scrollPos = occupantElement.scrollTop();
+        occupantElement.empty();
 
         this.occupants.forEach((occupant) => {
             // Now, draw it fresh since it's not an update.
@@ -122,10 +119,10 @@ class Info {
             html    += '  </div>';
             html    += '  <div class="name-wrapper"><div class="name">' + escapeHtml(occupant.nickname) + '</div></div>';
             html    += '</div>';
-            occupants.append(html);
+            occupantElement.append(html);
         });
 
-        occupants.scrollTop(scrollPos);
+        occupantElement.scrollTop(scrollPos);
     }
 
     setLastSettings( settings ) {
@@ -177,6 +174,7 @@ class Info {
     closeRoom( roomid ) {
         if (roomid == this.roomid) {
             this.occupants = [];
+            this.occupantsLoaded = false;
             this.roomid = "";
 
             $('div.info > div.occupants').empty();

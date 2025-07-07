@@ -319,6 +319,26 @@ class UserData(BaseData):
             result['icon'],
         )
 
+    def get_user(self, userid: UserID) -> Optional[User]:
+        """
+        Given a user ID, look up that user.
+        """
+        if userid is NewUserID:
+            return None
+
+        sql = """
+            SELECT user.id AS id, user.username AS uname, profile.nickname AS pname, profile.icon AS icon
+            FROM user
+            LEFT JOIN profile ON profile.user_id = user.id
+            WHERE user.id = :userid
+        """
+        cursor = self.execute(sql, {"userid": userid})
+        if cursor.rowcount != 1:
+            return None
+
+        result = cursor.mappings().fetchone()
+        return self.__to_user(result)
+
     def get_visible_users(self, userid: UserID, name: Optional[str] = None) -> List[User]:
         """
         Given a user searching, return a list of visible users (users that haven't blocked the

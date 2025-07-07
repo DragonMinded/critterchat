@@ -1,7 +1,7 @@
 TODO For First Test Build
 =========================
 Auto-update frontend when a custom emote is added or removed.
-Hook up @tagging to username list.
+Clickable links.
 Support editing a chat's custom name.
 Support for setting a chat's custom avatar/picture.
 Bit of work on the welcome page and login.
@@ -10,12 +10,14 @@ Polish for Test Build
 =====================
 Search should also search private chats that you used to be a member of, to rejoin.
 Display "--new--" bar for messages that have come in since you last looked at the chat.
+When leaving a chat, messages and info should blank out.
 
 TODO For Post Test Build
 ========================
 Close-by message coalescing into one group of lines.
 Start on profile view/editor to look at a person's profile.
 Display user name next to nickname in search as well as on profiles.
+Mentioning typeahead should allow searching by display nick as well as username.
 Support editing your nickname on the profile page.
 Support setting your custom color on the profile page.
 Support setting a custom avatar on the profile page.

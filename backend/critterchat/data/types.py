@@ -194,12 +194,14 @@ class Occupant:
         self,
         occupantid: OccupantID,
         userid: UserID,
+        username: str = "",
         nickname: str = "",
         iconid: Optional[AttachmentID] = None,
         inactive: bool = False,
     ) -> None:
         self.id = occupantid
         self.userid = userid
+        self.username = username
         self.nickname = nickname
         self.inactive = inactive
         self.iconid = iconid
@@ -209,6 +211,7 @@ class Occupant:
         return {
             "id": Occupant.from_id(self.id),
             "userid": User.from_id(self.userid),
+            "username": self.username,
             "nickname": self.nickname,
             "inactive": self.inactive,
             "icon": self.icon,

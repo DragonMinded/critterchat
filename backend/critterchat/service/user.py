@@ -1,7 +1,7 @@
-from typing import Dict
+from typing import Dict, Optional
 
 from ..config import Config
-from ..data import Data, UserSettings, ActionID, RoomID, UserID
+from ..data import Data, UserSettings, User, ActionID, RoomID, UserID
 
 
 class UserServiceException(Exception):
@@ -29,6 +29,9 @@ class UserService:
             raise UserServiceException("Invaid User ID in settings bundle!")
 
         self.__data.user.put_settings(userid, settings)
+
+    def lookup_user(self, user: UserID) -> Optional[User]:
+        return self.__data.user.get_user(user)
 
     def mark_last_seen(self, userid: UserID, roomid: RoomID, actionid: ActionID) -> None:
         self.__data.user.mark_last_seen(userid, roomid, actionid)

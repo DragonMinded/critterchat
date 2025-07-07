@@ -242,7 +242,7 @@ export function autocomplete(state, selector, items) {
                 $( '<div class="autocomplete-element"></div>' )
                     .attr("idx", i)
                     .attr("id", "autocomplete-element-" + i)
-                    .html("&nbsp;" + item.preview)
+                    .html("&nbsp;" + item.preview + "&nbsp;(" + text + ")")
                     .appendTo('div.autocomplete');
             } else {
                 // Display emoji/emote as the preview and the text to insert.
@@ -336,9 +336,6 @@ export function autocomplete(state, selector, items) {
 
     function cursorText(idx) {
         var text = displaying[idx].text;
-        if(text.startsWith('@')) {
-            text = text.slice(1);
-        }
         return text;
     }
 

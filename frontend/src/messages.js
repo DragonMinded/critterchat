@@ -93,9 +93,13 @@ class Messages {
         }
     }
 
-    setOccupants( occupants ) {
-        this.occupants = occupants;
-        this.occupantsLoaded = true;
+    setOccupants( roomid, occupants ) {
+        if (roomid == this.roomid) {
+            this.occupants = occupants.filter((occupant) => !occupant.inactive);
+            this.occupants.sort((a, b) => { return a.username.localeCompare(b.username); });
+            this.occupantsLoaded = true;
+            this.updateUsers();
+        }
     }
 
     setRoom( roomid ) {
@@ -104,6 +108,9 @@ class Messages {
             this.roomid = roomid;
             this.lastAction = {};
             this.autoscroll = true;
+            this.occupants = [];
+            this.occupantsLoaded = false;
+            this.updateUsers();
 
             $('div.chat > div.conversation').empty();
             $( '#message-actions' ).attr('roomid', roomid);
@@ -116,6 +123,10 @@ class Messages {
             this.roomid = "";
             this.lastAction = {};
             this.autoscroll = true;
+            this.occupants = [];
+            this.occupantsLoaded = false;
+            this.updateUsers();
+
             $('div.chat > div.conversation').empty();
             $( '#message-actions' ).attr('roomid', '');
         }
@@ -136,6 +147,39 @@ class Messages {
             return;
         }
 
+        this.drawActions( history );
+    }
+
+    updateActions( roomid, actions ) {
+        if (roomid != this.roomid) {
+            // Must be an out of date lookup, ignore it.
+            return;
+        }
+
+        // This is where we get notified of user joins and leaves.
+        var changed = false;
+        if (this.occupantsLoaded) {
+            actions.forEach((message) => {
+                if (message.action == "join") {
+                    // Add a new occupant to our list.
+                    this.occupants.push(message.occupant);
+                    changed = true;
+                } else if (message.action == "leave") {
+                    this.occupants = this.occupants.filter((occupant) => occupant.id != message.occupant.id);
+                    changed = true;
+                }
+            });
+        }
+
+        if (changed) {
+            this.occupants.sort((a, b) => { return a.username.localeCompare(b.username); });
+            this.updateUsers();
+        }
+
+        this.drawActions( actions );
+    }
+
+    drawActions( history ) {
         var lowestorder = -1;
         for (const message of this.messages) {
             if (lowestorder == -1) {
@@ -179,7 +223,11 @@ class Messages {
     // Whenever user changes occur (joins/parts/renames), update the autocomplete typeahead for those names.
     updateUsers() {
         var acusers = this.occupants.map(function(user) {
-            return {text: "@" + user.username, type: "user", preview: "<span>" + escapeHtml(user.nickname) + "</span>"};
+            return {
+                text: "@" + user.username,
+                type: "user",
+                preview: "<img class=\"icon-preview\" src=\"" + user.icon + "\" />&nbsp;" + escapeHtml(user.nickname)
+            };
         });
         this.autocompleteUpdate(this.options.concat(acusers));
     }
@@ -199,21 +247,19 @@ class Messages {
     // Whenever an emote is live-removed, update the autocomplet typeahead to remove that emote.
     delelteEmote(key) {
         delete emotes[key];
-
-        var loc = 0;
-        while( loc < this.options.length ) {
-            if (this.options[loc].type == "emote" && this.options[loc].text == key) {
-                this.options.splice(loc, 1);
-            } else {
-                loc ++;
-            }
-        }
+        this.options = this.options.filter((option) => !(option.type == "emote" && option.text == key));
         this.emojisearchUpdate(this.options);
         this.updateUsers();
     }
 
     formatMessage( message ) {
-        return this.embiggen(escapeHtml(message));
+        return this.embiggen(this.highlight(escapeHtml(message)));
+    }
+
+    wasHighlighted( message ) {
+        var before = escapeHtml(message);
+        var after = this.highlight(before);
+        return before != after;
     }
 
     drawMessage( message, loc ) {
@@ -222,29 +268,40 @@ class Messages {
         var drawnMessage = messages.find('div.message#' + message.id);
         if (drawnMessage.length > 0) {
             if (message.action == "message") {
-                drawnMessage.html(this.formatMessage(message.details));
+                let content = this.formatMessage(message.details);
+                let highlighted = this.wasHighlighted(message.details);
+                drawnMessage.html(content);
+
+                if (highlighted) {
+                    drawnMessage.addClass("highlighted");
+                } else {
+                    drawnMessage.removeClass("highlighted");
+                }
             }
         } else {
             // Now, draw it fresh since it's not an update.
             var html = "";
             if (message.action == "message") {
+                let content = this.formatMessage(message.details);
+                let highlighted = this.wasHighlighted(message.details);
+
                 html  = '<div class="item">';
                 html += '  <div class="icon avatar" id="' + message.occupant.id + '">';
                 html += '    <img src="' + message.occupant.icon + '" />';
                 html += '  </div>';
                 html += '  <div class="content-wrapper">';
                 html += '    <div class="meta-wrapper">';
-                html += '      <div class="name" id="' + message.occupant.id + '">' + message.occupant.nickname + '</div>';
+                html += '      <div class="name" id="' + message.occupant.id + '">' + escapeHtml(message.occupant.nickname) + '</div>';
                 html += '      <div class="timestamp" id="' + message.id + '">' + formatTime(message.timestamp) + '</div>';
                 html += '    </div>';
-                html += '    <div class="message" id="' + message.id + '">' + this.formatMessage(message.details) + '</div>';
+                html += '    <div class="message' + (highlighted ? " highlighted" : "") + '" id="' + message.id + '">' + content + '</div>';
                 html += '  </div>';
                 html += '</div>';
             } else if (message.action == "join") {
                 html  = '<div class="item">';
                 html += '  <div class="content-wrapper">';
                 html += '    <div class="meta-wrapper">';
-                html += '      <div class="name" id="' + message.occupant.id + '">' + message.occupant.nickname + '</div>';
+                html += '      <div class="name" id="' + message.occupant.id + '">' + escapeHtml(message.occupant.nickname) + '</div>';
                 html += '      <div class="joinmessage">has joined!</div>';
                 html += '      <div class="timestamp" id="' + message.id + '">' + formatTime(message.timestamp) + '</div>';
                 html += '    </div>';
@@ -254,7 +311,7 @@ class Messages {
                 html  = '<div class="item">';
                 html += '  <div class="content-wrapper">';
                 html += '    <div class="meta-wrapper">';
-                html += '      <div class="name" id="' + message.occupant.id + '">' + message.occupant.nickname + '</div>';
+                html += '      <div class="name" id="' + message.occupant.id + '">' + escapeHtml(message.occupant.nickname) + '</div>';
                 html += '      <div class="joinmessage">has left!</div>';
                 html += '      <div class="timestamp" id="' + message.id + '">' + formatTime(message.timestamp) + '</div>';
                 html += '    </div>';
@@ -294,6 +351,53 @@ class Messages {
             domentry.find('.emoji').addClass('emoji-big').removeClass('emoji');
             domentry.find('.emote').addClass('emote-big').removeClass('emote');
             return domentry.html();
+        }
+
+        return msg;
+    }
+
+    // Walks an already HTML-stripped and emojified message to see if any part of it is a reference
+    // to the current user. If so, wraps that chunk of text in a highlight div, but does not change
+    // capitalization. This allows your own name to be highlighted without rewriting how somebody
+    // wrote the message.
+    highlight( msg ) {
+        var actualuser = escapeHtml('@' + username).toLowerCase();
+
+        if( msg.length < actualuser.length ) {
+            return msg;
+        }
+
+        var before = '<span class="name-highlight">';
+        var after = '</span>';
+        var pos = 0;
+        while (pos <= (msg.length - actualuser.length)) {
+            if (pos > 0) {
+                if (msg.substring(pos - 1, pos) != " ") {
+                    pos ++;
+                    continue;
+                }
+            }
+            if (pos < (msg.length - actualuser.length)) {
+                if (msg.substring(pos + actualuser.length, pos + actualuser.length + 1) != " ") {
+                    pos ++;
+                    continue;
+                }
+            }
+
+            if (msg.substring(pos, pos + actualuser.length).toLowerCase() != actualuser) {
+                pos++;
+                continue;
+            }
+
+            msg = (
+                msg.substring(0, pos) +
+                before +
+                msg.substring(pos, pos + actualuser.length) +
+                after +
+                msg.substring(pos + actualuser.length, msg.length)
+            );
+
+            pos += actualuser.length + before.length + after.length;
         }
 
         return msg;
