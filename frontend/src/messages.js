@@ -210,13 +210,17 @@ class Messages {
         this.updateUsers();
     }
 
+    formatMessage( message ) {
+        return this.embiggen(escapeHtml(message));
+    }
+
     drawMessage( message, loc ) {
         // First, see if this is an update.
         var messages = $('div.chat > div.conversation');
         var drawnMessage = messages.find('div.message#' + message.id);
         if (drawnMessage.length > 0) {
             if (message.action == "message") {
-                drawnMessage.html(escapeHtml(message.details));
+                drawnMessage.html(this.formatMessage(message.details));
             }
         } else {
             // Now, draw it fresh since it's not an update.
@@ -231,7 +235,7 @@ class Messages {
                 html += '      <div class="name" id="' + message.occupant.id + '">' + message.occupant.nickname + '</div>';
                 html += '      <div class="timestamp" id="' + message.id + '">' + formatTime(message.timestamp) + '</div>';
                 html += '    </div>';
-                html += '    <div class="message" id="' + message.id + '">' + escapeHtml(message.details) + '</div>';
+                html += '    <div class="message" id="' + message.id + '">' + this.formatMessage(message.details) + '</div>';
                 html += '  </div>';
                 html += '</div>';
             } else if (message.action == "join") {
@@ -265,6 +269,25 @@ class Messages {
 
         this.updateLastAction(message);
         this.ensureScrolled();
+    }
+
+    // Takes an alraedy HTML-stripped and emojified message and figures out if it contains only
+    // emoji/emotes. If so, it makes them bigger because bigger emoji is more fun.
+    embiggen( msg ) {
+        if( msg.length == 0 ) {
+            return msg;
+        }
+
+        var domentry = $('<span class="wrapperelement">' + msg + '</span>');
+        var text = domentry.text().trim();
+        if (text.length == 0 && msg.length > 0) {
+            // Emoji only, embiggen the pictures.
+            domentry.find('.emoji').addClass('emoji-big').removeClass('emoji');
+            domentry.find('.emote').addClass('emote-big').removeClass('emote');
+            return domentry.html();
+        }
+
+        return msg;
     }
 }
 
