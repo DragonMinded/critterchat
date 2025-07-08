@@ -8,7 +8,6 @@ Bit of work on the welcome page and login.
 Polish for Test Build
 =====================
 Display "--new--" bar for messages that have come in since you last looked at the chat.
-When leaving a chat, messages and info should blank out.
 
 TODO For Post Test Build
 ========================

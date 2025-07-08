@@ -11,6 +11,7 @@ class Info {
         this.lastSettings = {};
         this.roomsLoaded = false;
         this.occupantsLoaded = false;
+        this.infoLoaded = false;
         this.lastSettingsLoaded = false;
 
         $( '#infotoggle' ).on( 'click', (event) => {
@@ -60,12 +61,18 @@ class Info {
         $( 'div.info > div.occupants' ).on( 'click', () => {
             this.inputState.setState("empty");
         });
+
+        $( 'div.info div.title-wrapper' ).hide();
+        $( 'div.info div.actions' ).hide();
     }
 
     setRooms( rooms ) {
         // Make a copy instead of keeping a reference, so we can safely mutate.
         this.rooms = rooms.filter(() => true);
         this.roomsLoaded = true;
+        if (this.roomid && !this.infoLoaded) {
+            this.setRoom(this.roomid);
+        }
     }
 
     setOccupants( roomid, occupants ) {
@@ -137,13 +144,14 @@ class Info {
     }
 
     setRoom( roomid ) {
-        if (roomid != this.roomid) {
+        if (roomid != this.roomid || !this.infoLoaded) {
             this.occupants = [];
             this.occupantsLoaded = false;
             this.roomid = roomid;
 
             $('div.info > div.occupants').empty();
-            $( '#leave-room' ).attr('roomid', roomid);
+            var updated = false;
+
             this.rooms.forEach((room) => {
                 if (room.id == roomid) {
                     var title;
@@ -166,8 +174,21 @@ class Info {
                     } else {
                         $( '#leave-type' ).text('chat');
                     }
+
+                    $( 'div.info div.title-wrapper' ).show();
+                    $( 'div.info div.actions' ).show();
+                    $( 'div.chat div.title' ).text(room.name);
+                    $( '#leave-room' ).attr('roomid', roomid);
+
+                    updated = true;
                 }
             });
+
+            // Only set this if we updated, so if we leave a room, refesh, and then rejoin
+            // that room, we don't accidentally ignore setting its info.
+            if (updated) {
+                this.infoLoaded = true;
+            }
         }
     }
 
@@ -175,10 +196,14 @@ class Info {
         if (roomid == this.roomid) {
             this.occupants = [];
             this.occupantsLoaded = false;
+            this.infoLoaded = false;
             this.roomid = "";
 
-            $('div.info > div.occupants').empty();
+            $( 'div.info > div.occupants' ).empty();
             $( '#leave-room' ).attr('roomid', '');
+            $( 'div.chat div.title' ).html('&nbsp;');
+            $( 'div.info div.title-wrapper' ).hide();
+            $( 'div.info div.actions' ).hide();
         }
     }
 }

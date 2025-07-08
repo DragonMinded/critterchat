@@ -148,7 +148,6 @@ div.actions div.item button:hover {
 }
 
 div.container > div.chat {
-    border: 10px solid #efefef;
     background: #efefef;
     overflow: hidden;
     flex-grow: 1;
@@ -156,11 +155,29 @@ div.container > div.chat {
     flex-shrink: 1;
     width: 0px;
     display: flex;
-    gap: 10px;
     flex-direction: column;
 }
 
+div.chat > div.info {
+    background: #dddddd;
+    border-top: 10px solid #dddddd;
+    border-bottom: 5px solid #dddddd;
+    display: flex;
+    flex-direction: row;
+    gap: 10px;
+}
+
+div.chat > div.info div.title {
+    font-size: 16px;
+}
+
+div.chat > div.info div.topic {
+    font-size: 12px;
+}
+
 div.chat > div.conversation {
+    border-left: 10px solid #efefef;
+    border-right: 10px solid #efefef;
     flex-grow: 1;
     overflow-y: scroll;
     padding-right: 10px;
@@ -170,6 +187,7 @@ div.chat > div.conversation {
 }
 
 div.chat > form.actions {
+    border: 10px solid #efefef;
     display: flex;
     flex-direction: row;
     gap: 5px;
