@@ -33,6 +33,7 @@ Moderation tools for individuals (block user, etc.).
 Sign-up modes (admin approval, open sign-ups, invite only, etc.).
 Photo attachments, both uploaded and pasted from clipboard.
 Arbitrary file attachments.
+Sitewide CSS themeing with css moved to themes directory.
 Per-chat CSS themeing.
 Ability to set a personal nickname for a user that only you can see.
 Port Myno's Pictochat over from PyStreaming, allow remixing.
