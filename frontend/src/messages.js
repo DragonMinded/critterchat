@@ -1,7 +1,14 @@
 import $ from "jquery";
+
+// Importing this enables linkify-html below.
+import * as linkify from "linkifyjs"; // eslint-disable-line no-unused-vars
+import linkifyHtml from "linkify-html";
+
 import { escapeHtml, formatTime, scrollTop, scrollTopMax } from "./utils.js";
 import { emojisearch } from "./emojisearch.js";
 import { autocomplete } from "./autocomplete.js";
+
+const linkifyOptions = { defaultProtocol: "http", target: "_blank", validate: { email: () => false } };
 
 class Messages {
     constructor( eventBus, inputState ) {
@@ -253,7 +260,7 @@ class Messages {
     }
 
     formatMessage( message ) {
-        return this.embiggen(this.highlight(escapeHtml(message)));
+        return linkifyHtml(this.embiggen(this.highlight(escapeHtml(message))), linkifyOptions);
     }
 
     wasHighlighted( message ) {
