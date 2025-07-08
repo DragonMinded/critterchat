@@ -1,10 +1,10 @@
 {% extends "base.html" %}
 {% block includes %}
-  <script src="{{ url_for('static', filename='chat.js') }}"></script>
+  <script src="{{ url_for('static', filename=jsname) }}"></script>
   <script src="{{ url_for('static', filename='twemoji-14.0.2.min.js') }}"></script>
-  <link href="{{ url_for('static', filename='chat.css') }}" rel="stylesheet" />
-  <link href="{{ url_for('static', filename='autocomplete.css') }}" rel="stylesheet" />
-  <link href="{{ url_for('static', filename='emojisearch.css') }}" rel="stylesheet" />
+  <link href="{{ url_for('static', filename='chat.css') }}?{{ cachebust }}" rel="stylesheet" />
+  <link href="{{ url_for('static', filename='autocomplete.css') }}?{{ cachebust }}" rel="stylesheet" />
+  <link href="{{ url_for('static', filename='emojisearch.css') }}?{{ cachebust }}" rel="stylesheet" />
   <link href="{{ url_for('static', filename='jquery.modal.0.9.1.min.css') }}" rel="stylesheet" />
   <script>
     window.twemojiOptions = { base: "{{ url_for('static', filename='twemoji/') }}" }

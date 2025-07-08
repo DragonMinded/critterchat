@@ -1,3 +1,5 @@
+import json
+import os
 from flask import Blueprint, Response, render_template
 
 from .app import app, static_location, templates_location, loginrequired, g
@@ -35,9 +37,19 @@ def home() -> Response:
 
     username = None if (not user) else user.username
 
+    # Attempt to look up our frontend JS.
+    jspath = os.path.join(static_location, "webpack-assets.json")
+    with open(jspath, "rb") as bfp:
+        jsdata = bfp.read().decode('utf-8')
+        jsblob = json.loads(jsdata)
+        jsname = jsblob['main']['js']
+        cachebust = jsname.replace('.js', '')
+
     return Response(render_template(
         "home/chat.html",
         title=f"{g.config.name}",
+        jsname=jsname,
+        cachebust=f"cachebust={cachebust}",
         emojis=emojis,
         emotes=emotes,
         username=username,
