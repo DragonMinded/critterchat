@@ -120,126 +120,66 @@ export function emojisearch(state, button, textbox, items) {
         });
     }
 
-    // Initial creation.
-    create();
-    populate(items);
+    function hook() {
+        // Set up category selection.
+        $("div.emojisearch-category").click(function() {
+            // Don't allow selection when search is happening.
+            var searchInput = $("#emojisearch-text").val();
 
-    // Register a callback for controlling global state.
-    state.registerStateChangeCallback(function(newState) {
-        // Allow ourselves to be hidden if an external system wants us closed.
-        if (newState == "empty") {
-            if (displayed) {
-                hide();
+            if (searchInput != "") {
+                return;
             }
-        }
-    });
 
-    // Set up category selection.
-    $("div.emojisearch-category").click(function() {
-        // Don't allow selection when search is happening.
-        var searchInput = $("#emojisearch-text").val();
+            var category = $(this).attr("category");
+            lastCategory = category;
 
-        if (searchInput != "") {
-            return;
-        }
-
-        var category = $(this).attr("category");
-        lastCategory = category;
-
-        $("div.emojisearch-category").each(function(i, elem) {
-            var elemCat = $(elem).attr("category");
-            $(elem).removeClass("selected");
-            if (elemCat == category) {
-                $(elem).addClass("selected");
-            }
-        });
-
-        $("div.emojisearch-element").each(function(i, elem) {
-            var elemCat = $(elem).attr("category");
-            if (elemCat == category) {
-                $(elem).show();
-            } else {
-                $(elem).hide();
-            }
-        });
-
-        // Make sure to scroll to the top of the visible list.
-        $("div.emojisearch-content").scrollTop(0);
-    });
-
-    // Select first emoji category.
-    $("div.emojisearch-category")[0].click();
-
-    // Handle searching for an emoji.
-    $("#emojisearch-text").on('input', function() {
-        var searchInput = $(this).val().toLowerCase();
-
-        if (searchInput == "") {
-            // Erased search, put us back to normal.
             $("div.emojisearch-category").each(function(i, elem) {
                 var elemCat = $(elem).attr("category");
-                if (elemCat == lastCategory) {
-                    $(elem).click();
+                $(elem).removeClass("selected");
+                if (elemCat == category) {
+                    $(elem).addClass("selected");
                 }
             });
-            return;
-        }
 
-        // Make sure all categories are highlighted.
-        $("div.emojisearch-category").each(function(i, elem) {
-            if (!$(elem).hasClass("selected")) {
-                $(elem).addClass("selected");
-            }
+            $("div.emojisearch-element").each(function(i, elem) {
+                var elemCat = $(elem).attr("category");
+                if (elemCat == category) {
+                    $(elem).show();
+                } else {
+                    $(elem).hide();
+                }
+            });
+
+            // Make sure to scroll to the top of the visible list.
+            $("div.emojisearch-content").scrollTop(0);
         });
 
-        $("div.emojisearch-element").each(function(i, elem) {
-            var elemText = $(elem).attr("text").toLowerCase();
-            if (elemText.includes(searchInput)) {
-                $(elem).show();
-            } else {
-                $(elem).hide();
+        // Select first emoji category.
+        $("div.emojisearch-category")[0].click();
+
+        // Handle selecting an emoji.
+        $(".emojisearch-element").click(function() {
+            var emoji = $(this).attr("text");
+            var textcontrol = $(textbox);
+
+            var start = getCursorStart(textcontrol);
+            var end = getCursorEnd(textcontrol);
+            if (end === null) {
+                end = start;
             }
+
+            if (start !== null && end !== null) {
+                var val = textcontrol.val();
+
+                const newval = val.slice(0, start) + emoji + val.slice(end);
+                textcontrol.val(newval);
+                textcontrol.setCursorPosition(start + emoji.length);
+            }
+
+            hide();
+            textcontrol.focus();
         });
-    });
-
-    // Handle selecting an emoji.
-    $(".emojisearch-element").click(function() {
-        var emoji = $(this).attr("text");
-        var textcontrol = $(textbox);
-
-        var start = getCursorStart(textcontrol);
-        var end = getCursorEnd(textcontrol);
-        if (end === null) {
-            end = start;
-        }
-
-        if (start !== null && end !== null) {
-            var val = textcontrol.val();
-
-            const newval = val.slice(0, start) + emoji + val.slice(end);
-            textcontrol.val(newval);
-            textcontrol.setCursorPosition(start + emoji.length);
-        }
-
-        hide();
-        textcontrol.focus();
-    });
-
-    $(button).click(function () {
-        if (displayed) {
-            hide();
-        } else {
-            show();
-        }
-    });
-
-    $("#emojisearch-text").on('keydown', function(event) {
-        // Are we closing the search?
-        if(event.keyCode == 27) {
-            hide();
-            $(textbox).focus();
-        }
-    });
+    }
 
     function show() {
         // Construct element
@@ -258,6 +198,7 @@ export function emojisearch(state, button, textbox, items) {
         $('div.emojisearch').width(width - 2);
 
         // Make sure search typeahead is focused.
+        $('#emojisearch-text').val("");
         $('#emojisearch-text').focus();
 
         // Make sure the emoji button stays highlighted.
@@ -297,14 +238,81 @@ export function emojisearch(state, button, textbox, items) {
         }
     }
 
+    // Initial creation.
+    create();
+    populate(items);
+    hook();
+
+    // Register a callback for controlling global state.
+    state.registerStateChangeCallback(function(newState) {
+        // Allow ourselves to be hidden if an external system wants us closed.
+        if (newState == "empty") {
+            if (displayed) {
+                hide();
+            }
+        }
+    });
+
+    // Handle searching for an emoji.
+    $("#emojisearch-text").on('input', function() {
+        var searchInput = $(this).val().toLowerCase();
+
+        if (searchInput == "") {
+            // Erased search, put us back to normal.
+            $("div.emojisearch-category").each(function(i, elem) {
+                var elemCat = $(elem).attr("category");
+                if (elemCat == lastCategory) {
+                    $(elem).click();
+                }
+            });
+            return;
+        }
+
+        // Make sure all categories are highlighted.
+        $("div.emojisearch-category").each(function(i, elem) {
+            if (!$(elem).hasClass("selected")) {
+                $(elem).addClass("selected");
+            }
+        });
+
+        $("div.emojisearch-element").each(function(i, elem) {
+            var elemText = $(elem).attr("text").toLowerCase();
+            if (elemText.includes(searchInput)) {
+                $(elem).show();
+            } else {
+                $(elem).hide();
+            }
+        });
+    });
+
+    // Handle toggling the search open or closed.
+    $(button).click(function () {
+        if (displayed) {
+            hide();
+        } else {
+            show();
+        }
+    });
+
+    $("#emojisearch-text").on('keydown', function(event) {
+        // Are we closing the search?
+        if(event.keyCode == 27) {
+            hide();
+            $(textbox).focus();
+        }
+    });
+
+    // Handle sizing ourselves to the chat box when the window resizes.
     $(window).resize(function() {
         if (displayed) {
             show();
         }
     });
 
+    // Provide a callback so that our caller can inform us of new emoji.
     function update(newitems) {
         populate(newitems);
+        hook();
     }
 
     return update;

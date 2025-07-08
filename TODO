@@ -1,6 +1,5 @@
 TODO For First Test Build
 =========================
-Auto-update frontend when a custom emote is added or removed.
 Support editing a chat's custom name.
 Support for setting a chat's custom avatar/picture.
 Auto-join room list for public chat rooms.

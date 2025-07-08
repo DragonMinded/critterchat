@@ -72,7 +72,7 @@ class Messages {
         for (const [key, value] of Object.entries(emotes)) {
           this.options.push({text: key, type: "emote", preview: "<img class=\"emoji-preview\" src=\"" + value + "\" />"});
         }
-        this.emojiSearchUpdate = emojisearch(this.inputState, '.emoji-search', '#message', this.options);
+        this.emojisearchUpdate = emojisearch(this.inputState, '.emoji-search', '#message', this.options);
 
         // Support tab-completing users as well.
         this.autocompleteUpdate = autocomplete(this.inputState, '#message', this.options);
@@ -240,21 +240,27 @@ class Messages {
     }
 
     // Whenever an emote is live-added, update the autocomplete typeahead for that emote.
-    addEmote(key, uri) {
-        emotes[key] = uri;
-        this.options.push({text: key, type: "emote", preview: "<img class=\"emoji-preview\" src=\"" + uri + "\" />"});
+    addEmotes( mapping ) {
+        var box = $( 'div.emote-preload' );
+
+        for (const [alias, uri] of Object.entries(mapping)) {
+            emotes[alias] = uri;
+            this.options.push({text: alias, type: "emote", preview: "<img class=\"emoji-preview\" src=\"" + uri + "\" />"});
+
+            // Also be sure to reload the image.
+            box.append( '<img src="' + uri + '" />' );
+        }
+
         this.emojisearchUpdate(this.options);
         this.updateUsers();
-
-        // Also be sure to reload the image.
-        var box = $( 'div.emote-preload' );
-        box.append( '<img src="' + uri + '" />' );
     }
 
     // Whenever an emote is live-removed, update the autocomplet typeahead to remove that emote.
-    delelteEmote(key) {
-        delete emotes[key];
-        this.options = this.options.filter((option) => !(option.type == "emote" && option.text == key));
+    deleteEmotes( aliases ) {
+        aliases.forEach((alias) => {
+            delete emotes[alias];
+            this.options = this.options.filter((option) => !(option.type == "emote" && option.text == alias));
+        });
         this.emojisearchUpdate(this.options);
         this.updateUsers();
     }

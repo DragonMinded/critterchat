@@ -61,6 +61,11 @@ export function manager(socket) {
         searchInst.populateResults(msg.rooms);
     });
 
+    socket.on('emotechanges', (msg) => {
+        messagesInst.addEmotes(msg.additions);
+        messagesInst.deleteEmotes(msg.deletions);
+    });
+
     eventBus.on('room', (roomid) => {
         settings.roomid = roomid;
 

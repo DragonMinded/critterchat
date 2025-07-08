@@ -1,9 +1,10 @@
 from threading import Lock
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Set
+from typing_extensions import Final
 
 from .app import socketio, config, request
-from ..common import AESCipher
-from ..service import UserService, MessageService
+from ..common import AESCipher, Time
+from ..service import EmoteService, UserService, MessageService
 from ..data import Data, Action, Room, User, UserSettings, NewActionID, ActionID, RoomID, UserID
 
 
@@ -16,6 +17,10 @@ class SocketInfo:
         self.lastseen: Dict[RoomID, int] = {}
 
 
+MESSAGE_PUMP_TICK_SECONDS: Final[float] = 0.25
+EMOJI_REFRESH_TICK_SECONDS: Final[int] = 5
+
+
 socket_lock: Lock = Lock()
 socket_to_info: Dict[Any, SocketInfo] = {}
 background_thread: Optional[object] = None
@@ -26,15 +31,45 @@ def background_thread_proc() -> None:
     The background polling thread that manages asynchronous messages from the database.
     """
 
+    data = Data(config)
+    messageservice = MessageService(config, data)
+    userservice = UserService(config, data)
+    emoteservice = EmoteService(config, data)
+
+    # Make sure we can send emote additions and subtractions to the connected clients.
+    emotes = {k for k in emoteservice.get_all_emotes()}
+    last_update = Time.now()
+
     while True:
         # Just yield to the async system.
-        socketio.sleep(0.25)
+        socketio.sleep(MESSAGE_PUMP_TICK_SECONDS)
+
+        # See if we need to update emotes on clients.
+        if Time.now() - last_update >= EMOJI_REFRESH_TICK_SECONDS:
+            newemotes = emoteservice.get_all_emotes()
+            additions: Set[str] = set()
+            deletions: Set[str] = set()
+
+            for emote in newemotes:
+                if emote not in emotes:
+                    # This was an addition.
+                    additions.add(emote)
+
+            for emote in emotes:
+                if emote not in newemotes:
+                    # This was a deletion.
+                    deletions.add(emote)
+
+            # Send the delta to the clients, intentionally not choosing a room here.
+            if additions or deletions:
+                socketio.emit('emotechanges', {
+                    'additions': {f":{alias}:": newemotes[alias] for alias in additions},
+                    'deletions': [f":{d}:" for d in deletions],
+                })
+                emotes = {k for k in newemotes}
+            last_update = Time.now()
 
         # Look for any new actions that should be relayed.
-        data = Data(config)
-        messageservice = MessageService(config, data)
-        userservice = UserService(config, data)
-
         with socket_lock:
             if not socket_to_info:
                 print("Shutting down message pump thread due to no more client sockets.")
