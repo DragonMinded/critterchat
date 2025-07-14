@@ -39,12 +39,12 @@ class Messages {
             }
         });
 
-        $( 'div.chat > div.conversation' ).on( 'click', () => {
+        $( 'div.chat > div.conversation-wrapper' ).on( 'click', () => {
             this.inputState.setState("empty");
         });
 
-        $( 'div.chat > div.conversation' ).scroll(() => {
-            var box = $( 'div.chat > div.conversation' );
+        $( 'div.chat > div.conversation-wrapper' ).scroll(() => {
+            var box = $( 'div.chat > div.conversation-wrapper' );
             this.autoscroll = scrollTop(box[0]) >= scrollTopMax(box[0]);
             if (this.autoscroll) {
                 $( 'div.new-messages-alert' ).css( 'display', 'none' );
@@ -52,7 +52,7 @@ class Messages {
         });
 
         $(window).resize(() => {
-            var box = $( 'div.chat > div.conversation' );
+            var box = $( 'div.chat > div.conversation-wrapper' );
             if (this.autoscroll) {
                 box[0].scrollTop = scrollTopMax(box[0]) + 1;
             }
@@ -119,7 +119,7 @@ class Messages {
             this.occupantsLoaded = false;
             this.updateUsers();
 
-            $('div.chat > div.conversation').empty();
+            $('div.chat > div.conversation-wrapper > div.conversation').empty();
             $( '#message-actions' ).attr('roomid', roomid);
         }
     }
@@ -134,13 +134,13 @@ class Messages {
             this.occupantsLoaded = false;
             this.updateUsers();
 
-            $('div.chat > div.conversation').empty();
+            $('div.chat > div.conversation-wrapper > div.conversation').empty();
             $( '#message-actions' ).attr('roomid', '');
         }
     }
 
     ensureScrolled() {
-        var box = $( 'div.chat > div.conversation' );
+        var box = $( 'div.chat > div.conversation-wrapper' );
         if (this.autoscroll) {
             box[0].scrollTop = scrollTopMax(box[0]) + 1;
         } else {
@@ -277,7 +277,7 @@ class Messages {
 
     drawMessage( message, loc ) {
         // First, see if this is an update.
-        var messages = $('div.chat > div.conversation');
+        var messages = $('div.chat > div.conversation-wrapper > div.conversation');
         var drawnMessage = messages.find('div.message#' + message.id);
         if (drawnMessage.length > 0) {
             if (message.action == "message") {

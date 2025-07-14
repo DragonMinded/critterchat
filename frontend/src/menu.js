@@ -11,7 +11,7 @@ class Menu {
         this.roomsLoaded = false;
         this.lastSettingsLoaded = false;
 
-        $( 'div.menu > div.conversations' ).on( 'click', () => {
+        $( 'div.menu > div.rooms' ).on( 'click', () => {
             this.inputState.setState("empty");
         });
     }
@@ -46,14 +46,14 @@ class Menu {
         });
 
         // If we re-arranged anything, nuke our existing.
-        var scrollPos = $('div.menu > div.conversations').scrollTop();
+        var scrollPos = $('div.menu > div.rooms').scrollTop();
         if (needsEmpty) {
-            $('div.menu > div.conversations').empty();
+            $('div.menu > div.rooms').empty();
         }
 
         // Draw, and then select the room.
         this.rooms.forEach((room) => this.drawRoom(room));
-        $('div.menu > div.conversations').scrollTop(scrollPos);
+        $('div.menu > div.rooms').scrollTop(scrollPos);
 
         if (this.lastSettingsLoaded) {
             this.selectRoom(this.lastSettings.roomid);
@@ -71,7 +71,7 @@ class Menu {
 
     drawRoom( room ) {
         // First, see if this is an update.
-        var conversations = $('div.menu > div.conversations');
+        var conversations = $('div.menu > div.rooms');
         var drawnRoom = conversations.find('div.item#' + room.id);
         if (drawnRoom.length > 0) {
             drawnRoom.find('.icon img').attr('src', room.icon);
@@ -93,7 +93,7 @@ class Menu {
             html    += '</div>';
             conversations.append(html);
 
-            $('div.menu > div.conversations div.item#' + room.id).on('click', (event) => {
+            $('div.menu > div.rooms div.item#' + room.id).on('click', (event) => {
                 event.stopPropagation();
                 event.stopImmediatePropagation();
 
@@ -129,7 +129,7 @@ class Menu {
         if (this.selected == roomid ) {
             this.selected = "";
 
-            var conversations = $('div.menu > div.conversations');
+            var conversations = $('div.menu > div.rooms');
             conversations.find('div.item#' + roomid).remove();
 
             this.rooms = this.rooms.filter((room) => room.id != roomid);
@@ -139,9 +139,9 @@ class Menu {
     }
 
     updateSelected() {
-        $('div.menu > div.conversations div.item').removeClass('selected');
+        $('div.menu > div.rooms div.item').removeClass('selected');
         if (this.selected) {
-            $('div.menu > div.conversations div.item#' + this.selected).addClass('selected');
+            $('div.menu > div.rooms div.item#' + this.selected).addClass('selected');
         }
     }
 
@@ -155,7 +155,7 @@ class Menu {
         }
 
         // Find the room to update
-        var conversations = $('div.menu > div.conversations');
+        var conversations = $('div.menu > div.rooms');
         var drawnRoom = conversations.find('div.item#' + roomid);
         if (drawnRoom.length > 0) {
             drawnRoom.find('.icon .badge').removeClass('empty');
@@ -200,7 +200,7 @@ class Menu {
 
     clearBadges( roomid ) {
         // Find the room to update
-        var conversations = $('div.menu > div.conversations');
+        var conversations = $('div.menu > div.rooms');
         var drawnRoom = conversations.find('div.item#' + roomid);
         if (drawnRoom.length > 0) {
             drawnRoom.find('.icon .badge').addClass('empty');
