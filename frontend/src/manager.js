@@ -36,6 +36,7 @@ export function manager(socket) {
         if (msg.selected) {
             menuInst.selectRoom(msg.selected);
         }
+        messagesInst.setRooms(msg.rooms);
     });
 
     socket.on('lastsettings', (msg) => {
@@ -91,6 +92,10 @@ export function manager(socket) {
 
     eventBus.on('joinroom', (roomoruserid) => {
         socket.emit('joinroom', {'roomid': roomoruserid})
+    });
+
+    eventBus.on('updateroom', (msg) => {
+        socket.emit('updateroom', {'roomid': msg.roomid, 'details': msg.details});
     });
 
     eventBus.on('message', (msg) => {

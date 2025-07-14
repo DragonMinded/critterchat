@@ -173,6 +173,8 @@ div.chat > div.info div.title {
 
 div.chat > div.info div.topic {
     font-size: 12px;
+    color: #707070;
+    align-content: end;
 }
 
 div.chat > div.conversation-wrapper {
@@ -318,7 +320,7 @@ div.search, div.warning {
     gap: 10px;
 }
 
-div.search > div.actions, div.warning > div.actions {
+div.search > div.actions, div.warning > div.actions, div.chatdetails > div.actions {
     display: flex;
     flex-direction: row;
     width: 100%;
@@ -344,6 +346,49 @@ div.search > div.results {
     flex-grow: 1;
     overflow-y: scroll;
     padding-right: 10px;
+}
+
+div.chatdetails {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+div.chatdetails > div.icon-wrapper {
+    background: #dddddd;
+    padding: 10px;
+    gap: 10px;
+    display: flex;
+    flex-direction: column;
+}
+
+div.chatdetails div.icon img {
+    display: block;
+    width: 72px;
+    height: 72px;
+    margin: 0px;
+}
+
+div.chatdetails div.icon, div.chatdetails div.picker {
+    display: flex;
+    justify-content: center;
+}
+
+div.chatdetails dl {
+    margin: 0px;
+}
+
+div.chatdetails dt {
+    font-size: 14px;
+}
+
+div.chatdetails dl.name dd, div.chatdetails dl.topic dd {
+    display: flex;
+    margin-left: 0px;
+}
+
+div.chatdetails dl.name input, div.chatdetails dl.topic input {
+    width: 100%;
 }
 
 div.info > div.occupants {

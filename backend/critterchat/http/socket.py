@@ -1,5 +1,5 @@
 from threading import Lock
-from typing import Any, Dict, Optional, Set
+from typing import Any, Dict, Optional, Set, cast
 from typing_extensions import Final
 
 from .app import socketio, config, request
@@ -404,3 +404,22 @@ def lastaction(json: Dict[str, object]) -> None:
     actionid = Action.to_id(str(json.get('actionid')))
     if roomid is not None and actionid is not None:
         userservice.mark_last_seen(userid, roomid, actionid)
+
+
+@socketio.on('updateroom')  # type: ignore
+def updateroom(json: Dict[str, object]) -> None:
+    data = Data(config)
+    messageservice = MessageService(config, data)
+
+    # Try to associate with a user if there is one.
+    userid = recover_userid(data, request.sid)
+    if userid is None:
+        return
+
+    # Grab all rooms that match this search result
+    roomid = Room.to_id(str(json.get('roomid')))
+    if roomid is not None:
+        details = cast(Dict[str, object], json.get('details', {}))
+        newname = str(details.get('name', ''))
+        newtopic = str(details.get('topic', ''))
+        messageservice.update_room(roomid, userid, name=newname, topic=newtopic)

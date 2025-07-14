@@ -16,10 +16,13 @@ class Messages {
         this.inputState = inputState;
         this.messages = [];
         this.occupants = [];
+        this.rooms = [];
         this.roomid = "";
+        this.roomType = "chat";
         this.autoscroll = true;
         this.lastAction = {};
         this.lastSettings = {};
+        this.roomsLoaded = false;
         this.lastSettingsLoaded = false;
         this.occupantsLoaded = false;
 
@@ -94,10 +97,6 @@ class Messages {
     setLastSettings( settings ) {
         this.lastSettings = settings;
         this.lastSettingsLoaded = true;
-
-        if (this.roomsLoaded) {
-            this.selectRoom(this.lastSettings.roomid);
-        }
     }
 
     setOccupants( roomid, occupants ) {
@@ -107,6 +106,12 @@ class Messages {
             this.occupantsLoaded = true;
             this.updateUsers();
         }
+    }
+
+    setRooms( rooms ) {
+        // Make a copy instead of keeping a reference, so we can safely mutate.
+        this.rooms = rooms.filter(() => true);
+        this.roomsLoaded = true;
     }
 
     setRoom( roomid ) {
@@ -121,6 +126,12 @@ class Messages {
 
             $('div.chat > div.conversation-wrapper > div.conversation').empty();
             $( '#message-actions' ).attr('roomid', roomid);
+
+            this.rooms.forEach((room) => {
+                if (room.id == roomid) {
+                    this.roomType = room.type;
+                }
+            });
         }
     }
 
@@ -326,6 +337,18 @@ class Messages {
                 html += '    <div class="meta-wrapper">';
                 html += '      <div class="name" id="' + message.occupant.id + '">' + escapeHtml(message.occupant.nickname) + '</div>';
                 html += '      <div class="joinmessage">has left!</div>';
+                html += '      <div class="timestamp" id="' + message.id + '">' + formatTime(message.timestamp) + '</div>';
+                html += '    </div>';
+                html += '  </div>';
+                html += '</div>';
+            } else if (message.action == "change_info") {
+                var type = this.roomType == "chat" ? "chat" : "room";
+
+                html  = '<div class="item">';
+                html += '  <div class="content-wrapper">';
+                html += '    <div class="meta-wrapper">';
+                html += '      <div class="name" id="' + message.occupant.id + '">' + escapeHtml(message.occupant.nickname) + '</div>';
+                html += '      <div class="joinmessage">has updated the ' + type + '\'s info!</div>';
                 html += '      <div class="timestamp" id="' + message.id + '">' + formatTime(message.timestamp) + '</div>';
                 html += '    </div>';
                 html += '  </div>';

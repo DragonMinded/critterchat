@@ -133,10 +133,19 @@ class RoomType(StrEnum):
 
 
 class Room:
-    def __init__(self, roomid: RoomID, name: str, public: bool, iconid: Optional[AttachmentID], last_action: int = 0) -> None:
+    def __init__(
+        self,
+        roomid: RoomID,
+        name: str,
+        topic: str,
+        public: bool,
+        iconid: Optional[AttachmentID],
+        last_action: int = 0,
+    ) -> None:
         self.id = roomid
         self.type = RoomType.UNKNOWN
-        self.name = name
+        self.name = name or ""
+        self.topic = topic or ""
         self.public = public
         self.last_action = last_action
         self.iconid = iconid
@@ -147,6 +156,7 @@ class Room:
             "id": Room.from_id(self.id),
             "type": self.type,
             "name": self.name,
+            "topic": self.topic,
             "public": self.public,
             "last_action": self.last_action,
             "icon": self.icon,
@@ -236,6 +246,7 @@ class ActionType(StrEnum):
     MESSAGE = 'message'
     JOIN = 'join'
     LEAVE = 'leave'
+    CHANGE_INFO = 'change_info'
 
 
 class Action:

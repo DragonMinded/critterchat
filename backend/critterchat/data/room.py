@@ -31,6 +31,7 @@ room = Table(
     metadata,
     Column("id", Integer, nullable=False, primary_key=True, autoincrement=True),
     Column("name", String(255)),
+    Column("topic", String(255)),
     Column("icon", Integer),
     Column("public", Boolean),
     Column("last_action", Integer, nullable=False),
@@ -92,7 +93,7 @@ class RoomData(BaseData):
             extra = "AND inactive != TRUE"
 
         sql = f"""
-            SELECT id, name, icon, public, last_action FROM room WHERE id in (
+            SELECT id, name, topic, icon, public, last_action FROM room WHERE id in (
                 SELECT room_id FROM occupant WHERE user_id = :userid {extra}
             )
         """
@@ -101,6 +102,7 @@ class RoomData(BaseData):
             Room(
                 roomid=RoomID(result['id']),
                 name=result['name'],
+                topic=result['topic'],
                 public=bool(result['public']),
                 last_action=result['last_action'],
                 iconid=AttachmentID(result['icon']) if result['icon'] else None,
@@ -125,7 +127,7 @@ class RoomData(BaseData):
             return []
 
         sql = """
-            SELECT id, name, icon, public, last_action FROM room WHERE id in (
+            SELECT id, name, topic, icon, public, last_action FROM room WHERE id in (
                 SELECT room_id FROM occupant WHERE user_id = :userid AND inactive != TRUE
             )
         """
@@ -137,6 +139,7 @@ class RoomData(BaseData):
             Room(
                 roomid=RoomID(result['id']),
                 name=result['name'],
+                topic=result['topic'],
                 public=bool(result['public']),
                 last_action=result['last_action'],
                 iconid=AttachmentID(result['icon']) if result['icon'] else None,
@@ -161,7 +164,7 @@ class RoomData(BaseData):
             return []
 
         sql = """
-            SELECT id, name, icon, public, last_action FROM room WHERE public = TRUE
+            SELECT id, name, topic, icon, public, last_action FROM room WHERE public = TRUE
         """
         if name is not None:
             sql += " AND (name IS NULL OR name = '' OR name COLLATE utf8mb4_general_ci LIKE :name)"
@@ -171,6 +174,7 @@ class RoomData(BaseData):
             Room(
                 roomid=RoomID(result['id']),
                 name=result['name'],
+                topic=result['topic'],
                 public=bool(result['public']),
                 last_action=result['last_action'],
                 iconid=AttachmentID(result['icon']) if result['icon'] else None,
@@ -199,6 +203,7 @@ class RoomData(BaseData):
         return Room(
             roomid=RoomID(result['id']),
             name=result['name'],
+            topic=result['topic'],
             public=bool(result['public']),
             last_action=result['last_action'],
             iconid=AttachmentID(result['icon']) if result['icon'] else None,
@@ -217,7 +222,7 @@ class RoomData(BaseData):
 
         timestamp = Time.now()
         sql = """
-            INSERT INTO room (`name`, `public`, `last_action`, `icon`) VALUES (:name, :public, :ts, :icon)
+            INSERT INTO room (`name`, `topic`, `public`, `last_action`, `icon`) VALUES (:name, :topic, :public, :ts, :icon)
         """
         cursor = self.execute(sql, {"name": room.name, "public": room.public, "timestamp": timestamp, "icon": room.iconid})
         if cursor.rowcount != 1:
@@ -226,6 +231,7 @@ class RoomData(BaseData):
         if newroom:
             room.id = newroom.id
             room.name = newroom.name
+            room.topic = newroom.topic
             room.public = newroom.public
             room.iconid = newroom.iconid
             room.last_action = timestamp
@@ -241,32 +247,33 @@ class RoomData(BaseData):
         if userid is NewUserID or roomid is NewRoomID:
             return None
 
-        # First, figure out if we're already joined.
-        sql = """
-            SELECT id FROM occupant WHERE `user_id` = :userid AND `room_id` = :roomid AND `inactive` != TRUE
-        """
-        cursor = self.execute(sql, {"userid": userid, "roomid": roomid})
-        already_joined = cursor.rowcount > 0
+        with self.transaction():
+            # First, figure out if we're already joined.
+            sql = """
+                SELECT id FROM occupant WHERE `user_id` = :userid AND `room_id` = :roomid AND `inactive` != TRUE
+            """
+            cursor = self.execute(sql, {"userid": userid, "roomid": roomid})
+            already_joined = cursor.rowcount > 0
 
-        sql = """
-            INSERT INTO occupant (`user_id`, `room_id`, `inactive`) VALUES (:userid, :roomid, FALSE)
-            ON DUPLICATE KEY UPDATE `inactive` = FALSE
-        """
-        self.execute(sql, {"userid": userid, "roomid": roomid})
+            sql = """
+                INSERT INTO occupant (`user_id`, `room_id`, `inactive`) VALUES (:userid, :roomid, FALSE)
+                ON DUPLICATE KEY UPDATE `inactive` = FALSE
+            """
+            self.execute(sql, {"userid": userid, "roomid": roomid})
 
-        if not already_joined:
-            occupant = Occupant(
-                occupantid=NewOccupantID,
-                userid=userid,
-            )
-            action = Action(
-                actionid=NewActionID,
-                timestamp=Time.now(),
-                occupant=occupant,
-                action=ActionType.JOIN,
-                details="",
-            )
-            self.insert_action(roomid, action)
+            if not already_joined:
+                occupant = Occupant(
+                    occupantid=NewOccupantID,
+                    userid=userid,
+                )
+                action = Action(
+                    actionid=NewActionID,
+                    timestamp=Time.now(),
+                    occupant=occupant,
+                    action=ActionType.JOIN,
+                    details="",
+                )
+                self.insert_action(roomid, action)
 
     def leave_room(self, roomid: RoomID, userid: UserID) -> None:
         """
@@ -297,6 +304,31 @@ class RoomData(BaseData):
             UPDATE occupant SET inactive = TRUE WHERE `user_id` = :userid AND `room_id` = :roomid
         """
         self.execute(sql, {"userid": userid, "roomid": roomid})
+
+    def update_room(self, room: Room, userid: UserID) -> None:
+        """
+        Given a valid room, update its details to match the given object.
+        """
+        if room.id is NewRoomID:
+            return
+
+        sql = """
+            UPDATE room SET name = :name, topic = :topic WHERE id = :roomid
+        """
+        self.execute(sql, {"roomid": room.id, "name": room.name, "topic": room.topic})
+
+        occupant = Occupant(
+            occupantid=NewOccupantID,
+            userid=userid,
+        )
+        action = Action(
+            actionid=NewActionID,
+            timestamp=Time.now(),
+            occupant=occupant,
+            action=ActionType.CHANGE_INFO,
+            details="",
+        )
+        self.insert_action(room.id, action)
 
     def __to_occupant(self, result: Any) -> Occupant:
         """

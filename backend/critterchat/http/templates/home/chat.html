@@ -55,11 +55,14 @@
         </div>
         <div class="actions">
             <div class="item">
+                <button id="edit-info">&#128393; edit info</button>
+            </div>
+            <div class="item">
                 <button id="leave-room">&#128682; leave <span id="leave-type">chat</span></button>
             </div>
         </div>
     </div>
-    <form id="search-form" class="modal">
+    <form id="search-form" class="modal search">
         <div class="search">
             <div class="actions">
                 <div class="searchbox">
@@ -69,7 +72,35 @@
             <div class="results"></div>
         </div>
     </form>
-    <form id="warning-form" class="modal">
+    <form id="chatdetails-form" class="modal chatdetails">
+        <div class="chatdetails">
+            <div class="icon-wrapper">
+                <div class="icon">
+                    <img id="chatdetails-icon" />
+                </div>
+                <div class="picker">
+                    <input type="file" id="chatdetails-iconpicker" />
+                </div>
+            </div>
+            <dl class="name">
+                <dt id="chatdetails-name-label"></dt>
+                <dd><input type="text" id="chatdetails-name" autocomplete="off" maxlength="255" /></dd>
+            </dl>
+            <dl class="topic">
+                <dt id="chatdetails-topic-label"></dt>
+                <dd><input type="text" id="chatdetails-topic" autocomplete="off" maxlength="255" /></dd>
+            </dl>
+            <div class="actions">
+                <div class="item">
+                    <button id="chatdetails-confirm">update info</button>
+                </div>
+                <div class="item">
+                    <button id="chatdetails-cancel">nevermind</button>
+                </div>
+            </div>
+        </div>
+    </form>
+    <form id="warning-form" class="modal warning">
         <div class="warning">
             <div class="warning-text" id="warning-text">
             </div>

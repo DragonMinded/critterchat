@@ -42,7 +42,7 @@ class MessageService:
         history = [
             self.__attachments.resolve_action_icon(e)
             for e in history
-            if e.action in {ActionType.MESSAGE, ActionType.JOIN, ActionType.LEAVE}
+            if e.action in {ActionType.MESSAGE, ActionType.JOIN, ActionType.LEAVE, ActionType.CHANGE_INFO}
         ]
         return history
 
@@ -51,7 +51,7 @@ class MessageService:
         history = [
             self.__attachments.resolve_action_icon(e)
             for e in history
-            if e.action in {ActionType.MESSAGE, ActionType.JOIN, ActionType.LEAVE}
+            if e.action in {ActionType.MESSAGE, ActionType.JOIN, ActionType.LEAVE, ActionType.CHANGE_INFO}
         ]
         return history
 
@@ -140,7 +140,7 @@ class MessageService:
                     return room
 
         # Now, create a new room since we don't have an existing one.
-        room = Room(NewRoomID, "", False, None)
+        room = Room(NewRoomID, "", "", False, None)
         self.__data.room.create_room(room)
         self.join_room(room.id, userid)
         self.join_room(room.id, otherid)
@@ -152,6 +152,16 @@ class MessageService:
 
     def leave_room(self, roomid: RoomID, userid: UserID) -> None:
         self.__data.room.leave_room(roomid, userid)
+
+    def update_room(self, roomid: RoomID, userid: UserID, name: Optional[str] = None, topic: Optional[str] = None) -> None:
+        room = self.__data.room.get_room(roomid)
+        if room:
+            if name is not None:
+                room.name = name
+            if topic is not None:
+                room.topic = topic
+
+            self.__data.room.update_room(room, userid)
 
     def get_joined_rooms(self, userid: UserID) -> List[Room]:
         rooms = self.__data.room.get_joined_rooms(userid)

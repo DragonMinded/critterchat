@@ -1,11 +1,14 @@
 import $ from "jquery";
 import { escapeHtml } from "./utils.js";
+import { ChatDetails } from "./modals/chatdetails.js";
 import { displayWarning } from "./modals/warningmodal.js";
 
 class Info {
     constructor( eventBus, inputState ) {
         this.eventBus = eventBus;
         this.inputState = inputState;
+        this.chatdetails = new ChatDetails( eventBus, inputState );
+
         this.roomid = "";
         this.occupants = [];
         this.rooms = [];
@@ -53,6 +56,14 @@ class Info {
             });
         });
 
+        $( '#edit-info' ).on( 'click', (event) => {
+            event.preventDefault();
+
+            this.inputState.setState("empty");
+            var roomid = $( '#leave-room' ).attr('roomid');
+            this.chatdetails.display( roomid );
+        });
+
         $( 'div.info > div.occupants' ).on( 'click', () => {
             this.inputState.setState("empty");
         });
@@ -65,8 +76,12 @@ class Info {
         // Make a copy instead of keeping a reference, so we can safely mutate.
         this.rooms = rooms.filter(() => true);
         this.roomsLoaded = true;
-        if (this.roomid && !this.infoLoaded) {
-            this.setRoom(this.roomid);
+        if (this.roomid) {
+            if (!this.infoLoaded) {
+                this.setRoom(this.roomid);
+            } else {
+                this.updateRoom(this.roomid);
+            }
         }
     }
 
@@ -172,10 +187,14 @@ class Info {
 
                     $( 'div.info div.title-wrapper' ).show();
                     $( 'div.info div.actions' ).show();
-                    $( 'div.chat div.title' ).text(room.name);
+                    $( 'div.chat div.title' ).html(escapeHtml(room.name));
+                    $( 'div.chat div.topic' ).html(escapeHtml(room.topic));
                     $( '#leave-room' ).attr('roomid', roomid);
+                    $( '#edit-info' ).attr('roomid', roomid);
 
                     updated = true;
+
+                    this.chatdetails.setRoom(room);
                 }
             });
 
@@ -187,8 +206,42 @@ class Info {
         }
     }
 
+    updateRoom( roomid ) {
+        if (roomid == this.roomid && this.infoLoaded) {
+            this.rooms.forEach((room) => {
+                if (room.id == roomid) {
+                    var title;
+                    if (room.type == "chat") {
+                        if (room['public']) {
+                            title = "Public group chat";
+                        } else {
+                            title = "Private chat";
+                        }
+                    } else {
+                        if (room['public']) {
+                            title = "Public room";
+                        } else {
+                            title = "Private room";
+                        }
+                    }
+                    $( '#room-title' ).text(title);
+                    if (room.type == 'room') {
+                        $( '#leave-type' ).text('room');
+                    } else {
+                        $( '#leave-type' ).text('chat');
+                    }
+
+                    $( 'div.chat div.title' ).html(escapeHtml(room.name));
+                    $( 'div.chat div.topic' ).html(escapeHtml(room.topic));
+                    this.chatdetails.setRoom(room);
+                }
+            });
+        }
+    }
+
     closeRoom( roomid ) {
         if (roomid == this.roomid) {
+            this.chatdetails.closeRoom(roomid);
             this.occupants = [];
             this.occupantsLoaded = false;
             this.infoLoaded = false;
@@ -196,7 +249,9 @@ class Info {
 
             $( 'div.info > div.occupants' ).empty();
             $( '#leave-room' ).attr('roomid', '');
+            $( '#edit-info' ).attr('roomid', '');
             $( 'div.chat div.title' ).html('&nbsp;');
+            $( 'div.chat div.topic' ).html('&nbsp;');
             $( 'div.info div.title-wrapper' ).hide();
             $( 'div.info div.actions' ).hide();
         }
