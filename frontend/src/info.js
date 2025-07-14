@@ -1,5 +1,6 @@
 import $ from "jquery";
 import { escapeHtml } from "./utils.js";
+import { displayWarning } from "./warningmodal.js";
 
 class Info {
     constructor( eventBus, inputState ) {
@@ -29,19 +30,6 @@ class Info {
             this.eventBus.emit('info', this.lastSettings.info);
         });
 
-        $( '#confirm-leave-room, #confirm-leave-chat').on( 'click', (event) => {
-            event.preventDefault();
-
-            this.eventBus.emit('leaveroom', $( '#leave-room' ).attr('roomid'));
-            $.modal.close();
-        });
-
-        $( '#cancel-leave-room, #cancel-leave-chat').on( 'click', (event) => {
-            event.preventDefault();
-
-            $.modal.close();
-        });
-
         $( '#leave-room' ).on( 'click', (event) => {
             event.preventDefault();
 
@@ -49,11 +37,18 @@ class Info {
             var roomid = $( '#leave-room' ).attr('roomid');
             this.rooms.forEach((room) => {
                 if (room.id == roomid) {
-                    if (room.type == 'room') {
-                        $('#leave-room-form').modal();
-                    } else {
-                        $('#leave-chat-form').modal();
-                    }
+                    displayWarning(
+                        room.type == 'room' ?
+                            'Leaving this room will mean you no longer receive messages from the other members. You can still ' +
+                            're-join this room in the future by searching for the room\'s name and clicking "join".' :
+                            'Leaving this chat will mean you no longer receive messages from the other chatter. You can still ' +
+                            're-join this chat in the future by searching for the chatter\'s name and clicking "message".',
+                        'yes, leave',
+                        'no, stay here',
+                        () => {
+                            this.eventBus.emit('leaveroom', $( '#leave-room' ).attr('roomid'));
+                        }
+                    );
                 }
             });
         });
