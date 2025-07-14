@@ -5,7 +5,7 @@ import { io } from "socket.io-client";
 import { modal } from "jquery-modal"; // eslint-disable-line no-unused-vars
 
 import { manager } from "./manager.js";
-import { hook } from "./extensions.js";
+import { hook } from "./config/extensions.js";
 
 // Hook jQuery extensions immediately.
 hook();

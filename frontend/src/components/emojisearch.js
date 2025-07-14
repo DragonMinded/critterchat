@@ -1,5 +1,5 @@
 import $ from "jquery";
-import { emojicategories } from "./emojicategories.js"
+import { emojicategories } from "../config/emojicategories.js"
 
 function getCursorStart(element) {
     var el = $(element).get(0);

@@ -1,6 +1,6 @@
 import $ from "jquery";
 import { escapeHtml } from "./utils.js";
-import { displayWarning } from "./warningmodal.js";
+import { displayWarning } from "./modals/warningmodal.js";
 
 class Info {
     constructor( eventBus, inputState ) {
