@@ -1,5 +1,8 @@
 import emoji
+import io
+from PIL import Image
 from typing import List, Optional
+from typing_extensions import Final
 
 from ..config import Config
 from ..common import Time
@@ -21,6 +24,10 @@ from ..data import (
     UserID,
 )
 from .attachment import AttachmentService
+
+
+MAX_ICON_WIDTH: Final[int] = 256
+MAX_ICON_HEIGHT: Final[int] = 256
 
 
 class MessageServiceException(Exception):
@@ -153,15 +160,50 @@ class MessageService:
     def leave_room(self, roomid: RoomID, userid: UserID) -> None:
         self.__data.room.leave_room(roomid, userid)
 
-    def update_room(self, roomid: RoomID, userid: UserID, name: Optional[str] = None, topic: Optional[str] = None) -> None:
+    def update_room(
+        self,
+        roomid: RoomID,
+        userid: UserID,
+        name: Optional[str] = None,
+        topic: Optional[str] = None,
+        icon: Optional[bytes] = None,
+    ) -> None:
         room = self.__data.room.get_room(roomid)
         if room:
+            changed = False
             if name is not None:
+                changed = changed or (room.name != name)
                 room.name = name
             if topic is not None:
+                changed = changed or (room.topic != topic)
                 room.topic = topic
+            if icon is not None:
+                # Need to store this as a new attachment, and then get back the ID.
+                img = Image.open(io.BytesIO(icon))
+                width, height = img.size
 
-            self.__data.room.update_room(room, userid)
+                if width > MAX_ICON_WIDTH or height > MAX_ICON_HEIGHT:
+                    raise MessageServiceException("Invalid image size for room icon")
+                if width != height:
+                    raise MessageServiceException("Room icon image is not square")
+
+                content_type = img.get_format_mimetype()
+                if not content_type:
+                    raise MessageServiceException("Room icon image has no valid content type")
+
+                attachmentid = self.__attachments.create_attachment(content_type)
+                if attachmentid is None:
+                    raise MessageServiceException("Could not insert new room icon!")
+                self.__attachments.put_attachment_data(attachmentid, icon)
+
+                changed = True
+                room.iconid = attachmentid
+
+            if room.iconid == DefaultAvatarID or room.iconid == DefaultRoomID:
+                room.iconid = None
+
+            if changed:
+                self.__data.room.update_room(room, userid)
 
     def get_joined_rooms(self, userid: UserID) -> List[Room]:
         rooms = self.__data.room.get_joined_rooms(userid)

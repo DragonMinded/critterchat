@@ -145,6 +145,7 @@ class Room:
         self.id = roomid
         self.type = RoomType.UNKNOWN
         self.name = name or ""
+        self.customname = self.name
         self.topic = topic or ""
         self.public = public
         self.last_action = last_action
@@ -156,6 +157,7 @@ class Room:
             "id": Room.from_id(self.id),
             "type": self.type,
             "name": self.name,
+            "customname": self.customname,
             "topic": self.topic,
             "public": self.public,
             "last_action": self.last_action,

@@ -14,6 +14,7 @@ from .types import (
     Room,
     NewUserID,
     NewActionID,
+    NewAttachmentID,
     NewOccupantID,
     NewRoomID,
     ActionID,
@@ -312,10 +313,18 @@ class RoomData(BaseData):
         if room.id is NewRoomID:
             return
 
+        if (
+            room.iconid is not None and
+            room.iconid is not NewAttachmentID
+        ):
+            iconid = room.iconid
+        else:
+            iconid = None
+
         sql = """
-            UPDATE room SET name = :name, topic = :topic WHERE id = :roomid
+            UPDATE room SET name = :name, topic = :topic, icon = :iconid WHERE id = :roomid
         """
-        self.execute(sql, {"roomid": room.id, "name": room.name, "topic": room.topic})
+        self.execute(sql, {"roomid": room.id, "name": room.name, "topic": room.topic, "iconid": iconid})
 
         occupant = Occupant(
             occupantid=NewOccupantID,

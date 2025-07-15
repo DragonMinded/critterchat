@@ -1,3 +1,4 @@
+import urllib.request
 from threading import Lock
 from typing import Any, Dict, Optional, Set, cast
 from typing_extensions import Final
@@ -19,6 +20,10 @@ class SocketInfo:
 
 MESSAGE_PUMP_TICK_SECONDS: Final[float] = 0.25
 EMOJI_REFRESH_TICK_SECONDS: Final[int] = 5
+
+
+MAX_ICON_WIDTH: Final[int] = 256
+MAX_ICON_HEIGHT: Final[int] = 256
 
 
 socket_lock: Lock = Lock()
@@ -422,4 +427,16 @@ def updateroom(json: Dict[str, object]) -> None:
         details = cast(Dict[str, object], json.get('details', {}))
         newname = str(details.get('name', ''))
         newtopic = str(details.get('topic', ''))
-        messageservice.update_room(roomid, userid, name=newname, topic=newtopic)
+        newicon = str(details.get('icon', ''))
+
+        icon: Optional[bytes] = None
+        if newicon:
+            # Verify that it's a reasonable icon.
+            header, _ = newicon.split(",", 1)
+            if not header.startswith("data:") or not header.endswith("base64"):
+                raise ValueError("Invaid image header")
+
+            with urllib.request.urlopen(newicon) as fp:
+                icon = fp.read()
+
+        messageservice.update_room(roomid, userid, name=newname, topic=newtopic, icon=icon)

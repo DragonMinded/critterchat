@@ -6,6 +6,7 @@ class ChatDetails {
         this.inputState = inputState;
         this.room = {};
         this.roomLoaded = false;
+        this.icon = "";
 
         $( '#chatdetails-form' ).on( 'submit', (event) => {
             event.preventDefault();
@@ -14,11 +15,13 @@ class ChatDetails {
         $( '#chatdetails-confirm' ).on( 'click', (event) => {
             event.preventDefault();
             $.modal.close();
+            this.inputState.setState("empty");
 
             if (this.roomLoaded) {
                 this.eventBus.emit('updateroom', {'roomid': this.room.id, 'details': {
                     'name': $('#chatdetails-name').val(),
                     'topic': $('#chatdetails-topic').val(),
+                    'icon': this.icon,
                 }});
             }
         });
@@ -26,12 +29,29 @@ class ChatDetails {
         $( '#chatdetails-cancel' ).on( 'click', (event) => {
             event.preventDefault();
             $.modal.close();
+            this.inputState.setState("empty");
+        });
+
+        $( '#chatdetails-iconpicker' ).on( 'change', (event) => {
+            const file = event.target.files[0];
+
+            if (file) {
+                var fr = new FileReader();
+                fr.onload = () => {
+                    this.icon = fr.result;
+                    $( '#chatdetails-icon' ).attr('src', this.icon);
+                };
+                fr.readAsDataURL(file);
+            }
         });
     }
 
     display( roomid ) {
         if (this.roomLoaded && this.room.id == roomid) {
             $.modal.close();
+
+            // Make sure we don't accidentally set a previous icon.
+            this.icon = "";
 
             var photoType = this.room['public'] ? 'room' : 'avatar';
             $('div.chatdetails div.icon').removeClass('avatar').removeClass('room').addClass(photoType);
@@ -42,7 +62,7 @@ class ChatDetails {
             $("#chatdetails-topic-label").text(roomType + " topic");
             $("#chatdetails-topic").attr('placeholder', 'Type a topic for this ' + roomType + '...');
 
-            $('#chatdetails-name').val(this.room.name);
+            $('#chatdetails-name').val(this.room.customname);
             $('#chatdetails-topic').val(this.room.topic);
             $('#chatdetails-icon').attr('src', this.room.icon);
             $('#chatdetails-form').modal();

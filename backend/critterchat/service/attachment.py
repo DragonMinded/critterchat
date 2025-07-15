@@ -26,6 +26,13 @@ class AttachmentService:
         except Exception:
             return "application/octet-stream"
 
+    def create_attachment(self, content_type: str) -> Optional[AttachmentID]:
+        return self.__data.attachment.insert_attachment(self.__config.attachments.system, content_type)
+
+    def destroy_attachment(self, attachmentid: AttachmentID) -> None:
+        self.delete_attachment_data(attachmentid)
+        self.__data.attachment.remove_attachment(attachmentid)
+
     def get_attachment_data(self, attachmentid: AttachmentID) -> Optional[Tuple[str, bytes]]:
         # Check for default avatar.
         if attachmentid == DefaultAvatarID:

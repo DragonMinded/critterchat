@@ -1,6 +1,7 @@
 TODO For First Test Build
 =========================
-Support for setting a chat's custom avatar/picture.
+Support editing your nickname on the profile page.
+Support setting a custom avatar on the profile page.
 Auto-join room list for public chat rooms.
 Bit of work on the welcome page and login.
 
@@ -11,14 +12,14 @@ Display "--new--" bar for messages that have come in since you last looked at th
 TODO For Post Test Build
 ========================
 Close-by message coalescing into one group of lines.
-Start on profile view/editor to look at a person's profile.
+Start on profile view to look at a person's profile.
 Display user name next to nickname in search as well as on profiles.
+Chat info name and topic should support emoji autocomplete and emoji search.
 Mentioning typeahead should allow searching by display nick as well as username.
-Support editing your nickname on the profile page.
 Support setting your custom color on the profile page.
-Support setting a custom avatar on the profile page.
 Support creating an account flow with ability to disable instance-side.
 Support editing your nickname per-chat.
+Support being able to delete a chat icon or your own icon.
 README for contributing/setting up/etc.
 Protocol documentation.
 
