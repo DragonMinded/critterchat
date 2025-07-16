@@ -1,7 +1,6 @@
 TODO For First Test Build
 =========================
-Support editing your nickname on the profile page.
-Support setting a custom avatar on the profile page.
+Auto-refresh members list and messages by user when they change their nickname or icon.
 Auto-join room list for public chat rooms.
 Bit of work on the welcome page and login.
 

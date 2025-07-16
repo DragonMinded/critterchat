@@ -30,7 +30,7 @@ class Info {
                 this.lastSettings.info = "hidden";
             }
 
-            this.eventBus.emit('info', this.lastSettings.info);
+            this.eventBus.emit('updateinfo', this.lastSettings.info);
         });
 
         $( '#leave-room' ).on( 'click', (event) => {

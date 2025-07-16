@@ -10,7 +10,7 @@ from passlib.hash import pbkdf2_sha512  # type: ignore
 
 from ..common import Time
 from .base import BaseData, metadata
-from .types import User, UserSettings, NewActionID, NewRoomID, NewUserID, ActionID, RoomID, UserID
+from .types import User, UserSettings, NewActionID, NewRoomID, NewUserID, NewAttachmentID, ActionID, RoomID, UserID
 
 """
 Table representing a user.
@@ -338,6 +338,31 @@ class UserData(BaseData):
 
         result = cursor.mappings().fetchone()
         return self.__to_user(result)
+
+    def update_user(self, user: User) -> None:
+        """
+        Given a valid user, update that user's information.
+        """
+        if user.id is NewUserID:
+            return
+
+        if (
+            user.iconid is not None and
+            user.iconid is not NewAttachmentID
+        ):
+            iconid = user.iconid
+        else:
+            iconid = None
+
+        if (user.username == user.nickname) or (not user.nickname):
+            nickname = None
+        else:
+            nickname = user.nickname
+
+        sql = """
+            UPDATE profile SET nickname = :name, icon = :iconid WHERE user_id = :userid
+        """
+        self.execute(sql, {"userid": user.id, "name": nickname, "iconid": iconid})
 
     def get_visible_users(self, userid: UserID, name: Optional[str] = None) -> List[User]:
         """

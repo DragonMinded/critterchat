@@ -2,7 +2,6 @@ import emoji
 import io
 from PIL import Image
 from typing import List, Optional
-from typing_extensions import Final
 
 from ..config import Config
 from ..common import Time
@@ -24,10 +23,6 @@ from ..data import (
     UserID,
 )
 from .attachment import AttachmentService
-
-
-MAX_ICON_WIDTH: Final[int] = 256
-MAX_ICON_HEIGHT: Final[int] = 256
 
 
 class MessageServiceException(Exception):
@@ -182,7 +177,7 @@ class MessageService:
                 img = Image.open(io.BytesIO(icon))
                 width, height = img.size
 
-                if width > MAX_ICON_WIDTH or height > MAX_ICON_HEIGHT:
+                if width > AttachmentService.MAX_ICON_WIDTH or height > AttachmentService.MAX_ICON_HEIGHT:
                     raise MessageServiceException("Invalid image size for room icon")
                 if width != height:
                     raise MessageServiceException("Room icon image is not square")

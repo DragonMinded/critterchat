@@ -1,10 +1,13 @@
 import $ from "jquery";
 import { escapeHtml } from "./utils.js";
+import { EditProfile } from "./modals/editprofile.js";
 
 class Menu {
     constructor( eventBus, inputState ) {
         this.eventBus = eventBus;
         this.inputState = inputState;
+        this.editProfile = new EditProfile( eventBus, inputState );
+
         this.rooms = [];
         this.selected = "";
         this.lastSettings = {};
@@ -13,6 +16,13 @@ class Menu {
 
         $( 'div.menu > div.rooms' ).on( 'click', () => {
             this.inputState.setState("empty");
+        });
+
+        $( '#edit-profile' ).on( 'click', (event) => {
+            event.preventDefault();
+
+            this.inputState.setState("empty");
+            this.editProfile.display();
         });
     }
 
@@ -69,6 +79,10 @@ class Menu {
         }
     }
 
+    setProfile( profile ) {
+        this.editProfile.setProfile( profile );
+    }
+
     drawRoom( room ) {
         // First, see if this is an update.
         var conversations = $('div.menu > div.rooms');
@@ -121,7 +135,7 @@ class Menu {
             this.updateSelected();
             this.clearBadges(roomid);
 
-            this.eventBus.emit('room', roomid);
+            this.eventBus.emit('updateroom', roomid);
         }
     }
 

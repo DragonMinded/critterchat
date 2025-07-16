@@ -1,6 +1,7 @@
 import mimetypes
 import os
 from typing import Optional, Tuple
+from typing_extensions import Final
 
 from ..config import Config
 from ..data import Data, Attachment, Action, User, Occupant, Room, AttachmentID, DefaultAvatarID, DefaultRoomID
@@ -16,6 +17,9 @@ class AttachmentServiceException(Exception):
 
 
 class AttachmentService:
+    MAX_ICON_WIDTH: Final[int] = 256
+    MAX_ICON_HEIGHT: Final[int] = 256
+
     def __init__(self, config: Config, data: Data) -> None:
         self.__config = config
         self.__data = data

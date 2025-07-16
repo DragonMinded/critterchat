@@ -251,6 +251,22 @@ def lastsettings(json: Dict[str, object]) -> None:
     socketio.emit('lastsettings', userservice.get_settings(userid).to_dict(), room=request.sid)
 
 
+@socketio.on('profile')  # type: ignore
+def profile(json: Dict[str, object]) -> None:
+    data = Data(config)
+    userservice = UserService(config, data)
+
+    # Try to associate with a user if there is one.
+    userid = recover_userid(data, request.sid)
+    if userid is None:
+        return
+
+    # Look up last settings for this user.
+    userprofile = userservice.lookup_user(userid)
+    if userprofile:
+        socketio.emit('profile', userprofile.to_dict(), room=request.sid)
+
+
 @socketio.on('updatesettings')  # type: ignore
 def updatesettings(json: Dict[str, object]) -> None:
     data = Data(config)
@@ -263,6 +279,37 @@ def updatesettings(json: Dict[str, object]) -> None:
 
     # Save last settings for this user.
     userservice.update_settings(userid, UserSettings.from_dict(userid, json))
+
+
+@socketio.on('updateprofile')  # type: ignore
+def updateprofile(json: Dict[str, object]) -> None:
+    data = Data(config)
+    userservice = UserService(config, data)
+
+    # Try to associate with a user if there is one.
+    userid = recover_userid(data, request.sid)
+    if userid is None:
+        return
+
+    # Save last settings for this user.
+    details = cast(Dict[str, object], json.get('details', {}))
+    newname = str(details.get('name', ''))
+    newicon = str(details.get('icon', ''))
+
+    icon: Optional[bytes] = None
+    if newicon:
+        # Verify that it's a reasonable icon.
+        header, _ = newicon.split(",", 1)
+        if not header.startswith("data:") or not header.endswith("base64"):
+            raise ValueError("Invaid image header")
+
+        with urllib.request.urlopen(newicon) as fp:
+            icon = fp.read()
+
+    userservice.update_user(userid, name=newname, icon=icon)
+    userprofile = userservice.lookup_user(userid)
+    if userprofile:
+        socketio.emit('profile', userprofile.to_dict(), room=request.sid)
 
 
 @socketio.on('chathistory')  # type: ignore

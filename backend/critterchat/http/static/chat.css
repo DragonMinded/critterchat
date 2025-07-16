@@ -320,7 +320,7 @@ div.search, div.warning {
     gap: 10px;
 }
 
-div.search > div.actions, div.warning > div.actions, div.chatdetails > div.actions {
+div.search > div.actions, div.warning > div.actions, div.chatdetails > div.actions, div.editprofile > div.actions {
     display: flex;
     flex-direction: row;
     width: 100%;
@@ -348,13 +348,13 @@ div.search > div.results {
     padding-right: 10px;
 }
 
-div.chatdetails {
+div.chatdetails, div.editprofile {
     display: flex;
     flex-direction: column;
     gap: 10px;
 }
 
-div.chatdetails > div.icon-wrapper {
+div.chatdetails > div.icon-wrapper, div.editprofile > div.icon-wrapper {
     background: #dddddd;
     padding: 10px;
     gap: 10px;
@@ -362,32 +362,32 @@ div.chatdetails > div.icon-wrapper {
     flex-direction: column;
 }
 
-div.chatdetails div.icon img {
+div.chatdetails div.icon img, div.editprofile div.icon img {
     display: block;
     width: 72px;
     height: 72px;
     margin: 0px;
 }
 
-div.chatdetails div.icon, div.chatdetails div.picker {
+div.chatdetails div.icon, div.chatdetails div.picker, div.editprofile div.icon, div.editprofile div.picker {
     display: flex;
     justify-content: center;
 }
 
-div.chatdetails dl {
+div.chatdetails dl, div.editprofile dl {
     margin: 0px;
 }
 
-div.chatdetails dt {
+div.chatdetails dt, div.editprofile dt {
     font-size: 14px;
 }
 
-div.chatdetails dl.name dd, div.chatdetails dl.topic dd {
+div.chatdetails dl.name dd, div.chatdetails dl.topic dd, div.editprofile dl.name dd {
     display: flex;
     margin-left: 0px;
 }
 
-div.chatdetails dl.name input, div.chatdetails dl.topic input {
+div.chatdetails dl.name input, div.chatdetails dl.topic input, div.editprofile dl.name input {
     width: 100%;
 }
 

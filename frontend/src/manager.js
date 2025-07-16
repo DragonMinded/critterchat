@@ -18,7 +18,8 @@ export function manager(socket) {
         // Ask for our list of rooms that we're in.
         socket.emit('roomlist', {});
 
-        // Ask for our last settings so we can refresh where we left off.
+        // Ask for our profile and last settings so we can refresh where we left off.
+        socket.emit('profile', {});
         socket.emit('lastsettings', {});
     });
 
@@ -46,6 +47,12 @@ export function manager(socket) {
         infoInst.setLastSettings(msg);
     });
 
+    socket.on('profile', (msg) => {
+        // This should never change, but if we have info about it, let's update anyway.
+        window.username = msg.username;
+        menuInst.setProfile(msg);
+    });
+
     socket.on('chathistory', (msg) => {
         messagesInst.setOccupants(msg.roomid, msg.occupants);
         infoInst.setOccupants(msg.roomid, msg.occupants);
@@ -67,7 +74,7 @@ export function manager(socket) {
         messagesInst.deleteEmotes(msg.deletions);
     });
 
-    eventBus.on('room', (roomid) => {
+    eventBus.on('updateroom', (roomid) => {
         settings.roomid = roomid;
 
         messagesInst.setRoom(roomid);
@@ -76,10 +83,14 @@ export function manager(socket) {
         socket.emit('chathistory', {roomid: roomid});
     });
 
-    eventBus.on('info', (info) => {
+    eventBus.on('updateinfo', (info) => {
         settings.info = info;
 
         socket.emit('updatesettings', settings);
+    });
+
+    eventBus.on('updateprofile', (profile) => {
+        socket.emit('updateprofile', profile);
     });
 
     eventBus.on('leaveroom', (roomid) => {

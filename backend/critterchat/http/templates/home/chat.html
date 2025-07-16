@@ -21,6 +21,9 @@
             <div class="item">
                 <button id="search-chat">&#128269; search chat/chatter</button>
             </div>
+            <div class="item">
+                <button id="edit-profile">&#128393; edit profile</button>
+            </div>
         </div>
     </div>
     <div class="chat">
@@ -70,6 +73,30 @@
                 </div>
             </div>
             <div class="results"></div>
+        </div>
+    </form>
+    <form id="editprofile-form" class="modal editprofile">
+        <div class="editprofile">
+            <div class="icon-wrapper">
+                <div class="icon avatar">
+                    <img id="editprofile-icon" />
+                </div>
+                <div class="picker">
+                    <input type="file" id="editprofile-iconpicker" accept="image/*" />
+                </div>
+            </div>
+            <dl class="name">
+                <dt id="editprofile-name-label"></dt>
+                <dd><input type="text" id="editprofile-name" autocomplete="off" maxlength="255" /></dd>
+            </dl>
+            <div class="actions">
+                <div class="item">
+                    <button id="editprofile-confirm">update profile</button>
+                </div>
+                <div class="item">
+                    <button id="editprofile-cancel">nevermind</button>
+                </div>
+            </div>
         </div>
     </form>
     <form id="chatdetails-form" class="modal chatdetails">
