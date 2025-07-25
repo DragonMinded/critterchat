@@ -584,8 +584,9 @@ class RoomData(BaseData):
             action.occupant.inactive = newoccupant.inactive
             action.occupant.iconid = newoccupant.iconid
 
-        # Finally, record the action timestamp into the room.
-        sql = """
-            UPDATE room SET `last_action` = :ts WHERE `id` = :roomid AND `last_action` < :ts
-        """
-        self.execute(sql, {"roomid": roomid, "ts": action.timestamp})
+        # Finally, record the action timestamp into the room if it is an action that causes badging.
+        if action.action in ActionType.unread_types():
+            sql = """
+                UPDATE room SET `last_action` = :ts WHERE `id` = :roomid AND `last_action` < :ts
+            """
+            self.execute(sql, {"roomid": roomid, "ts": action.timestamp})
