@@ -1,4 +1,5 @@
-from typing import Any, List, Optional
+import json
+from typing import Any, Dict, List, Optional
 from typing_extensions import Final
 
 from sqlalchemy import Table, Column
@@ -110,6 +111,35 @@ class RoomData(BaseData):
             )
             for result in cursor.mappings()
         ]
+
+    def get_joined_room_occupants(self, userid: UserID) -> Dict[RoomID, Occupant]:
+        """
+        Given a user ID, look up the occupant data for that user in each room they're in.
+
+        Parameters:
+            roomid - The ID of the user that we want occupants for.
+        """
+        if userid is NewUserID:
+            return {}
+
+        sql = """
+            SELECT
+                occupant.id AS id,
+                occupant.user_id AS user_id,
+                occupant.room_id AS room_id,
+                occupant.nickname AS onick,
+                occupant.inactive AS inactive,
+                occupant.icon AS oicon,
+                profile.nickname AS pnick,
+                profile.icon AS picon,
+                user.username AS unick
+            FROM occupant
+            LEFT JOIN profile ON occupant.user_id = profile.user_id
+            LEFT JOIN user ON occupant.user_id = user.id
+            WHERE occupant.user_id = :userid
+        """
+        cursor = self.execute(sql, {"userid": userid})
+        return {RoomID(o['room_id']): self.__to_occupant(o) for o in cursor.mappings()}
 
     def get_matching_rooms(self, userid: UserID, name: Optional[str] = None) -> List[Room]:
         """
@@ -335,7 +365,7 @@ class RoomData(BaseData):
             timestamp=Time.now(),
             occupant=occupant,
             action=ActionType.CHANGE_INFO,
-            details="",
+            details=json.dumps({"name": room.name, "topic": room.topic, "iconid": iconid}),
         )
         self.insert_action(room.id, action)
 

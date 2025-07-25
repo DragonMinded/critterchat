@@ -135,7 +135,7 @@ class Menu {
             this.updateSelected();
             this.clearBadges(roomid);
 
-            this.eventBus.emit('updateroom', roomid);
+            this.eventBus.emit('selectroom', roomid);
         }
     }
 
@@ -160,11 +160,20 @@ class Menu {
     }
 
     updateActions( roomid, actions ) {
-        this.updateBadges( roomid, actions.length );
+        var count = 0;
+        actions.forEach((action) => {
+            if (action.action == "message" || action.action == "join" || action.action == "leave" || action.action == "change_info") {
+                count += 1;
+            }
+        });
+        this.updateBadges( roomid, count );
     }
 
     updateBadges( roomid, newactions ) {
         if (roomid == this.selected) {
+            return;
+        }
+        if (newactions == 0) {
             return;
         }
 

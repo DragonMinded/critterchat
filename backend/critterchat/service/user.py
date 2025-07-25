@@ -1,9 +1,11 @@
 import io
+import json
 from PIL import Image
 from typing import Dict, Optional
 
+from ..common import Time
 from ..config import Config
-from ..data import Data, UserSettings, User, DefaultAvatarID, ActionID, RoomID, UserID
+from ..data import Data, UserSettings, User, Action, ActionType, DefaultAvatarID, NewActionID, ActionID, Occupant, RoomID, UserID
 from .attachment import AttachmentService
 
 
@@ -46,6 +48,9 @@ class UserService:
         name: Optional[str] = None,
         icon: Optional[bytes] = None,
     ) -> None:
+        # Grab rooms the user is in so we can figure out which ones need updating.
+        old_occupancy = self.__data.room.get_joined_room_occupants(userid)
+
         user = self.__data.user.get_user(userid)
         if user:
             changed = False
@@ -79,6 +84,33 @@ class UserService:
 
             if changed:
                 self.__data.user.update_user(user)
+
+        # Now, grab the occupants for the same user and write an action event for
+        # every one that changed.
+        new_occupancy = self.__data.room.get_joined_room_occupants(userid)
+        changes: Dict[RoomID, Occupant] = {}
+
+        for roomid, occupant in new_occupancy.items():
+            if roomid not in old_occupancy:
+                changes[roomid] = occupant
+                continue
+
+            old = old_occupancy[roomid]
+            if old.nickname != occupant.nickname or old.iconid != occupant.iconid:
+                # Changed, notify this channel.
+                changes[roomid] = occupant
+
+        for roomid, occupant in changes.items():
+            self.__attachments.resolve_occupant_icon(occupant)
+
+            action = Action(
+                actionid=NewActionID,
+                timestamp=Time.now(),
+                occupant=occupant,
+                action=ActionType.CHANGE_PROFILE,
+                details=json.dumps({"nickname": occupant.nickname, "iconid": occupant.iconid})
+            )
+            self.__data.room.insert_action(roomid, action)
 
     def mark_last_seen(self, userid: UserID, roomid: RoomID, actionid: ActionID) -> None:
         self.__data.user.mark_last_seen(userid, roomid, actionid)

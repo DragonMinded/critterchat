@@ -113,6 +113,15 @@ class Info {
                 } else if (entry.action == "leave") {
                     this.occupants = this.occupants.filter((occupant) => occupant.id != entry.occupant.id);
                     changed = true;
+                } else if (entry.action == "change_profile") {
+                    this.occupants.forEach((occupant) => {
+                        if (occupant.id == entry.occupant.id) {
+                            occupant.nickname = entry.occupant.nickname;
+                            occupant.icon = entry.occupant.icon;
+                        }
+                    });
+                    $('div.info > div.occupants div.item#' + entry.occupant.id + ' div.name').html(escapeHtml(entry.occupant.nickname));
+                    $('div.info > div.occupants div.item#' + entry.occupant.id + ' div.icon img').attr('src', entry.occupant.icon);
                 }
             });
         }

@@ -44,7 +44,7 @@ class MessageService:
         history = [
             self.__attachments.resolve_action_icon(e)
             for e in history
-            if e.action in {ActionType.MESSAGE, ActionType.JOIN, ActionType.LEAVE, ActionType.CHANGE_INFO}
+            if e.action in ActionType.unread_types()
         ]
         return history
 
@@ -53,7 +53,7 @@ class MessageService:
         history = [
             self.__attachments.resolve_action_icon(e)
             for e in history
-            if e.action in {ActionType.MESSAGE, ActionType.JOIN, ActionType.LEAVE, ActionType.CHANGE_INFO}
+            if e.action in ActionType.update_types()
         ]
         return history
 

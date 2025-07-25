@@ -1,5 +1,5 @@
 from enum import StrEnum
-from typing import Dict, NewType, Optional
+from typing import Dict, NewType, Optional, Set
 
 
 UserID = NewType("UserID", int)
@@ -249,6 +249,26 @@ class ActionType(StrEnum):
     JOIN = 'join'
     LEAVE = 'leave'
     CHANGE_INFO = 'change_info'
+    CHANGE_PROFILE = 'change_profile'
+
+    @staticmethod
+    def unread_types() -> Set["ActionType"]:
+        return {
+            ActionType.MESSAGE,
+            ActionType.JOIN,
+            ActionType.LEAVE,
+            ActionType.CHANGE_INFO,
+        }
+
+    @staticmethod
+    def update_types() -> Set["ActionType"]:
+        return {
+            ActionType.MESSAGE,
+            ActionType.JOIN,
+            ActionType.LEAVE,
+            ActionType.CHANGE_INFO,
+            ActionType.CHANGE_PROFILE,
+        }
 
 
 class Action:

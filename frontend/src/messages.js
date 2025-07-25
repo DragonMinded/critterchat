@@ -353,6 +353,10 @@ class Messages {
                 html += '    </div>';
                 html += '  </div>';
                 html += '</div>';
+            } else if (message.action == "change_profile") {
+                // Just update the name and icon since this is a change.
+                $('div.chat > div.conversation-wrapper > div.conversation div.name#' + message.occupant.id).html(escapeHtml(message.occupant.nickname));
+                $('div.chat > div.conversation-wrapper > div.conversation div.icon#' + message.occupant.id + ' img').attr('src', message.occupant.icon);
             }
 
             if (loc == 'after') {

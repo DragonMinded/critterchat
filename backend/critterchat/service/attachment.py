@@ -1,10 +1,11 @@
+import json
 import mimetypes
 import os
 from typing import Optional, Tuple
 from typing_extensions import Final
 
 from ..config import Config
-from ..data import Data, Attachment, Action, User, Occupant, Room, AttachmentID, DefaultAvatarID, DefaultRoomID
+from ..data import Data, Attachment, Action, ActionType, User, Occupant, Room, AttachmentID, DefaultAvatarID, DefaultRoomID
 from ..http.static import default_avatar, default_room
 
 
@@ -122,6 +123,42 @@ class AttachmentService:
 
     def resolve_action_icon(self, action: Action) -> Action:
         self.resolve_occupant_icon(action.occupant)
+
+        if action.action == ActionType.CHANGE_INFO:
+            try:
+                details = json.loads(action.details)
+                if details.get("iconid"):
+                    iconid = AttachmentID(int(details["iconid"]))
+                    del details["iconid"]
+                else:
+                    iconid = None
+
+                if iconid is None:
+                    details["icon"] = self.get_attachment_url(DefaultRoomID)
+                else:
+                    details["icon"] = self.get_attachment_url(iconid)
+
+                action.details = json.dumps(details)
+            except json.decoder.JSONDecodeError:
+                action.details = json.dumps({})
+        elif action.action == ActionType.CHANGE_PROFILE:
+            try:
+                details = json.loads(action.details)
+                if details.get("iconid"):
+                    iconid = AttachmentID(int(details["iconid"]))
+                    del details["iconid"]
+                else:
+                    iconid = None
+
+                if iconid is None:
+                    details["icon"] = self.get_attachment_url(DefaultAvatarID)
+                else:
+                    details["icon"] = self.get_attachment_url(iconid)
+
+                action.details = json.dumps(details)
+            except json.decoder.JSONDecodeError:
+                action.details = json.dumps({})
+
         return action
 
     def resolve_chat_icon(self, room: Room) -> Room:

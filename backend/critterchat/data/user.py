@@ -10,7 +10,7 @@ from passlib.hash import pbkdf2_sha512  # type: ignore
 
 from ..common import Time
 from .base import BaseData, metadata
-from .types import User, UserSettings, NewActionID, NewRoomID, NewUserID, NewAttachmentID, ActionID, RoomID, UserID
+from .types import ActionType, User, UserSettings, NewActionID, NewRoomID, NewUserID, NewAttachmentID, ActionID, RoomID, UserID
 
 """
 Table representing a user.
@@ -441,9 +441,9 @@ class UserData(BaseData):
 
         def hydrate_count(roomid: RoomID, actionid: ActionID) -> int:
             sql = """
-                SELECT COUNT(id) AS count FROM action WHERE `room_id` = :roomid AND `id` > :actionid
+                SELECT COUNT(id) AS count FROM action WHERE `room_id` = :roomid AND `id` > :actionid AND `action` IN :types
             """
-            cursor = self.execute(sql, {"roomid": roomid, "actionid": actionid})
+            cursor = self.execute(sql, {"roomid": roomid, "actionid": actionid, "types": list(ActionType.unread_types())})
             if cursor.rowcount != 1:
                 return 0
             result = cursor.mappings().fetchone()

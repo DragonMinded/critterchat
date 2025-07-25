@@ -74,7 +74,7 @@ export function manager(socket) {
         messagesInst.deleteEmotes(msg.deletions);
     });
 
-    eventBus.on('updateroom', (roomid) => {
+    eventBus.on('selectroom', (roomid) => {
         settings.roomid = roomid;
 
         messagesInst.setRoom(roomid);
