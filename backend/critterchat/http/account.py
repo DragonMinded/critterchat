@@ -1,3 +1,4 @@
+import string
 from flask import Blueprint, Response, make_response, render_template, url_for, redirect
 
 from .app import app, request, static_location, templates_location, loginprohibited, loginrequired, error, info, g
@@ -93,6 +94,17 @@ def registerpost() -> Response:
                 title="Register Account",
             )
         )
+
+    valid_names = string.ascii_letters + string.digits + "_."
+    for ch in username:
+        if ch not in valid_names:
+            error("You cannot use non-alphanumeric characters in your username!")
+            return Response(
+                render_template(
+                    "account/register.html",
+                    title="Register Account",
+                )
+            )
 
     if password1 != password2:
         error("Your passwords do not match each other!")
