@@ -444,3 +444,19 @@ div.emoji-search:hover, div.emoji-search.opened {
 .name-highlight {
     font-weight: bold;
 }
+
+div.newseparator > div.content-wrapper {
+    display: flex;
+    flex-direction: row;
+}
+
+div.newseparator div.newline {
+    border-top: 1px solid black;
+    flex-grow: 1;
+    margin-top: 12px;
+    margin-bottom: -24px;
+}
+
+div.newseparator div.newmessage {
+    padding: 5px;
+}

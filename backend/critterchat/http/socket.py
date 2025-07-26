@@ -374,6 +374,7 @@ def updateprofile(json: Dict[str, object]) -> None:
 def chathistory(json: Dict[str, object]) -> None:
     data = Data(config)
     messageservice = MessageService(config, data)
+    userservice = UserService(config, data)
 
     # Try to associate with a user if there is one.
     userid = recover_userid(data, request.sid)
@@ -386,6 +387,13 @@ def chathistory(json: Dict[str, object]) -> None:
     with socket_lock:
         roomid = Room.to_id(str(json.get('roomid')))
         if roomid:
+            rooms = messageservice.get_joined_rooms(userid)
+            joinedrooms = {room.id for room in rooms}
+            if roomid not in joinedrooms:
+                # Trying to grab chat for a room we're not in!
+                return
+
+            lastseen = userservice.get_last_seen_actions(userid)
             actions = messageservice.get_room_history(roomid)
             occupants = messageservice.get_room_occupants(roomid)
 
@@ -395,10 +403,14 @@ def chathistory(json: Dict[str, object]) -> None:
                 fetchlimit = action.id if fetchlimit is None else max(fetchlimit, action.id)
             info.fetchlimit[roomid] = fetchlimit or NewActionID
 
+            # Also report the last seen message, so that a "new" indicator can be displayed.
+            lastaction = lastseen.get(roomid, None)
+
             socketio.emit('chathistory', {
                 'roomid': Room.from_id(roomid),
                 'history': [action.to_dict() for action in actions],
                 'occupants': [occupant.to_dict() for occupant in occupants],
+                'lastseen': Action.from_id(lastaction) if lastaction else None,
             }, room=request.sid)
 
 

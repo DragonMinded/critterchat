@@ -144,3 +144,7 @@ class UserService:
     def get_last_seen_counts(self, userid: UserID) -> Dict[RoomID, int]:
         lastseen = self.__data.user.get_last_seen_counts(userid)
         return {ls[0]: ls[1] for ls in lastseen}
+
+    def get_last_seen_actions(self, userid: UserID) -> Dict[RoomID, ActionID]:
+        lastseen = self.__data.user.get_last_seen_actions(userid)
+        return {ls[0]: ls[1] for ls in lastseen}

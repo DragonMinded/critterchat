@@ -473,3 +473,17 @@ class UserData(BaseData):
         # There's probably a SQL way to do this, but I don't want to bang my head against
         # it right now, so it can come in a future improvement.
         return [(c[0], hydrate_count(c[0], c[1])) for c in counts]
+
+    def get_last_seen_actions(self, userid: UserID) -> List[Tuple[RoomID, ActionID]]:
+        """
+        Given a user, grab all of the last seen room/action IDs.
+        """
+
+        if userid is NewUserID:
+            return []
+
+        sql = """
+            SELECT room_id, action_id FROM lastseen WHERE user_id = :userid
+        """
+        cursor = self.execute(sql, {"userid": userid})
+        return [(RoomID(result['room_id']), ActionID(result['action_id'])) for result in cursor.mappings()]

@@ -1,7 +1,3 @@
-Polish for Test Build
-=====================
-Display "--new--" bar for messages that have come in since you last looked at the chat.
-
 TODO For Post Test Build
 ========================
 Close-by message coalescing into one group of lines.

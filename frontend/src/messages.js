@@ -38,6 +38,7 @@ class Messages {
 
                 if (message) {
                     this.eventBus.emit('message', {'roomid': roomid, 'message': message});
+                    this.removeNewIndicator();
                 }
             }
         });
@@ -159,13 +160,57 @@ class Messages {
         }
     }
 
-    updateHistory( roomid, history ) {
+    updateHistory( roomid, history, lastSeen ) {
         if (roomid != this.roomid) {
             // Must be an out of date lookup, ignore it.
             return;
         }
 
         this.drawActions( history );
+        this.addNewIndicator( lastSeen );
+    }
+
+    addNewIndicator( lastSeen ) {
+        // First, find the message this is referring to.
+        var lastMessage = null;
+        this.messages.forEach((message) => {
+            if (message.id == lastSeen) {
+                lastMessage = message;
+            }
+        });
+
+        if (!lastMessage) {
+            return;
+        }
+
+        // Now, grab all messages that are newer than this.
+        var newerMessages = [];
+        this.messages.forEach((message) => {
+            if (message.order > lastMessage.order) {
+                newerMessages.push(message);
+            }
+        });
+
+        if (newerMessages.length > 0) {
+            var html = "";
+
+            html  = '<div class="newseparator">';
+            html += '  <div class="content-wrapper">';
+            html += '    <div class="newline">&nbsp;</div>';
+            html += '    <div class="newmessage">new</div>';
+            html += '    <div class="newline">&nbsp;</div>';
+            html += '  </div>';
+            html += '</div>';
+
+            var messages = $('div.chat > div.conversation-wrapper > div.conversation');
+            $(html).insertAfter(messages.find('div.item#' + lastMessage.id));
+            this.ensureScrolled();
+        }
+    }
+
+    removeNewIndicator() {
+        $('div.newseparator').remove();
+        this.ensureScrolled();
     }
 
     updateActions( roomid, actions ) {
@@ -309,47 +354,47 @@ class Messages {
                 let content = this.formatMessage(message.details);
                 let highlighted = this.wasHighlighted(message.details);
 
-                html  = '<div class="item">';
+                html  = '<div class="item" id="' + message.id + '">';
                 html += '  <div class="icon avatar" id="' + message.occupant.id + '">';
                 html += '    <img src="' + message.occupant.icon + '" />';
                 html += '  </div>';
                 html += '  <div class="content-wrapper">';
                 html += '    <div class="meta-wrapper">';
                 html += '      <div class="name" id="' + message.occupant.id + '">' + escapeHtml(message.occupant.nickname) + '</div>';
-                html += '      <div class="timestamp" id="' + message.id + '">' + formatTime(message.timestamp) + '</div>';
+                html += '      <div class="timestamp">' + formatTime(message.timestamp) + '</div>';
                 html += '    </div>';
                 html += '    <div class="message' + (highlighted ? " highlighted" : "") + '" id="' + message.id + '">' + content + '</div>';
                 html += '  </div>';
                 html += '</div>';
             } else if (message.action == "join") {
-                html  = '<div class="item">';
+                html  = '<div class="item" id="' + message.id + '">';
                 html += '  <div class="content-wrapper">';
                 html += '    <div class="meta-wrapper">';
                 html += '      <div class="name" id="' + message.occupant.id + '">' + escapeHtml(message.occupant.nickname) + '</div>';
                 html += '      <div class="joinmessage">has joined!</div>';
-                html += '      <div class="timestamp" id="' + message.id + '">' + formatTime(message.timestamp) + '</div>';
+                html += '      <div class="timestamp">' + formatTime(message.timestamp) + '</div>';
                 html += '    </div>';
                 html += '  </div>';
                 html += '</div>';
             } else if (message.action == "leave") {
-                html  = '<div class="item">';
+                html  = '<div class="item" id="' + message.id + '">';
                 html += '  <div class="content-wrapper">';
                 html += '    <div class="meta-wrapper">';
                 html += '      <div class="name" id="' + message.occupant.id + '">' + escapeHtml(message.occupant.nickname) + '</div>';
                 html += '      <div class="joinmessage">has left!</div>';
-                html += '      <div class="timestamp" id="' + message.id + '">' + formatTime(message.timestamp) + '</div>';
+                html += '      <div class="timestamp">' + formatTime(message.timestamp) + '</div>';
                 html += '    </div>';
                 html += '  </div>';
                 html += '</div>';
             } else if (message.action == "change_info") {
                 var type = this.roomType == "chat" ? "chat" : "room";
 
-                html  = '<div class="item">';
+                html  = '<div class="item" id="' + message.id + '">';
                 html += '  <div class="content-wrapper">';
                 html += '    <div class="meta-wrapper">';
                 html += '      <div class="name" id="' + message.occupant.id + '">' + escapeHtml(message.occupant.nickname) + '</div>';
                 html += '      <div class="joinmessage">has updated the ' + type + '\'s info!</div>';
-                html += '      <div class="timestamp" id="' + message.id + '">' + formatTime(message.timestamp) + '</div>';
+                html += '      <div class="timestamp">' + formatTime(message.timestamp) + '</div>';
                 html += '    </div>';
                 html += '  </div>';
                 html += '</div>';

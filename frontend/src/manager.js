@@ -85,7 +85,7 @@ export function manager(socket) {
     socket.on('chathistory', (msg) => {
         messagesInst.setOccupants(msg.roomid, msg.occupants);
         infoInst.setOccupants(msg.roomid, msg.occupants);
-        messagesInst.updateHistory(msg.roomid, msg.history);
+        messagesInst.updateHistory(msg.roomid, msg.history, msg.lastseen);
     });
 
     socket.on('chatactions', (msg) => {
