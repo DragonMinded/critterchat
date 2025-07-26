@@ -2,6 +2,7 @@ from flask import Blueprint, Response, make_response, render_template, url_for, 
 
 from .app import app, request, static_location, templates_location, loginprohibited, loginrequired, error, g
 from ..common import AESCipher, Time
+from ..data import UserPermission
 
 
 account = Blueprint(
@@ -21,6 +22,16 @@ def loginpost() -> Response:
     user = g.data.user.from_username(username)
     if user is None:
         error("Unrecognized username or password!")
+        return Response(
+            render_template(
+                "account/login.html",
+                title="Log In",
+                username=username,
+            )
+        )
+
+    if UserPermission.ACTIVATED not in user.permissions:
+        error("Account is not activated!")
         return Response(
             render_template(
                 "account/login.html",

@@ -10,7 +10,7 @@ from passlib.hash import pbkdf2_sha512  # type: ignore
 
 from ..common import Time
 from .base import BaseData, metadata
-from .types import ActionType, User, UserSettings, NewActionID, NewRoomID, NewUserID, NewAttachmentID, ActionID, RoomID, UserID
+from .types import ActionType, User, UserSettings, UserPermission, NewActionID, NewRoomID, NewUserID, NewAttachmentID, ActionID, RoomID, UserID
 
 """
 Table representing a user.
@@ -312,9 +312,16 @@ class UserData(BaseData):
         if not nickname:
             nickname = result['uname']
 
+        permissions = set()
+        bitmask = int(result['permissions'] or 0)
+        for perm in UserPermission:
+            if (bitmask & perm) == perm:
+                permissions.add(perm)
+
         return User(
             UserID(result['id']),
             result['uname'],
+            permissions,
             nickname,
             result['icon'],
         )
@@ -327,7 +334,7 @@ class UserData(BaseData):
             return None
 
         sql = """
-            SELECT user.id AS id, user.username AS uname, profile.nickname AS pname, profile.icon AS icon
+            SELECT user.id AS id, user.username AS uname, user.permissions AS permissions, profile.nickname AS pname, profile.icon AS icon
             FROM user
             LEFT JOIN profile ON profile.user_id = user.id
             WHERE user.id = :userid
@@ -373,7 +380,7 @@ class UserData(BaseData):
             return []
 
         sql = """
-            SELECT user.id AS id, user.username AS uname, profile.nickname AS pname, profile.icon AS icon
+            SELECT user.id AS id, user.username AS uname, user.permissions AS permissions, profile.nickname AS pname, profile.icon AS icon
             FROM user
             LEFT JOIN profile ON profile.user_id = user.id
             WHERE user.id = :myid

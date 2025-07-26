@@ -1,4 +1,4 @@
-from enum import StrEnum
+from enum import IntEnum, StrEnum
 from typing import Dict, NewType, Optional, Set
 
 
@@ -18,10 +18,15 @@ DefaultAvatarID = AttachmentID(-100)
 DefaultRoomID = AttachmentID(-200)
 
 
+class UserPermission(IntEnum):
+    ACTIVATED = 1
+
+
 class User:
-    def __init__(self, userid: UserID, username: str, nickname: str, iconid: Optional[AttachmentID]) -> None:
+    def __init__(self, userid: UserID, username: str, permissions: Set[UserPermission], nickname: str, iconid: Optional[AttachmentID]) -> None:
         self.id = userid
         self.username = username
+        self.permissions = permissions
         self.nickname = nickname
         self.iconid = iconid
         self.icon: Optional[str] = None

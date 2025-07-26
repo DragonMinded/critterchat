@@ -5,7 +5,7 @@ from flask import Blueprint, Response, render_template
 from .app import app, static_location, templates_location, loginrequired, g
 from ..common import get_emoji_unicode_dict, get_aliases_unicode_dict
 from ..data import Data
-from ..service import EmoteService, UserService
+from ..service import EmoteService
 
 
 chat = Blueprint(
@@ -20,7 +20,6 @@ chat = Blueprint(
 @loginrequired
 def home() -> Response:
     data = Data(g.config)
-    userservice = UserService(g.config, data)
     emoteservice = EmoteService(g.config, data)
 
     emojis = {
@@ -30,12 +29,7 @@ def home() -> Response:
     emojis = {key: emojis[key] for key in emojis if "__" not in key}
     emotes = {f":{key}:": val for key, val in emoteservice.get_all_emotes().items()}
 
-    if g.userID is not None:
-        user = userservice.lookup_user(g.userID)
-    else:
-        user = None
-
-    username = None if (not user) else user.username
+    username = None if (not g.user) else g.user.username
 
     # Attempt to look up our frontend JS.
     jspath = os.path.join(static_location, "webpack-assets.json")

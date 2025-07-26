@@ -214,7 +214,7 @@ class MessageService:
         return sorted(occupants, key=lambda o: o.nickname)
 
     def get_matching_rooms(self, userid: UserID, *, name: Optional[str] = None) -> List[RoomSearchResult]:
-        # First get the list of rooms that we can see based on our userID (joined rooms).
+        # First get the list of rooms that we can see based on our user ID (joined rooms).
         inrooms = self.__data.room.get_matching_rooms(userid, name=name)
         memberof = {r.id for r in inrooms}
 

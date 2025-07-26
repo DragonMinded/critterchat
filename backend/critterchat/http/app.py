@@ -19,7 +19,7 @@ from typing import Any, Callable, cast
 
 from ..common import AESCipher
 from ..config import Config
-from ..data import Data
+from ..data import Data, UserPermission
 from .templates import templates_location
 from .static import static_location
 
@@ -89,13 +89,9 @@ def before_request() -> None:
     # Try to associate with a user if there is one.
     g.sessionID = sessionID
     if sessionID is not None:
-        user = g.data.user.from_session(sessionID)
-        if user:
-            g.userID = user.id
-        else:
-            g.userID = None
+        g.user = g.data.user.from_session(sessionID)
     else:
-        g.userID = None
+        g.user = None
 
 
 @app.after_request
@@ -119,7 +115,7 @@ def teardown_request(exception: Any) -> None:
 def loginrequired(func: Callable[..., Response]) -> Callable[..., Response]:
     @wraps(func)
     def decoratedfunction(*args: Any, **kwargs: Any) -> Response:
-        if g.userID is None:
+        if g.user is None or UserPermission.ACTIVATED not in g.user.permissions:
             return redirect(url_for("account.login"))  # type: ignore
         else:
             return func(*args, **kwargs)
@@ -130,7 +126,7 @@ def loginrequired(func: Callable[..., Response]) -> Callable[..., Response]:
 def loginprohibited(func: Callable[..., Response]) -> Callable[..., Response]:
     @wraps(func)
     def decoratedfunction(*args: Any, **kwargs: Any) -> Response:
-        if g.userID is not None:
+        if not (g.user is None or UserPermission.ACTIVATED not in g.user.permissions):
             return redirect(url_for("chat.home"))  # type: ignore
         else:
             return func(*args, **kwargs)

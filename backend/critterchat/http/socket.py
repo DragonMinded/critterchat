@@ -6,7 +6,7 @@ from typing_extensions import Final
 from .app import socketio, config, request
 from ..common import AESCipher, Time
 from ..service import EmoteService, UserService, MessageService
-from ..data import Data, Action, Room, User, UserSettings, NewActionID, ActionID, RoomID, UserID
+from ..data import Data, Action, Room, User, UserPermission, UserSettings, NewActionID, ActionID, RoomID, UserID
 
 
 class SocketInfo:
@@ -85,6 +85,12 @@ def background_thread_proc() -> None:
                 return
 
             for _, info in socket_to_info.items():
+                # First, if they were deactivated, inform them now.
+                user = userservice.lookup_user(info.userid) if info.userid is not None else None
+                if user is None or UserPermission.ACTIVATED not in user.permissions:
+                    socketio.emit('reload', {}, room=info.sid)
+                    continue
+
                 updated = False
                 for roomid, fetchlimit in info.fetchlimit.items():
                     # Only fetch deltas for clients that have gotten an initial fetch for a room.
@@ -173,6 +179,11 @@ def recover_userid(data: Data, sid: Any) -> Optional[UserID]:
 
     if info.userid != user.id:
         # Session is invalid, tell the client to refresh.
+        socketio.emit('reload', {}, room=sid)
+        return None
+
+    if UserPermission.ACTIVATED not in user.permissions:
+        # User is not activated, they might have been deactivated.
         socketio.emit('reload', {}, room=sid)
         return None
 
