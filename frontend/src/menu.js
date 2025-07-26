@@ -1,6 +1,7 @@
 import $ from "jquery";
 import { escapeHtml } from "./utils.js";
 import { EditProfile } from "./modals/editprofile.js";
+import { displayWarning } from "./modals/warningmodal.js";
 
 class Menu {
     constructor( eventBus, inputState ) {
@@ -23,6 +24,20 @@ class Menu {
 
             this.inputState.setState("empty");
             this.editProfile.display();
+        });
+
+        $( '#log-out' ).on( 'click', (event) => {
+            event.preventDefault();
+
+            this.inputState.setState("empty");
+            displayWarning(
+                'Are you sure you want to log out?',
+                'yes, log out',
+                'no, stay here',
+                () => {
+                    window.location.href = "/logout";
+                }
+            );
         });
     }
 
