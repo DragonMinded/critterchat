@@ -89,7 +89,11 @@ def before_request() -> None:
     # Try to associate with a user if there is one.
     g.sessionID = sessionID
     if sessionID is not None:
-        g.userID = g.data.user.from_session(sessionID)
+        user = g.data.user.from_session(sessionID)
+        if user:
+            g.userID = user.id
+        else:
+            g.userID = None
     else:
         g.userID = None
 

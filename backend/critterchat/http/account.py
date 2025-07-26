@@ -18,8 +18,8 @@ def loginpost() -> Response:
     username = request.form["username"]
     password = request.form["password"]
 
-    userid = g.data.user.from_username(username)
-    if userid is None:
+    user = g.data.user.from_username(username)
+    if user is None:
         error("Unrecognized username or password!")
         return Response(
             render_template(
@@ -29,9 +29,9 @@ def loginpost() -> Response:
             )
         )
 
-    if g.data.user.validate_password(userid, password):
+    if g.data.user.validate_password(user.id, password):
         aes = AESCipher(g.config.cookie_key)
-        sessionID = g.data.user.create_session(userid, expiration=90 * 86400)
+        sessionID = g.data.user.create_session(user.id, expiration=90 * 86400)
         response = make_response(redirect(url_for("chat.home")))
         response.set_cookie(
             "SessionID",

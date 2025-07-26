@@ -140,8 +140,8 @@ def register_sid(data: Data, sid: Any, sessionid: Optional[str]) -> None:
             print("Starting message pump thread due to first client socket connection.")
             background_thread = socketio.start_background_task(background_thread_proc)
 
-        userid = None if sessionid is None else data.user.from_session(sessionid)
-        socket_to_info[sid] = SocketInfo(sid, sessionid, userid)
+        user = None if sessionid is None else data.user.from_session(sessionid)
+        socket_to_info[sid] = SocketInfo(sid, sessionid, user.id if user is not None else None)
 
 
 def unregister_sid(sid: Any) -> None:
@@ -165,18 +165,18 @@ def recover_userid(data: Data, sid: Any) -> Optional[UserID]:
         socketio.emit('reload', {}, room=sid)
         return None
 
-    userid = data.user.from_session(info.sessionid)
-    if userid is None:
+    user = data.user.from_session(info.sessionid)
+    if user is None:
         # Session was de-authed, tell the client to refresh.
         socketio.emit('reload', {}, room=sid)
         return None
 
-    if info.userid != userid:
+    if info.userid != user.id:
         # Session is invalid, tell the client to refresh.
         socketio.emit('reload', {}, room=sid)
         return None
 
-    return userid
+    return user.id
 
 
 @socketio.on('connect')  # type: ignore

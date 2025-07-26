@@ -141,9 +141,9 @@ class UserData(BaseData):
         sql = "UPDATE user SET password = :hash, salt = :salt WHERE id = :userid"
         self.execute(sql, {"hash": passhash, "salt": salt, "userid": userid})
 
-    def from_username(self, username: str) -> Optional[UserID]:
+    def from_username(self, username: str) -> Optional[User]:
         """
-        Given a username, look up a user ID.
+        Given a username, look up a user.
 
         Parameters:
             username - A string representing the user's username.
@@ -158,11 +158,11 @@ class UserData(BaseData):
             return None
 
         result = cursor.mappings().fetchone()
-        return UserID(result["id"])
+        return self.get_user(UserID(result["id"]))
 
-    def from_session(self, session: str) -> Optional[UserID]:
+    def from_session(self, session: str) -> Optional[User]:
         """
-        Given a previously-opened session, look up an ID.
+        Given a previously-opened session, look up a user.
 
         Parameters:
             session - String identifying a session that was opened by create_session.
@@ -182,7 +182,7 @@ class UserData(BaseData):
             return None
 
         result = cursor.mappings().fetchone()
-        return UserID(result["id"])
+        return self.get_user(UserID(result["id"]))
 
     def create_session(self, userid: UserID, expiration: int = (30 * 86400)) -> str:
         """
@@ -242,7 +242,7 @@ class UserData(BaseData):
         sql = "DELETE FROM session WHERE expiration < :timestamp"
         self.execute(sql, {"timestamp": Time.now()})
 
-    def create_account(self, username: str, password: str) -> Optional[UserID]:
+    def create_account(self, username: str, password: str) -> Optional[User]:
         """
         Create a new user account given a username and password.
 
@@ -251,8 +251,8 @@ class UserData(BaseData):
             password - The password that this user will user to login with.
         """
 
-        existing_id = self.from_username(username)
-        if existing_id:
+        existing_user = self.from_username(username)
+        if existing_user:
             return None
 
         sql = "INSERT INTO user (`username`, `password`, `salt`) VALUES (:username, :hash, :salt)"
@@ -260,7 +260,7 @@ class UserData(BaseData):
         cursor = self.execute(sql, {"hash": passhash, "salt": salt, "username": username})
         if cursor.rowcount != 1:
             return None
-        return UserID(cursor.lastrowid)
+        return self.get_user(UserID(cursor.lastrowid))
 
     def get_settings(self, userid: UserID) -> Optional[UserSettings]:
         """
