@@ -1,8 +1,9 @@
 from flask import Blueprint, Response, make_response, render_template, url_for, redirect
 
-from .app import app, request, static_location, templates_location, loginprohibited, loginrequired, error, g
+from .app import app, request, static_location, templates_location, loginprohibited, loginrequired, error, info, g
 from ..common import AESCipher, Time
-from ..data import UserPermission
+from ..data import Data, UserPermission
+from ..service import UserService, UserServiceException
 
 
 account = Blueprint(
@@ -75,6 +76,76 @@ def login() -> Response:
 def logout() -> Response:
     g.data.user.destroy_session(g.sessionID)
     return redirect(url_for("welcome.home"))  # type: ignore
+
+
+@account.route("/register", methods=["POST"])
+@loginprohibited
+def registerpost() -> Response:
+    username = request.form["username"]
+    password1 = request.form["password1"]
+    password2 = request.form["password2"]
+
+    if not username:
+        error("You need to choose a username!")
+        return Response(
+            render_template(
+                "account/register.html",
+                title="Register Account",
+            )
+        )
+
+    if password1 != password2:
+        error("Your passwords do not match each other!")
+        return Response(
+            render_template(
+                "account/register.html",
+                title="Register Account",
+                username=username,
+            )
+        )
+
+    if len(password1) < 6:
+        error("Your password is not long enough (six characters)!")
+        return Response(
+            render_template(
+                "account/register.html",
+                title="Register Account",
+                username=username,
+            )
+        )
+
+    try:
+        data = Data(g.config)
+        userservice = UserService(g.config, data)
+        user = userservice.create_user(username, password1)
+        if UserPermission.ACTIVATED not in user.permissions:
+            info("Your account has been created but has not been activated yet!")
+            return Response(
+                render_template(
+                    "account/login.html",
+                    title="Log In",
+                    username=username,
+                )
+            )
+        else:
+            info("Your account was created successfully, feel free to log in!")
+            return Response(
+                render_template(
+                    "account/login.html",
+                    title="Log In",
+                    username=username,
+                )
+            )
+
+    except UserServiceException as e:
+        error(str(e))
+        return Response(
+            render_template(
+                "account/register.html",
+                title="Register Account",
+                username=username,
+            )
+        )
 
 
 @account.route("/register")

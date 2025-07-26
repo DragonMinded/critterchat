@@ -42,6 +42,17 @@ class UserService:
             self.__attachments.resolve_user_icon(user)
         return user
 
+    def create_user(self, username: str, password: str) -> User:
+        # First, try to create the actual account.
+        user = self.__data.user.create_account(username, password)
+        if not user:
+            raise UserServiceException("Username already exists, please choose another!")
+
+        # TODO: Check network settings and auto-activate user if the setting for this is enabled.
+
+        # Finally, return the user that was just created.
+        return user
+
     def update_user(
         self,
         userid: UserID,

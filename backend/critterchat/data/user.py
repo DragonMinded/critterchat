@@ -367,7 +367,12 @@ class UserData(BaseData):
             nickname = user.nickname
 
         sql = """
-            UPDATE profile SET nickname = :name, icon = :iconid WHERE user_id = :userid
+            INSERT INTO `profile`
+                (`user_id`, `nickname`, `icon`)
+            VALUES
+                (:userid, :name, :iconid)
+            ON DUPLICATE KEY UPDATE
+            nickname = :name, icon = :iconid
         """
         self.execute(sql, {"userid": user.id, "name": nickname, "iconid": iconid})
 
