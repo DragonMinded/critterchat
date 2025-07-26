@@ -1,5 +1,7 @@
 *.swp
 __pycache__/
+build/
+critterchat.egg-info/
 backend/critterchat/http/static/chat.*.js
 backend/critterchat/http/static/chat.*.js.LICENSE.txt
 backend/critterchat/http/static/webpack-assets.json

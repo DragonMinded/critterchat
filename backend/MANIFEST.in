@@ -1,0 +1,12 @@
+include critterchat/data/migrations/alembic.ini
+include critterchat/http/templates/*.html
+include critterchat/http/templates/account/*.html
+include critterchat/http/templates/home/*.html
+include critterchat/http/static/*.otf
+include critterchat/http/static/*.ttf
+include critterchat/http/static/*.woff
+include critterchat/http/static/*.css
+include critterchat/http/static/*.js
+include critterchat/http/static/*.json
+include critterchat/http/static/*.png
+graft critterchat/http/static/twemoji
