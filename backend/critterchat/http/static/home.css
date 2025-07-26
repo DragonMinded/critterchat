@@ -1,0 +1,72 @@
+html, body {
+    font-family: "Atkinson Hyperlegible", Arial, Helvetica, sans-serif;
+    margin: 0px;
+    padding: 0px;
+    width: 100vw;
+    height: 100vh;
+    background: #ffffff;
+    overflow: hidden;
+}
+
+div.container {
+    display: flex;
+    width: 100vw;
+    height: 100vh;
+}
+
+div.login {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+    justify-content: center;
+}
+
+div.login-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    width: min(500px, 100vw);
+}
+
+div.login div.section {
+    border-radius: 15px;
+    background: #dddddd;
+    padding: 15px;
+}
+
+div.login div.section dd {
+    margin: 0px;
+    display: flex;
+}
+
+div.login div.section dd input[type=text], div.login div.section dd input[type=password] {
+    width: 100%;
+}
+
+ul.errors {
+    list-style: none;
+    margin: 0px;
+    padding: 10px;
+}
+
+ul.errors li {
+    border-radius: 15px;
+    padding: 15px;
+    margin: 0px;
+}
+
+li.error {
+    background: #e4a7a7;
+}
+
+li.warning {
+    background: #e4c9a7;
+}
+
+li.success {
+    background: #bde4a7;
+}
+
+li.info {
+    background: #a7d0e4;
+}
