@@ -213,6 +213,20 @@ class MessageService:
         occupants = [self.__attachments.resolve_occupant_icon(o) for o in self.__data.room.get_room_occupants(roomid)]
         return sorted(occupants, key=lambda o: o.nickname)
 
+    def get_autojoin_rooms(self, userid: UserID) -> List[Room]:
+        rooms = self.__data.room.get_autojoin_rooms()
+
+        # Figure out any rooms that don't have a set name, and infer the name of the room.
+        for room in rooms:
+            self.__infer_room_info(userid, room)
+
+        return sorted(rooms, key=lambda r: r.name)
+
+    def join_autojoin_rooms(self, userid: UserID) -> None:
+        rooms = self.__data.room.get_autojoin_rooms()
+        for room in rooms:
+            self.__data.room.join_room(room.id, userid)
+
     def get_matching_rooms(self, userid: UserID, *, name: Optional[str] = None) -> List[RoomSearchResult]:
         # First get the list of rooms that we can see based on our user ID (joined rooms).
         inrooms = self.__data.room.get_matching_rooms(userid, name=name)

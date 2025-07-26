@@ -34,6 +34,7 @@ room = Table(
     Column("id", Integer, nullable=False, primary_key=True, autoincrement=True),
     Column("name", String(255)),
     Column("topic", String(255)),
+    Column("autojoin", Boolean),
     Column("icon", Integer),
     Column("public", Boolean),
     Column("last_action", Integer, nullable=False),
@@ -55,7 +56,6 @@ occupant = Table(
     UniqueConstraint("user_id", "room_id", name='uidrid'),
     mysql_charset="utf8mb4",
 )
-
 
 """
 Table representing a chat room's actions taken by occupants.
@@ -213,6 +213,30 @@ class RoomData(BaseData):
             for result in cursor.mappings()
         ]
 
+    def get_autojoin_rooms(self) -> List[Room]:
+        """
+        Look up all rooms that are marked for auto-join on this network.
+
+        Returns:
+            list of Room objects representing the rooms the user will auto-join.
+        """
+        sql = """
+            SELECT id, name, topic, icon, public, last_action FROM room WHERE autojoin = TRUE
+        """
+
+        cursor = self.execute(sql, {})
+        return [
+            Room(
+                roomid=RoomID(result['id']),
+                name=result['name'],
+                topic=result['topic'],
+                public=bool(result['public']),
+                last_action=result['last_action'],
+                iconid=AttachmentID(result['icon']) if result['icon'] else None,
+            )
+            for result in cursor.mappings()
+        ]
+
     def get_room(self, roomid: RoomID) -> Optional[Room]:
         """
         Given a room ID, get that room.
@@ -253,9 +277,9 @@ class RoomData(BaseData):
 
         timestamp = Time.now()
         sql = """
-            INSERT INTO room (`name`, `topic`, `public`, `last_action`, `icon`) VALUES (:name, :topic, :public, :ts, :icon)
+            INSERT INTO room (`name`, `topic`, `public`, `last_action`, `icon`) VALUES (:name, :topic, :public, :timestamp, :icon)
         """
-        cursor = self.execute(sql, {"name": room.name, "public": room.public, "timestamp": timestamp, "icon": room.iconid})
+        cursor = self.execute(sql, {"name": room.name, "topic": None, "public": room.public, "timestamp": timestamp, "icon": room.iconid})
         if cursor.rowcount != 1:
             return None
         newroom = self.get_room(RoomID(cursor.lastrowid))

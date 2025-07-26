@@ -215,6 +215,53 @@ def disconnect() -> None:
     unregister_sid(request.sid)
 
 
+@socketio.on('motd')  # type: ignore
+def motd(json: Dict[str, object]) -> None:
+    data = Data(config)
+    userservice = UserService(config, data)
+    messageservice = MessageService(config, data)
+
+    # Try to associate with a user if there is one.
+    userid = recover_userid(data, request.sid)
+    if userid is None:
+        return
+
+    user = userservice.lookup_user(userid)
+    if user:
+        if UserPermission.WELCOMED not in user.permissions:
+            # TODO: Look up any welcome message to display to the user here.
+            extra = ""
+            rooms = messageservice.get_autojoin_rooms(userid)
+            if rooms:
+                extra += "You will be automatically added to the following rooms."
+
+            socketio.emit('welcome', {
+                "message": f"Welcome to {config.name}! {extra}",
+                "rooms": [room.to_dict() for room in rooms],
+            }, room=request.sid)
+
+
+@socketio.on('welcomeaccept')  # type: ignore
+def welcomeaccept(json: Dict[str, object]) -> None:
+    data = Data(config)
+    userservice = UserService(config, data)
+    messageservice = MessageService(config, data)
+
+    # Try to associate with a user if there is one.
+    userid = recover_userid(data, request.sid)
+    if userid is None:
+        return
+
+    messageservice.join_autojoin_rooms(userid)
+    userservice.add_permission(userid, UserPermission.WELCOMED)
+    rooms = messageservice.get_joined_rooms(userid)
+    if rooms:
+        socketio.emit('roomlist', {
+            'rooms': [room.to_dict() for room in rooms],
+            'selected': Room.from_id(rooms[-1].id),
+        }, room=request.sid)
+
+
 @socketio.on('roomlist')  # type: ignore
 def roomlist(json: Dict[str, object]) -> None:
     data = Data(config)

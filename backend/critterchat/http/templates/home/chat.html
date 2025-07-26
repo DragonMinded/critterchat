@@ -144,6 +144,17 @@
             </div>
         </div>
     </form>
+    <form id="info-form" class="modal information">
+        <div class="information">
+            <div class="information-text" id="info-text">
+            </div>
+            <div class="actions">
+                <div class="item">
+                    <button id="info-confirm"></button>
+                </div>
+            </div>
+        </div>
+    </form>
     <div class="emote-preload" style="display: none">
         {% for _, uri in emotes.items() %}
             <img src="{{uri}}" />

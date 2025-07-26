@@ -376,6 +376,15 @@ class UserData(BaseData):
         """
         self.execute(sql, {"userid": user.id, "name": nickname, "iconid": iconid})
 
+        permissions: int = 0
+        for perm in user.permissions:
+            permissions |= perm
+
+        sql = """
+            UPDATE `user` SET `permissions` = :perms WHERE `id` = :userid
+        """
+        self.execute(sql, {"userid": user.id, "perms": permissions})
+
     def get_visible_users(self, userid: UserID, name: Optional[str] = None) -> List[User]:
         """
         Given a user searching, return a list of visible users (users that haven't blocked the

@@ -313,21 +313,21 @@ div.occupants div.item {
     border: 1px solid transparent;
 }
 
-div.search, div.warning {
+div.search, div.warning, div.information {
     height: 300px;
     display: flex;
     flex-direction: column;
     gap: 10px;
 }
 
-div.search > div.actions, div.warning > div.actions, div.chatdetails > div.actions, div.editprofile > div.actions {
+div.search > div.actions, div.warning > div.actions, div.information > div.actions, div.chatdetails > div.actions, div.editprofile > div.actions {
     display: flex;
     flex-direction: row;
     width: 100%;
     gap: 10px;
 }
 
-div.warning > div.warning-text {
+div.warning > div.warning-text, div.information > div.information-text {
     flex-grow: 1;
 }
 

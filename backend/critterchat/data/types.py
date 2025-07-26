@@ -19,7 +19,8 @@ DefaultRoomID = AttachmentID(-200)
 
 
 class UserPermission(IntEnum):
-    ACTIVATED = 1
+    ACTIVATED = 0x1
+    WELCOMED = 0x2
 
 
 class User:

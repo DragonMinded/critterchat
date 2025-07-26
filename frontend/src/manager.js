@@ -5,6 +5,9 @@ import { Info } from "./info.js";
 import { Search } from "./search.js";
 import { InputState } from "./inputstate.js";
 
+import { escapeHtml } from "./utils.js";
+import { displayInfo } from "./modals/infomodal.js";
+
 export function manager(socket) {
     var eventBus = new EventEmitter();
     var inputState = new InputState();
@@ -21,11 +24,37 @@ export function manager(socket) {
         // Ask for our profile and last settings so we can refresh where we left off.
         socket.emit('profile', {});
         socket.emit('lastsettings', {});
+
+        // Ask for any server MOTD or admin messages.
+        socket.emit('motd', {});
     });
 
     socket.on('reload', () => {
         // Server wants us to reload, probably to de-auth ourselves after a remote logout.
         window.location.reload();
+    });
+
+    socket.on('welcome', (msg) => {
+        var html = "";
+        msg.rooms.forEach((result) => {
+            var id = result.roomid;
+            var type = result['public'] ? 'room' : 'avatar';
+
+            html += '<div class="item" id="' + id + '">';
+            html += '  <div class="icon ' + type + '">';
+            html += '    <img src="' + result.icon + '" />';
+            html += '  </div>';
+            html += '  <div class="name-wrapper"><div class="name">' + escapeHtml(result.name) + '</div></div>';
+            html += '</div>';
+        });
+
+        displayInfo(
+            '<div class="welcome-message">' + msg.message + '</div><div class="results">' + html + '</div>',
+            'okay!',
+            () => {
+                socket.emit('welcomeaccept', {});
+            }
+        );
     });
 
     socket.on('roomlist', (msg) => {

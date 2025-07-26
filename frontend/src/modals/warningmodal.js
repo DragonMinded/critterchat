@@ -5,7 +5,7 @@ export function displayWarning( warningText, confirmText, cancelText, confirmCal
     $.modal.close();
 
     // Now, set the text up for the modal itself.
-    $('#warning-text').text(warningText);
+    $('#warning-text').html(warningText);
     $('#warning-confirm').text(confirmText);
     $('#warning-cancel').text(cancelText);
 

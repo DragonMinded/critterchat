@@ -5,7 +5,7 @@ from typing import Dict, Optional
 
 from ..common import Time
 from ..config import Config
-from ..data import Data, UserSettings, User, Action, ActionType, DefaultAvatarID, NewActionID, ActionID, Occupant, RoomID, UserID
+from ..data import Data, UserSettings, UserPermission, User, Action, ActionType, DefaultAvatarID, NewActionID, ActionID, Occupant, RoomID, UserID
 from .attachment import AttachmentService
 
 
@@ -122,6 +122,21 @@ class UserService:
                 details=json.dumps({"nickname": occupant.nickname, "iconid": occupant.iconid})
             )
             self.__data.room.insert_action(roomid, action)
+
+    def add_permission(self, userid: UserID, permission: UserPermission) -> None:
+        user = self.__data.user.get_user(userid)
+        if not user:
+            raise UserServiceException("User does not exist to add permission!")
+        user.permissions.add(permission)
+        self.__data.user.update_user(user)
+
+    def remove_permission(self, userid: UserID, permission: UserPermission) -> None:
+        user = self.__data.user.get_user(userid)
+        if not user:
+            raise UserServiceException("User does not exist to remove permission!")
+        if permission in user.permissions:
+            user.permissions.remove(permission)
+        self.__data.user.update_user(user)
 
     def mark_last_seen(self, userid: UserID, roomid: RoomID, actionid: ActionID) -> None:
         self.__data.user.mark_last_seen(userid, roomid, actionid)
