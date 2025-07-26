@@ -358,6 +358,11 @@ def updateprofile(json: Dict[str, object]) -> None:
         socketio.emit('error', {'error': 'Your nickname is too long!'})
         return
 
+    # TODO: Configurable, maybe?
+    if len(newicon) > 1000000:
+        socketio.emit('error', {'error': 'Chosen avatar file size is too large!'})
+        return
+
     icon: Optional[bytes] = None
     if newicon:
         # Verify that it's a reasonable icon.
@@ -556,6 +561,11 @@ def updateroom(json: Dict[str, object]) -> None:
         newname = str(details.get('name', ''))
         newtopic = str(details.get('topic', ''))
         newicon = str(details.get('icon', ''))
+
+        # TODO: Configurable, maybe?
+        if len(newicon) > 1000000:
+            socketio.emit('error', {'error': 'Chosen icon file size is too large!'})
+            return
 
         icon: Optional[bytes] = None
         if newicon:
