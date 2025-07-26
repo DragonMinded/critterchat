@@ -59,6 +59,10 @@ class MessageService:
 
     def add_message(self, roomid: RoomID, userid: UserID, message: str) -> Optional[Action]:
         message = emoji.emojize(emoji.emojize(message, language="alias"), language="en")
+        if len(message) > 64000:
+            # TODO: Make this configurable on the instance.
+            raise MessageServiceException("You're trying to send a message that is too long!")
+
         occupant = Occupant(
             occupantid=NewOccupantID,
             userid=userid,

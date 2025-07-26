@@ -74,17 +74,17 @@ class UserService:
                 width, height = img.size
 
                 if width > AttachmentService.MAX_ICON_WIDTH or height > AttachmentService.MAX_ICON_HEIGHT:
-                    raise UserServiceException("Invalid image size for user icon")
+                    raise UserServiceException("Invalid image size for user avatar")
                 if width != height:
-                    raise UserServiceException("User icon image is not square")
+                    raise UserServiceException("User avatar image is not square")
 
                 content_type = img.get_format_mimetype()
                 if not content_type:
-                    raise UserServiceException("User icon image has no valid content type")
+                    raise UserServiceException("User avatar image has no valid content type")
 
                 attachmentid = self.__attachments.create_attachment(content_type)
                 if attachmentid is None:
-                    raise UserServiceException("Could not insert new user icon!")
+                    raise UserServiceException("Could not insert new user avatar!")
                 self.__attachments.put_attachment_data(attachmentid, icon)
 
                 changed = True

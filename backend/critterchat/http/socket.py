@@ -5,7 +5,7 @@ from typing_extensions import Final
 
 from .app import socketio, config, request
 from ..common import AESCipher, Time
-from ..service import EmoteService, UserService, MessageService
+from ..service import EmoteService, UserService, MessageService, UserServiceException, MessageServiceException
 from ..data import Data, Action, Room, User, UserPermission, UserSettings, NewActionID, ActionID, RoomID, UserID
 
 
@@ -354,20 +354,28 @@ def updateprofile(json: Dict[str, object]) -> None:
     newname = str(details.get('name', ''))
     newicon = str(details.get('icon', ''))
 
+    if newname and len(newname) > 255:
+        socketio.emit('error', {'error': 'Your nickname is too long!'})
+        return
+
     icon: Optional[bytes] = None
     if newicon:
         # Verify that it's a reasonable icon.
         header, _ = newicon.split(",", 1)
         if not header.startswith("data:") or not header.endswith("base64"):
-            raise ValueError("Invaid image header")
+            socketio.emit('error', {'error': 'Chosen avatar is not a valid image!'})
+            return
 
         with urllib.request.urlopen(newicon) as fp:
             icon = fp.read()
 
-    userservice.update_user(userid, name=newname, icon=icon)
-    userprofile = userservice.lookup_user(userid)
-    if userprofile:
-        socketio.emit('profile', userprofile.to_dict(), room=request.sid)
+    try:
+        userservice.update_user(userid, name=newname, icon=icon)
+        userprofile = userservice.lookup_user(userid)
+        if userprofile:
+            socketio.emit('profile', userprofile.to_dict(), room=request.sid)
+    except UserServiceException as e:
+        socketio.emit('error', {'error': str(e)})
 
 
 @socketio.on('chathistory')  # type: ignore
@@ -427,7 +435,10 @@ def message(json: Dict[str, object]) -> None:
     roomid = Room.to_id(str(json.get('roomid')))
     message = json.get('message')
     if roomid and message:
-        messageservice.add_message(roomid, userid, str(message))
+        try:
+            messageservice.add_message(roomid, userid, str(message))
+        except MessageServiceException as e:
+            socketio.emit('error', {'error': str(e)})
 
 
 @socketio.on('leaveroom')  # type: ignore
@@ -551,9 +562,13 @@ def updateroom(json: Dict[str, object]) -> None:
             # Verify that it's a reasonable icon.
             header, _ = newicon.split(",", 1)
             if not header.startswith("data:") or not header.endswith("base64"):
-                raise ValueError("Invaid image header")
+                socketio.emit('error', {'error': 'Chosen icon is not a valid image!'})
+                return
 
             with urllib.request.urlopen(newicon) as fp:
                 icon = fp.read()
 
-        messageservice.update_room(roomid, userid, name=newname, topic=newtopic, icon=icon)
+        try:
+            messageservice.update_room(roomid, userid, name=newname, topic=newtopic, icon=icon)
+        except MessageServiceException as e:
+            socketio.emit('error', {'error': str(e)})

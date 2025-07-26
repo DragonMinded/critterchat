@@ -57,6 +57,13 @@ export function manager(socket) {
         );
     });
 
+    socket.on('error', (msg) => {
+        displayInfo(
+            msg.error,
+            'okay!',
+        );
+    })
+
     socket.on('roomlist', (msg) => {
         menuInst.setRooms(msg.rooms);
         if (msg.counts) {

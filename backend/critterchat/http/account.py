@@ -106,6 +106,15 @@ def registerpost() -> Response:
                 )
             )
 
+    if len(username) > 255:
+        error("Your username is too long!")
+        return Response(
+            render_template(
+                "account/register.html",
+                title="Register Account",
+            )
+        )
+
     if password1 != password2:
         error("Your passwords do not match each other!")
         return Response(
