@@ -7,6 +7,7 @@ import linkifyHtml from "linkify-html";
 import { escapeHtml, formatTime, scrollTop, scrollTopMax } from "./utils.js";
 import { emojisearch } from "./components/emojisearch.js";
 import { autocomplete } from "./components/autocomplete.js";
+import { displayInfo } from "./modals/infomodal.js";
 
 const linkifyOptions = { defaultProtocol: "http", target: "_blank", validate: { email: () => false } };
 
@@ -34,11 +35,19 @@ class Messages {
 
             if (roomid) {
                 var message = $( 'input#message' ).val();
-                $( 'input#message' ).val( '' );
 
-                if (message) {
-                    this.eventBus.emit('message', {'roomid': roomid, 'message': message});
-                    this.removeNewIndicator();
+                if (message && message.length > 64000) {
+                    displayInfo(
+                        'Your message is too long to be sent, please type fewer things!',
+                        'okay!',
+                    );
+                } else {
+                    $( 'input#message' ).val( '' );
+
+                    if (message) {
+                        this.eventBus.emit('message', {'roomid': roomid, 'message': message});
+                        this.removeNewIndicator();
+                    }
                 }
             }
         });

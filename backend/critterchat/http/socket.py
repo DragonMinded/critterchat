@@ -359,7 +359,7 @@ def updateprofile(json: Dict[str, object]) -> None:
         return
 
     # TODO: Configurable, maybe?
-    if len(newicon) > 1000000:
+    if len(newicon) > 128000:
         socketio.emit('error', {'error': 'Chosen avatar file size is too large!'}, room=request.sid)
         return
 
@@ -575,7 +575,7 @@ def updateroom(json: Dict[str, object]) -> None:
             return
 
         # TODO: Configurable, maybe?
-        if len(newicon) > 1000000:
+        if len(newicon) > 128000:
             socketio.emit('error', {'error': 'Chosen icon file size is too large!'}, room=request.sid)
             return
 

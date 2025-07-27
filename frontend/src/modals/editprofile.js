@@ -19,7 +19,7 @@ class EditProfile {
 
             if (this.profileLoaded) {
                 this.eventBus.emit('updateprofile', {'details': {
-                    'name': $('#editprofile-name').val(),
+                    'name': $('#editprofile-name').val().substring(0, 255),
                     'icon': this.icon,
                 }});
             }
@@ -34,7 +34,7 @@ class EditProfile {
         $( '#editprofile-iconpicker' ).on( 'change', (event) => {
             const file = event.target.files[0];
 
-            if (file && file.size < 1000000) {
+            if (file && file.size < 128000) {
                 var fr = new FileReader();
                 fr.onload = () => {
                     this.icon = fr.result;

@@ -19,8 +19,8 @@ class ChatDetails {
 
             if (this.roomLoaded) {
                 this.eventBus.emit('updateroom', {'roomid': this.room.id, 'details': {
-                    'name': $('#chatdetails-name').val(),
-                    'topic': $('#chatdetails-topic').val(),
+                    'name': $('#chatdetails-name').val().substring(0, 255),
+                    'topic': $('#chatdetails-topic').val().substring(0, 255),
                     'icon': this.icon,
                 }});
             }
@@ -35,7 +35,7 @@ class ChatDetails {
         $( '#chatdetails-iconpicker' ).on( 'change', (event) => {
             const file = event.target.files[0];
 
-            if (file && file.size < 1000000) {
+            if (file && file.size < 128000) {
                 var fr = new FileReader();
                 fr.onload = () => {
                     this.icon = fr.result;
