@@ -20,5 +20,6 @@ types-emoji
 types-pyyaml
 types-requests
 types-python-dateutil
+types-setuptools
 mypy
 flake8

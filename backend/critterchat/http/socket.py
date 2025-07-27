@@ -355,12 +355,12 @@ def updateprofile(json: Dict[str, object]) -> None:
     newicon = str(details.get('icon', ''))
 
     if newname and len(newname) > 255:
-        socketio.emit('error', {'error': 'Your nickname is too long!'})
+        socketio.emit('error', {'error': 'Your nickname is too long!'}, room=request.sid)
         return
 
     # TODO: Configurable, maybe?
     if len(newicon) > 1000000:
-        socketio.emit('error', {'error': 'Chosen avatar file size is too large!'})
+        socketio.emit('error', {'error': 'Chosen avatar file size is too large!'}, room=request.sid)
         return
 
     icon: Optional[bytes] = None
@@ -368,7 +368,7 @@ def updateprofile(json: Dict[str, object]) -> None:
         # Verify that it's a reasonable icon.
         header, _ = newicon.split(",", 1)
         if not header.startswith("data:") or not header.endswith("base64"):
-            socketio.emit('error', {'error': 'Chosen avatar is not a valid image!'})
+            socketio.emit('error', {'error': 'Chosen avatar is not a valid image!'}, room=request.sid)
             return
 
         with urllib.request.urlopen(newicon) as fp:
@@ -380,7 +380,7 @@ def updateprofile(json: Dict[str, object]) -> None:
         if userprofile:
             socketio.emit('profile', userprofile.to_dict(), room=request.sid)
     except UserServiceException as e:
-        socketio.emit('error', {'error': str(e)})
+        socketio.emit('error', {'error': str(e)}, room=request.sid)
 
 
 @socketio.on('chathistory')  # type: ignore
@@ -443,7 +443,7 @@ def message(json: Dict[str, object]) -> None:
         try:
             messageservice.add_message(roomid, userid, str(message))
         except MessageServiceException as e:
-            socketio.emit('error', {'error': str(e)})
+            socketio.emit('error', {'error': str(e)}, room=request.sid)
 
 
 @socketio.on('leaveroom')  # type: ignore
@@ -564,7 +564,7 @@ def updateroom(json: Dict[str, object]) -> None:
 
         # TODO: Configurable, maybe?
         if len(newicon) > 1000000:
-            socketio.emit('error', {'error': 'Chosen icon file size is too large!'})
+            socketio.emit('error', {'error': 'Chosen icon file size is too large!'}, room=request.sid)
             return
 
         icon: Optional[bytes] = None
@@ -572,7 +572,7 @@ def updateroom(json: Dict[str, object]) -> None:
             # Verify that it's a reasonable icon.
             header, _ = newicon.split(",", 1)
             if not header.startswith("data:") or not header.endswith("base64"):
-                socketio.emit('error', {'error': 'Chosen icon is not a valid image!'})
+                socketio.emit('error', {'error': 'Chosen icon is not a valid image!'}, room=request.sid)
                 return
 
             with urllib.request.urlopen(newicon) as fp:
@@ -581,4 +581,4 @@ def updateroom(json: Dict[str, object]) -> None:
         try:
             messageservice.update_room(roomid, userid, name=newname, topic=newtopic, icon=icon)
         except MessageServiceException as e:
-            socketio.emit('error', {'error': str(e)})
+            socketio.emit('error', {'error': str(e)}, room=request.sid)
