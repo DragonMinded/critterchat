@@ -61,7 +61,7 @@ class AttachmentService:
             if not directory:
                 raise AttachmentServiceException("Cannot find directory for local attachment storage!")
 
-            path = os.path.join(directory, str(attachmentid))
+            path = os.path.join(directory, Attachment.from_id(attachmentid))
             try:
                 with open(path, "rb") as bfp:
                     data = bfp.read()
@@ -83,7 +83,7 @@ class AttachmentService:
             if not directory:
                 raise AttachmentServiceException("Cannot find directory for local attachment storage!")
 
-            path = os.path.join(directory, str(attachmentid))
+            path = os.path.join(directory, Attachment.from_id(attachmentid))
             with open(path, "wb") as bfp:
                 bfp.write(data)
         else:
@@ -101,7 +101,7 @@ class AttachmentService:
             if not directory:
                 raise AttachmentServiceException("Cannot find directory for local attachment storage!")
 
-            path = os.path.join(directory, str(attachmentid))
+            path = os.path.join(directory, Attachment.from_id(attachmentid))
             os.remove(path)
         else:
             # Unknown backend, throw.

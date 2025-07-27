@@ -5,7 +5,7 @@ from setuptools import Command, setup
 
 setup(
     name='critterchat',
-    version='0.0.1',
+    version='0.0.2',
     description='CritterChat chat room software.',
     author='DragonMinded',
     license='Public Domain',

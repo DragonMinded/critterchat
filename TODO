@@ -1,3 +1,13 @@
+TODO For Installable
+====================
+nginx example configuration.
+Run example configuration file.
+Handle defavi and defroom files in attachments directory somehow.
+When creating a user through manage.py, set them up to be activated.
+Activate/deactivate through manage.py.
+Create new public room through manage.py.
+Enable/disable room autojoin through manage.py.
+
 TODO For Post Test Build
 ========================
 Close-by message coalescing into one group of lines.
