@@ -17,6 +17,7 @@ passlib
 sqlalchemy-stubs
 python-dateutil
 types-emoji
+types-gevent
 types-pyyaml
 types-requests
 types-python-dateutil

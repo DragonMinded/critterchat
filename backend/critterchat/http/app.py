@@ -53,7 +53,7 @@ class CritterChatFlask(Flask):
 
 app = CritterChatFlask(__name__)
 CORS(app)
-socketio = SocketIO(app, cors_allowed_origins='*')
+socketio = SocketIO(app, logger=True, async_mode='gevent', cors_allowed_origins='*')
 config: Config = Config()
 
 

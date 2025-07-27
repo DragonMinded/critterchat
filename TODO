@@ -7,6 +7,10 @@ When creating a user through manage.py, set them up to be activated.
 Activate/deactivate through manage.py.
 Create new public room through manage.py.
 Enable/disable room autojoin through manage.py.
+Fix lockup when people send large websocket messages.
+Figure out deploy issues for having it run multi-threaded/multi-process.
+--new-- bar should disappear upon your message being received, not on send.
+Consider ways to get rid of emoji preloading.
 
 TODO For Post Test Build
 ========================

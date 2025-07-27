@@ -1,9 +1,12 @@
-import argparse
-from werkzeug.middleware.proxy_fix import ProxyFix
+from gevent import monkey
+monkey.patch_all()
 
-from critterchat.http import app, config, socketio
+import argparse  # noqa
+from werkzeug.middleware.proxy_fix import ProxyFix  # noqa
 
-from critterchat.config import load_config
+from critterchat.http import app, config, socketio  # noqa
+
+from critterchat.config import load_config  # noqa
 
 
 # Since the sockets and REST files use decorators for hooking, simply importing these hooks the desired functions
@@ -13,7 +16,7 @@ import critterchat.http.account  # noqa
 import critterchat.http.socket  # noqa
 
 # This is only hooked when local storage is enabled.
-from critterchat.http.attachments import attachments
+from critterchat.http.attachments import attachments  # noqa
 
 
 if __name__ == '__main__':

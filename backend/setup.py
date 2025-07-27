@@ -1,6 +1,4 @@
-import os
-import shutil
-from setuptools import Command, setup
+from setuptools import setup
 
 
 setup(
