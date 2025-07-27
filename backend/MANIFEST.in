@@ -7,6 +7,7 @@ include critterchat/http/static/*.ttf
 include critterchat/http/static/*.woff
 include critterchat/http/static/*.css
 include critterchat/http/static/*.js
+include critterchat/http/static/*.LICENSE.txt
 include critterchat/http/static/*.json
 include critterchat/http/static/*.png
 graft critterchat/http/static/twemoji
