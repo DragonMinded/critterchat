@@ -440,6 +440,12 @@ def message(json: Dict[str, object]) -> None:
     roomid = Room.to_id(str(json.get('roomid')))
     message = json.get('message')
     if roomid and message:
+        rooms = messageservice.get_joined_rooms(userid)
+        joinedrooms = {room.id for room in rooms}
+        if roomid not in joinedrooms:
+            # Trying to insert a chat for a room we're not in!
+            return
+
         try:
             messageservice.add_message(roomid, userid, str(message))
         except MessageServiceException as e:
@@ -561,6 +567,12 @@ def updateroom(json: Dict[str, object]) -> None:
         newname = str(details.get('name', ''))
         newtopic = str(details.get('topic', ''))
         newicon = str(details.get('icon', ''))
+
+        rooms = messageservice.get_joined_rooms(userid)
+        joinedrooms = {room.id for room in rooms}
+        if roomid not in joinedrooms:
+            # Trying to grab chat for a room we're not in!
+            return
 
         # TODO: Configurable, maybe?
         if len(newicon) > 1000000:
