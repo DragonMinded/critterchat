@@ -107,6 +107,14 @@ div.rooms div.item div.name-wrapper, div.results div.item div.name-wrapper, div.
 div.name-wrapper div.name {
     max-height: 36px;
     overflow: hidden;
+    overflow-wrap: break-word;
+    word-break: break-word;
+}
+
+div.meta-wrapper div.name {
+    overflow: hidden;
+    overflow-wrap: break-word;
+    word-break: break-word;
 }
 
 div.results div.item div.action-wrapper {
@@ -169,12 +177,18 @@ div.chat > div.info {
 
 div.chat > div.info div.title {
     font-size: 16px;
+    overflow: hidden;
+    overflow-wrap: break-word;
+    word-break: break-word;
 }
 
 div.chat > div.info div.topic {
     font-size: 12px;
     color: #707070;
     align-content: end;
+    overflow: hidden;
+    overflow-wrap: break-word;
+    word-break: break-word;
 }
 
 div.chat > div.conversation-wrapper {
@@ -241,6 +255,8 @@ div.conversation div.item div.timestamp {
 
 div.conversation div.item div.message {
     font-size: 14px;
+    overflow-wrap: break-word;
+    word-break: break-word;
 }
 
 div.message.highlighted {
