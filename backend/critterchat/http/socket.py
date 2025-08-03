@@ -164,6 +164,16 @@ def recover_info(sid: Any) -> SocketInfo:
         return socket_to_info[sid]
 
 
+def recover_sessionid(data: Data, sid: Any) -> Optional[str]:
+    info = recover_info(sid)
+    if info.sessionid is None:
+        # Session was de-authed, tell the client to refresh.
+        socketio.emit('reload', {}, room=sid)
+        return None
+
+    return info.sessionid
+
+
 def recover_userid(data: Data, sid: Any) -> Optional[UserID]:
     info = recover_info(sid)
     if info.sessionid is None:
@@ -300,13 +310,16 @@ def lastsettings(json: Dict[str, object]) -> None:
     data = Data(config)
     userservice = UserService(config, data)
 
-    # Try to associate with a user if there is one.
+    # Try to associate with a user and login session if there is one.
     userid = recover_userid(data, request.sid)
     if userid is None:
         return
+    sessionid = recover_sessionid(data, request.sid)
+    if sessionid is None:
+        return
 
     # Look up last settings for this user.
-    socketio.emit('lastsettings', userservice.get_settings(userid).to_dict(), room=request.sid)
+    socketio.emit('lastsettings', userservice.get_settings(sessionid, userid).to_dict(), room=request.sid)
 
 
 @socketio.on('profile')  # type: ignore
@@ -330,13 +343,16 @@ def updatesettings(json: Dict[str, object]) -> None:
     data = Data(config)
     userservice = UserService(config, data)
 
-    # Try to associate with a user if there is one.
+    # Try to associate with a user and login session if there is one.
     userid = recover_userid(data, request.sid)
     if userid is None:
         return
+    sessionid = recover_sessionid(data, request.sid)
+    if sessionid is None:
+        return
 
     # Save last settings for this user.
-    userservice.update_settings(userid, UserSettings.from_dict(userid, json))
+    userservice.update_settings(sessionid, UserSettings.from_dict(userid, json))
 
 
 @socketio.on('updateprofile')  # type: ignore

@@ -57,13 +57,12 @@ class User:
 
 class UserSettings:
     def __init__(self, userid: UserID, roomid: Optional[RoomID], info: Optional[str]) -> None:
-        self.id = userid
+        self.userid = userid
         self.roomid = roomid
         self.info = info
 
     def to_dict(self) -> Dict[str, object]:
         return {
-            "id": User.from_id(self.id),
             "roomid": Room.from_id(self.roomid) if self.roomid is not None else None,
             "info": self.info if self.info else "hidden",
         }
@@ -79,20 +78,6 @@ class UserSettings:
             roomid=roomid,
             info=info,
         )
-
-    @staticmethod
-    def from_id(roomid: RoomID) -> str:
-        return f"r{roomid}"
-
-    @staticmethod
-    def to_id(idstr: str) -> Optional[RoomID]:
-        if idstr[0] != 'r':
-            return None
-
-        try:
-            return RoomID(int(idstr[1:]))
-        except ValueError:
-            return None
 
 
 class Attachment:

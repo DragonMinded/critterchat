@@ -53,12 +53,13 @@ profile = Table(
 )
 
 """
-Table representing a user's settings.
+Table representing a user's per-session settings.
 """
 settings = Table(
     "settings",
     metadata,
-    Column("user_id", Integer, nullable=False, unique=True, index=True),
+    Column("session", String(32), nullable=False, unique=True, index=True),
+    Column("user_id", Integer, nullable=False, index=True),
     Column("last_room", Integer),
     Column("info", String(8)),
     mysql_charset="utf8mb4",
@@ -178,6 +179,9 @@ class UserData(BaseData):
             sql = "DELETE FROM session WHERE expiration < :timestamp"
             self.execute(sql, {"timestamp": Time.now()})
 
+            sql = "DELETE FROM settings WHERE session NOT IN (SELECT session FROM session WHERE type = :sesstype)"
+            self.execute(sql, {"sesstype": self.SESSION_TYPE_LOGIN})
+
             # Couldn't find a user with this session
             return None
 
@@ -238,9 +242,15 @@ class UserData(BaseData):
         sql = "DELETE FROM session WHERE session = :session AND type = :sesstype"
         self.execute(sql, {"session": session, "sesstype": self.SESSION_TYPE_LOGIN})
 
+        sql = "DELETE FROM settings WHERE session = :session"
+        self.execute(sql, {"session": session})
+
         # Also weed out any other defunct sessions
         sql = "DELETE FROM session WHERE expiration < :timestamp"
         self.execute(sql, {"timestamp": Time.now()})
+
+        sql = "DELETE FROM settings WHERE session NOT IN (SELECT session FROM session WHERE type = :sesstype)"
+        self.execute(sql, {"sesstype": self.SESSION_TYPE_LOGIN})
 
     def create_account(self, username: str, password: str) -> Optional[User]:
         """
@@ -262,47 +272,63 @@ class UserData(BaseData):
             return None
         return self.get_user(UserID(cursor.lastrowid))
 
-    def get_settings(self, userid: UserID) -> Optional[UserSettings]:
+    def get_settings(self, session: str) -> Optional[UserSettings]:
         """
         Look up a user's settings if they exist.
 
         Parameters:
-            userid - The ID of the user we want to grab settings for.
+            session - The session that this user is logged in under.
         """
-        if userid is NewUserID:
-            raise Exception("Logic error, should not try to fetch settings for a new user ID!")
+        sql = "SELECT * FROM settings WHERE session = :session"
+        cursor = self.execute(sql, {"session": session})
+        if cursor.rowcount != 1:
+            return None
 
-        sql = "SELECT * FROM settings WHERE user_id = :userid"
+        result = cursor.mappings().fetchone()
+        return UserSettings(
+            userid=UserID(result['user_id']),
+            roomid=RoomID(result['last_room']) if result['last_room'] is not None else None,
+            info=result['info'],
+        )
+
+    def get_any_settings(self, userid: UserID) -> Optional[UserSettings]:
+        """
+        Look up any of a user's settings if they exist.
+
+        Parameters:
+            userid - The user ID we want any settings for, regardless of sesssion.
+        """
+        sql = "SELECT * FROM settings WHERE user_id = :userid LIMIT 1"
         cursor = self.execute(sql, {"userid": userid})
         if cursor.rowcount != 1:
             return None
 
         result = cursor.mappings().fetchone()
         return UserSettings(
-            userid=userid,
+            userid=UserID(result['user_id']),
             roomid=RoomID(result['last_room']) if result['last_room'] is not None else None,
             info=result['info'],
         )
 
-    def put_settings(self, userid: UserID, settings: UserSettings) -> None:
+    def put_settings(self, session: str, settings: UserSettings) -> None:
         """
         Write a new settings blob to the specified user.
 
         Parameters:
-            userid - The user ID that we should update settings for.
+            session - The user session that we should update settings for.
             settings - The new settings bundle we should persist.
         """
-        if userid is NewUserID:
+        if settings.userid is NewUserID:
             raise Exception("Logic error, should not try to update settings for a new user ID!")
 
         sql = """
             INSERT INTO `settings`
-                (`user_id`, `last_room`, `info`)
-            VALUES (:userid, :roomid, :info)
+                (`session`, `user_id`, `last_room`, `info`)
+            VALUES (:session, :userid, :roomid, :info)
             ON DUPLICATE KEY UPDATE
             `last_room` = :roomid, `info` = :info
         """
-        self.execute(sql, {"roomid": settings.roomid, "info": settings.info, "userid": userid})
+        self.execute(sql, {"session": session, "roomid": settings.roomid, "info": settings.info, "userid": settings.userid})
 
     def __to_user(self, result: Any) -> User:
         """

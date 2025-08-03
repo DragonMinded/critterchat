@@ -19,8 +19,12 @@ class UserService:
         self.__data = data
         self.__attachments = AttachmentService(self.__config, self.__data)
 
-    def get_settings(self, userid: UserID) -> UserSettings:
-        settings = self.__data.user.get_settings(userid)
+    def get_settings(self, session: str, userid: UserID) -> UserSettings:
+        settings = self.__data.user.get_settings(session)
+        if settings:
+            return settings
+
+        settings = self.__data.user.get_any_settings(userid)
         if settings:
             return settings
 
@@ -30,11 +34,8 @@ class UserService:
             info=None,
         )
 
-    def update_settings(self, userid: UserID, settings: UserSettings) -> None:
-        if userid != settings.id:
-            raise UserServiceException("Invaid User ID in settings bundle!")
-
-        self.__data.user.put_settings(userid, settings)
+    def update_settings(self, session: str, settings: UserSettings) -> None:
+        self.__data.user.put_settings(session, settings)
 
     def lookup_user(self, userid: UserID) -> Optional[User]:
         user = self.__data.user.get_user(userid)
