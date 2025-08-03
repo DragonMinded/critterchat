@@ -1,4 +1,4 @@
-var entityMap = {
+const entityMap = {
   '&': '&amp;',
   '<': '&lt;',
   '>': '&gt;',
@@ -9,7 +9,9 @@ var entityMap = {
   '=': '&#x3D;'
 };
 
-var escapeHtml = function( str ) {
+const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+const escapeHtml = function( str ) {
     str = String(str);
         str = str.replace(/[&<>"'`=/]/g, function (s) {
         return entityMap[s];
@@ -24,7 +26,7 @@ var escapeHtml = function( str ) {
     return str;
 }
 
-var formatTime = function( ts, showseconds, twentyfour ) {
+const formatTime = function( ts, showseconds, twentyfour ) {
     var date = new Date(ts * 1000);
     var hours = date.getHours();
     var ampm = "";
@@ -39,18 +41,31 @@ var formatTime = function( ts, showseconds, twentyfour ) {
     var minutes = "0" + date.getMinutes();
     var seconds = "0" + date.getSeconds();
     var formattedTime = hours + ':' + minutes.substr(-2) + (showseconds ? ':' + seconds.substr(-2) : '') + ampm;
-    return formattedTime
+    return formattedTime;
+}
+
+const formatDate = function( ts ) {
+    var date = new Date(ts * 1000);
+    var month = months[date.getMonth()];
+    var day = date.getDate();
+    var year = date.getFullYear();
+    var formattedDate = month + " " + day + ", " + year;
+    return formattedDate;
+}
+
+const formatDateTime = function( ts ) {
+    return formatDate( ts ) + " @ " + formatTime( ts );
 }
 
 // Calculate the integer scroll top of a given component.
-var scrollTop = function( obj ) {
+const scrollTop = function( obj ) {
     // Sometimes the chrome/firefox calculation of scrollTopMax is off by one
     return Math.floor(obj.scrollTop) + 1;
 }
 
 // Calculate the maximum scroll top of a given component.
-var scrollTopMax = function( obj ) {
+const scrollTopMax = function( obj ) {
     return obj.scrollHeight - obj.clientHeight;
 }
 
-export { escapeHtml, formatTime, scrollTop, scrollTopMax };
+export { escapeHtml, formatTime, formatDate, formatDateTime, scrollTop, scrollTopMax };

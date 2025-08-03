@@ -4,7 +4,7 @@ import $ from "jquery";
 import * as linkify from "linkifyjs"; // eslint-disable-line no-unused-vars
 import linkifyHtml from "linkify-html";
 
-import { escapeHtml, formatTime, scrollTop, scrollTopMax } from "./utils.js";
+import { escapeHtml, formatDateTime, scrollTop, scrollTopMax } from "./utils.js";
 import { emojisearch } from "./components/emojisearch.js";
 import { autocomplete } from "./components/autocomplete.js";
 import { displayInfo } from "./modals/infomodal.js";
@@ -370,7 +370,7 @@ class Messages {
                 html += '  <div class="content-wrapper">';
                 html += '    <div class="meta-wrapper">';
                 html += '      <div class="name" id="' + message.occupant.id + '">' + escapeHtml(message.occupant.nickname) + '</div>';
-                html += '      <div class="timestamp">' + formatTime(message.timestamp) + '</div>';
+                html += '      <div class="timestamp">' + formatDateTime(message.timestamp) + '</div>';
                 html += '    </div>';
                 html += '    <div class="message' + (highlighted ? " highlighted" : "") + '" id="' + message.id + '">' + content + '</div>';
                 html += '  </div>';
@@ -381,7 +381,7 @@ class Messages {
                 html += '    <div class="meta-wrapper">';
                 html += '      <div class="name" id="' + message.occupant.id + '">' + escapeHtml(message.occupant.nickname) + '</div>';
                 html += '      <div class="joinmessage">has joined!</div>';
-                html += '      <div class="timestamp">' + formatTime(message.timestamp) + '</div>';
+                html += '      <div class="timestamp">' + formatDateTime(message.timestamp) + '</div>';
                 html += '    </div>';
                 html += '  </div>';
                 html += '</div>';
@@ -391,7 +391,7 @@ class Messages {
                 html += '    <div class="meta-wrapper">';
                 html += '      <div class="name" id="' + message.occupant.id + '">' + escapeHtml(message.occupant.nickname) + '</div>';
                 html += '      <div class="joinmessage">has left!</div>';
-                html += '      <div class="timestamp">' + formatTime(message.timestamp) + '</div>';
+                html += '      <div class="timestamp">' + formatDateTime(message.timestamp) + '</div>';
                 html += '    </div>';
                 html += '  </div>';
                 html += '</div>';
@@ -403,7 +403,7 @@ class Messages {
                 html += '    <div class="meta-wrapper">';
                 html += '      <div class="name" id="' + message.occupant.id + '">' + escapeHtml(message.occupant.nickname) + '</div>';
                 html += '      <div class="joinmessage">has updated the ' + type + '\'s info!</div>';
-                html += '      <div class="timestamp">' + formatTime(message.timestamp) + '</div>';
+                html += '      <div class="timestamp">' + formatDateTime(message.timestamp) + '</div>';
                 html += '    </div>';
                 html += '  </div>';
                 html += '</div>';
