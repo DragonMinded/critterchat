@@ -2,8 +2,8 @@ html, body {
     font-family: "Atkinson Hyperlegible", Arial, Helvetica, sans-serif;
     margin: 0px;
     padding: 0px;
-    width: 100vw;
-    height: 100vh;
+    width: 100dvw;
+    height: 100dvh;
     background: #ffffff;
     overflow: hidden;
 }
@@ -15,8 +15,8 @@ div.errors {
 
 div.container {
     display: flex;
-    width: 100vw;
-    height: 100vh;
+    width: 100dvw;
+    height: 100dvh;
 }
 
 div.container > div.menu {
