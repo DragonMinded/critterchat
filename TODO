@@ -10,7 +10,6 @@ Enable/disable room autojoin through manage.py.
 Fix lockup when people send large websocket messages.
 Figure out deploy issues for having it run multi-threaded/multi-process.
 Consider ways to get rid of emoji preloading.
-Multiple clients for the same user don't all get updates without reloading.
 
 TODO For Post Test Build
 ========================
