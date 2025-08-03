@@ -27,10 +27,10 @@ def upgrade() -> None:
     # Kill any settings since we can't easily look up the session for them.
     conn = op.get_bind()
     conn.execute(text("UPDATE settings, session SET settings.session = session.session WHERE session.id = settings.user_id"))  # type: ignore
-    op.create_index(op.f('ix_settings_session'), 'settings', ['session'], unique=True)
 
     # Now, migrate settings over for each session.
     cursor = conn.execute(text("SELECT id FROM user"))  # type: ignore
+    seen = set()
     for result in cursor.mappings():
         cursor2 = conn.execute(text("SELECT last_room, info FROM settings WHERE user_id = :userid LIMIT 1"), {'userid': result['id']})  # type: ignore
         if cursor2.rowcount == 1:
@@ -38,6 +38,10 @@ def upgrade() -> None:
 
             cursor3 = conn.execute(text("SELECT session FROM session WHERE id = :userid"), {'userid': result['id']})  # type: ignore
             for result3 in cursor3.mappings():
+                if result3['session'] in seen:
+                    continue
+                seen.add(result3['session'])
+
                 conn.execute(text(  # type: ignore
                 """
                     INSERT INTO settings
@@ -46,6 +50,20 @@ def upgrade() -> None:
                         (:session, :userid, :lastroom, :info)
                     ON DUPLICATE KEY UPDATE user_id = user_id
                 """), {'session': result3['session'], 'userid': result['id'], 'lastroom': result2['last_room'], 'info': result2['info']})
+
+    # Now, kill any duplicate settings that snuck in.
+    cursor = conn.execute(text("SELECT session FROM settings"))  # type: ignore
+    for result in cursor.mappings():
+        cursor2 = conn.execute(text("SELECT count(session) AS c FROM settings WHERE session = :session"), {'session': result['session']})  # type: ignore
+        if cursor2.rowcount == 1:
+            result2 = cursor2.mappings().fetchone()
+            count = int(result2['c'])
+            if count > 1:
+                conn.execute(text("DELETE FROM settings WHERE session = :session LIMIT :count"), {'session': result['session'], 'count': count - 1})  # type: ignore
+
+    # Now, delete any old settings.
+    conn.execute(text("DELETE FROM settings WHERE session = ''"))  # type: ignore
+    op.create_index(op.f('ix_settings_session'), 'settings', ['session'], unique=True)
 
 
 def downgrade() -> None:
