@@ -46,7 +46,6 @@ class Messages {
 
                     if (message) {
                         this.eventBus.emit('message', {'roomid': roomid, 'message': message});
-                        this.removeNewIndicator();
                     }
                 }
             }
@@ -212,7 +211,10 @@ class Messages {
             html += '</div>';
 
             var messages = $('div.chat > div.conversation-wrapper > div.conversation');
+
+            this.removeNewIndicator();
             $(html).insertAfter(messages.find('div.item#' + lastMessage.id));
+
             this.ensureScrolled();
         }
     }
@@ -228,10 +230,11 @@ class Messages {
             return;
         }
 
-        // This is where we get notified of user joins and leaves.
         var changed = false;
+        var selfMessage = false;
         if (this.occupantsLoaded) {
             actions.forEach((message) => {
+                // This is where we get notified of user joins and leaves.
                 if (message.action == "join") {
                     // Add a new occupant to our list.
                     this.occupants.push(message.occupant);
@@ -239,6 +242,13 @@ class Messages {
                 } else if (message.action == "leave") {
                     this.occupants = this.occupants.filter((occupant) => occupant.id != message.occupant.id);
                     changed = true;
+                }
+
+                // Remove -- new -- indicator on receipt of own message instead of on send, since
+                // it can take a little while to round trip and the double change to the message
+                // window looks weird.
+                if (message.occupant.username == window.username) {
+                    selfMessage = true;
                 }
             });
         }
@@ -249,6 +259,10 @@ class Messages {
         }
 
         this.drawActions( actions );
+
+        if (selfMessage) {
+            this.removeNewIndicator();
+        }
     }
 
     drawActions( history ) {
