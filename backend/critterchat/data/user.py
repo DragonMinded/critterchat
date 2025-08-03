@@ -62,6 +62,7 @@ settings = Table(
     Column("user_id", Integer, nullable=False, index=True),
     Column("last_room", Integer),
     Column("info", String(8)),
+    Column("timestamp", Integer),
     mysql_charset="utf8mb4",
 )
 
@@ -172,12 +173,13 @@ class UserData(BaseData):
             ID as an integer if found, or None if the session is expired or doesn't exist.
         """
         # Look up the user account, making sure to expire old sessions
+        now = Time.now()
         sql = "SELECT id FROM session WHERE session = :session AND type = :type AND expiration > :timestamp"
-        cursor = self.execute(sql, {"session": session, "type": self.SESSION_TYPE_LOGIN, "timestamp": Time.now()})
+        cursor = self.execute(sql, {"session": session, "type": self.SESSION_TYPE_LOGIN, "timestamp": now})
         if cursor.rowcount != 1:
             # Possibly expired, so let's delete any expired ones.
-            sql = "DELETE FROM session WHERE expiration < :timestamp"
-            self.execute(sql, {"timestamp": Time.now()})
+            sql = "DELETE FROM session WHERE expiration <= :timestamp"
+            self.execute(sql, {"timestamp": now})
 
             sql = "DELETE FROM settings WHERE session NOT IN (SELECT session FROM session WHERE type = :sesstype)"
             self.execute(sql, {"sesstype": self.SESSION_TYPE_LOGIN})
@@ -246,7 +248,7 @@ class UserData(BaseData):
         self.execute(sql, {"session": session})
 
         # Also weed out any other defunct sessions
-        sql = "DELETE FROM session WHERE expiration < :timestamp"
+        sql = "DELETE FROM session WHERE expiration <= :timestamp"
         self.execute(sql, {"timestamp": Time.now()})
 
         sql = "DELETE FROM settings WHERE session NOT IN (SELECT session FROM session WHERE type = :sesstype)"
@@ -298,7 +300,7 @@ class UserData(BaseData):
         Parameters:
             userid - The user ID we want any settings for, regardless of sesssion.
         """
-        sql = "SELECT * FROM settings WHERE user_id = :userid LIMIT 1"
+        sql = "SELECT * FROM settings WHERE user_id = :userid ORDER BY timestamp DESC, session DESC LIMIT 1"
         cursor = self.execute(sql, {"userid": userid})
         if cursor.rowcount != 1:
             return None
@@ -323,12 +325,12 @@ class UserData(BaseData):
 
         sql = """
             INSERT INTO `settings`
-                (`session`, `user_id`, `last_room`, `info`)
-            VALUES (:session, :userid, :roomid, :info)
+                (`session`, `user_id`, `last_room`, `info`, `timestamp`)
+            VALUES (:session, :userid, :roomid, :info, :ts)
             ON DUPLICATE KEY UPDATE
-            `last_room` = :roomid, `info` = :info
+            `last_room` = :roomid, `info` = :info, `timestamp` = :ts
         """
-        self.execute(sql, {"session": session, "roomid": settings.roomid, "info": settings.info, "userid": settings.userid})
+        self.execute(sql, {"session": session, "roomid": settings.roomid, "info": settings.info, "userid": settings.userid, 'ts': Time.now()})
 
     def __to_user(self, result: Any) -> User:
         """
