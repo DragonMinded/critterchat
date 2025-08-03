@@ -34,7 +34,7 @@ class EditProfile {
         $( '#editprofile-iconpicker' ).on( 'change', (event) => {
             const file = event.target.files[0];
 
-            if (file && file.size < 128000) {
+            if (file && file.size < 128 * 1024) {
                 var fr = new FileReader();
                 fr.onload = () => {
                     this.icon = fr.result;

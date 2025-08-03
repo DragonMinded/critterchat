@@ -358,17 +358,18 @@ def updateprofile(json: Dict[str, object]) -> None:
         socketio.emit('error', {'error': 'Your nickname is too long!'}, room=request.sid)
         return
 
-    # TODO: Configurable, maybe?
-    if len(newicon) > 128000:
-        socketio.emit('error', {'error': 'Chosen avatar file size is too large!'}, room=request.sid)
-        return
-
     icon: Optional[bytes] = None
     if newicon:
         # Verify that it's a reasonable icon.
-        header, _ = newicon.split(",", 1)
+        header, b64data = newicon.split(",", 1)
         if not header.startswith("data:") or not header.endswith("base64"):
             socketio.emit('error', {'error': 'Chosen avatar is not a valid image!'}, room=request.sid)
+            return
+
+        # TODO: Configurable, maybe?
+        actual_length = (len(b64data) / 4) * 3
+        if actual_length > 128 * 1024:
+            socketio.emit('error', {'error': 'Chosen avatar file size is too large!'}, room=request.sid)
             return
 
         with urllib.request.urlopen(newicon) as fp:
@@ -574,17 +575,18 @@ def updateroom(json: Dict[str, object]) -> None:
             # Trying to grab chat for a room we're not in!
             return
 
-        # TODO: Configurable, maybe?
-        if len(newicon) > 128000:
-            socketio.emit('error', {'error': 'Chosen icon file size is too large!'}, room=request.sid)
-            return
-
         icon: Optional[bytes] = None
         if newicon:
             # Verify that it's a reasonable icon.
-            header, _ = newicon.split(",", 1)
+            header, b64data = newicon.split(",", 1)
             if not header.startswith("data:") or not header.endswith("base64"):
                 socketio.emit('error', {'error': 'Chosen icon is not a valid image!'}, room=request.sid)
+                return
+
+            # TODO: Configurable, maybe?
+            actual_length = (len(b64data) / 4) * 3
+            if actual_length > 128 * 1024:
+                socketio.emit('error', {'error': 'Chosen icon file size is too large!'}, room=request.sid)
                 return
 
             with urllib.request.urlopen(newicon) as fp:
