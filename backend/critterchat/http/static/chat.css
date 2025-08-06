@@ -207,7 +207,7 @@ div.container > div.chat {
     flex-direction: column;
 }
 
-div.chat > div.info {
+div.chat > div.top-info {
     background: var(--sidebar-background);
     border-top: 10px solid var(--sidebar-background);
     border-bottom: 5px solid var(--sidebar-background);
@@ -215,17 +215,34 @@ div.chat > div.info {
     display: flex;
     flex-direction: row;
     gap: 10px;
+    padding-left: 10px;
+    padding-right: 10px;
 }
 
-div.chat > div.info div.title {
+div.top-info div.icon img {
+    display: block;
+    width: 36px;
+    height: 36px;
+    margin: 0px;
+}
+
+div.top-info div.info-wrapper {
+    height: 36px;
+    align-items: center;
+    display: flex;
+}
+
+div.top-info div.title {
     font-size: 16px;
+    max-height: 36px;
     overflow: hidden;
     overflow-wrap: break-word;
     word-break: break-word;
 }
 
-div.chat > div.info div.topic {
+div.top-info div.topic {
     font-size: 12px;
+    max-height: 28px;
     color: var(--conversation-topic);
     align-content: end;
     overflow: hidden;

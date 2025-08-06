@@ -174,17 +174,22 @@ class Info {
             this.rooms.forEach((room) => {
                 if (room.id == roomid) {
                     var title;
+                    var iconType;
                     if (room.type == "chat") {
                         if (room['public']) {
                             title = "Public group chat";
+                            iconType = 'room';
                         } else {
                             title = "Private chat";
+                            iconType = 'avatar';
                         }
                     } else {
                         if (room['public']) {
                             title = "Public room";
+                            iconType = 'room';
                         } else {
                             title = "Private room";
+                            iconType = 'avatar';
                         }
                     }
                     $( '#room-title' ).text(title);
@@ -196,6 +201,8 @@ class Info {
 
                     $( 'div.info div.title-wrapper' ).show();
                     $( 'div.info div.actions' ).show();
+                    $( 'div.chat div.icon' ).removeClass('room').removeClass('avatar').addClass(iconType);
+                    $( 'div.chat div.icon img' ).attr('src', room.icon);
                     $( 'div.chat div.title' ).html(escapeHtml(room.name));
                     $( 'div.chat div.topic' ).html(escapeHtml(room.topic));
                     $( '#leave-room' ).attr('roomid', roomid);
