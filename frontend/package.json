@@ -7,7 +7,8 @@
     "build": "webpack --mode production",
     "debug": "webpack --mode development",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "lint": "npx eslint src/"
+    "lint": "npx eslint src/",
+    "clean": "cd $INIT_CWD/../backend/critterchat/http/static && rm -f chat.*.js && rm -f chat.*.txt"
   },
   "keywords": [],
   "author": "",
