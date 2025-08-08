@@ -147,7 +147,7 @@ div.name-wrapper div.name {
     word-break: break-word;
 }
 
-div.meta-wrapper div.name {
+div.meta-wrapper span.name {
     overflow: hidden;
     overflow-wrap: break-word;
     word-break: break-word;
@@ -319,11 +319,12 @@ div.conversation div.item div.meta-wrapper {
     gap: 5px;
 }
 
-div.conversation div.item div.name {
+div.conversation div.item span.name {
     font-size: 16px;
+    font-weight: bold;
 }
 
-div.conversation div.item div.timestamp {
+div.conversation div.item span.timestamp {
     color: var(--conversation-timestamp);
     font-size: 12px;
     padding-top: 4px;
