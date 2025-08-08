@@ -35,6 +35,9 @@ class MessageService:
         self.__data = data
         self.__attachments = AttachmentService(self.__config, self.__data)
 
+    def get_last_action(self) -> Optional[ActionID]:
+        return self.__data.room.get_last_action()
+
     def get_last_room_action(self, roomid: RoomID) -> Optional[Action]:
         history = self.__data.room.get_room_history(roomid, limit=1)
         return self.__attachments.resolve_action_icon(history[0]) if history else None

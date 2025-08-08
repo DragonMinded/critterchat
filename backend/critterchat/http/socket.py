@@ -18,7 +18,8 @@ class SocketInfo:
         self.lastseen: Dict[RoomID, int] = {}
 
 
-MESSAGE_PUMP_TICK_SECONDS: Final[float] = 0.25
+MESSAGE_PUMP_TICK_SECONDS: Final[float] = 0.05
+MESSAGE_PUMP_ALWAYS_TICK_SECONDS: Final[int] = 1
 EMOJI_REFRESH_TICK_SECONDS: Final[int] = 5
 
 
@@ -43,14 +44,16 @@ def background_thread_proc() -> None:
 
     # Make sure we can send emote additions and subtractions to the connected clients.
     emotes = {k for k in emoteservice.get_all_emotes()}
-    last_update = Time.now()
+    last_emote_update = Time.now()
+    last_user_update = Time.now()
+    last_action: Optional[ActionID] = None
 
     while True:
         # Just yield to the async system.
         socketio.sleep(MESSAGE_PUMP_TICK_SECONDS)
 
         # See if we need to update emotes on clients.
-        if Time.now() - last_update >= EMOJI_REFRESH_TICK_SECONDS:
+        if (Time.now() - last_emote_update) >= EMOJI_REFRESH_TICK_SECONDS:
             newemotes = emoteservice.get_all_emotes()
             additions: Set[str] = set()
             deletions: Set[str] = set()
@@ -72,7 +75,7 @@ def background_thread_proc() -> None:
                     'deletions': [f":{d}:" for d in deletions],
                 })
                 emotes = {k for k in newemotes}
-            last_update = Time.now()
+            last_emote_update = Time.now()
 
         # Look for any new actions that should be relayed.
         with socket_lock:
@@ -83,6 +86,15 @@ def background_thread_proc() -> None:
                 background_thread = None
 
                 return
+
+            current_action = messageservice.get_last_action()
+            if current_action == last_action:
+                if (Time.now() - last_user_update) < MESSAGE_PUMP_ALWAYS_TICK_SECONDS:
+                    # Nothing to do, skip the expensive part below.
+                    continue
+
+            last_action = current_action
+            last_user_update = Time.now()
 
             for _, info in socket_to_info.items():
                 # First, if they were deactivated, inform them now.

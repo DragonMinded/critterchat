@@ -482,6 +482,21 @@ class RoomData(BaseData):
         result = cursor.mappings().fetchone()
         return self.__to_occupant(result)
 
+    def get_last_action(self) -> Optional[ActionID]:
+        """
+        Gets the last action that was performed for this entire application.
+        """
+
+        sql = """
+            SELECT id FROM action ORDER BY id DESC LIMIT 1
+        """
+        cursor = self.execute(sql, {})
+        if cursor.rowcount != 1:
+            return None
+
+        result = cursor.mappings().fetchone()
+        return ActionID(result['id'])
+
     def get_room_history(
         self,
         roomid: RoomID,
