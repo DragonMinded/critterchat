@@ -7,6 +7,7 @@ When creating a user through manage.py, set them up to be activated.
 Activate/deactivate through manage.py.
 Create new public room through manage.py.
 Enable/disable room autojoin through manage.py.
+Linkify topics as well as messages.
 
 TODO For Post Test Build
 ========================
