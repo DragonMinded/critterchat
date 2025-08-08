@@ -1,4 +1,5 @@
 import argparse
+import getpass
 import os
 import sys
 from typing import Optional
@@ -61,22 +62,56 @@ def generate_migration(config: Config, message: str, allow_empty: bool) -> None:
     data.close()
 
 
-def create_user(config: Config, username: str, password: str) -> None:
+def create_user(config: Config, username: str, password: Optional[str]) -> None:
     """
-    Given a config pointing at a valid MySQL DB that's been created already, runs any pending migrations
-    that were checked in since you last ran create or migrate.
+    Create a new user that logs in with username, and uses password to login. If the password is
+    not provided at the CLI, instead prompts for a password interactively.
     """
+
+    if not password:
+        # Prompt for it at the CLI instead.
+        password1 = getpass.getpass(prompt="Password: ")
+        password2 = getpass.getpass(prompt="Password again: ")
+        if password1 != password2:
+            raise CommandException("Passwords do not match!")
+        password = password1
 
     data = Data(config)
 
-    existing_id = data.user.from_username(username)
-    if existing_id:
+    existing_user = data.user.from_username(username)
+    if existing_user:
         raise CommandException("User already exists in the database!")
 
     new_id = data.user.create_account(username, password)
     if not new_id:
         raise CommandException("User could not be created!")
     print(f"User created with user ID {new_id}")
+
+    data.close()
+
+
+def change_user_password(config: Config, username: str, password: Optional[str]) -> None:
+    """
+    Given an existing user that logs in with username, update their password to the provded password.
+    If the password is not provided at the CLI, instead prompts for a password interactively.
+    """
+
+    if not password:
+        # Prompt for it at the CLI instead.
+        password1 = getpass.getpass(prompt="Password: ")
+        password2 = getpass.getpass(prompt="Password again: ")
+        if password1 != password2:
+            raise CommandException("Passwords do not match!")
+        password = password1
+
+    data = Data(config)
+
+    existing_user = data.user.from_username(username)
+    if not existing_user:
+        raise CommandException("User does not exist in the database!")
+
+    data.user.update_password(existing_user.id, password)
+    print(f"User with ID {existing_user.id} updated with new password")
 
     data.close()
 
@@ -243,9 +278,30 @@ def main() -> None:
     create_parser.add_argument(
         "-p",
         "--password",
-        required=True,
+        default=None,
         type=str,
         help="password that the user will use to login with",
+    )
+
+    # Only a few params for this one
+    change_password_parser = user_commands.add_parser(
+        "change_password",
+        help="change password for a user that can log in",
+        description="Change password for a user that can log in.",
+    )
+    change_password_parser.add_argument(
+        "-u",
+        "--username",
+        required=True,
+        type=str,
+        help="username that the user uses to login with",
+    )
+    change_password_parser.add_argument(
+        "-p",
+        "--password",
+        default=None,
+        type=str,
+        help="password that the user uses to login with",
     )
 
     # Another subcommand here.
@@ -324,6 +380,8 @@ def main() -> None:
                 raise CLIException("Unspecified user operation1")
             elif args.user == "create":
                 create_user(config, args.username, args.password)
+            elif args.user == "change_password":
+                change_user_password(config, args.username, args.password)
             else:
                 raise CLIException(f"Unknown user operation '{args.user}'")
 
