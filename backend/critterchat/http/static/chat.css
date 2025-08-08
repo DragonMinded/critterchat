@@ -219,6 +219,17 @@ div.chat > div.top-info {
     padding-right: 10px;
 }
 
+div.top-info div.back, div.info div.back {
+    cursor: default;
+    display: none;
+}
+
+div.back > img {
+    width: 36px;
+    height: 36px;
+    display: block;
+}
+
 div.top-info div.icon img {
     display: block;
     width: 36px;
@@ -248,6 +259,10 @@ div.top-info div.topic {
     overflow: hidden;
     overflow-wrap: break-word;
     word-break: break-word;
+}
+
+div.top-info div.topic img.emote, div.top-info div.topic img.emoji {
+    height: 12px ! important;
 }
 
 div.chat > div.conversation-wrapper {
@@ -369,8 +384,19 @@ div.container > div.info {
     flex-direction: column;
 }
 
-div.container > div.info.hidden {
-    display: none;
+div.hidden {
+    display: none ! important;
+}
+
+div.full {
+    width: 100% ! important;
+}
+
+div.info > div.header {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
 }
 
 div.info > div.occupants {

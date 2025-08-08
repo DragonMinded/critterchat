@@ -12,9 +12,11 @@ import { displayInfo } from "./modals/infomodal.js";
 const linkifyOptions = { defaultProtocol: "http", target: "_blank", validate: { email: () => false } };
 
 class Messages {
-    constructor( eventBus, inputState ) {
+    constructor( eventBus, screenState, inputState, initialSize ) {
         this.eventBus = eventBus;
         this.inputState = inputState;
+        this.screenState = screenState;
+        this.size = initialSize;
         this.messages = [];
         this.occupants = [];
         this.rooms = [];
@@ -76,6 +78,18 @@ class Messages {
             }
         });
 
+        // Set up dynamic mobile detection.
+        eventBus.on( 'resize', (newSize) => {
+            this.size = newSize;
+            this.updateSize();
+        });
+
+        this.screenState.registerStateChangeCallback(() => {
+            this.updateSize();
+        });
+
+        this.updateSize();
+
         // Set up custom emotes, as well as normal emoji typeahead.
         this.options = [];
         for (const [key, value] of Object.entries(emojis)) {
@@ -91,6 +105,18 @@ class Messages {
 
         // Set up the emoji search itself.
         $(".emoji-search").html(twemoji.parse(String.fromCodePoint(0x1F600), twemojiOptions));
+    }
+
+    updateSize() {
+        if (this.size == "mobile") {
+            if (this.screenState.current == "chat") {
+                $( 'div.container > div.chat' ).removeClass('hidden');
+            } else {
+                $( 'div.container > div.chat' ).addClass('hidden');
+            }
+        } else {
+            $( 'div.container > div.chat' ).removeClass('hidden');
+        }
     }
 
     updateLastAction( action ) {

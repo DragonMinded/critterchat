@@ -4,10 +4,12 @@ import { ChatDetails } from "./modals/chatdetails.js";
 import { displayWarning } from "./modals/warningmodal.js";
 
 class Info {
-    constructor( eventBus, inputState ) {
+    constructor( eventBus, screenState, inputState, initialSize ) {
         this.eventBus = eventBus;
         this.inputState = inputState;
+        this.screenState = screenState;
         this.chatdetails = new ChatDetails( eventBus, inputState );
+        this.size = initialSize;
 
         this.roomid = "";
         this.occupants = [];
@@ -21,16 +23,21 @@ class Info {
         $( '#infotoggle' ).on( 'click', (event) => {
             event.preventDefault();
 
-            this.inputState.setState("empty");
-            if ($('div.container > div.info').hasClass('hidden')) {
-                $('div.container > div.info').removeClass('hidden');
-                this.lastSettings.info = "shown";
+            if (this.size == "mobile") {
+                this.inputState.setState("empty");
+                this.screenState.setState("info");
             } else {
-                $('div.container > div.info').addClass('hidden');
-                this.lastSettings.info = "hidden";
-            }
+                this.inputState.setState("empty");
+                if ($('div.container > div.info').hasClass('hidden')) {
+                    $('div.container > div.info').removeClass('hidden');
+                    this.lastSettings.info = "shown";
+                } else {
+                    $('div.container > div.info').addClass('hidden');
+                    this.lastSettings.info = "hidden";
+                }
 
-            this.eventBus.emit('updateinfo', this.lastSettings.info);
+                this.eventBus.emit('updateinfo', this.lastSettings.info);
+            }
         });
 
         $( '#leave-room' ).on( 'click', (event) => {
@@ -70,6 +77,43 @@ class Info {
 
         $( 'div.info div.title-wrapper' ).hide();
         $( 'div.info div.actions' ).hide();
+
+        $( 'div.info div.back' ).on( 'click', (event) => {
+            event.preventDefault();
+
+            this.inputState.setState("empty");
+            this.screenState.setState("chat");
+        });
+
+        // Set up dynamic mobile detection.
+        eventBus.on( 'resize', (newSize) => {
+            this.size = newSize;
+            this.updateSize();
+        });
+
+        this.screenState.registerStateChangeCallback(() => {
+            this.updateSize();
+        });
+
+        this.updateSize();
+    }
+
+    updateSize() {
+        if (this.size == "mobile") {
+            $( 'div.info div.back' ).show();
+            if (this.screenState.current == "info") {
+                $( 'div.container > div.info' ).removeClass('hidden').addClass('full');
+            } else {
+                $( 'div.container > div.info' ).addClass('hidden').addClass('full');
+            }
+        } else {
+            $( 'div.info div.back' ).hide();
+            if (this.lastSettings.info == "shown") {
+                $( 'div.container > div.info' ).removeClass('hidden').removeClass('full');
+            } else {
+                $( 'div.container > div.info' ).addClass('hidden').removeClass('full');
+            }
+        }
     }
 
     setRooms( rooms ) {
@@ -155,10 +199,12 @@ class Info {
         this.lastSettings = settings;
         this.lastSettingsLoaded = true;
 
-        if (this.lastSettings.info == "shown") {
-            $('div.container > div.info').removeClass('hidden');
-        } else {
-            $('div.container > div.info').addClass('hidden');
+        if (this.size != "mobile") {
+            if (this.lastSettings.info == "shown") {
+                $('div.container > div.info').removeClass('hidden').removeClass('full');
+            } else {
+                $('div.container > div.info').addClass('hidden').removeClass('full');
+            }
         }
     }
 

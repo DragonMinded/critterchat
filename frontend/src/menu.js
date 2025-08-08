@@ -4,10 +4,12 @@ import { EditProfile } from "./modals/editprofile.js";
 import { displayWarning } from "./modals/warningmodal.js";
 
 class Menu {
-    constructor( eventBus, inputState ) {
+    constructor( eventBus, screenState, inputState, initialSize ) {
         this.eventBus = eventBus;
+        this.screenState = screenState;
         this.inputState = inputState;
         this.editProfile = new EditProfile( eventBus, inputState );
+        this.size = initialSize;
 
         this.rooms = [];
         this.selected = "";
@@ -39,6 +41,39 @@ class Menu {
                 }
             );
         });
+
+        // Set up the mobile back button.
+        $( 'div.top-info div.back' ).on( 'click', (event) => {
+            event.preventDefault();
+
+            this.inputState.setState("empty");
+            this.screenState.setState("menu");
+        });
+
+        eventBus.on( 'resize', (newSize) => {
+            this.size = newSize;
+            this.updateSize();
+        });
+
+        this.screenState.registerStateChangeCallback(() => {
+            this.updateSize();
+        });
+
+        this.updateSize();
+    }
+
+    updateSize() {
+        if (this.size == "mobile") {
+            $( 'div.top-info div.back' ).show();
+            if (this.screenState.current == "menu") {
+                $( 'div.container > div.menu' ).removeClass('hidden').addClass('full');
+            } else {
+                $( 'div.container > div.menu' ).addClass('hidden').addClass('full');
+            }
+        } else {
+            $( 'div.top-info div.back' ).hide();
+            $( 'div.container > div.menu' ).removeClass('hidden').removeClass('full');
+        }
     }
 
     setRooms( rooms ) {
@@ -145,6 +180,10 @@ class Menu {
             }
         }
 
+        if (found) {
+            this.screenState.setState("chat");
+        }
+
         if (found && roomid != this.selected) {
             this.selected = roomid;
             this.updateSelected();
@@ -162,6 +201,8 @@ class Menu {
             conversations.find('div.item#' + roomid).remove();
 
             this.rooms = this.rooms.filter((room) => room.id != roomid);
+
+            this.screenState.setState("menu");
         }
 
         this.updateSelected();

@@ -2,7 +2,7 @@ import $ from "jquery";
 import { escapeHtml } from "./utils.js";
 
 class Search {
-    constructor( eventBus, inputState ) {
+    constructor( eventBus, screenState, inputState ) {
         this.eventBus = eventBus;
         this.inputState = inputState;
         this.lastSettings = {};

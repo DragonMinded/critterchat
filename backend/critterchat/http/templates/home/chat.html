@@ -31,6 +31,9 @@
     </div>
     <div class="chat">
         <div class="top-info">
+            <div class="back">
+                <img alt="back" src="{{ url_for('static', filename='left-arrow-circle.svg') }}" />
+            </div>
             <div class="icon">
                 <img />
             </div>
@@ -60,9 +63,14 @@
         </form>
     </div>
     <div class="info hidden">
-        <div class="title-wrapper">
-            <span class="title" id="room-title"></span>
-            <span class="desc">with the following members:</span>
+        <div class="header">
+            <div class="back">
+                <img alt="back" src="{{ url_for('static', filename='left-arrow-circle.svg') }}" />
+            </div>
+            <div class="title-wrapper">
+                <span class="title" id="room-title"></span>
+                <span class="desc">with the following members:</span>
+            </div>
         </div>
         <div class="occupants">
         </div>
