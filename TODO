@@ -11,6 +11,7 @@ Enable/disable room autojoin through manage.py.
 TODO For Post Test Build
 ========================
 Close-by message coalescing into one group of lines.
+URL for public chats to link directly as an invite.
 Start on profile view to look at a person's profile.
 Display user name next to nickname in search as well as on profiles.
 Chat info name and topic should support emoji autocomplete and emoji search.
