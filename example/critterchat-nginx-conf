@@ -48,7 +48,7 @@ server {
     # attachment type in your config.yaml.
     location /attachments {
         # This should match the directory you used in your config.yaml for the directory setting. 
-        alias /test/web/attachments;
+        alias /path/to/your/attachments;
         autoindex off;
         add_header Cache-Control "public, max-age=604800, no-transform";
     }
