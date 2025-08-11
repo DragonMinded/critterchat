@@ -50,6 +50,7 @@ server {
         # This should match the directory you used in your config.yaml for the directory setting. 
         alias /test/web/attachments;
         autoindex off;
+        add_header Cache-Control "public, max-age=604800, no-transform";
     }
 
     location /static {
@@ -57,5 +58,6 @@ server {
         # need to edit this to point at the venv root, and ensure that the version of python also matches.
         alias /path/to/your/python/venv/lib/python3.12/site-packages/critterchat/http/static;
         autoindex off;
+        add_header Cache-Control "public, max-age=604800, no-transform";
     }
 }
