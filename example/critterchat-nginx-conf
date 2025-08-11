@@ -1,0 +1,61 @@
+# Configuration for non-SSL connections, all it does is listen on your domain and immediately redirect
+# the request to the SSL version of the site.
+server {
+    # Change this to the domain or subdomain you are hosting this on.
+    server_name your.cool.domain;
+    listen 80;
+    server_tokens off;
+    
+    # Change the domain portion of this to the domain or subdomain you are hosting this on.
+    return 301 https://your.cool.domain$request_uri;
+}
+
+# SSL version of the site, assuming that you are using Let's Encrypt for your certificates.
+server {
+    # Change this to the domain or subdomain you are hosting this on.
+    server_name your.cool.domain;
+    listen 443 ssl;
+    server_tokens off;
+
+    # If you are not using Let's Encrypt, you should point these at your certs that you've obtained.
+    ssl_certificate /etc/letsencrypt/live/your.cool.domain/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/your.cool.domain/privkey.pem;
+
+    location / {
+        include proxy_params;
+
+        # This port should match the port you gave to the "LISTEN_PORT" section in your systemd service.
+        proxy_pass http://127.0.0.1:12345/;
+    }
+
+    location /socket.io {
+        include proxy_params;
+        proxy_http_version 1.1;
+        proxy_buffering off;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "Upgrade";
+        include uwsgi_params;
+
+        # This port should match the port you gave to the "LISTEN_PORT" section in your systemd service.
+        proxy_pass http://127.0.0.1:12345/socket.io;
+
+        # If you are not using Let's Encrypt, you should point these at your certs that you've obtained.
+    	proxy_ssl_certificate /etc/letsencrypt/live/your.cool.domain/fullchain.pem;
+    	proxy_ssl_certificate_key /etc/letsencrypt/live/your.cool.domain/privkey.pem;
+    }
+
+    # This section is only necessary if you are hosting attachments on the same host using the "local"
+    # attachment type in your config.yaml.
+    location /attachments {
+        # This should match the directory you used in your config.yaml for the directory setting. 
+        alias /test/web/attachments;
+        autoindex off;
+    }
+
+    location /static {
+        # The static assets are installed when you install critterchat into your venv. However, you still
+        # need to edit this to point at the venv root, and ensure that the version of python also matches.
+        alias /path/to/your/python/venv/lib/python3.12/site-packages/critterchat/http/static;
+        autoindex off;
+    }
+}

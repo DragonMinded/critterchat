@@ -1,0 +1,27 @@
+[Unit]
+Description=CritterChat Service
+Wants=network-online.target After=network.target network-online.target
+
+[Service]
+Restart=always
+Type=simple
+
+# The user you run this under. Should probably be a new user on your system for security.
+User=critterchat
+# The group you run this under. Should probably match the above, but could also be www-data.
+Group=critterchat
+
+# The venv that you've set up and installed critterchat into.
+Environment=VENV_LOCATION=/path/to/your/python/venv
+
+# The location of your production config.yaml (recommended to make a copy out of the repo).
+Environment=CONFIG_LOCATION=/path/to/your/config.yaml
+
+# The port that this service will listen on. Doesn't matter as long as it's unique to any other
+# service.
+Environment=LISTEN_PORT=12345
+
+ExecStart=bash -c "${VENV_LOCATION}/bin/python3 -m critterchat --config ${CONFIG_LOCATION} --port ${LISTEN_PORT} --nginx-proxy 1"
+
+[Install]
+WantedBy=multi-user.target

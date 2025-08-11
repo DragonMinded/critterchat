@@ -1,7 +1,5 @@
 TODO For Installable
 ====================
-nginx example configuration.
-Run example configuration file.
 Handle defavi and defroom files in attachments directory somehow.
 When creating a user through manage.py, set them up to be activated.
 Activate/deactivate through manage.py.
@@ -24,6 +22,8 @@ Support being able to delete a chat icon or your own icon.
 README for contributing/setting up/etc.
 Protocol documentation.
 Favicon support.
+Delayed loading of all emoji/emotes until after search/picker selected.
+Loading indicator on channel icon, loading indicator in main area.
 
 Long-Term TODOs
 ===============
@@ -44,6 +44,7 @@ Read receipts.
 Now typing indicators.
 Link auto-sanitization.
 Message pinning.
+Multi-account support.
 
 Begin to Think About
 ====================
