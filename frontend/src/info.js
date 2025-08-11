@@ -249,6 +249,7 @@ class Info {
                     $( 'div.info div.actions' ).show();
                     $( 'div.chat div.icon' ).removeClass('room').removeClass('avatar').addClass(iconType);
                     $( 'div.chat div.icon img' ).attr('src', room.icon);
+                    $( 'div.chat div.icon' ).removeClass('hidden');
                     $( 'div.chat div.title' ).html(escapeHtml(room.name));
                     $( 'div.chat div.topic' ).html(escapeHtml(room.topic));
                     $( '#leave-room' ).attr('roomid', roomid);

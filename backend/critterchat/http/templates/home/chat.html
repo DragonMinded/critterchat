@@ -34,7 +34,7 @@
             <div class="back">
                 <img alt="back" src="{{ url_for('static', filename='left-arrow-circle.svg') }}" />
             </div>
-            <div class="icon">
+            <div class="icon hidden">
                 <img />
             </div>
             <div class="info-wrapper">
@@ -46,6 +46,11 @@
         </div>
         <div class="conversation-wrapper">
             <div class="conversation">
+                <div class="loading-wrapper">
+                    <div class="loading">
+                        Now loading your chat...
+                    </div>
+                </div>
             </div>
         </div>
         <form class="actions" action="" method="POST" id="message-actions">
