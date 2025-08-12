@@ -18,6 +18,7 @@ from ..data import (
     NewOccupantID,
     NewActionID,
     NewRoomID,
+    NewUserID,
     ActionID,
     RoomID,
     UserID,
@@ -233,6 +234,12 @@ class MessageService:
         rooms = self.__data.room.get_autojoin_rooms()
         for room in rooms:
             self.__data.room.join_room(room.id, userid)
+
+    def get_public_rooms(self) -> List[Room]:
+        rooms = self.__data.room.get_public_rooms()
+        for room in rooms:
+            self.__infer_room_info(NewUserID, room)
+        return rooms
 
     def get_matching_rooms(self, userid: UserID, *, name: Optional[str] = None) -> List[RoomSearchResult]:
         # First get the list of rooms that we can see based on our user ID (joined rooms).

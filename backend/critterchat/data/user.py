@@ -413,6 +413,30 @@ class UserData(BaseData):
         """
         self.execute(sql, {"userid": user.id, "perms": permissions})
 
+    def get_activated_users(self, name: Optional[str] = None) -> List[User]:
+        """
+        Return a list of all activated users on the network.
+        """
+
+        sql = """
+            SELECT user.id AS id, user.username AS uname, user.permissions AS permissions, profile.nickname AS pname, profile.icon AS icon
+            FROM user
+            LEFT JOIN profile ON profile.user_id = user.id
+        """
+
+        if name is not None:
+            sql += " OR (user.username COLLATE utf8mb4_general_ci LIKE :name OR profile.nickname COLLATE utf8mb4_general_ci LIKE :name)"
+
+        cursor = self.execute(sql, {"name": f"%{name}%"})
+        users = [self.__to_user(u) for u in cursor.mappings()]
+
+        # Post-filter by name if requested, so we don't find ourselves all the time.
+        if name:
+            users = [u for u in users if (name in u.username) or (name in u.nickname)]
+
+        # Post-filter by activated status.
+        return [u for u in users if UserPermission.ACTIVATED in u.permissions]
+
     def get_visible_users(self, userid: UserID, name: Optional[str] = None) -> List[User]:
         """
         Given a user searching, return a list of visible users (users that haven't blocked the

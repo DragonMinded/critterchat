@@ -178,6 +178,35 @@ class RoomData(BaseData):
             for result in cursor.mappings()
         ]
 
+    def get_public_rooms(self, name: Optional[str] = None) -> List[Room]:
+        """
+        Look up all public rooms, potentially matching any that match the name.
+
+        Parameters:
+            name - The name of the room we want to match.
+
+        Returns:
+            list of Room objects representing the public rooms on the network
+        """
+        sql = """
+            SELECT id, name, topic, icon, public, last_action FROM room WHERE public = TRUE
+        """
+        if name is not None:
+            sql += " AND (name IS NULL OR name = '' OR name COLLATE utf8mb4_general_ci LIKE :name)"
+
+        cursor = self.execute(sql, {"name": f"%{name}%"})
+        return [
+            Room(
+                roomid=RoomID(result['id']),
+                name=result['name'],
+                topic=result['topic'],
+                public=bool(result['public']),
+                last_action=result['last_action'],
+                iconid=AttachmentID(result['icon']) if result['icon'] else None,
+            )
+            for result in cursor.mappings()
+        ]
+
     def get_visible_rooms(self, userid: UserID, name: Optional[str] = None) -> List[Room]:
         """
         Given a user ID, look up the rooms that user can see that match the search criteria.
@@ -237,6 +266,22 @@ class RoomData(BaseData):
             for result in cursor.mappings()
         ]
 
+    def set_room_autojoin(self, roomid: RoomID, autojoin: bool) -> None:
+        """
+        Given a room, set it's autojoin to true or false.
+
+        Params:
+            roomid - The ID of the room we're setting.
+            autojoin - A boolean for whether the room should be autojoin or not.
+        """
+        if roomid is NewRoomID:
+            return
+
+        sql = """
+            UPDATE room SET `autojoin` = :autojoin WHERE `id` = :roomid
+        """
+        self.execute(sql, {'roomid': roomid, 'autojoin': autojoin})
+
     def get_room(self, roomid: RoomID) -> Optional[Room]:
         """
         Given a room ID, get that room.
@@ -279,7 +324,7 @@ class RoomData(BaseData):
         sql = """
             INSERT INTO room (`name`, `topic`, `public`, `last_action`, `icon`) VALUES (:name, :topic, :public, :timestamp, :icon)
         """
-        cursor = self.execute(sql, {"name": room.name, "topic": None, "public": room.public, "timestamp": timestamp, "icon": room.iconid})
+        cursor = self.execute(sql, {"name": room.name, "topic": room.topic, "public": room.public, "timestamp": timestamp, "icon": room.iconid})
         if cursor.rowcount != 1:
             return None
         newroom = self.get_room(RoomID(cursor.lastrowid))

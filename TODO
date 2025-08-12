@@ -1,10 +1,10 @@
 TODO For Installable
 ====================
 Handle defavi and defroom files in attachments directory somehow.
-Create new public room through manage.py.
 Enable/disable room autojoin through manage.py.
 Linkify topics as well as messages.
 Scroll back for loading old messages.
+README for contributing/setting up/etc.
 
 TODO For Post Test Build
 ========================
@@ -18,7 +18,6 @@ Support setting your custom color on the profile page.
 Support creating an account flow with ability to disable instance-side and setting for auto-activate or moderator activate.
 Support editing your nickname per-chat.
 Support being able to delete a chat icon or your own icon.
-README for contributing/setting up/etc.
 Protocol documentation.
 Favicon support.
 Delayed loading of all emoji/emotes until after search/picker selected.

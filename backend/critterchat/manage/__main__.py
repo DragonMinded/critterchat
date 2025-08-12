@@ -4,9 +4,9 @@ import os
 import sys
 from typing import Optional
 
-from critterchat.data import Data, DBCreateException, UserPermission
+from critterchat.data import Data, DBCreateException, UserPermission, Room, NewRoomID, NewUserID
 from critterchat.config import Config, load_config
-from critterchat.service import AttachmentService, EmoteService, EmoteServiceException, UserService
+from critterchat.service import AttachmentService, EmoteService, EmoteServiceException, MessageService, UserService
 
 
 class CLIException(Exception):
@@ -165,6 +165,8 @@ def list_emotes(config: Config) -> None:
     data = Data(config)
     emoteservice = EmoteService(config, data)
     emotes = emoteservice.get_all_emotes()
+    data.close()
+
     names = sorted([e for e in emotes])
     for name in names:
         print(f"{name}")
@@ -214,6 +216,8 @@ def add_emote(config: Config, alias: Optional[str], filename_or_directory: str) 
         except EmoteServiceException as e:
             raise CommandException(str(e))
 
+    data.close()
+
 
 def drop_emote(config: Config, alias: str) -> None:
     """
@@ -227,6 +231,53 @@ def drop_emote(config: Config, alias: str) -> None:
         print(f"Emote with alias '{alias}' removed from system")
     except EmoteServiceException as e:
         raise CommandException(str(e))
+
+    data.close()
+
+
+def list_public_rooms(config: Config) -> None:
+    """
+    List all public rooms on the network.
+    """
+
+    data = Data(config)
+    messageservice = MessageService(config, data)
+    rooms = messageservice.get_public_rooms()
+    autojoin_ids = {room.id for room in messageservice.get_autojoin_rooms(NewUserID)}
+    data.close()
+
+    for room in rooms:
+        print(f"ID: {room.id}")
+        print(f"Name: {room.name}")
+        print(f"Topic: {room.topic}")
+        print(f"Autojoin: {'on' if room.id in autojoin_ids else 'off'}")
+        print("")
+
+
+def create_public_room(config: Config, name: Optional[str], topic: Optional[str], autojoin: str) -> None:
+    """
+    Create a new public room on the network, optionally setting it as auto-join when
+    accounts are created and joining existing users to the room.
+    """
+
+    data = Data(config)
+    messageservice = MessageService(config, data)
+    room = Room(NewRoomID, name or "", topic or "", True, None)
+    data.room.create_room(room)
+
+    if autojoin == "on":
+        data.room.set_room_autojoin(room.id, True)
+
+        for user in data.user.get_activated_users():
+            messageservice.join_room(room.id, user.id)
+
+        print(f"Room created with ID {room.id} and all activated users joined to the room.")
+    else:
+        data.room.set_room_autojoin(room.id, False)
+
+        print(f"Room created with ID {room.id}.")
+
+    data.close()
 
 
 def main() -> None:
@@ -422,6 +473,50 @@ def main() -> None:
         help="alias of the emote you're dropping, containing only alphanumberic characters, dashes and underscores",
     )
 
+    # Another subcommand here.
+    room_parser = commands.add_parser(
+        "room",
+        help="modify public rooms on the network",
+        description="Modify public rooms on the network.",
+    )
+    room_commands = room_parser.add_subparsers(dest="room")
+
+    # No params for this one
+    room_commands.add_parser(
+        "list",
+        help="list all public rooms",
+        description="List all public rooms.",
+    )
+
+    # A few params for this one
+    createroom_parser = room_commands.add_parser(
+        "create",
+        help="create a public room",
+        description="Create a public room.",
+    )
+    createroom_parser.add_argument(
+        "-n",
+        "--name",
+        type=str,
+        default=None,
+        help="name of the room that you are creating",
+    )
+    createroom_parser.add_argument(
+        "-t",
+        "--topic",
+        type=str,
+        default=None,
+        help="topic of the room that you are creating",
+    )
+    createroom_parser.add_argument(
+        "-a",
+        "--autojoin",
+        type=str,
+        choices=["on", "off"],
+        default="off",
+        help="whether the room is set to auto-join on account creation or not",
+    )
+
     args = parser.parse_args()
 
     config = Config()
@@ -469,6 +564,16 @@ def main() -> None:
                 drop_emote(config, args.alias)
             else:
                 raise CLIException(f"Unknown emote operation '{args.emote}'")
+
+        elif args.operation == "room":
+            if args.room is None:
+                raise CLIException("Unspecified room operation1")
+            elif args.room == "create":
+                create_public_room(config, args.name, args.topic, args.autojoin)
+            elif args.room == "list":
+                list_public_rooms(config)
+            else:
+                raise CLIException(f"Unknown room operation '{args.room}'")
 
         else:
             raise CLIException(f"Unknown operation '{args.operation}'")
