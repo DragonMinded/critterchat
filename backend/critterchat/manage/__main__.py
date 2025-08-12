@@ -62,6 +62,23 @@ def generate_migration(config: Config, message: str, allow_empty: bool) -> None:
     data.close()
 
 
+def list_users(config: Config) -> None:
+    """
+    List all users on the network.
+    """
+
+    data = Data(config)
+    users = data.user.get_users()
+    data.close()
+
+    for user in users:
+        print(f"ID: {user.id}")
+        print(f"Username: {user.username}")
+        print(f"Nickname: {user.nickname}")
+        print(f"Permissions: {', '.join([u.name for u in user.permissions])}")
+        print("")
+
+
 def create_user(config: Config, username: str, password: Optional[str]) -> None:
     """
     Create a new user that logs in with username, and uses password to login. If the password is
@@ -268,7 +285,10 @@ def create_public_room(config: Config, name: Optional[str], topic: Optional[str]
     if autojoin == "on":
         data.room.set_room_autojoin(room.id, True)
 
-        for user in data.user.get_activated_users():
+        for user in data.user.get_users():
+            if UserPermission.ACTIVATED not in user.permissions:
+                continue
+
             messageservice.join_room(room.id, user.id)
 
         print(f"Room created with ID {room.id} and all activated users joined to the room.")
@@ -353,6 +373,13 @@ def main() -> None:
         description="Modify backing DB for this network.",
     )
     user_commands = user_parser.add_subparsers(dest="user")
+
+    # No params for this one
+    user_commands.add_parser(
+        "list",
+        help="list all users on this network",
+        description="List all users on this network.",
+    )
 
     # Only a few params for this one
     create_parser = user_commands.add_parser(
@@ -542,6 +569,8 @@ def main() -> None:
         elif args.operation == "user":
             if args.user is None:
                 raise CLIException("Unspecified user operation1")
+            elif args.user == "list":
+                list_users(config)
             elif args.user == "create":
                 create_user(config, args.username, args.password)
             elif args.user == "change_password":
@@ -568,10 +597,10 @@ def main() -> None:
         elif args.operation == "room":
             if args.room is None:
                 raise CLIException("Unspecified room operation1")
-            elif args.room == "create":
-                create_public_room(config, args.name, args.topic, args.autojoin)
             elif args.room == "list":
                 list_public_rooms(config)
+            elif args.room == "create":
+                create_public_room(config, args.name, args.topic, args.autojoin)
             else:
                 raise CLIException(f"Unknown room operation '{args.room}'")
 

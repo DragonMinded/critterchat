@@ -413,9 +413,9 @@ class UserData(BaseData):
         """
         self.execute(sql, {"userid": user.id, "perms": permissions})
 
-    def get_activated_users(self, name: Optional[str] = None) -> List[User]:
+    def get_users(self, name: Optional[str] = None) -> List[User]:
         """
-        Return a list of all activated users on the network.
+        Return a list of all users on the network.
         """
 
         sql = """
@@ -434,8 +434,7 @@ class UserData(BaseData):
         if name:
             users = [u for u in users if (name in u.username) or (name in u.nickname)]
 
-        # Post-filter by activated status.
-        return [u for u in users if UserPermission.ACTIVATED in u.permissions]
+        return users
 
     def get_visible_users(self, userid: UserID, name: Optional[str] = None) -> List[User]:
         """
