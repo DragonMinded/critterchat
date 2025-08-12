@@ -4,9 +4,9 @@ import os
 import sys
 from typing import Optional
 
-from critterchat.data import Data, DBCreateException
+from critterchat.data import Data, DBCreateException, UserPermission
 from critterchat.config import Config, load_config
-from critterchat.service import AttachmentService, EmoteService, EmoteServiceException
+from critterchat.service import AttachmentService, EmoteService, EmoteServiceException, UserService
 
 
 class CLIException(Exception):
@@ -82,12 +82,15 @@ def create_user(config: Config, username: str, password: Optional[str]) -> None:
     if existing_user:
         raise CommandException("User already exists in the database!")
 
-    new_id = data.user.create_account(username, password)
-    if not new_id:
+    new_user = data.user.create_account(username, password)
+    if not new_user:
         raise CommandException("User could not be created!")
-    print(f"User created with user ID {new_id}")
 
+    userservice = UserService(config, data)
+    userservice.add_permission(new_user.id, UserPermission.ACTIVATED)
     data.close()
+
+    print(f"User created with user ID {new_user.id}")
 
 
 def change_user_password(config: Config, username: str, password: Optional[str]) -> None:
