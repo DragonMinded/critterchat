@@ -1,7 +1,11 @@
 import $ from "jquery";
+import linkifyHtml from "linkify-html";
+
 import { escapeHtml } from "./utils.js";
 import { ChatDetails } from "./modals/chatdetails.js";
 import { displayWarning } from "./modals/warningmodal.js";
+
+const linkifyOptions = { defaultProtocol: "http", target: "_blank", validate: { email: () => false } };
 
 class Info {
     constructor( eventBus, screenState, inputState, initialSize ) {
@@ -251,7 +255,7 @@ class Info {
                     $( 'div.chat div.icon img' ).attr('src', room.icon);
                     $( 'div.chat div.icon' ).removeClass('hidden');
                     $( 'div.chat div.title' ).html(escapeHtml(room.name));
-                    $( 'div.chat div.topic' ).html(escapeHtml(room.topic));
+                    $( 'div.chat div.topic' ).html(linkifyHtml(escapeHtml(room.topic), linkifyOptions));
                     $( '#leave-room' ).attr('roomid', roomid);
                     $( '#edit-info' ).attr('roomid', roomid);
 
@@ -295,7 +299,7 @@ class Info {
                     }
 
                     $( 'div.chat div.title' ).html(escapeHtml(room.name));
-                    $( 'div.chat div.topic' ).html(escapeHtml(room.topic));
+                    $( 'div.chat div.topic' ).html(linkifyHtml(escapeHtml(room.topic), linkifyOptions));
                     this.chatdetails.setRoom(room);
                 }
             });

@@ -7,6 +7,9 @@ import { modal } from "jquery-modal"; // eslint-disable-line no-unused-vars
 import { manager } from "./manager.js";
 import { hook } from "./config/extensions.js";
 
+// Importing this enables linkify.
+import * as linkify from "linkifyjs"; // eslint-disable-line no-unused-vars
+
 // Hook jQuery extensions immediately.
 hook();
 

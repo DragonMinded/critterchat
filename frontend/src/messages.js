@@ -1,7 +1,4 @@
 import $ from "jquery";
-
-// Importing this enables linkify-html below.
-import * as linkify from "linkifyjs"; // eslint-disable-line no-unused-vars
 import linkifyHtml from "linkify-html";
 
 import { escapeHtml, formatDateTime, scrollTop, scrollTopMax } from "./utils.js";
