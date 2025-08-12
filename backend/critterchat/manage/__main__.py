@@ -114,9 +114,47 @@ def change_user_password(config: Config, username: str, password: Optional[str])
         raise CommandException("User does not exist in the database!")
 
     data.user.update_password(existing_user.id, password)
+    data.close()
+
     print(f"User with ID {existing_user.id} updated with new password")
 
+
+def activate_user(config: Config, username: str) -> None:
+    """
+    Given an existing user that logs in with username, update their account to be in the active
+    state, allowing them to login and use the account normally.
+    """
+
+    data = Data(config)
+
+    existing_user = data.user.from_username(username)
+    if not existing_user:
+        raise CommandException("User does not exist in the database!")
+
+    userservice = UserService(config, data)
+    userservice.add_permission(existing_user.id, UserPermission.ACTIVATED)
     data.close()
+
+    print(f"User with ID {existing_user.id} activated")
+
+
+def deactivate_user(config: Config, username: str) -> None:
+    """
+    Given an existing user that logs in with username, update their account to be in the
+    inactive state, kicking them out of any active sessions and disallowing login.
+    """
+
+    data = Data(config)
+
+    existing_user = data.user.from_username(username)
+    if not existing_user:
+        raise CommandException("User does not exist in the database!")
+
+    userservice = UserService(config, data)
+    userservice.remove_permission(existing_user.id, UserPermission.ACTIVATED)
+    data.close()
+
+    print(f"User with ID {existing_user.id} deactivated")
 
 
 def list_emotes(config: Config) -> None:
@@ -307,6 +345,34 @@ def main() -> None:
         help="password that the user uses to login with",
     )
 
+    # Only a few params for this one
+    activate_parser = user_commands.add_parser(
+        "activate",
+        help="activate a user, allowing them to log in",
+        description="Activate a user, allowing them to log in",
+    )
+    activate_parser.add_argument(
+        "-u",
+        "--username",
+        required=True,
+        type=str,
+        help="username that the user uses to login with",
+    )
+
+    # Only a few params for this one
+    deactivate_parser = user_commands.add_parser(
+        "deactivate",
+        help="deactivate a user, disallowing them from logging in",
+        description="Deactivate a user, disallowing them from logging in",
+    )
+    deactivate_parser.add_argument(
+        "-u",
+        "--username",
+        required=True,
+        type=str,
+        help="username that the user uses to login with",
+    )
+
     # Another subcommand here.
     emote_parser = commands.add_parser(
         "emote",
@@ -385,6 +451,10 @@ def main() -> None:
                 create_user(config, args.username, args.password)
             elif args.user == "change_password":
                 change_user_password(config, args.username, args.password)
+            elif args.user == "activate":
+                activate_user(config, args.username)
+            elif args.user == "deactivate":
+                deactivate_user(config, args.username)
             else:
                 raise CLIException(f"Unknown user operation '{args.user}'")
 
