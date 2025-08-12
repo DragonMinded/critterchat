@@ -4,7 +4,7 @@ import os
 import sys
 from typing import Optional
 
-from critterchat.data import Data, DBCreateException, UserPermission, Room, NewRoomID, NewUserID
+from critterchat.data import Data, DBCreateException, UserPermission, User, Room, NewRoomID, NewUserID
 from critterchat.config import Config, load_config
 from critterchat.service import AttachmentService, EmoteService, EmoteServiceException, MessageService, UserService
 
@@ -72,7 +72,7 @@ def list_users(config: Config) -> None:
     data.close()
 
     for user in users:
-        print(f"ID: {user.id}")
+        print(f"ID: {User.from_id(user.id)}")
         print(f"Username: {user.username}")
         print(f"Nickname: {user.nickname}")
         print(f"Permissions: {', '.join([u.name for u in user.permissions])}")
@@ -107,7 +107,7 @@ def create_user(config: Config, username: str, password: Optional[str]) -> None:
     userservice.add_permission(new_user.id, UserPermission.ACTIVATED)
     data.close()
 
-    print(f"User created with user ID {new_user.id}")
+    print(f"User created with user ID {User.from_id(new_user.id)}")
 
 
 def change_user_password(config: Config, username: str, password: Optional[str]) -> None:
@@ -133,7 +133,7 @@ def change_user_password(config: Config, username: str, password: Optional[str])
     data.user.update_password(existing_user.id, password)
     data.close()
 
-    print(f"User with ID {existing_user.id} updated with new password")
+    print(f"User with ID {User.from_id(existing_user.id)} updated with new password")
 
 
 def activate_user(config: Config, username: str) -> None:
@@ -152,7 +152,7 @@ def activate_user(config: Config, username: str) -> None:
     userservice.add_permission(existing_user.id, UserPermission.ACTIVATED)
     data.close()
 
-    print(f"User with ID {existing_user.id} activated")
+    print(f"User with ID {User.from_id(existing_user.id)} activated")
 
 
 def deactivate_user(config: Config, username: str) -> None:
@@ -171,7 +171,7 @@ def deactivate_user(config: Config, username: str) -> None:
     userservice.remove_permission(existing_user.id, UserPermission.ACTIVATED)
     data.close()
 
-    print(f"User with ID {existing_user.id} deactivated")
+    print(f"User with ID {User.from_id(existing_user.id)} deactivated")
 
 
 def list_emotes(config: Config) -> None:
@@ -264,7 +264,7 @@ def list_public_rooms(config: Config) -> None:
     data.close()
 
     for room in rooms:
-        print(f"ID: {room.id}")
+        print(f"ID: {Room.from_id(room.id)}")
         print(f"Name: {room.name}")
         print(f"Topic: {room.topic}")
         print(f"Autojoin: {'on' if room.id in autojoin_ids else 'off'}")
@@ -291,11 +291,34 @@ def create_public_room(config: Config, name: Optional[str], topic: Optional[str]
 
             messageservice.join_room(room.id, user.id)
 
-        print(f"Room created with ID {room.id} and all activated users joined to the room.")
+        print(f"Room created with ID {Room.from_id(room.id)} and all activated users joined to the room.")
     else:
         data.room.set_room_autojoin(room.id, False)
 
-        print(f"Room created with ID {room.id}.")
+        print(f"Room created with ID {Room.from_id(room.id)}.")
+
+    data.close()
+
+
+def modify_public_room_autojoin(config: Config, roomid: str, autojoin: str) -> None:
+    """
+    Modify an existing room by ID, setting it's autojoin property. Note that when toggling this,
+    it does not join existing users to the room.
+    """
+
+    data = Data(config)
+    actual_id = Room.to_id(roomid)
+    if actual_id is None:
+        raise CommandException("Room ID is not valid!")
+
+    if autojoin == "on":
+        data.room.set_room_autojoin(actual_id, True)
+
+        print(f"Room with ID {Room.from_id(actual_id)} set to auto join new users.")
+    else:
+        data.room.set_room_autojoin(actual_id, False)
+
+        print(f"Room with ID {Room.from_id(actual_id)} set to not auto join new users.")
 
     data.close()
 
@@ -544,6 +567,28 @@ def main() -> None:
         help="whether the room is set to auto-join on account creation or not",
     )
 
+    # A few params for this one
+    autojoinroom_parser = room_commands.add_parser(
+        "autojoin",
+        help="modify a public room's autojoin property",
+        description="Modify a public room's autojoin property.",
+    )
+    autojoinroom_parser.add_argument(
+        "-i",
+        "--id",
+        type=str,
+        required=True,
+        help="ID of the room that you are modifying the autojoin property of",
+    )
+    autojoinroom_parser.add_argument(
+        "-a",
+        "--autojoin",
+        type=str,
+        choices=["on", "off"],
+        required=True,
+        help="whether the room is set to auto-join on account creation or not",
+    )
+
     args = parser.parse_args()
 
     config = Config()
@@ -568,7 +613,7 @@ def main() -> None:
 
         elif args.operation == "user":
             if args.user is None:
-                raise CLIException("Unspecified user operation1")
+                raise CLIException("Unspecified user operation!")
             elif args.user == "list":
                 list_users(config)
             elif args.user == "create":
@@ -584,7 +629,7 @@ def main() -> None:
 
         elif args.operation == "emote":
             if args.emote is None:
-                raise CLIException("Unspecified emote operation1")
+                raise CLIException("Unspecified emote operation!")
             elif args.emote == "list":
                 list_emotes(config)
             elif args.emote == "add":
@@ -596,11 +641,13 @@ def main() -> None:
 
         elif args.operation == "room":
             if args.room is None:
-                raise CLIException("Unspecified room operation1")
+                raise CLIException("Unspecified room operation!")
             elif args.room == "list":
                 list_public_rooms(config)
             elif args.room == "create":
                 create_public_room(config, args.name, args.topic, args.autojoin)
+            elif args.room == "autojoin":
+                modify_public_room_autojoin(config, args.id, args.autojoin)
             else:
                 raise CLIException(f"Unknown room operation '{args.room}'")
 
