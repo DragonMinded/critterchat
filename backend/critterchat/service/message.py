@@ -43,8 +43,8 @@ class MessageService:
         history = self.__data.room.get_room_history(roomid, limit=1)
         return self.__attachments.resolve_action_icon(history[0]) if history else None
 
-    def get_room_history(self, roomid: RoomID) -> List[Action]:
-        history = self.__data.room.get_room_history(roomid)
+    def get_room_history(self, roomid: RoomID, before: Optional[ActionID] = None) -> List[Action]:
+        history = self.__data.room.get_room_history(roomid, before=before)
         history = [
             self.__attachments.resolve_action_icon(e)
             for e in history

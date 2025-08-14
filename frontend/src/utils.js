@@ -68,4 +68,23 @@ const scrollTopMax = function( obj ) {
     return obj.scrollHeight - obj.clientHeight;
 }
 
-export { escapeHtml, formatTime, formatDate, formatDateTime, scrollTop, scrollTopMax };
+const isInViewport = function( el ) {
+    if (el) {
+        el = el[0];
+        if (el) {
+            const rect = el.getBoundingClientRect();
+            return (
+                rect.top >= 0 &&
+                rect.left >= 0 &&
+                rect.bottom <= (window.innerHeight || document.documentElement.clientHeight) &&
+                rect.right <= (window.innerWidth || document.documentElement.clientWidth)
+            );
+        } else {
+            return false;
+        }
+    } else {
+        return false;
+    }
+};
+
+export { escapeHtml, formatTime, formatDate, formatDateTime, scrollTop, scrollTopMax, isInViewport };

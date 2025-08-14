@@ -435,25 +435,36 @@ def chathistory(json: Dict[str, object]) -> None:
                 # Trying to grab chat for a room we're not in!
                 return
 
-            lastseen = userservice.get_last_seen_actions(userid)
-            actions = messageservice.get_room_history(roomid)
-            occupants = messageservice.get_room_occupants(roomid)
+            before = json.get('before', None)
+            if before:
+                beforeid = Action.to_id(str(before))
+                actions = messageservice.get_room_history(roomid, before=beforeid)
 
-            # Starting from scratch here since this messages clears the chat pane on the client.
-            fetchlimit = None
-            for action in actions:
-                fetchlimit = action.id if fetchlimit is None else max(fetchlimit, action.id)
-            info.fetchlimit[roomid] = fetchlimit or NewActionID
+                socketio.emit('chathistory', {
+                    'roomid': Room.from_id(roomid),
+                    'history': [action.to_dict() for action in actions],
+                }, room=request.sid)
 
-            # Also report the last seen message, so that a "new" indicator can be displayed.
-            lastaction = lastseen.get(roomid, None)
+            else:
+                lastseen = userservice.get_last_seen_actions(userid)
+                actions = messageservice.get_room_history(roomid)
+                occupants = messageservice.get_room_occupants(roomid)
 
-            socketio.emit('chathistory', {
-                'roomid': Room.from_id(roomid),
-                'history': [action.to_dict() for action in actions],
-                'occupants': [occupant.to_dict() for occupant in occupants],
-                'lastseen': Action.from_id(lastaction) if lastaction else None,
-            }, room=request.sid)
+                # Starting from scratch here since this messages clears the chat pane on the client.
+                fetchlimit = None
+                for action in actions:
+                    fetchlimit = action.id if fetchlimit is None else max(fetchlimit, action.id)
+                info.fetchlimit[roomid] = fetchlimit or NewActionID
+
+                # Also report the last seen message, so that a "new" indicator can be displayed.
+                lastaction = lastseen.get(roomid, None)
+
+                socketio.emit('chathistory', {
+                    'roomid': Room.from_id(roomid),
+                    'history': [action.to_dict() for action in actions],
+                    'occupants': [occupant.to_dict() for occupant in occupants],
+                    'lastseen': Action.from_id(lastaction) if lastaction else None,
+                }, room=request.sid)
 
 
 @socketio.on('message')  # type: ignore

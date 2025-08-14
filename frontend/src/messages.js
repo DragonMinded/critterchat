@@ -1,7 +1,7 @@
 import $ from "jquery";
 import linkifyHtml from "linkify-html";
 
-import { escapeHtml, formatDateTime, scrollTop, scrollTopMax } from "./utils.js";
+import { escapeHtml, formatDateTime, scrollTop, scrollTopMax, isInViewport } from "./utils.js";
 import { emojisearch } from "./components/emojisearch.js";
 import { autocomplete } from "./components/autocomplete.js";
 import { displayInfo } from "./modals/infomodal.js";
@@ -72,6 +72,12 @@ class Messages {
             this.autoscroll = scrollTop(box[0]) >= scrollTopMax(box[0]);
             if (this.autoscroll) {
                 $( 'div.new-messages-alert' ).css( 'display', 'none' );
+            }
+        });
+
+        $( 'div.chat > div.conversation-wrapper' ).scroll(() => {
+            if (isInViewport($( ".scrolled-top.untriggered" ))) {
+                this.loadOlderMessages();
             }
         });
 
@@ -198,7 +204,10 @@ class Messages {
         }
 
         this.drawActions( history );
-        this.addNewIndicator( lastSeen );
+
+        if ( lastSeen ) {
+            this.addNewIndicator( lastSeen );
+        }
     }
 
     addNewIndicator( lastSeen ) {
@@ -288,16 +297,36 @@ class Messages {
         }
     }
 
-    drawActions( history ) {
-        var lowestorder = -1;
+    loadOlderMessages() {
+        var lowestMessage = this.getEarliestMessage();
+        if (lowestMessage) {
+            $( '.scrolled-top' ).removeClass('untriggered');
+            this.eventBus.emit("loadhistory", {"roomid": this.roomid, "before": lowestMessage.id})
+            console.log('loading older...');
+        }
+    };
+
+    getEarliestMessage() {
+        var lowestMessage = undefined;
         for (const message of this.messages) {
-            if (lowestorder == -1) {
-                lowestorder = message.order;
+            if (lowestMessage == undefined) {
+                lowestMessage = message;
             } else {
-                lowestorder = Math.min(lowestorder, message.order);
+                if (message.order < lowestMessage.order) {
+                    lowestMessage = message;
+                }
             }
         }
+        return lowestMessage;
+    }
 
+    getEarliestMessageOrder() {
+        var lowestMessage = this.getEarliestMessage();
+        return lowestMessage ? lowestMessage.order : -1;
+    }
+
+    drawActions( history ) {
+        var lowestorder = this.getEarliestMessageOrder();
         var prepend = [];
         var append = [];
         if (lowestorder == -1) {
@@ -323,6 +352,10 @@ class Messages {
 
         prepend.forEach((message) => this.drawMessage(message, 'before'));
         append.forEach((message) => this.drawMessage(message, 'after'));
+
+        // Remove any scroll detectors and add a new one at the top.
+        $( '.scrolled-top' ).remove();
+        $('div.chat > div.conversation-wrapper > div.conversation').prepend('<div class="scrolled-top untriggered">...</div>');
 
         if (this.lastAction.id != oldactionid) {
             this.eventBus.emit("lastaction", {"roomid": this.roomid, "actionid": this.lastAction.id})
@@ -458,13 +491,13 @@ class Messages {
 
             if (loc == 'after') {
                 messages.append(html);
+                this.ensureScrolled();
             } else {
                 messages.prepend(html);
             }
         }
 
         this.updateLastAction(message);
-        this.ensureScrolled();
     }
 
     // Takes an alraedy HTML-stripped and emojified message and figures out if it contains only

@@ -272,6 +272,13 @@ div.chat > div.conversation-wrapper {
     overflow-y: auto;
 }
 
+div.conversation div.scrolled-top {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+    height: 15px;
+}
+
 div.conversation > div.loading-wrapper {
     display: flex;
     justify-content: center;

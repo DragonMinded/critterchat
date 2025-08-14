@@ -107,8 +107,10 @@ export function manager(socket) {
     });
 
     socket.on('chathistory', (msg) => {
-        messagesInst.setOccupants(msg.roomid, msg.occupants);
-        infoInst.setOccupants(msg.roomid, msg.occupants);
+        if (msg.occupants) {
+            messagesInst.setOccupants(msg.roomid, msg.occupants);
+            infoInst.setOccupants(msg.roomid, msg.occupants);
+        }
         messagesInst.updateHistory(msg.roomid, msg.history, msg.lastseen);
     });
 
@@ -134,6 +136,10 @@ export function manager(socket) {
         infoInst.setRoom(roomid);
         socket.emit('updatesettings', settings);
         socket.emit('chathistory', {roomid: roomid});
+    });
+
+    eventBus.on('loadhistory', (info) => {
+        socket.emit('chathistory', {roomid: info.roomid, before: info.before});
     });
 
     eventBus.on('updateinfo', (info) => {
