@@ -6,8 +6,9 @@ from werkzeug.middleware.proxy_fix import ProxyFix  # noqa
 
 from critterchat.http import app, config, socketio  # noqa
 
-from critterchat.config import load_config  # noqa
-
+from critterchat.config import Config, load_config  # noqa
+from critterchat.data import Data  # noqa
+from critterchat.service import AttachmentService  # noqa
 
 # Since the sockets and REST files use decorators for hooking, simply importing these hooks the desired functions
 import critterchat.http.welcome  # noqa
@@ -17,6 +18,14 @@ import critterchat.http.socket  # noqa
 
 # This is only hooked when local storage is enabled.
 from critterchat.http.attachments import attachments  # noqa
+
+
+def perform_initialization_work(config: Config) -> None:
+    data = Data(config)
+
+    # Ensure that the default avatars are copied to the attachment storage system.
+    attachmentservice = AttachmentService(config, data)
+    attachmentservice.create_default_attachments()
 
 
 if __name__ == '__main__':
@@ -33,6 +42,9 @@ if __name__ == '__main__':
     # Attach local storage handler if we're local attachment type.
     if config.attachments.system == "local":
         app.register_blueprint(attachments)
+
+    # Perform any one-time initialization that needs to happen.
+    perform_initialization_work(config)
 
     if args.nginx_proxy > 0:
         app.wsgi_app = ProxyFix(app.wsgi_app, x_host=args.nginx_proxy, x_proto=args.nginx_proxy, x_for=args.nginx_proxy)  # type: ignore

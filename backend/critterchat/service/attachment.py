@@ -31,6 +31,30 @@ class AttachmentService:
         except Exception:
             return "application/octet-stream"
 
+    def _get_local_attachment_path(self, aid: AttachmentID) -> str:
+        directory = self.__config.attachments.directory
+        if not directory:
+            raise AttachmentServiceException("Cannot find directory for local attachment storage!")
+
+        return os.path.join(directory, Attachment.from_id(aid))
+
+    def create_default_attachments(self) -> None:
+        for aid, default in [
+            (DefaultAvatarID, default_avatar),
+            (DefaultRoomID, default_room)
+        ]:
+            if self.__config.attachments.system == "local":
+                # Local storage, copy the system default into the attachment directory if needed.
+                path = self._get_local_attachment_path(aid)
+                if not os.path.isfile(path):
+                    with open(default, "rb") as bfp:
+                        data = bfp.read()
+                    with open(path, "wb") as bfp:
+                        bfp.write(data)
+            else:
+                # Unknown backend, throw.
+                raise AttachmentServiceException("Unrecognized backend system!")
+
     def create_attachment(self, content_type: str) -> Optional[AttachmentID]:
         return self.__data.attachment.insert_attachment(self.__config.attachments.system, content_type)
 
@@ -40,16 +64,20 @@ class AttachmentService:
 
     def get_attachment_data(self, attachmentid: AttachmentID) -> Optional[Tuple[str, bytes]]:
         # Check for default avatar.
-        if attachmentid == DefaultAvatarID:
-            with open(default_avatar, "rb") as bfp:
-                data = bfp.read()
-                enc = self.get_content_type(default_avatar)
-                return enc, data
-        if attachmentid == DefaultRoomID:
-            with open(default_room, "rb") as bfp:
-                data = bfp.read()
-                enc = self.get_content_type(default_room)
-                return enc, data
+        if attachmentid == DefaultAvatarID or attachmentid == DefaultRoomID:
+            if self.__config.attachments.system == "local":
+                # Local storage, look up the storage directory and return that data.
+                path = self._get_local_attachment_path(attachmentid)
+                try:
+                    with open(path, "rb") as bfp:
+                        data = bfp.read()
+                        enc = self.get_content_type(path)
+                        return enc, data
+                except FileNotFoundError:
+                    return None
+            else:
+                # Unknown backend, throw.
+                raise AttachmentServiceException("Unrecognized backend system!")
 
         attachment = self.__data.attachment.lookup_attachment(attachmentid)
         if not attachment:
@@ -57,11 +85,7 @@ class AttachmentService:
 
         if attachment.system == "local":
             # Local storage, look up the storage directory and return that data.
-            directory = self.__config.attachments.directory
-            if not directory:
-                raise AttachmentServiceException("Cannot find directory for local attachment storage!")
-
-            path = os.path.join(directory, Attachment.from_id(attachmentid))
+            path = self._get_local_attachment_path(attachmentid)
             try:
                 with open(path, "rb") as bfp:
                     data = bfp.read()
@@ -79,11 +103,7 @@ class AttachmentService:
 
         if attachment.system == "local":
             # Local storage, look up the storage directory and write the data.
-            directory = self.__config.attachments.directory
-            if not directory:
-                raise AttachmentServiceException("Cannot find directory for local attachment storage!")
-
-            path = os.path.join(directory, Attachment.from_id(attachmentid))
+            path = self._get_local_attachment_path(attachmentid)
             with open(path, "wb") as bfp:
                 bfp.write(data)
         else:
@@ -97,11 +117,7 @@ class AttachmentService:
 
         if attachment.system == "local":
             # Local storage, look up the storage directory and write the data.
-            directory = self.__config.attachments.directory
-            if not directory:
-                raise AttachmentServiceException("Cannot find directory for local attachment storage!")
-
-            path = os.path.join(directory, Attachment.from_id(attachmentid))
+            path = self._get_local_attachment_path(attachmentid)
             os.remove(path)
         else:
             # Unknown backend, throw.
