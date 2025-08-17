@@ -22,6 +22,7 @@ class Messages {
         this.autoscroll = true;
         this.lastAction = {};
         this.lastSettings = {};
+        this.scrollTo = {};
         this.roomsLoaded = false;
         this.lastSettingsLoaded = false;
         this.occupantsLoaded = false;
@@ -316,10 +317,33 @@ class Messages {
     loadOlderMessages() {
         var lowestMessage = this.getEarliestMessage();
         if (lowestMessage) {
+            const messages = $('div.chat > div.conversation-wrapper > div.conversation > div.item');
+            const oldest = messages.first();
+
+            if (messages && oldest) {
+                this.scrollTo = {id: oldest.attr('id'), position: oldest.position().top};
+            }
+
             $( '.scrolled-top' ).removeClass('untriggered');
+
             this.eventBus.emit("loadhistory", {"roomid": this.roomid, "before": lowestMessage.id})
         }
-    };
+    }
+
+    scrollToMessage() {
+        if (this.scrollTo.id) {
+            const item = $('div.chat > div.conversation-wrapper > div.conversation > div.item#' + this.scrollTo.id);
+            if (item && item.position()) {
+                const delta = item.position().top - this.scrollTo.position;
+                if (delta) {
+                    var box = $( 'div.chat > div.conversation-wrapper' );
+                    box[0].scrollTop = box[0].scrollTop + delta;
+                }
+            }
+
+            this.scrollTo = {};
+        }
+    }
 
     getEarliestMessage() {
         var lowestMessage = undefined;
@@ -369,6 +393,7 @@ class Messages {
         append.forEach((message) => this.drawMessage(message, 'after'));
 
         this.drawOlderMessagesLoader();
+        this.scrollToMessage();
 
         if (this.lastAction.id != oldactionid) {
             this.eventBus.emit("lastaction", {"roomid": this.roomid, "actionid": this.lastAction.id})
