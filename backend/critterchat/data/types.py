@@ -131,6 +131,7 @@ class Room:
         topic: str,
         public: bool,
         iconid: Optional[AttachmentID],
+        oldest_action: Optional[ActionID] = None,
         last_action: int = 0,
     ) -> None:
         self.id = roomid
@@ -139,6 +140,7 @@ class Room:
         self.customname = self.name
         self.topic = topic or ""
         self.public = public
+        self.oldest_action = oldest_action
         self.last_action = last_action
         self.iconid = iconid
         self.icon: Optional[str] = None
@@ -151,6 +153,7 @@ class Room:
             "customname": self.customname,
             "topic": self.topic,
             "public": self.public,
+            "oldest_action": Action.from_id(self.oldest_action) if self.oldest_action else None,
             "last_action": self.last_action,
             "icon": self.icon,
         }

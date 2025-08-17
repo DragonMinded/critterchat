@@ -126,7 +126,7 @@ class MessageService:
         if room_type == RoomType.ROOM:
             self.__attachments.resolve_room_icon(room)
 
-    def create_chat(self, userid: UserID, otherid: UserID) -> Room:
+    def create_room(self, userid: UserID, otherid: UserID) -> Room:
         # First, find all rooms that the first user is in or was ever in.
         rooms = self.__data.room.get_joined_rooms(userid, include_left=True)
 

@@ -76,6 +76,22 @@ action = Table(
 class RoomData(BaseData):
     MAX_HISTORY: Final[int] = 100
 
+    def _get_oldest_action(self, room_ids: List[RoomID]) -> Dict[RoomID, Optional[ActionID]]:
+        sql = """
+            SELECT room_id, MIN(id) AS action_id FROM action WHERE room_id IN :room_ids GROUP BY room_id
+        """
+        cursor = self.execute(sql, {'room_ids': room_ids})
+        retval: Dict[RoomID, Optional[ActionID]] = {rid: None for rid in room_ids}
+        for result in cursor.mappings():
+            retval[RoomID(result['room_id'])] = ActionID(result['action_id'])
+        return retval
+
+    def _hydrate_oldest_action(self, rooms: List[Room]) -> List[Room]:
+        oldest_actions = self._get_oldest_action([r.id for r in rooms])
+        for room in rooms:
+            room.oldest_action = oldest_actions[room.id]
+        return rooms
+
     def get_joined_rooms(self, userid: UserID, include_left: bool = False) -> List[Room]:
         """
         Given a user ID, look up the rooms that user is in.
@@ -100,7 +116,7 @@ class RoomData(BaseData):
             )
         """
         cursor = self.execute(sql, {"userid": userid})
-        return [
+        return self._hydrate_oldest_action([
             Room(
                 roomid=RoomID(result['id']),
                 name=result['name'],
@@ -110,7 +126,7 @@ class RoomData(BaseData):
                 iconid=AttachmentID(result['icon']) if result['icon'] else None,
             )
             for result in cursor.mappings()
-        ]
+        ])
 
     def get_joined_room_occupants(self, userid: UserID) -> Dict[RoomID, Occupant]:
         """
@@ -166,7 +182,7 @@ class RoomData(BaseData):
             sql += " AND (name IS NULL OR name = '' OR name COLLATE utf8mb4_general_ci LIKE :name)"
 
         cursor = self.execute(sql, {"userid": userid, "name": f"%{name}%"})
-        return [
+        return self._hydrate_oldest_action([
             Room(
                 roomid=RoomID(result['id']),
                 name=result['name'],
@@ -176,7 +192,7 @@ class RoomData(BaseData):
                 iconid=AttachmentID(result['icon']) if result['icon'] else None,
             )
             for result in cursor.mappings()
-        ]
+        ])
 
     def get_public_rooms(self, name: Optional[str] = None) -> List[Room]:
         """
@@ -195,7 +211,7 @@ class RoomData(BaseData):
             sql += " AND (name IS NULL OR name = '' OR name COLLATE utf8mb4_general_ci LIKE :name)"
 
         cursor = self.execute(sql, {"name": f"%{name}%"})
-        return [
+        return self._hydrate_oldest_action([
             Room(
                 roomid=RoomID(result['id']),
                 name=result['name'],
@@ -205,7 +221,7 @@ class RoomData(BaseData):
                 iconid=AttachmentID(result['icon']) if result['icon'] else None,
             )
             for result in cursor.mappings()
-        ]
+        ])
 
     def get_visible_rooms(self, userid: UserID, name: Optional[str] = None) -> List[Room]:
         """
@@ -230,7 +246,7 @@ class RoomData(BaseData):
             sql += " AND (name IS NULL OR name = '' OR name COLLATE utf8mb4_general_ci LIKE :name)"
 
         cursor = self.execute(sql, {"userid": userid, "name": f"%{name}%"})
-        return [
+        return self._hydrate_oldest_action([
             Room(
                 roomid=RoomID(result['id']),
                 name=result['name'],
@@ -240,7 +256,7 @@ class RoomData(BaseData):
                 iconid=AttachmentID(result['icon']) if result['icon'] else None,
             )
             for result in cursor.mappings()
-        ]
+        ])
 
     def get_autojoin_rooms(self) -> List[Room]:
         """
@@ -254,7 +270,7 @@ class RoomData(BaseData):
         """
 
         cursor = self.execute(sql, {})
-        return [
+        return self._hydrate_oldest_action([
             Room(
                 roomid=RoomID(result['id']),
                 name=result['name'],
@@ -264,7 +280,7 @@ class RoomData(BaseData):
                 iconid=AttachmentID(result['icon']) if result['icon'] else None,
             )
             for result in cursor.mappings()
-        ]
+        ])
 
     def set_room_autojoin(self, roomid: RoomID, autojoin: bool) -> None:
         """
@@ -300,12 +316,16 @@ class RoomData(BaseData):
         if cursor.rowcount != 1:
             return None
         result = cursor.mappings().fetchone()
+        room_id = RoomID(result['id'])
+        actions = self._get_oldest_action([room_id])
+
         return Room(
-            roomid=RoomID(result['id']),
+            roomid=room_id,
             name=result['name'],
             topic=result['topic'],
             public=bool(result['public']),
             last_action=result['last_action'],
+            oldest_action=actions.get(room_id),
             iconid=AttachmentID(result['icon']) if result['icon'] else None,
         )
 

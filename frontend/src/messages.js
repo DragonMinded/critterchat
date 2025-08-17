@@ -16,7 +16,7 @@ class Messages {
         this.size = initialSize;
         this.messages = [];
         this.occupants = [];
-        this.rooms = [];
+        this.rooms = new Map();
         this.roomid = "";
         this.roomType = "chat";
         this.autoscroll = true;
@@ -148,28 +148,30 @@ class Messages {
 
     setRooms( rooms ) {
         // Make a copy instead of keeping a reference, so we can safely mutate.
-        this.rooms = rooms.filter(() => true);
+        const newRooms = new Map();
+        rooms.forEach((room) => {
+            newRooms.set(room.id, room);
+        });
+
+        this.rooms = newRooms;
         this.roomsLoaded = true;
     }
 
     setRoom( roomid ) {
         if (roomid != this.roomid) {
-            this.messages = [];
-            this.roomid = roomid;
-            this.lastAction = {};
-            this.autoscroll = true;
-            this.occupants = [];
-            this.occupantsLoaded = false;
-            this.updateUsers();
+            if (this.rooms.has(roomid)) {
+                this.messages = [];
+                this.roomid = roomid;
+                this.lastAction = {};
+                this.autoscroll = true;
+                this.occupants = [];
+                this.occupantsLoaded = false;
+                this.roomType = this.rooms.get(roomid).type;
+                this.updateUsers();
 
-            $('div.chat > div.conversation-wrapper > div.conversation').empty();
-            $( '#message-actions' ).attr('roomid', roomid);
-
-            this.rooms.forEach((room) => {
-                if (room.id == roomid) {
-                    this.roomType = room.type;
-                }
-            });
+                $('div.chat > div.conversation-wrapper > div.conversation').empty();
+                $( '#message-actions' ).attr('roomid', roomid);
+            }
         }
     }
 
@@ -297,12 +299,25 @@ class Messages {
         }
     }
 
+    drawOlderMessagesLoader() {
+        // Remove any scroll detectors and add a new one at the top.
+        $( '.scrolled-top' ).remove();
+
+        if (this.roomid && this.rooms.has(this.roomid)) {
+            const lowestMessage = this.getEarliestMessage();
+            const room = this.rooms.get(this.roomid);
+
+            if (room.oldest_action && lowestMessage && room.oldest_action != lowestMessage.id) {
+                $('div.chat > div.conversation-wrapper > div.conversation').prepend('<div class="scrolled-top untriggered">...</div>');
+            }
+        }
+    }
+
     loadOlderMessages() {
         var lowestMessage = this.getEarliestMessage();
         if (lowestMessage) {
             $( '.scrolled-top' ).removeClass('untriggered');
             this.eventBus.emit("loadhistory", {"roomid": this.roomid, "before": lowestMessage.id})
-            console.log('loading older...');
         }
     };
 
@@ -353,9 +368,7 @@ class Messages {
         prepend.forEach((message) => this.drawMessage(message, 'before'));
         append.forEach((message) => this.drawMessage(message, 'after'));
 
-        // Remove any scroll detectors and add a new one at the top.
-        $( '.scrolled-top' ).remove();
-        $('div.chat > div.conversation-wrapper > div.conversation').prepend('<div class="scrolled-top untriggered">...</div>');
+        this.drawOlderMessagesLoader();
 
         if (this.lastAction.id != oldactionid) {
             this.eventBus.emit("lastaction", {"roomid": this.roomid, "actionid": this.lastAction.id})
