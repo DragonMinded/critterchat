@@ -55,6 +55,10 @@ ul.errors li {
     margin: 0px;
 }
 
+ul.errors li:not(:last-child) {
+   margin-bottom: 10px;
+}
+
 li.error {
     background: #e4a7a7;
 }
@@ -69,4 +73,8 @@ li.success {
 
 li.info {
     background: #a7d0e4;
+}
+
+ul.errors button.close {
+    display: none;
 }

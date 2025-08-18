@@ -8,6 +8,9 @@
   <link href="{{ url_for('static', filename='jquery.modal.0.9.1.min.css') }}" rel="stylesheet" />
   <script>
     window.twemojiOptions = { base: "{{ url_for('static', filename='twemoji/') }}" }
+    window.versionCheck = "{{ url_for('chat.version') }}";
+    window.appname = {{ title|tojson|safe }};
+    window.version = {{ version|tojson|safe }};
     window.emojis = {{ emojis|tojson|safe }};
     window.emotes = {{ emotes|tojson|safe }};
     window.username = {{ username|tojson|safe }};

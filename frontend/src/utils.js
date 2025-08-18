@@ -1,3 +1,5 @@
+import $ from "jquery";
+
 const entityMap = {
   '&': '&amp;',
   '<': '&lt;',
@@ -87,4 +89,26 @@ const isInViewport = function( el ) {
     }
 };
 
-export { escapeHtml, formatTime, formatDate, formatDateTime, scrollTop, scrollTopMax, isInViewport };
+const flashHook = function() {
+    $( 'ul.errors li button' ).on('click', function(event) {
+        event.preventDefault();
+        const id = $( this ).attr('pid');
+        $( 'ul.errors li#' + id ).remove();
+    });
+};
+
+const flash = function( type, message ) {
+    const ts = Date.now();
+    const nonce = window.nonce || 0;
+    window.nonce = nonce + 1;
+
+    var html = '<li class="' + type + '" id="flash' + ts + '' + nonce + '">';
+    html    += '  <div>' + message + '</div>';
+    html    += '  <button pid="flash' + ts + '' + nonce + '" class="close ' + type + '">&#10060;</button>';
+    html    += '</li>';
+
+    $( 'ul.errors' ).append(html);
+    flashHook();
+}
+
+export { escapeHtml, formatTime, formatDate, formatDateTime, scrollTop, scrollTopMax, isInViewport, flash, flashHook };

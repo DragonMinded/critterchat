@@ -1,5 +1,6 @@
 import traceback
-from typing import Optional
+from functools import wraps
+from typing import Any, Callable, Dict, Optional, cast
 
 from flask import (
     Flask,
@@ -14,8 +15,6 @@ from flask import (
 )
 from flask_socketio import SocketIO  # type: ignore
 from flask_cors import CORS  # type: ignore
-from functools import wraps
-from typing import Any, Callable, cast
 
 from ..common import AESCipher
 from ..config import Config
@@ -134,7 +133,7 @@ def loginprohibited(func: Callable[..., Response]) -> Callable[..., Response]:
     return decoratedfunction
 
 
-def jsonify(func: Callable[..., Response]) -> Callable[..., Response]:
+def jsonify(func: Callable[..., Dict[str, Any]]) -> Callable[..., Response]:
     @wraps(func)
     def decoratedfunction(*args: Any, **kwargs: Any) -> Response:
         try:

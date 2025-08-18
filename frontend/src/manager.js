@@ -8,7 +8,7 @@ import { Search } from "./search.js";
 import { InputState } from "./inputstate.js";
 import { ScreenState } from "./screenstate.js";
 
-import { escapeHtml } from "./utils.js";
+import { escapeHtml, flash, flashHook } from "./utils.js";
 import { displayInfo } from "./modals/infomodal.js";
 
 export function manager(socket) {
@@ -23,6 +23,21 @@ export function manager(socket) {
     var messagesInst = new Messages(eventBus, screenState, inputState, size);
     var infoInst = new Info(eventBus, screenState, inputState, size);
     var searchInst = new Search(eventBus, screenState, inputState);
+
+    // Ensure any server-generated messages are closeable.
+    flashHook();
+
+    // Check for application updates.
+    function checkForUpdates() {
+        $.getJSON(window.versionCheck, function( data ) {
+            if (data.js != window.version) {
+                window.version = data.js;
+                flash( 'info', 'There is a new version of ' + window.appname + ' available. Refresh to upgrade!' );
+            }
+        });
+    }
+
+    setInterval(checkForUpdates, 1000 * 15);
 
     socket.on('connect', () => {
         // Ask for our list of rooms that we're in.

@@ -43,9 +43,52 @@ html, body {
     overflow: hidden;
 }
 
-/* TODO: Get this to be floating so anything we need can be put above the top */
 div.errors {
-    display: none;
+    position: absolute;
+    z-index: 1;
+    width: 100%;
+}
+
+ul.errors {
+    list-style: none;
+    margin: 0px;
+    padding: 10px;
+}
+
+ul.errors li {
+    border-radius: 5px;
+    padding: 10px;
+    margin: 0px;
+    display: flex;
+}
+
+ul.errors li:not(:last-child) {
+   margin-bottom: 10px;
+}
+
+ul.errors li div {
+    flex-grow: 1;
+    margin: 0px;
+}
+
+ul.errors li button.close {
+    font-size: 10px;
+}
+
+li.error {
+    background: #e4a7a7;
+}
+
+li.warning {
+    background: #e4c9a7;
+}
+
+li.success {
+    background: #bde4a7;
+}
+
+li.info {
+    background: #a7d0e4;
 }
 
 div.container {
