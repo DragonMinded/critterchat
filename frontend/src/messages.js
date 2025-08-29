@@ -1,7 +1,7 @@
 import $ from "jquery";
 import linkifyHtml from "linkify-html";
 
-import { escapeHtml, formatDateTime, scrollTop, scrollTopMax, isInViewport } from "./utils.js";
+import { escapeHtml, formatDateTime, scrollTop, scrollTopMax, isInViewport, getSelectionText } from "./utils.js";
 import { emojisearch } from "./components/emojisearch.js";
 import { autocomplete } from "./components/autocomplete.js";
 import { displayInfo } from "./modals/infomodal.js";
@@ -53,6 +53,10 @@ class Messages {
 
         $( 'div.chat > div.conversation-wrapper' ).on( 'click', () => {
             this.inputState.setState("empty");
+
+            if (!getSelectionText()) {
+                $('input#message').focus();
+            }
         });
 
         $( 'div.chat > div.conversation-wrapper' ).scroll(() => {

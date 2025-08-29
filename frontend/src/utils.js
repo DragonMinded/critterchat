@@ -111,4 +111,27 @@ const flash = function( type, message ) {
     flashHook();
 }
 
-export { escapeHtml, formatTime, formatDate, formatDateTime, scrollTop, scrollTopMax, isInViewport, flash, flashHook };
+const getSelectionText = function() {
+    let text = "";
+
+    if (window.getSelection) {
+        text = window.getSelection().toString();
+    } else if (document.selection && document.selection.type != "Control") {
+        text = document.selection.createRange().text;
+    }
+
+    return text;
+}
+
+export {
+    escapeHtml,
+    formatTime,
+    formatDate,
+    formatDateTime,
+    scrollTop,
+    scrollTopMax,
+    isInViewport,
+    flash,
+    flashHook,
+    getSelectionText,
+};
