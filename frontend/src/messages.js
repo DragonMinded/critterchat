@@ -54,7 +54,7 @@ class Messages {
         $( 'div.chat > div.conversation-wrapper' ).on( 'click', () => {
             this.inputState.setState("empty");
 
-            if (!getSelectionText()) {
+            if (!getSelectionText() && this.size != "mobile") {
                 $('input#message').focus();
             }
         });

@@ -193,7 +193,9 @@ class Menu {
             this.eventBus.emit('selectroom', roomid);
         }
 
-        $('input#message').focus();
+        if (this.size != "mobile") {
+            $('input#message').focus();
+        }
     }
 
     closeRoom( roomid ) {
