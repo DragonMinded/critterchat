@@ -1,6 +1,6 @@
 import urllib.request
 from threading import Lock
-from typing import Any, Dict, Optional, Set, cast
+from typing import Any, Dict, List, Optional, Set, cast
 from typing_extensions import Final
 
 from .app import socketio, config, request
@@ -16,6 +16,7 @@ class SocketInfo:
         self.userid = userid
         self.fetchlimit: Dict[RoomID, Optional[ActionID]] = {}
         self.lastseen: Dict[RoomID, int] = {}
+        self.lock: Lock = Lock()
 
 
 MESSAGE_PUMP_TICK_SECONDS: Final[float] = 0.05
@@ -70,6 +71,10 @@ def background_thread_proc() -> None:
 
             # Send the delta to the clients, intentionally not choosing a room here.
             if additions or deletions:
+                if additions:
+                    print("Detected the following added emotes: " + ", ".join(additions))
+                if deletions:
+                    print("Detected the following removed emotes: " + ", ".join(deletions))
                 socketio.emit('emotechanges', {
                     'additions': {f":{alias}:": newemotes[alias] for alias in additions},
                     'deletions': [f":{d}:" for d in deletions],
@@ -78,6 +83,17 @@ def background_thread_proc() -> None:
             last_emote_update = Time.now()
 
         # Look for any new actions that should be relayed.
+        current_action = messageservice.get_last_action()
+        if current_action == last_action:
+            if (Time.now() - last_user_update) < MESSAGE_PUMP_ALWAYS_TICK_SECONDS:
+                # Nothing to do, skip the expensive part below.
+                continue
+
+        last_action = current_action
+        last_user_update = Time.now()
+
+        # If we have actual actions, grab who we need to act on and then individually lock.
+        # This prevents a misbehaving client from locking the whole network.
         with socket_lock:
             if not socket_to_info:
                 print("Shutting down message pump thread due to no more client sockets.")
@@ -87,68 +103,68 @@ def background_thread_proc() -> None:
 
                 return
 
-            current_action = messageservice.get_last_action()
-            if current_action == last_action:
-                if (Time.now() - last_user_update) < MESSAGE_PUMP_ALWAYS_TICK_SECONDS:
-                    # Nothing to do, skip the expensive part below.
-                    continue
+            sockets: List[SocketInfo] = list(socket_to_info.values())
 
-            last_action = current_action
-            last_user_update = Time.now()
+        for info in sockets:
+            # Lock this so other communication with this client doesn't get out of order.
+            locked = info.lock.acquire(blocking=False)
+            if locked:
+                try:
+                    # First, if they were deactivated, inform them now.
+                    user = userservice.lookup_user(info.userid) if info.userid is not None else None
+                    if user is None or UserPermission.ACTIVATED not in user.permissions:
+                        socketio.emit('reload', {}, room=info.sid)
+                        continue
 
-            for _, info in socket_to_info.items():
-                # First, if they were deactivated, inform them now.
-                user = userservice.lookup_user(info.userid) if info.userid is not None else None
-                if user is None or UserPermission.ACTIVATED not in user.permissions:
-                    socketio.emit('reload', {}, room=info.sid)
-                    continue
+                    updated = False
+                    for roomid, fetchlimit in info.fetchlimit.items():
+                        # Only fetch deltas for clients that have gotten an initial fetch for a room.
+                        if fetchlimit is not None:
+                            actions = messageservice.get_room_updates(roomid, after=fetchlimit)
 
-                updated = False
-                for roomid, fetchlimit in info.fetchlimit.items():
-                    # Only fetch deltas for clients that have gotten an initial fetch for a room.
-                    if fetchlimit is not None:
-                        actions = messageservice.get_room_updates(roomid, after=fetchlimit)
+                            if actions:
+                                for action in actions:
+                                    fetchlimit = action.id if fetchlimit is None else max(fetchlimit, action.id)
+                                info.fetchlimit[roomid] = fetchlimit or NewActionID
 
-                        if actions:
-                            for action in actions:
-                                fetchlimit = action.id if fetchlimit is None else max(fetchlimit, action.id)
-                            info.fetchlimit[roomid] = fetchlimit or NewActionID
+                                socketio.emit('chatactions', {
+                                    'roomid': Room.from_id(roomid),
+                                    'actions': [action.to_dict() for action in actions],
+                                }, room=info.sid)
+                                updated = True
 
-                            socketio.emit('chatactions', {
-                                'roomid': Room.from_id(roomid),
-                                'actions': [action.to_dict() for action in actions],
+                    # Figure out if this user has been joined to a new chat.
+                    if info.userid is not None:
+                        # Figure out if rooms have changed, so we can start monitoring.
+                        rooms = messageservice.get_joined_rooms(info.userid)
+
+                        for room in rooms:
+                            if room.id not in info.fetchlimit:
+                                updated = True
+                                lastaction = messageservice.get_last_room_action(room.id)
+                                if lastaction:
+                                    info.fetchlimit[room.id] = lastaction.id
+                                else:
+                                    info.fetchlimit[room.id] = NewActionID
+
+                        # Calculate any badge updates that the client needs to know about.
+                        lastseen = userservice.get_last_seen_counts(info.userid)
+                        counts: Dict[RoomID, int] = {}
+                        for roomid, count in lastseen.items():
+                            if count < info.lastseen.get(roomid, 0):
+                                counts[roomid] = count
+                                updated = True
+                            info.lastseen[roomid] = count
+
+                        if updated:
+                            # Notify the client of any room rearranges, or any new rooms.
+                            socketio.emit('roomlist', {
+                                'rooms': [room.to_dict() for room in rooms],
+                                'counts': [{'roomid': Room.from_id(k), 'count': v} for k, v in counts.items()],
                             }, room=info.sid)
-                            updated = True
 
-                # Figure out if this user has been joined to a new chat.
-                if info.userid is not None:
-                    # Figure out if rooms have changed, so we can start monitoring.
-                    rooms = messageservice.get_joined_rooms(info.userid)
-
-                    for room in rooms:
-                        if room.id not in info.fetchlimit:
-                            updated = True
-                            lastaction = messageservice.get_last_room_action(room.id)
-                            if lastaction:
-                                info.fetchlimit[room.id] = lastaction.id
-                            else:
-                                info.fetchlimit[room.id] = NewActionID
-
-                    # Calculate any badge updates that the client needs to know about.
-                    lastseen = userservice.get_last_seen_counts(info.userid)
-                    counts: Dict[RoomID, int] = {}
-                    for roomid, count in lastseen.items():
-                        if count < info.lastseen.get(roomid, 0):
-                            counts[roomid] = count
-                            updated = True
-                        info.lastseen[roomid] = count
-
-                    if updated:
-                        # Notify the client of any room rearranges, or any new rooms.
-                        socketio.emit('roomlist', {
-                            'rooms': [room.to_dict() for room in rooms],
-                            'counts': [{'roomid': Room.from_id(k), 'count': v} for k, v in counts.items()],
-                        }, room=info.sid)
+                finally:
+                    info.lock.release()
 
 
 def register_sid(data: Data, sid: Any, sessionid: Optional[str]) -> None:
@@ -296,7 +312,7 @@ def roomlist(json: Dict[str, object]) -> None:
     if userid is None or info is None:
         return
 
-    with socket_lock:
+    with info.lock:
         # Grab all rooms that the user is in, based on their user ID.
         rooms = messageservice.get_joined_rooms(userid)
         lastseen = userservice.get_last_seen_counts(userid)
@@ -426,7 +442,7 @@ def chathistory(json: Dict[str, object]) -> None:
 
     # Locking our socket info so we can keep track of what history we've seen,
     # so that we can send deltas afterwards to the client when new chats happen.
-    with socket_lock:
+    with info.lock:
         roomid = Room.to_id(str(json.get('roomid')))
         if roomid:
             rooms = messageservice.get_joined_rooms(userid)
@@ -504,7 +520,7 @@ def leaveroom(json: Dict[str, object]) -> None:
         return
 
     # Locking our socket info so we can remove this chat from our monitoring.
-    with socket_lock:
+    with info.lock:
         roomid = Room.to_id(str(json.get('roomid')))
         if roomid:
             if roomid in info.fetchlimit:
@@ -543,7 +559,7 @@ def joinroom(json: Dict[str, object]) -> None:
 
     # Locking our socket info so we can add this chat to our monitoring.
     actual_id: Optional[RoomID] = None
-    with socket_lock:
+    with info.lock:
         roomid = Room.to_id(str(json.get('roomid')))
         if roomid:
             messageservice.join_room(roomid, userid)
