@@ -10,6 +10,7 @@ class Menu {
         this.inputState = inputState;
         this.editProfile = new EditProfile( eventBus, inputState );
         this.size = initialSize;
+        this.title = document.title;
 
         this.rooms = [];
         this.selected = "";
@@ -218,11 +219,17 @@ class Menu {
     updateActions( roomid, actions ) {
         var count = 0;
         actions.forEach((action) => {
-            if (action.action == "message" || action.action == "join" || action.action == "leave" || action.action == "change_info") {
+            if (
+                action.action == "message" ||
+                action.action == "join" ||
+                action.action == "leave" ||
+                action.action == "change_info"
+            ) {
                 count += 1;
             }
         });
         this.updateBadges( roomid, count );
+        this.updateTitleBadge();
     }
 
     updateBadges( roomid, newactions ) {
@@ -274,6 +281,8 @@ class Menu {
                     this.updateBadges(obj.roomid, obj.count);
                 }
             });
+
+            this.updateTitleBadge();
         }
     }
 
@@ -289,6 +298,23 @@ class Menu {
                     room.count = '';
                 }
             });
+        }
+
+        this.updateTitleBadge();
+    }
+
+    updateTitleBadge() {
+        var hasBadges = false;
+        this.rooms.forEach((room) => {
+            if (room.count) {
+                hasBadges = true;
+            }
+        });
+
+        if (hasBadges) {
+            document.title = this.title + " [\u2605]";
+        } else {
+            document.title = this.title;
         }
     }
 }
