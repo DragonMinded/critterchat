@@ -77,6 +77,9 @@ class RoomData(BaseData):
     MAX_HISTORY: Final[int] = 100
 
     def _get_oldest_action(self, room_ids: List[RoomID]) -> Dict[RoomID, Optional[ActionID]]:
+        if not room_ids:
+            return {}
+
         sql = """
             SELECT room_id, MIN(id) AS action_id FROM action WHERE room_id IN :room_ids GROUP BY room_id
         """
@@ -604,23 +607,26 @@ class RoomData(BaseData):
 
         # Now, scoop up all of our occupants that we should look up.
         occupantids = {x['occupant_id'] for x in data}
-        sql = """
-            SELECT
-                occupant.id AS id,
-                occupant.user_id AS user_id,
-                occupant.nickname AS onick,
-                occupant.inactive AS inactive,
-                occupant.icon AS oicon,
-                profile.nickname AS pnick,
-                profile.icon AS picon,
-                user.username AS unick
-            FROM occupant
-            LEFT JOIN profile ON occupant.user_id = profile.user_id
-            LEFT JOIN user ON occupant.user_id = user.id
-            WHERE occupant.id IN :occupantids
-        """
-        cursor = self.execute(sql, {"occupantids": list(occupantids)})
-        occupants = [self.__to_occupant(o) for o in cursor.mappings()]
+        if occupantids:
+            sql = """
+                SELECT
+                    occupant.id AS id,
+                    occupant.user_id AS user_id,
+                    occupant.nickname AS onick,
+                    occupant.inactive AS inactive,
+                    occupant.icon AS oicon,
+                    profile.nickname AS pnick,
+                    profile.icon AS picon,
+                    user.username AS unick
+                FROM occupant
+                LEFT JOIN profile ON occupant.user_id = profile.user_id
+                LEFT JOIN user ON occupant.user_id = user.id
+                WHERE occupant.id IN :occupantids
+            """
+            cursor = self.execute(sql, {"occupantids": list(occupantids)})
+            occupants = [self.__to_occupant(o) for o in cursor.mappings()]
+        else:
+            occupants = []
         mapping = {oc.id: oc for oc in occupants}
 
         # Now, combine them all.

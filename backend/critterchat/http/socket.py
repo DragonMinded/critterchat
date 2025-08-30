@@ -1,3 +1,4 @@
+import traceback
 import urllib.request
 from threading import Lock
 from typing import Any, Dict, List, Optional, Set, cast
@@ -34,6 +35,16 @@ background_thread: Optional[object] = None
 
 
 def background_thread_proc() -> None:
+    while True:
+        try:
+            background_thread_proc_impl()
+            return
+        except Exception:
+            print(traceback.format_exc())
+            print("Background polling thread died with an exception, restarting!")
+
+
+def background_thread_proc_impl() -> None:
     """
     The background polling thread that manages asynchronous messages from the database.
     """
