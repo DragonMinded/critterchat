@@ -9,11 +9,12 @@ import { displayInfo } from "./modals/infomodal.js";
 const linkifyOptions = { defaultProtocol: "http", target: "_blank", validate: { email: () => false } };
 
 class Messages {
-    constructor( eventBus, screenState, inputState, initialSize ) {
+    constructor( eventBus, screenState, inputState, initialSize, initialVisibility ) {
         this.eventBus = eventBus;
         this.inputState = inputState;
         this.screenState = screenState;
         this.size = initialSize;
+        this.visibility = initialVisibility;
         this.messages = [];
         this.occupants = [];
         this.rooms = new Map();

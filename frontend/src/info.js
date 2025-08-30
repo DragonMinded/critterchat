@@ -8,12 +8,13 @@ import { displayWarning } from "./modals/warningmodal.js";
 const linkifyOptions = { defaultProtocol: "http", target: "_blank", validate: { email: () => false } };
 
 class Info {
-    constructor( eventBus, screenState, inputState, initialSize ) {
+    constructor( eventBus, screenState, inputState, initialSize, initialVisibility ) {
         this.eventBus = eventBus;
         this.inputState = inputState;
         this.screenState = screenState;
         this.chatdetails = new ChatDetails( eventBus, inputState );
         this.size = initialSize;
+        this.visibility = initialVisibility;
 
         this.roomid = "";
         this.occupants = [];

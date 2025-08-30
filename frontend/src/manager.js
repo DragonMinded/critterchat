@@ -18,10 +18,11 @@ export function manager(socket) {
 
     var settings = {};
     var size = $( window ).width() <= 700 ? "mobile" : "desktop";
+    var visibility = document.visibilityState;
 
-    var menuInst = new Menu(eventBus, screenState, inputState, size);
-    var messagesInst = new Messages(eventBus, screenState, inputState, size);
-    var infoInst = new Info(eventBus, screenState, inputState, size);
+    var menuInst = new Menu(eventBus, screenState, inputState, size, visibility);
+    var messagesInst = new Messages(eventBus, screenState, inputState, size, visibility);
+    var infoInst = new Info(eventBus, screenState, inputState, size, visibility);
     var searchInst = new Search(eventBus, screenState, inputState);
 
     // Ensure any server-generated messages are closeable.
@@ -63,6 +64,13 @@ export function manager(socket) {
         if (newSize != size) {
             size = newSize;
             eventBus.emit('resize', size);
+        }
+    });
+
+    document.addEventListener("visibilitychange", () => {
+        if (document.visibilityState != visibility) {
+            visibility = document.visibilityState;
+            eventBus.emit('updatevisibility', visibility);
         }
     });
 

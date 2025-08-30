@@ -4,12 +4,13 @@ import { EditProfile } from "./modals/editprofile.js";
 import { displayWarning } from "./modals/warningmodal.js";
 
 class Menu {
-    constructor( eventBus, screenState, inputState, initialSize ) {
+    constructor( eventBus, screenState, inputState, initialSize, initialVisibility ) {
         this.eventBus = eventBus;
         this.screenState = screenState;
         this.inputState = inputState;
         this.editProfile = new EditProfile( eventBus, inputState );
         this.size = initialSize;
+        this.visibility = initialVisibility;
         this.title = document.title;
 
         this.rooms = [];
@@ -17,6 +18,7 @@ class Menu {
         this.lastSettings = {};
         this.roomsLoaded = false;
         this.lastSettingsLoaded = false;
+        this.selectedUnread = 0;
 
         $( 'div.menu > div.rooms' ).on( 'click', () => {
             this.inputState.setState("empty");
@@ -56,6 +58,14 @@ class Menu {
             this.updateSize();
         });
 
+        eventBus.on( 'updatevisibility', (newVisibility) => {
+            this.visibility = newVisibility;
+            if (this.visibility == "visible") {
+                this.selectedUnread = 0;
+            }
+            this.updateVisibility();
+        });
+
         this.screenState.registerStateChangeCallback(() => {
             this.updateSize();
         });
@@ -75,6 +85,10 @@ class Menu {
             $( 'div.top-info div.back' ).hide();
             $( 'div.container > div.menu' ).removeClass('hidden').removeClass('full');
         }
+    }
+
+    updateVisibility() {
+        this.updateTitleBadge();
     }
 
     setRooms( rooms ) {
@@ -187,6 +201,7 @@ class Menu {
 
         if (found && roomid != this.selected) {
             this.selected = roomid;
+            this.selectedUnread = 0;
             this.updateSelected();
             this.clearBadges(roomid);
 
@@ -201,6 +216,7 @@ class Menu {
     closeRoom( roomid ) {
         if (this.selected == roomid ) {
             this.selected = "";
+            this.selectedUnread = 0;
 
             var conversations = $('div.menu > div.rooms');
             conversations.find('div.item#' + roomid).remove();
@@ -222,6 +238,7 @@ class Menu {
 
     updateActions( roomid, actions ) {
         var count = 0;
+        var notMeCount = 0;
         actions.forEach((action) => {
             if (
                 action.action == "message" ||
@@ -230,8 +247,14 @@ class Menu {
                 action.action == "change_info"
             ) {
                 count += 1;
+                if (action.occupant.username != window.username) {
+                    notMeCount += 1;
+                }
             }
         });
+        if (this.visibility == "hidden" && roomid == this.selected) {
+            this.selectedUnread += notMeCount;
+        }
         this.updateBadges( roomid, count );
         this.updateTitleBadge();
     }
@@ -315,7 +338,16 @@ class Menu {
             }
         });
 
+        var notified = false;
         if (hasBadges) {
+            notified = true;
+        } else {
+            if (this.visibility == "hidden" && this.selectedUnread) {
+                notified = true;
+            }
+        }
+
+        if (notified) {
             document.title = this.title + " [\u2605]";
         } else {
             document.title = this.title;
