@@ -40,14 +40,14 @@ that can be enabled or disabled per-instance.
 
 ## Needed Help
 
-If you're looking for something to contribute and something on this list sparks your
-interest we would be very grateful for a contribution! Please get in touch so we can
-work out the direction you plan to take.
+If you're looking for something to contribute and something on this or the above
+list sparks your interest we would be very grateful for a contribution! Please
+get in touch so we can work out the direction you plan to take.
 
  - Containerization and simplifying deployment/updates.
  - UX design work and help with themes.
  - SVGs for graphics for default avatar/room pictures, iconography on the frontend.
- - Documentation clarification, better documentation for websocket protocol.
+ - Documentation clarification or correction, better documentation for websocket protocol.
  - Support for more attachment backends.
  - Native clients for mobile or desktop operating systems.
  - Changes that make custom integrations easier.
