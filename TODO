@@ -16,29 +16,3 @@ Support being able to delete a chat icon or your own icon.
 Protocol documentation.
 Favicon support.
 Delayed loading of all emoji/emotes until after search/picker selected.
-
-Long-Term TODOs
-===============
-Message editing.
-Message deleting.
-Moderation tools for network admin (global mute, global ban, etc).
-Moderation tools for individuals (block user, etc.).
-Sign-up modes (admin approval, open sign-ups, invite only, etc.).
-Photo attachments, both uploaded and pasted from clipboard.
-Arbitrary file attachments.
-Sitewide CSS themeing with css moved to themes directory.
-Per-chat CSS themeing.
-Ability to set a personal nickname for a user that only you can see.
-Port Myno's Pictochat over from PyStreaming, allow remixing.
-Message reactions.
-Reply to message.
-Read receipts.
-Now typing indicators.
-Link auto-sanitization.
-Message pinning.
-Multi-account support.
-Emoji auto-categorization by prefix.
-
-Begin to Think About
-====================
-Federating with other instances.
