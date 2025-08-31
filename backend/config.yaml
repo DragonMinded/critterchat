@@ -28,3 +28,6 @@ attachments:
 
   # The local directory where attachments are stored, if the system is "local".
   directory: "/tmp"
+
+  # The key that will be used when hashing attachment names to ensure they are not enumerable.
+  attachment_key: "you_should_additionally_change_this_to_something_long_and_random"

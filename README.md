@@ -219,9 +219,16 @@ user.
 
 Review the `config.yaml` file to ensure that you've modified everything you need
 to. Ensure that the `database` section points at your production database. Make
-sure that the `cookie_key` and `password_key` are both set to a random string of
-sufficient length. I recommend keeping them different and using a random generator
-that can give you a string of at least 48 characters. Make sure you rename your
+sure that the `cookie_key`, `password_key` and `attachment_key` are all set to a
+random string of sufficient length. I recommend keeping them different and using
+a random generator that can give you a string of at least 48 characters. Note that
+it is important to select good random values now and not change them in the future.
+Changing these values in a production instance can have undesirable effects. If
+you change the `cookie_key` in a production instance, all sessions will be logged
+out. If you change `password_key` in production, all passwords will be invalidated
+and you will have to manually change all of them. If you change `attachment_key`
+in a production instance, all existing attachments will 404. So, choose good values
+when setting up your instance and do not modify them. Make sure you rename your
 instance to what you want to call it. Finally, configure the attachment system.
 Right now, only local storage is supported, so leave it set to local, and leave
 the prefix as-is. Update the directory to the absolute path of the attachment

@@ -50,6 +50,10 @@ class Attachments:
         directory = self.__config.get("attachments", {}).get("directory")
         return str(directory) if directory else None
 
+    @property
+    def attachment_key(self) -> str:
+        return str(self.__config.get("attachments", {}).get("attachment_key", "youalsoreallyshouldhavechangedthistoo"))
+
 
 class Config(dict[str, Any]):
     def __init__(self, existing_contents: Dict[str, Any] = {}) -> None:

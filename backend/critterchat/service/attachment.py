@@ -1,3 +1,4 @@
+import hashlib
 import json
 import mimetypes
 import os
@@ -34,12 +35,20 @@ class AttachmentService:
         except Exception:
             return "application/octet-stream"
 
+    def _get_hashed_attachment_name(self, aid: AttachmentID) -> str:
+        if aid in {DefaultAvatarID, DefaultRoomID}:
+            return Attachment.from_id(aid)
+
+        hashkey = self.__config.attachments.attachment_key
+        inval = f"{hashkey}-{Attachment.from_id(aid)}"
+        return hashlib.shake_256(inval.encode('utf-8')).hexdigest(20)
+
     def _get_local_attachment_path(self, aid: AttachmentID) -> str:
         directory = self.__config.attachments.directory
         if not directory:
             raise AttachmentServiceException("Cannot find directory for local attachment storage!")
 
-        return os.path.join(directory, Attachment.from_id(aid))
+        return os.path.join(directory, self._get_hashed_attachment_name(aid))
 
     def create_default_attachments(self) -> None:
         for aid, default in [
@@ -50,16 +59,39 @@ class AttachmentService:
                 # Local storage, copy the system default into the attachment directory if needed.
                 path = self._get_local_attachment_path(aid)
                 if not os.path.isfile(path):
-                    with open(default, "rb") as bfp:
-                        data = bfp.read()
-                    with open(path, "wb") as bfp:
-                        bfp.write(data)
+                    with open(default, "rb") as bfp1:
+                        data = bfp1.read()
+                    with open(path, "wb") as bfp2:
+                        bfp2.write(data)
             else:
                 # Unknown backend, throw.
                 raise AttachmentServiceException("Unrecognized backend system!")
 
     def migrate_legacy_attachments(self) -> None:
-        pass
+        if self.__config.attachments.system == "local":
+            def _get_legacy_local_attachment_path(aid: AttachmentID) -> str:
+                directory = self.__config.attachments.directory
+                if not directory:
+                    raise AttachmentServiceException("Cannot find directory for local attachment storage!")
+
+                return os.path.join(directory, Attachment.from_id(aid))
+
+            # First, we need to attempt to migrate from pre-hashed to hashed.
+            attachments = self.__data.attachment.get_attachments()
+            for attachment in attachments:
+                # Local storage, copy the system default into the attachment directory if needed.
+                oldpath = _get_legacy_local_attachment_path(attachment.id)
+                path = self._get_local_attachment_path(attachment.id)
+                if (not os.path.isfile(path)) and os.path.isfile(oldpath):
+                    with open(oldpath, "rb") as bfp1:
+                        data = bfp1.read()
+                    with open(path, "wb") as bfp2:
+                        bfp2.write(data)
+                    os.remove(oldpath)
+
+        else:
+            # Unknown backend, throw since we have no known migrations.
+            raise AttachmentServiceException("Unrecognized backend system!")
 
     def id_from_path(self, path: str) -> Optional[AttachmentID]:
         path = path.rsplit("/", 1)[-1]
@@ -73,13 +105,7 @@ class AttachmentService:
 
         attachments = self.__data.attachment.get_attachments()
         for attachment in attachments:
-            if self.__config.attachments.system == "local":
-                path = self._get_local_attachment_path(attachment.id)
-                path = os.path.basename(path)
-            else:
-                # Unknown backend, throw.
-                raise AttachmentServiceException("Unrecognized backend system!")
-
+            path = self._get_hashed_attachment_name(attachment.id)
             _hash_to_id_lut[path] = attachment.id
 
         return _hash_to_id_lut.get(path, None)
@@ -227,4 +253,4 @@ class AttachmentService:
         prefix = self.__config.attachments.prefix
         if prefix[-1] == "/":
             prefix = prefix[:-1]
-        return f"{prefix}/{Attachment.from_id(attachmentid)}"
+        return f"{prefix}/{self._get_hashed_attachment_name(attachmentid)}"
