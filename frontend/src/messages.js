@@ -62,7 +62,7 @@ class Messages {
 
         $( 'div.chat > div.conversation-wrapper' ).scroll(() => {
             var box = $( 'div.chat > div.conversation-wrapper' );
-            this.autoscroll = scrollTop(box[0]) >= scrollTopMax(box[0]);
+            this.autoscroll = scrollTop(box[0]) >= (scrollTopMax(box[0]) - 5);
             if (this.autoscroll) {
                 $( 'div.new-messages-alert' ).css( 'display', 'none' );
             }
@@ -75,7 +75,7 @@ class Messages {
             }
 
             // Recalculate autoscroll since it could have been enabled by a resize.
-            this.autoscroll = scrollTop(box[0]) >= scrollTopMax(box[0]);
+            this.autoscroll = scrollTop(box[0]) >= (scrollTopMax(box[0]) - 5);
             if (this.autoscroll) {
                 $( 'div.new-messages-alert' ).css( 'display', 'none' );
             }
