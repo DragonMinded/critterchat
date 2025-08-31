@@ -93,6 +93,10 @@ class Messages {
             this.updateSize();
         });
 
+        eventBus.on( 'updatevisibility', (newVisibility) => {
+            this.visibility = newVisibility;
+        });
+
         this.screenState.registerStateChangeCallback(() => {
             this.updateSize();
         });
@@ -218,6 +222,10 @@ class Messages {
         }
     }
 
+    isNewIndicatorPresent() {
+        return $('div.newseparator').length > 0;
+    }
+
     addNewIndicator( lastSeen ) {
         // First, find the message this is referring to.
         var lastMessage = null;
@@ -270,6 +278,10 @@ class Messages {
             return;
         }
 
+        // If this action is not visible, calculate the last seen message so we can add the new message indicator
+        // to the current page.
+        const lastSeenMessage = (this.visibility == "hidden" || !this.autoscroll) ? this.getLatestMessage() : undefined;
+
         var changed = false;
         var selfMessage = false;
         if (this.occupantsLoaded) {
@@ -300,7 +312,14 @@ class Messages {
 
         this.drawActions( actions );
 
-        if (selfMessage) {
+        if (this.visibility == "hidden" && lastSeenMessage && !this.isNewIndicatorPresent()) {
+            // Add a new messages line if we're in another tab, so we can tab back to new messages.
+            this.addNewIndicator( lastSeenMessage.id );
+        } else if (!this.autoscroll && lastSeenMessage && !this.isNewIndicatorPresent()) {
+            // Add a new messgaes line if we're scrolled up, so we can scroll down to new messages.
+            this.addNewIndicator( lastSeenMessage.id );
+        } else if (selfMessage) {
+            // We messaged this channel so nothing is new, we've seen it all.
             this.removeNewIndicator();
         }
     }
@@ -367,6 +386,25 @@ class Messages {
     getEarliestMessageOrder() {
         var lowestMessage = this.getEarliestMessage();
         return lowestMessage ? lowestMessage.order : -1;
+    }
+
+    getLatestMessage() {
+        var highestMessage = undefined;
+        for (const message of this.messages) {
+            if (highestMessage == undefined) {
+                highestMessage = message;
+            } else {
+                if (message.order > highestMessage.order) {
+                    highestMessage = message;
+                }
+            }
+        }
+        return highestMessage;
+    }
+
+    getLatestMessageOrder() {
+        var highestMessage = this.getLatestMessage();
+        return highestMessage ? highestMessage.order : -1;
     }
 
     drawActions( history ) {
