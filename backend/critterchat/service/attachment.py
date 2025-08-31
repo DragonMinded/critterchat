@@ -1,7 +1,7 @@
 import json
 import mimetypes
 import os
-from typing import Optional, Tuple
+from typing import Dict, Optional, Tuple
 from typing_extensions import Final
 
 from ..config import Config
@@ -15,6 +15,9 @@ mimetypes.init()
 
 class AttachmentServiceException(Exception):
     pass
+
+
+_hash_to_id_lut: Dict[str, AttachmentID] = {}
 
 
 class AttachmentService:
@@ -54,6 +57,32 @@ class AttachmentService:
             else:
                 # Unknown backend, throw.
                 raise AttachmentServiceException("Unrecognized backend system!")
+
+    def migrate_legacy_attachments(self) -> None:
+        pass
+
+    def id_from_path(self, path: str) -> Optional[AttachmentID]:
+        path = path.rsplit("/", 1)[-1]
+
+        if path == Attachment.from_id(DefaultAvatarID):
+            return DefaultAvatarID
+        if path == Attachment.from_id(DefaultRoomID):
+            return DefaultRoomID
+        if path in _hash_to_id_lut:
+            return _hash_to_id_lut[path]
+
+        attachments = self.__data.attachment.get_attachments()
+        for attachment in attachments:
+            if self.__config.attachments.system == "local":
+                path = self._get_local_attachment_path(attachment.id)
+                path = os.path.basename(path)
+            else:
+                # Unknown backend, throw.
+                raise AttachmentServiceException("Unrecognized backend system!")
+
+            _hash_to_id_lut[path] = attachment.id
+
+        return _hash_to_id_lut.get(path, None)
 
     def create_attachment(self, content_type: str) -> Optional[AttachmentID]:
         return self.__data.attachment.insert_attachment(self.__config.attachments.system, content_type)

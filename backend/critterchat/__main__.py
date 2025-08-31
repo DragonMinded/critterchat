@@ -25,7 +25,11 @@ def perform_initialization_work(config: Config) -> None:
 
     # Ensure that the default avatars are copied to the attachment storage system.
     attachmentservice = AttachmentService(config, data)
+    print("Creating any default attachments required.")
     attachmentservice.create_default_attachments()
+    print("Migrating any legacy attachments to current system.")
+    attachmentservice.migrate_legacy_attachments()
+    print("Done with initialization.")
 
 
 if __name__ == '__main__':

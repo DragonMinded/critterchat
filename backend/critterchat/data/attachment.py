@@ -99,6 +99,24 @@ class AttachmentData(BaseData):
         result = cursor.mappings().fetchone()
         return Attachment(attachmentid, str(result["system"]), str(result["content_type"]))
 
+    def get_attachments(self) -> List[Attachment]:
+        """
+        Look up all known attachments in the system.
+        """
+
+        sql = """
+            SELECT `id`, `system`, `content_type`
+            FROM attachment
+        """
+        cursor = self.execute(sql, {})
+        return [
+            Attachment(
+                AttachmentID(result['id']),
+                str(result['system']),
+                str(result['content_type']),
+            ) for result in cursor.mappings()
+        ]
+
     def get_emotes(self) -> List[Emote]:
         """
         Look up all custom emotes in the DB.

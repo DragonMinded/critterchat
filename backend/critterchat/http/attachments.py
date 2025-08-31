@@ -1,7 +1,7 @@
 from flask import Blueprint, Response
 
 from .app import cacheable, static_location, templates_location, g
-from ..data import Data, Attachment
+from ..data import Data
 from ..service import AttachmentService
 
 
@@ -16,14 +16,13 @@ attachments = Blueprint(
 @attachments.route("/attachments/<attachment>")
 @cacheable(86400)
 def get_attachment(attachment: str) -> Response:
-    if "." in attachment:
-        attachment, _ = attachment.split(".", 1)
-
     # Look up and return data for attachment.
     data = Data(g.config)
     attachmentservice = AttachmentService(g.config, data)
 
-    attachmentid = Attachment.to_id(attachment)
+    # This is a debug endpoint only, not meant for production use. So, it's fine
+    # to pull a little shenanigans here.
+    attachmentid = attachmentservice.id_from_path(attachment)
     if attachmentid is not None:
         response = attachmentservice.get_attachment_data(attachmentid)
         if response:
