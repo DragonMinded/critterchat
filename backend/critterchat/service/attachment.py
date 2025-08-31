@@ -118,7 +118,10 @@ class AttachmentService:
         if attachment.system == "local":
             # Local storage, look up the storage directory and write the data.
             path = self._get_local_attachment_path(attachmentid)
-            os.remove(path)
+            try:
+                os.remove(path)
+            except FileNotFoundError:
+                pass
         else:
             # Unknown backend, throw.
             raise AttachmentServiceException("Unrecognized backend system!")

@@ -174,7 +174,7 @@ def deactivate_user(config: Config, username: str) -> None:
     print(f"User with ID {User.from_id(existing_user.id)} deactivated")
 
 
-def list_emotes(config: Config) -> None:
+def list_emotes(config: Config, only_broken: bool) -> None:
     """
     List all of the custom emotes enabled on this network right now.
     """
@@ -186,6 +186,10 @@ def list_emotes(config: Config) -> None:
 
     names = sorted([e for e in emotes])
     for name in names:
+        if only_broken:
+            if emoteservice.validate_emote(name):
+                continue
+
         print(f"{name}")
 
 
@@ -483,10 +487,16 @@ def main() -> None:
     emote_commands = emote_parser.add_subparsers(dest="emote")
 
     # No params for this one
-    emote_commands.add_parser(
+    listemote_parser = emote_commands.add_parser(
         "list",
         help="list all custom emotes",
         description="List all custom emotes.",
+    )
+    listemote_parser.add_argument(
+        "-o",
+        "--only-broken",
+        action="store_true",
+        help="only list emotes that do not have valid data in the current attachment backend",
     )
 
     # A few params for this one
@@ -631,7 +641,7 @@ def main() -> None:
             if args.emote is None:
                 raise CLIException("Unspecified emote operation!")
             elif args.emote == "list":
-                list_emotes(config)
+                list_emotes(config, args.only_broken)
             elif args.emote == "add":
                 add_emote(config, args.alias, args.file)
             elif args.emote == "drop":

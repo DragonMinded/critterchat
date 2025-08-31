@@ -24,6 +24,20 @@ class EmoteService:
             results[emote.alias] = url
         return results
 
+    def validate_emote(self, alias: str) -> bool:
+        # First, sanitize the name of the emote.
+        alias = alias.lower()
+        for c in alias:
+            if c not in "abcdefghijklmnopqrstuvwxyz0123456789-_":
+                raise EmoteServiceException("Invalid emote name!")
+
+        emote = self.__data.attachment.get_emote(alias)
+        if not emote:
+            return False
+
+        attachment = self.__attachments.get_attachment_data(emote.attachmentid)
+        return attachment is not None
+
     def add_emote(self, alias: str, content_type: str, data: bytes) -> None:
         # First, sanitize the name of the emote.
         alias = alias.lower()
