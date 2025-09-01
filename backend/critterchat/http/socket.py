@@ -29,6 +29,8 @@ class SocketInfo:
         self.userid = userid
         self.fetchlimit: Dict[RoomID, Optional[ActionID]] = {}
         self.lastseen: Dict[RoomID, int] = {}
+        self.profilets: Optional[int] = None
+        self.prefsts: Optional[int] = None
         self.lock: Lock = Lock()
 
 
@@ -179,17 +181,35 @@ def background_thread_proc_impl() -> None:
                                 updated = True
                             info.lastseen[roomid] = count
 
-                    # TODO: Figure out if preferences or profile changed since our last poll,
-                    # and send an updated "preferences" or "profile" response to said client
-                    # if it has. This should keep prefs and profiles in sync across multiple
-                    # sessions at once.
-
                     if updated:
                         # Notify the client of any room rearranges, or any new rooms.
                         socketio.emit('roomlist', {
                             'rooms': [room.to_dict() for room in rooms],
                             'counts': [{'roomid': Room.from_id(k), 'count': v} for k, v in counts.items()],
                         }, room=info.sid)
+
+                    # Figure out if preferences or profile changed since our last poll,
+                    # and send an updated "preferences" or "profile" response to said
+                    # client if it has. This should keep prefs and profiles in sync
+                    # across multiple sessions at once.
+                    profilets = info.profilets
+                    prefsts = info.prefsts
+
+                    if profilets is not None:
+                        ts = Time.now()
+                        if userservice.has_updated_user(user.id, profilets):
+                            userprofile = userservice.lookup_user(user.id)
+                            if userprofile:
+                                info.profilets = ts
+                                socketio.emit('profile', userprofile.to_dict(), room=info.sid)
+
+                    if prefsts is not None:
+                        ts = Time.now()
+                        if userservice.has_updated_preferences(user.id, prefsts):
+                            userpreferences = userservice.get_preferences(user.id)
+                            if userpreferences:
+                                info.prefsts = ts
+                                socketio.emit('preferences', userpreferences.to_dict(), room=info.sid)
 
                 finally:
                     info.lock.release()
@@ -385,13 +405,19 @@ def profile(json: Dict[str, object]) -> None:
 
     # Try to associate with a user if there is one.
     userid = recover_userid(data, request.sid)
-    if userid is None:
+    info = recover_info(request.sid)
+    if userid is None or info is None:
         return
 
-    # Look up last settings for this user.
-    userprofile = userservice.lookup_user(userid)
-    if userprofile:
-        socketio.emit('profile', userprofile.to_dict(), room=request.sid)
+    # Locking our socket info so we can keep track of profiles sent to all sessions.
+    # That way we can notify other sessions if the current one changes their profile.
+    with info.lock:
+        # Look up last settings for this user.
+        ts = Time.now()
+        userprofile = userservice.lookup_user(userid)
+        if userprofile:
+            info.profilets = ts
+            socketio.emit('profile', userprofile.to_dict(), room=request.sid)
 
 
 @socketio.on('preferences')  # type: ignore
@@ -401,13 +427,19 @@ def preferences(json: Dict[str, object]) -> None:
 
     # Try to associate with a user if there is one.
     userid = recover_userid(data, request.sid)
-    if userid is None:
+    info = recover_info(request.sid)
+    if userid is None or info is None:
         return
 
-    # Look up last settings for this user.
-    userpreferences = userservice.get_preferences(userid)
-    if userpreferences:
-        socketio.emit('preferences', userpreferences.to_dict(), room=request.sid)
+    # Locking our socket info so we can keep track of profiles sent to all sessions.
+    # That way we can notify other sessions if the current one changes their profile.
+    with info.lock:
+        # Look up last settings for this user.
+        ts = Time.now()
+        userpreferences = userservice.get_preferences(userid)
+        if userpreferences:
+            info.prefsts = ts
+            socketio.emit('preferences', userpreferences.to_dict(), room=request.sid)
 
 
 @socketio.on('updatesettings')  # type: ignore

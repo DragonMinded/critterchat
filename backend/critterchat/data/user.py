@@ -379,6 +379,18 @@ class UserData(BaseData):
             title_notifs=bool(result['title_notifs']),
         )
 
+    def has_updated_preferences(self, userid: UserID, last_checked: int) -> bool:
+        """
+        Given a user ID and a last checked timestamp, return whether there's an updated user object
+        for that user ID or not.
+        """
+
+        sql = """
+            SELECT user_id FROM preferences WHERE user_id = :userid AND timestamp >= :ts
+        """
+        cursor = self.execute(sql, {"userid": userid, "ts": last_checked})
+        return bool(cursor.rowcount == 1)
+
     def put_preferences(self, preferences: UserPreferences) -> None:
         """
         Write a new preferences blob to the specified user.
@@ -439,6 +451,18 @@ class UserData(BaseData):
 
         result = cursor.mappings().fetchone()
         return self.__to_user(result)
+
+    def has_updated_user(self, userid: UserID, last_checked: int) -> bool:
+        """
+        Given a user ID and a last checked timestamp, return whether there's an updated user object
+        for that user ID or not.
+        """
+
+        sql = """
+            SELECT user_id FROM profile WHERE user_id = :userid AND timestamp >= :ts
+        """
+        cursor = self.execute(sql, {"userid": userid, "ts": last_checked})
+        return bool(cursor.rowcount == 1)
 
     def update_user(self, user: User) -> None:
         """

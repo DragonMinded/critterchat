@@ -64,6 +64,9 @@ class UserService:
     def update_preferences(self, prefs: UserPreferences) -> None:
         self.__data.user.put_preferences(prefs)
 
+    def has_updated_preferences(self, userid: UserID, last_checked: int) -> bool:
+        return self.__data.user.has_updated_preferences(userid, last_checked)
+
     def lookup_user(self, userid: UserID) -> Optional[User]:
         user = self.__data.user.get_user(userid)
         if user:
@@ -150,6 +153,9 @@ class UserService:
                 details=json.dumps({"nickname": occupant.nickname, "iconid": occupant.iconid})
             )
             self.__data.room.insert_action(roomid, action)
+
+    def has_updated_user(self, userid: UserID, last_checked: int) -> bool:
+        return self.__data.user.has_updated_user(userid, last_checked)
 
     def add_permission(self, userid: UserID, permission: UserPermission) -> None:
         user = self.__data.user.get_user(userid)
