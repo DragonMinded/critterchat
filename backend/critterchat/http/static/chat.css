@@ -220,6 +220,7 @@ div.menu > div.actions, div.info > div.actions {
 div.actions div.item {
     height: 40px;
     overflow: hidden;
+    flex-grow: 1;
 }
 
 div.actions div.item button {
@@ -481,7 +482,13 @@ div.search, div.warning, div.information {
     gap: 10px;
 }
 
-div.search > div.actions, div.warning > div.actions, div.information > div.actions, div.chatdetails > div.actions, div.editprofile > div.actions {
+div.search > div.actions,
+div.warning > div.actions,
+div.information > div.actions,
+div.chatdetails > div.actions,
+div.editprofile > div.actions,
+div.editpreferences > div.actions
+{
     display: flex;
     flex-direction: row;
     width: 100%;
@@ -509,7 +516,7 @@ div.search > div.results {
     padding-right: 10px;
 }
 
-div.chatdetails, div.editprofile {
+div.chatdetails, div.editprofile, div.editpreferences {
     display: flex;
     flex-direction: column;
     gap: 10px;
@@ -537,11 +544,11 @@ div.chatdetails div.icon, div.chatdetails div.picker, div.editprofile div.icon, 
     justify-content: center;
 }
 
-div.chatdetails dl, div.editprofile dl {
+div.chatdetails dl, div.editprofile dl, div.editpreferences dl {
     margin: 0px;
 }
 
-div.chatdetails dt, div.editprofile dt {
+div.chatdetails dt, div.editprofile dt, div.editpreferences dt {
     font-size: 14px;
 }
 

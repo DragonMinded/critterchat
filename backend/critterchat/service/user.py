@@ -5,7 +5,21 @@ from typing import Dict, Optional
 
 from ..common import Time
 from ..config import Config
-from ..data import Data, UserSettings, UserPermission, User, Action, ActionType, DefaultAvatarID, NewActionID, ActionID, Occupant, RoomID, UserID
+from ..data import (
+    Data,
+    UserPreferences,
+    UserSettings,
+    UserPermission,
+    User,
+    Action,
+    ActionType,
+    DefaultAvatarID,
+    NewActionID,
+    ActionID,
+    Occupant,
+    RoomID,
+    UserID,
+)
 from .attachment import AttachmentService
 
 
@@ -36,6 +50,14 @@ class UserService:
 
     def update_settings(self, session: str, settings: UserSettings) -> None:
         self.__data.user.put_settings(session, settings)
+
+    def get_preferences(self, userid: UserID) -> UserPreferences:
+        return UserPreferences(
+            userid=userid
+        )
+
+    def update_preferences(self, prefs: UserPreferences) -> None:
+        pass
 
     def lookup_user(self, userid: UserID) -> Optional[User]:
         user = self.__data.user.get_user(userid)

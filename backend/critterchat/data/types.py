@@ -80,6 +80,21 @@ class UserSettings:
         )
 
 
+class UserPreferences:
+    def __init__(self, userid: UserID) -> None:
+        self.userid = userid
+
+    def to_dict(self) -> Dict[str, object]:
+        return {
+        }
+
+    @staticmethod
+    def from_dict(userid: UserID, values: Dict[str, object]) -> "UserPreferences":
+        return UserPreferences(
+            userid=userid,
+        )
+
+
 class Attachment:
     def __init__(self, attachmentid: AttachmentID, uri: str, mimetype: str) -> None:
         self.id = attachmentid

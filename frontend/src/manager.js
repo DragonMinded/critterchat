@@ -46,6 +46,7 @@ export function manager(socket) {
 
         // Ask for our profile and last settings so we can refresh where we left off.
         socket.emit('profile', {});
+        socket.emit('preferences', {});
         socket.emit('lastsettings', {});
 
         // Ask for any server MOTD or admin messages.
@@ -127,6 +128,14 @@ export function manager(socket) {
         // This should never change, but if we have info about it, let's update anyway.
         window.username = msg.username;
         menuInst.setProfile(msg);
+        messagesInst.setProfile(msg);
+        infoInst.setProfile(msg);
+    });
+
+    socket.on('preferences', (msg) => {
+        menuInst.setPreferences(msg);
+        messagesInst.setPreferences(msg);
+        infoInst.setPreferences(msg);
     });
 
     socket.on('chathistory', (msg) => {

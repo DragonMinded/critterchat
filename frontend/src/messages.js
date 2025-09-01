@@ -142,6 +142,14 @@ class Messages {
         }
     }
 
+    setProfile( _profile ) {
+        // This page intentionally left blank.
+    }
+
+    setPreferences( _preferences ) {
+        // This page intentionally left blank.
+    }
+
     setLastSettings( settings ) {
         this.lastSettings = settings;
         this.lastSettingsLoaded = true;

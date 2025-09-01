@@ -1,6 +1,7 @@
 import $ from "jquery";
 import { escapeHtml } from "./utils.js";
 import { EditProfile } from "./modals/editprofile.js";
+import { EditPreferences } from "./modals/editpreferences.js";
 import { displayWarning } from "./modals/warningmodal.js";
 
 class Menu {
@@ -9,6 +10,7 @@ class Menu {
         this.screenState = screenState;
         this.inputState = inputState;
         this.editProfile = new EditProfile( eventBus, inputState );
+        this.editPreferences = new EditPreferences( eventBus, inputState );
         this.size = initialSize;
         this.visibility = initialVisibility;
         this.title = document.title;
@@ -29,6 +31,13 @@ class Menu {
 
             this.inputState.setState("empty");
             this.editProfile.display();
+        });
+
+        $( '#edit-preferences' ).on( 'click', (event) => {
+            event.preventDefault();
+
+            this.inputState.setState("empty");
+            this.editPreferences.display();
         });
 
         $( '#log-out' ).on( 'click', (event) => {
@@ -146,6 +155,10 @@ class Menu {
 
     setProfile( profile ) {
         this.editProfile.setProfile( profile );
+    }
+
+    setPreferences( preferences ) {
+        this.editPreferences.setPreferences( preferences );
     }
 
     drawRoom( room ) {

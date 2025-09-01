@@ -10,7 +10,12 @@ export default defineConfig([
         },
         extends: ["js/recommended"],
         rules: {
-            "no-unused-vars": "warn",
+            "no-unused-vars": [
+                "warn",
+                {
+                    "argsIgnorePattern": "^_",
+                }
+            ],
             "no-undef": "warn",
             "no-prototype-builtins": "off",
         },

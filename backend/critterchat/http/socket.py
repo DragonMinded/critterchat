@@ -377,6 +377,22 @@ def profile(json: Dict[str, object]) -> None:
         socketio.emit('profile', userprofile.to_dict(), room=request.sid)
 
 
+@socketio.on('preferences')  # type: ignore
+def preferences(json: Dict[str, object]) -> None:
+    data = Data(config)
+    userservice = UserService(config, data)
+
+    # Try to associate with a user if there is one.
+    userid = recover_userid(data, request.sid)
+    if userid is None:
+        return
+
+    # Look up last settings for this user.
+    userpreferences = userservice.get_preferences(userid)
+    if userpreferences:
+        socketio.emit('preferences', userpreferences.to_dict(), room=request.sid)
+
+
 @socketio.on('updatesettings')  # type: ignore
 def updatesettings(json: Dict[str, object]) -> None:
     data = Data(config)

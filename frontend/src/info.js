@@ -121,6 +121,14 @@ class Info {
         }
     }
 
+    setProfile( _profile ) {
+        // This page intentionally left blank.
+    }
+
+    setPreferences( _preferences ) {
+        // This page intentionally left blank.
+    }
+
     setRooms( rooms ) {
         // Make a copy instead of keeping a reference, so we can safely mutate.
         this.rooms = rooms.filter(() => true);
