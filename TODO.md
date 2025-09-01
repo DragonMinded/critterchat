@@ -1,8 +1,9 @@
 TODO For Installable
 ====================
 
- - Preferences so notification noise can be enabled.
+ - Notification sound support for send chat, receive chat, send message, receive message, mention.
  - Display name doesn't change in chat history when somebody updates it, like it does in info.
+ - More visual indicator for room versus chat.
 
 TODO For Post Test Build
 ========================
