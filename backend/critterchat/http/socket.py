@@ -159,27 +159,26 @@ def background_thread_proc_impl() -> None:
                                 updated = True
 
                     # Figure out if this user has been joined to a new chat.
-                    if info.userid is not None:
-                        # Figure out if rooms have changed, so we can start monitoring.
-                        rooms = messageservice.get_joined_rooms(info.userid)
+                    # Figure out if rooms have changed, so we can start monitoring.
+                    rooms = messageservice.get_joined_rooms(user.id)
 
-                        for room in rooms:
-                            if room.id not in info.fetchlimit:
-                                updated = True
-                                lastaction = messageservice.get_last_room_action(room.id)
-                                if lastaction:
-                                    info.fetchlimit[room.id] = lastaction.id
-                                else:
-                                    info.fetchlimit[room.id] = NewActionID
+                    for room in rooms:
+                        if room.id not in info.fetchlimit:
+                            updated = True
+                            lastaction = messageservice.get_last_room_action(room.id)
+                            if lastaction:
+                                info.fetchlimit[room.id] = lastaction.id
+                            else:
+                                info.fetchlimit[room.id] = NewActionID
 
-                        # Calculate any badge updates that the client needs to know about.
-                        lastseen = userservice.get_last_seen_counts(info.userid)
-                        counts: Dict[RoomID, int] = {}
-                        for roomid, count in lastseen.items():
-                            if count < info.lastseen.get(roomid, 0):
-                                counts[roomid] = count
-                                updated = True
-                            info.lastseen[roomid] = count
+                    # Calculate any badge updates that the client needs to know about.
+                    lastseen = userservice.get_last_seen_counts(user.id)
+                    counts: Dict[RoomID, int] = {}
+                    for roomid, count in lastseen.items():
+                        if count < info.lastseen.get(roomid, 0):
+                            counts[roomid] = count
+                            updated = True
+                        info.lastseen[roomid] = count
 
                     if updated:
                         # Notify the client of any room rearranges, or any new rooms.
