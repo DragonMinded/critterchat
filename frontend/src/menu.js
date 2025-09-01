@@ -21,6 +21,8 @@ class Menu {
         this.roomsLoaded = false;
         this.lastSettingsLoaded = false;
         this.selectedUnread = 0;
+        this.preferences = {}
+        this.preferencesLoaded = false;
 
         $( 'div.menu > div.rooms' ).on( 'click', () => {
             this.inputState.setState("empty");
@@ -158,7 +160,10 @@ class Menu {
     }
 
     setPreferences( preferences ) {
+        this.preferences = preferences;
+        this.preferencesLoaded = true;
         this.editPreferences.setPreferences( preferences );
+        this.updateTitleBadge();
     }
 
     drawRoom( room ) {
@@ -360,7 +365,7 @@ class Menu {
             }
         }
 
-        if (notified) {
+        if (this.preferencesLoaded && this.preferences.title_notifs && notified) {
             document.title = this.title + " [\u2605]";
         } else {
             document.title = this.title;
