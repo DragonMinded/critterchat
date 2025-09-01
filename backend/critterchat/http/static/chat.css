@@ -539,6 +539,10 @@ div.chatdetails div.icon img, div.editprofile div.icon img {
     margin: 0px;
 }
 
+div.chatdetails div.details, div.editprofile div.details {
+    text-align: center;
+}
+
 div.chatdetails div.icon, div.chatdetails div.picker, div.editprofile div.icon, div.editprofile div.picker {
     display: flex;
     justify-content: center;
