@@ -17,8 +17,9 @@ class EditPreferences {
             this.inputState.setState("empty");
 
             if (this.preferencesLoaded) {
-                this.eventBus.emit('updatepreferences', {'details': {
-                }});
+                this.eventBus.emit('updatepreferences', {
+                    'title_notifs': $('#editpreferences-title-notifications').is(":checked"),
+                });
             }
         });
 
@@ -34,6 +35,7 @@ class EditPreferences {
             $.modal.close();
 
             $('#editpreferences-form').modal();
+            $('#editpreferences-title-notifications').prop('checked', this.preferences.title_notifs);
         }
     }
 

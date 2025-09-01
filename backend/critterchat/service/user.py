@@ -52,12 +52,17 @@ class UserService:
         self.__data.user.put_settings(session, settings)
 
     def get_preferences(self, userid: UserID) -> UserPreferences:
+        prefs = self.__data.user.get_preferences(userid)
+        if prefs:
+            return prefs
+
         return UserPreferences(
-            userid=userid
+            userid=userid,
+            title_notifs=True,
         )
 
     def update_preferences(self, prefs: UserPreferences) -> None:
-        pass
+        self.__data.user.put_preferences(prefs)
 
     def lookup_user(self, userid: UserID) -> Optional[User]:
         user = self.__data.user.get_user(userid)

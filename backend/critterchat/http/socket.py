@@ -7,7 +7,19 @@ from typing_extensions import Final
 from .app import socketio, config, request
 from ..common import AESCipher, Time
 from ..service import EmoteService, UserService, MessageService, UserServiceException, MessageServiceException
-from ..data import Data, Action, Room, User, UserPermission, UserSettings, NewActionID, ActionID, RoomID, UserID
+from ..data import (
+    Data,
+    Action,
+    Room,
+    User,
+    UserPermission,
+    UserPreferences,
+    UserSettings,
+    NewActionID,
+    ActionID,
+    RoomID,
+    UserID,
+)
 
 
 class SocketInfo:
@@ -167,12 +179,17 @@ def background_thread_proc_impl() -> None:
                                 updated = True
                             info.lastseen[roomid] = count
 
-                        if updated:
-                            # Notify the client of any room rearranges, or any new rooms.
-                            socketio.emit('roomlist', {
-                                'rooms': [room.to_dict() for room in rooms],
-                                'counts': [{'roomid': Room.from_id(k), 'count': v} for k, v in counts.items()],
-                            }, room=info.sid)
+                    # TODO: Figure out if preferences or profile changed since our last poll,
+                    # and send an updated "preferences" or "profile" response to said client
+                    # if it has. This should keep prefs and profiles in sync across multiple
+                    # sessions at once.
+
+                    if updated:
+                        # Notify the client of any room rearranges, or any new rooms.
+                        socketio.emit('roomlist', {
+                            'rooms': [room.to_dict() for room in rooms],
+                            'counts': [{'roomid': Room.from_id(k), 'count': v} for k, v in counts.items()],
+                        }, room=info.sid)
 
                 finally:
                     info.lock.release()
@@ -421,9 +438,8 @@ def updateprofile(json: Dict[str, object]) -> None:
         return
 
     # Save last settings for this user.
-    details = cast(Dict[str, object], json.get('details', {}))
-    newname = str(details.get('name', ''))
-    newicon = str(details.get('icon', ''))
+    newname = str(json.get('name', ''))
+    newicon = str(json.get('icon', ''))
 
     if newname and len(newname) > 255:
         socketio.emit('error', {'error': 'Your nickname is too long!'}, room=request.sid)
@@ -453,6 +469,20 @@ def updateprofile(json: Dict[str, object]) -> None:
             socketio.emit('profile', userprofile.to_dict(), room=request.sid)
     except UserServiceException as e:
         socketio.emit('error', {'error': str(e)}, room=request.sid)
+
+
+@socketio.on('updatepreferences')  # type: ignore
+def updatepreferences(json: Dict[str, object]) -> None:
+    data = Data(config)
+    userservice = UserService(config, data)
+
+    # Try to associate with a user and login session if there is one.
+    userid = recover_userid(data, request.sid)
+    if userid is None:
+        return
+
+    # Save preferences for this user.
+    userservice.update_preferences(UserPreferences.from_dict(userid, json))
 
 
 @socketio.on('chathistory')  # type: ignore

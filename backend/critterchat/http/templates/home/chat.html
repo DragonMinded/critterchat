@@ -108,6 +108,12 @@
     </form>
     <form id="editpreferences-form" class="modal editpreferences">
         <div class="editpreferences">
+            <div class="preferences">
+                <div class="preference">
+                    <input type="checkbox" id="editpreferences-title-notifications">
+                    <label for="editpreferences-title-notifications">Add notification indicator to title bar</label>
+                </div>
+            </div>
             <div class="actions">
                 <div class="item">
                     <button id="editpreferences-confirm">update preferences</button>
@@ -132,8 +138,8 @@
                 </div>
             </div>
             <dl class="name">
-                <dt id="editprofile-name-label"></dt>
-                <dd><input type="text" id="editprofile-name" autocomplete="off" maxlength="255" /></dd>
+                <dt id="editprofile-name-label">nickname</dt>
+                <dd><input type="text" id="editprofile-name" placeholder="Type a custom nickname..." autocomplete="off" maxlength="255" /></dd>
             </dl>
             <div class="actions">
                 <div class="item">

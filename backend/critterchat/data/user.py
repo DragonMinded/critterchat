@@ -3,14 +3,27 @@ import string
 
 from sqlalchemy import Table, Column
 from sqlalchemy.schema import UniqueConstraint
-from sqlalchemy.types import String, Integer, Text
+from sqlalchemy.types import Boolean, String, Integer, Text
 from typing import Any, List, Optional, Tuple
 from typing_extensions import Final
 from passlib.hash import pbkdf2_sha512  # type: ignore
 
 from ..common import Time
 from .base import BaseData, metadata
-from .types import ActionType, User, UserSettings, UserPermission, NewActionID, NewRoomID, NewUserID, NewAttachmentID, ActionID, RoomID, UserID
+from .types import (
+    ActionType,
+    User,
+    UserPreferences,
+    UserSettings,
+    UserPermission,
+    NewActionID,
+    NewRoomID,
+    NewUserID,
+    NewAttachmentID,
+    ActionID,
+    RoomID,
+    UserID,
+)
 
 """
 Table representing a user.
@@ -49,6 +62,19 @@ profile = Table(
     Column("nickname", String(255)),
     Column("about", Text),
     Column("icon", Integer),
+    Column("timestamp", Integer),
+    mysql_charset="utf8mb4",
+)
+
+"""
+Table representing a user's instance-wide preferences.
+"""
+preferences = Table(
+    "preferences",
+    metadata,
+    Column("user_id", Integer, nullable=False, unique=True, index=True),
+    Column("title_notifs", Boolean),
+    Column("timestamp", Integer),
     mysql_charset="utf8mb4",
 )
 
@@ -332,6 +358,46 @@ class UserData(BaseData):
         """
         self.execute(sql, {"session": session, "roomid": settings.roomid, "info": settings.info, "userid": settings.userid, 'ts': Time.now()})
 
+    def get_preferences(self, userid: UserID) -> Optional[UserPreferences]:
+        """
+        Look up a user's preferences if they exist.
+
+        Parameters:
+            userid: The user ID that we're looking up preferences for.
+        """
+        if userid is NewUserID:
+            return None
+
+        sql = "SELECT * FROM preferences WHERE user_id = :userid"
+        cursor = self.execute(sql, {"userid": userid})
+        if cursor.rowcount != 1:
+            return None
+
+        result = cursor.mappings().fetchone()
+        return UserPreferences(
+            userid=UserID(result['user_id']),
+            title_notifs=bool(result['title_notifs']),
+        )
+
+    def put_preferences(self, preferences: UserPreferences) -> None:
+        """
+        Write a new preferences blob to the specified user.
+
+        Parameters:
+            preferences - The new preferences bundle we should persist.
+        """
+        if preferences.userid is NewUserID:
+            raise Exception("Logic error, should not try to update preferences for a new user ID!")
+
+        sql = """
+            INSERT INTO `preferences`
+                (`user_id`, `title_notifs`, `timestamp`)
+            VALUES (:userid, :title_notifs, :ts)
+            ON DUPLICATE KEY UPDATE
+            `title_notifs` = :title_notifs, `timestamp` = :ts
+        """
+        self.execute(sql, {"userid": preferences.userid, "title_notifs": preferences.title_notifs, "ts": Time.now()})
+
     def __to_user(self, result: Any) -> User:
         """
         Given a result set, spawn a user for that result.
@@ -396,13 +462,13 @@ class UserData(BaseData):
 
         sql = """
             INSERT INTO `profile`
-                (`user_id`, `nickname`, `icon`)
+                (`user_id`, `nickname`, `icon`, `timestamp`)
             VALUES
-                (:userid, :name, :iconid)
+                (:userid, :name, :iconid, :ts)
             ON DUPLICATE KEY UPDATE
-            nickname = :name, icon = :iconid
+            `nickname` = :name, `icon` = :iconid, `timestamp` = :ts
         """
-        self.execute(sql, {"userid": user.id, "name": nickname, "iconid": iconid})
+        self.execute(sql, {"userid": user.id, "name": nickname, "iconid": iconid, "ts": Time.now()})
 
         permissions: int = 0
         for perm in user.permissions:

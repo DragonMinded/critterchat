@@ -8,6 +8,8 @@ TODO For Post Test Build
 
  - URL for public chats to link directly as an invite.
  - Start on profile view to look at a person's profile.
+ - Display name doesn't change in chat history when somebody updates it, like it does in info.
+ - Inform other sessions of client changes to profile or prefeences.
  - Display user name next to nickname in search as well as on profiles.
  - Chat info name and topic should support emoji autocomplete and emoji search.
  - Mentioning typeahead should allow searching by display nick as well as username.

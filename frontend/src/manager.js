@@ -184,6 +184,10 @@ export function manager(socket) {
         socket.emit('updateprofile', profile);
     });
 
+    eventBus.on('updatepreferences', (preferences) => {
+        socket.emit('updatepreferences', preferences);
+    });
+
     eventBus.on('leaveroom', (roomid) => {
         socket.emit('leaveroom', {'roomid': roomid})
 

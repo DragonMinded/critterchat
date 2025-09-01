@@ -18,10 +18,10 @@ class EditProfile {
             this.inputState.setState("empty");
 
             if (this.profileLoaded) {
-                this.eventBus.emit('updateprofile', {'details': {
+                this.eventBus.emit('updateprofile', {
                     'name': $('#editprofile-name').val().substring(0, 255),
                     'icon': this.icon,
-                }});
+                });
             }
         });
 
@@ -51,9 +51,6 @@ class EditProfile {
 
             // Make sure we don't accidentally set a previous icon.
             this.icon = "";
-
-            $("#editprofile-name-label").text("nickname");
-            $("#editprofile-name").attr('placeholder', 'Type a custom nickname...');
 
             $('#editprofile-name').val(this.profile.nickname);
             $('#editprofile-icon').attr('src', this.profile.icon);

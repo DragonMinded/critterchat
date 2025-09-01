@@ -81,17 +81,20 @@ class UserSettings:
 
 
 class UserPreferences:
-    def __init__(self, userid: UserID) -> None:
+    def __init__(self, userid: UserID, *, title_notifs: bool) -> None:
         self.userid = userid
+        self.title_notifs = title_notifs
 
     def to_dict(self) -> Dict[str, object]:
         return {
+            "title_notifs": self.title_notifs,
         }
 
     @staticmethod
     def from_dict(userid: UserID, values: Dict[str, object]) -> "UserPreferences":
         return UserPreferences(
             userid=userid,
+            title_notifs=bool(values.get('title_notifs')),
         )
 
 
