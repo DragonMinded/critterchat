@@ -177,15 +177,17 @@ def background_thread_proc_impl() -> None:
                     for roomid, count in lastseen.items():
                         if count < info.lastseen.get(roomid, 0):
                             counts[roomid] = count
-                            updated = True
                         info.lastseen[roomid] = count
 
-                    if updated:
+                    if updated or counts:
+                        clientdata: Dict[str, object] = {}
+                        if updated:
+                            clientdata['rooms'] = [room.to_dict() for room in rooms]
+                        if counts:
+                            clientdata['counts'] = [{'roomid': Room.from_id(k), 'count': v} for k, v in counts.items()]
+
                         # Notify the client of any room rearranges, or any new rooms.
-                        socketio.emit('roomlist', {
-                            'rooms': [room.to_dict() for room in rooms],
-                            'counts': [{'roomid': Room.from_id(k), 'count': v} for k, v in counts.items()],
-                        }, room=info.sid)
+                        socketio.emit('roomlist', clientdata, room=info.sid)
 
                     # Figure out if preferences or profile changed since our last poll,
                     # and send an updated "preferences" or "profile" response to said
