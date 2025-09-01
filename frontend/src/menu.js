@@ -366,7 +366,7 @@ class Menu {
         }
 
         if (this.preferencesLoaded && this.preferences.title_notifs && notified) {
-            document.title = this.title + " [\u2605]";
+            document.title = "[\u2605] " + this.title;
         } else {
             document.title = this.title;
         }
