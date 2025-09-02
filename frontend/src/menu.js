@@ -180,11 +180,13 @@ class Menu {
             html    += '  <div class="icon ' + type + '">';
             html    += '    <img src="' + room.icon + '" />';
             if (room.count) {
-                html    += '    <div class="badge"><div class="count">' + room.count + '</div>';
+                html    += '    <div class="badge"><div class="count">' + room.count + '</div></div>';
             } else {
-                html    += '    <div class="badge empty"><div class="count"></div>';
+                html    += '    <div class="badge empty"><div class="count"></div></div>';
             }
-            html    += '    </div>';
+            if (type == 'room') {
+                html    += '    <div class="room-indicator">#</div>';
+            }
             html    += '  </div>';
             html    += '  <div class="name-wrapper"><div class="name">' + escapeHtml(room.name) + '</div></div>';
             html    += '</div>';

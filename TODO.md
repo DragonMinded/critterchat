@@ -2,7 +2,6 @@ TODO For Installable
 ====================
 
  - Notification sound support for send chat, receive chat, send message, receive message, mention.
- - More visual indicator for room versus chat.
 
 TODO For Post Test Build
 ========================

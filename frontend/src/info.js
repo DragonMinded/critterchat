@@ -242,6 +242,7 @@ class Info {
                             title = "Private chat";
                             iconType = 'avatar';
                         }
+                        $( 'div.chat div.top-info div.room-indicator' ).addClass('hidden');
                     } else {
                         if (room['public']) {
                             title = "Public room";
@@ -250,6 +251,7 @@ class Info {
                             title = "Private room";
                             iconType = 'avatar';
                         }
+                        $( 'div.chat div.top-info div.room-indicator' ).removeClass('hidden');
                     }
                     $( '#room-title' ).text(title);
                     if (room.type == 'room') {
@@ -293,12 +295,14 @@ class Info {
                         } else {
                             title = "Private chat";
                         }
+                        $( 'div.chat div.top-info div.room-indicator' ).addClass('hidden');
                     } else {
                         if (room['public']) {
                             title = "Public room";
                         } else {
                             title = "Private room";
                         }
+                        $( 'div.chat div.top-info div.room-indicator' ).removeClass('hidden');
                     }
                     $( '#room-title' ).text(title);
                     if (room.type == 'room') {

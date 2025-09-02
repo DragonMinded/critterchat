@@ -18,6 +18,9 @@
     --badge-background: #ff0000;
     --badge-text: #ffffff;
 
+    --roomindicator-background: #ffffff;
+    --roomindicator-text: #000000;
+
     --action-background: #d372fd;
     --action-text: #000000;
 
@@ -133,6 +136,23 @@ div.rooms div.item.selected, div.results div.item:hover {
 
 div.rooms div.item:hover {
     border: 1px solid var(--sidebar-hover-background);
+}
+
+div.icon div.room-indicator {
+    position: absolute;
+    font-size: 14px;
+    top: 22px;
+    left: 22px;
+    width: 16px;
+    height: 16px;
+    border-radius: 5px;
+    color: var(--roomindicator-text);
+    background: var(--roomindicator-background);
+    padding: 0px;
+    margin: 0px;
+    overflow: hidden;
+    display: flex;
+    justify-content: center
 }
 
 div.icon div.badge.empty {
@@ -272,6 +292,10 @@ div.back > img {
     width: 36px;
     height: 36px;
     display: block;
+}
+
+div.top-info div.icon {
+    position: relative;
 }
 
 div.top-info div.icon img {
