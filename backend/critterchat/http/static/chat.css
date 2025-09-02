@@ -138,6 +138,11 @@ div.rooms div.item:hover {
     border: 1px solid var(--sidebar-hover-background);
 }
 
+div.actions div.item img {
+    margin-bottom: -3px;
+    display: inline;
+}
+
 div.icon div.room-indicator {
     position: absolute;
     font-size: 14px;

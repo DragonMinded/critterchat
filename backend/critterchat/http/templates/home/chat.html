@@ -22,18 +22,30 @@
         </div>
         <div class="actions">
             <div class="item">
-                <button id="search-chat">&#128269; search chat/chatter</button>
+                <button id="search-chat">
+                    <img src="{{ url_for('static', filename='search.svg') }}" width="16" height="16" />
+                    search chat/chatter
+                </button>
             </div>
         </div>
         <div class="actions">
             <div class="item">
-                <button id="edit-preferences">&#128393; edit preferences</button>
+                <button id="edit-preferences">
+                    <img src="{{ url_for('static', filename='edit.svg') }}" width="16" height="16" />
+                    edit preferences
+                </button>
             </div>
             <div class="item">
-                <button id="edit-profile">&#128393; edit profile</button>
+                <button id="edit-profile">
+                    <img src="{{ url_for('static', filename='edit.svg') }}" width="16" height="16" />
+                    edit profile
+                </button>
             </div>
             <div class="item">
-                <button id="log-out">&#10060; log out</button>
+                <button id="log-out">
+                    <img src="{{ url_for('static', filename='logout.svg') }}" width="16" height="16" />
+                    log out
+                </button>
             </div>
         </div>
     </div>
@@ -90,10 +102,16 @@
         </div>
         <div class="actions">
             <div class="item">
-                <button id="edit-info">&#128393; edit info</button>
+                <button id="edit-info">
+                    <img src="{{ url_for('static', filename='edit.svg') }}" width="16" height="16" />
+                    edit info
+                </button>
             </div>
             <div class="item">
-                <button id="leave-room">&#128682; leave <span id="leave-type">chat</span></button>
+                <button id="leave-room">
+                    <img src="{{ url_for('static', filename='leave.svg') }}" width="16" height="16" />
+                    leave <span id="leave-type">chat</span>
+                </button>
             </div>
         </div>
     </div>

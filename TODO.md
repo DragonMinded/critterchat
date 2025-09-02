@@ -2,7 +2,6 @@ TODO For Installable
 ====================
 
  - Notification sound support for send chat, receive chat, send message, receive message, mention.
- - Better SVGs for action buttons.
 
 TODO For Post Test Build
 ========================
