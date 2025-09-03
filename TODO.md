@@ -2,6 +2,8 @@ TODO For Installable
 ====================
 
  - Notification sound support for send chat, receive chat, send message, receive message, mention.
+ - Fix PIL.UnidentifiedImageError on invalid image upload.
+ - Fix cachebusting only working on minified JS change, and not on html or css changes.
 
 TODO For Post Test Build
 ========================
@@ -17,3 +19,6 @@ TODO For Post Test Build
  - Protocol documentation.
  - Favicon support.
  - Delayed loading of all emoji/emotes until after search/picker selected.
+ - Setting for keeping public rooms on top of the sorted LHS list.
+ - Fix audio conversion thread/proc causes exceptions in gevent.
+ - Fix modal popover not allowing scrollable content when sizing down.

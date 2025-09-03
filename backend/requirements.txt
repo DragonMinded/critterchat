@@ -16,6 +16,7 @@ pycryptodome
 passlib
 sqlalchemy-stubs
 python-dateutil
+pydub
 types-emoji
 types-gevent
 types-pyyaml

@@ -15,6 +15,7 @@ from .types import (
     User,
     UserPreferences,
     UserSettings,
+    UserNotification,
     UserPermission,
     NewActionID,
     NewRoomID,
@@ -74,6 +75,7 @@ preferences = Table(
     metadata,
     Column("user_id", Integer, nullable=False, unique=True, index=True),
     Column("title_notifs", Boolean),
+    Column("audio_notifs", Integer),
     Column("timestamp", Integer),
     mysql_charset="utf8mb4",
 )
@@ -374,9 +376,16 @@ class UserData(BaseData):
             return None
 
         result = cursor.mappings().fetchone()
+        notifications = set()
+        bitmask = int(result['audio_notifs'] or 0)
+        for notif in UserNotification:
+            if (bitmask & notif) == notif:
+                notifications.add(notif)
+
         return UserPreferences(
             userid=UserID(result['user_id']),
             title_notifs=bool(result['title_notifs']),
+            audio_notifs=notifications,
         )
 
     def has_updated_preferences(self, userid: UserID, last_checked: int) -> bool:
@@ -401,14 +410,23 @@ class UserData(BaseData):
         if preferences.userid is NewUserID:
             raise Exception("Logic error, should not try to update preferences for a new user ID!")
 
+        audio_notifs: int = 0
+        for an in preferences.audio_notifs:
+            audio_notifs |= an
+
         sql = """
             INSERT INTO `preferences`
-                (`user_id`, `title_notifs`, `timestamp`)
-            VALUES (:userid, :title_notifs, :ts)
+                (`user_id`, `title_notifs`, `audio_notifs`, `timestamp`)
+            VALUES (:userid, :title_notifs, :audio_notifs, :ts)
             ON DUPLICATE KEY UPDATE
-            `title_notifs` = :title_notifs, `timestamp` = :ts
+            `title_notifs` = :title_notifs, `audio_notifs` = :audio_notifs, `timestamp` = :ts
         """
-        self.execute(sql, {"userid": preferences.userid, "title_notifs": preferences.title_notifs, "ts": Time.now()})
+        self.execute(sql, {
+            "userid": preferences.userid,
+            "title_notifs": preferences.title_notifs,
+            "audio_notifs": audio_notifs,
+            "ts": Time.now()
+        })
 
     def __to_user(self, result: Any) -> User:
         """

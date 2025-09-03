@@ -13,7 +13,6 @@ from ..data import (
     Room,
     User,
     UserPermission,
-    UserPreferences,
     UserSettings,
     NewActionID,
     ActionID,
@@ -515,7 +514,46 @@ def updatepreferences(json: Dict[str, object]) -> None:
         return
 
     # Save preferences for this user.
-    userservice.update_preferences(UserPreferences.from_dict(userid, json))
+    new_title_notifs = json.get('title_notifs', None)
+    if new_title_notifs is not None:
+        new_title_notifs = bool(new_title_notifs)
+    new_audio_notifs = json.get('audio_notifs', None)
+    if new_audio_notifs is not None:
+        if isinstance(new_audio_notifs, list):
+            new_audio_notifs = {str(x) for x in new_audio_notifs}
+        else:
+            new_audio_notifs = None
+
+    new_notif_sounds: Dict[str, bytes] = {}
+    notif_dict = json.get('notif_sounds', {}) or {}
+    if isinstance(notif_dict, dict):
+        for name, data in notif_dict.items():
+            if not isinstance(name, str) or not isinstance(data, str):
+                continue
+
+            # Verify that it's a reasonable sound.
+            header, b64data = data.split(",", 1)
+            if not header.startswith("data:") or not header.endswith("base64"):
+                socketio.emit('error', {'error': 'Chosen notification is not a valid audio file!'}, room=request.sid)
+                return
+
+            # TODO: Configurable, maybe?
+            actual_length = (len(b64data) / 4) * 3
+            if actual_length > 128 * 1024:
+                socketio.emit('error', {'error': 'Chosen notification file size is too large!'}, room=request.sid)
+                return
+
+            with urllib.request.urlopen(data) as fp:
+                notif_data = fp.read()
+
+            new_notif_sounds[name] = notif_data
+
+    userservice.update_preferences(
+        userid,
+        title_notifs=new_title_notifs,
+        audio_notifs=new_audio_notifs,
+        notif_sounds=new_notif_sounds,
+    )
 
 
 @socketio.on('chathistory')  # type: ignore

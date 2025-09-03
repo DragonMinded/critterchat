@@ -1,9 +1,10 @@
 from sqlalchemy import Table, Column
+from sqlalchemy.schema import UniqueConstraint
 from sqlalchemy.types import String, Integer
-from typing import List, Optional
+from typing import Dict, List, Optional
 
 from .base import BaseData, metadata
-from .types import AttachmentID, NewAttachmentID
+from .types import AttachmentID, NewAttachmentID, UserID, NewUserID
 
 """
 Table representing an attachment.
@@ -26,6 +27,20 @@ emote = Table(
     Column("id", Integer, nullable=False, primary_key=True, autoincrement=True),
     Column("alias", String(64), nullable=False, unique=True),
     Column("attachment_id", Integer),
+    mysql_charset="utf8mb4",
+)
+
+"""
+Table representing a user's custom notification sounds.
+"""
+notification = Table(
+    "notification",
+    metadata,
+    Column("id", Integer, nullable=False, primary_key=True, autoincrement=True),
+    Column("user_id", Integer, nullable=False, index=True),
+    Column("type", String(64), nullable=False),
+    Column("attachment_id", Integer),
+    UniqueConstraint("user_id", "type", name="user_id_type"),
     mysql_charset="utf8mb4",
 )
 
@@ -97,7 +112,7 @@ class AttachmentData(BaseData):
             return None
 
         result = cursor.mappings().fetchone()
-        return Attachment(attachmentid, str(result["system"]), str(result["content_type"]))
+        return Attachment(attachmentid, str(result["system"] or ""), str(result["content_type"] or ""))
 
     def get_attachments(self) -> List[Attachment]:
         """
@@ -112,8 +127,8 @@ class AttachmentData(BaseData):
         return [
             Attachment(
                 AttachmentID(result['id']),
-                str(result['system']),
-                str(result['content_type']),
+                str(result['system'] or ""),
+                str(result['content_type'] or ""),
             ) for result in cursor.mappings()
         ]
 
@@ -134,8 +149,8 @@ class AttachmentData(BaseData):
             Emote(
                 result['alias'],
                 AttachmentID(result['attachment_id']),
-                result['system'],
-                result['content_type'],
+                str(result['system'] or ""),
+                str(result['content_type'] or ""),
             ) for result in cursor.mappings()
         ]
 
@@ -160,8 +175,8 @@ class AttachmentData(BaseData):
         return Emote(
             result['alias'],
             AttachmentID(result['attachment_id']),
-            result['system'],
-            result['content_type'],
+            str(result['system'] or ""),
+            str(result['content_type'] or ""),
         )
 
     def add_emote(self, alias: str, attachmentid: AttachmentID) -> None:
@@ -179,3 +194,80 @@ class AttachmentData(BaseData):
             DELETE FROM emote WHERE `alias` = :alias LIMIT 1
         """
         self.execute(sql, {"alias": alias})
+
+    def get_notifications(self, userid: UserID) -> Dict[str, Attachment]:
+        """
+        Look up all custom notifications for a user.
+        """
+        if userid is NewUserID:
+            return {}
+
+        sql = """
+            SELECT
+                attachment.id AS attachment_id, attachment.system AS `system`, attachment.content_type AS content_type,
+                notification.type AS type
+            FROM notification
+            JOIN attachment ON attachment.id = notification.attachment_id
+            WHERE notification.user_id = :userid
+        """
+        cursor = self.execute(sql, {"userid": userid})
+        return {
+            str(result['type']): Attachment(
+                AttachmentID(result['attachment_id']),
+                str(result['system'] or ""),
+                str(result['content_type'] or ""),
+            ) for result in cursor.mappings()
+        }
+
+    def get_notification(self, userid: UserID, notificationtype: str) -> Optional[Attachment]:
+        """
+        Look up a custom notification for a user based on type.
+        """
+        if userid is NewUserID:
+            return None
+
+        sql = """
+            SELECT
+                attachment.id AS attachment_id, attachment.system AS `system`, attachment.content_type AS content_type,
+                emote.alias AS alias
+                notification.type AS type
+            FROM notification
+            JOIN attachment ON attachment.id = notification.attachment_id
+            WHERE notification.user_id = :userid AND notification.type = :type
+        """
+        cursor = self.execute(sql, {"userid": userid, "type": notificationtype})
+        if cursor.rowcount != 1:
+            return None
+
+        result = cursor.mappings().fetchone()
+        return Attachment(
+            AttachmentID(result['attachment_id']),
+            str(result['system'] or ""),
+            str(result['content_type'] or ""),
+        )
+
+    def set_notification(self, userid: UserID, notificationtype: str, attachmentid: AttachmentID) -> None:
+        """
+        Given a custom notification and an attachment ID, insert or update the notification for a user.
+        """
+        if userid is NewUserID:
+            return
+
+        sql = """
+            INSERT INTO notification (`user_id`, `type`, `attachment_id`)
+            VALUES (:userid, :type, :aid)
+            ON DUPLICATE KEY UPDATE `attachment_id` = :aid
+        """
+        self.execute(sql, {"userid": userid, "type": notificationtype, "aid": attachmentid})
+
+    def remove_notification(self, userid: UserID, notificationtype: str) -> None:
+        """
+        Remove any existing notification of this type for this user.
+        """
+        if userid is NewUserID:
+            return
+
+        sql = """
+            DELETE FROM notification WHERE `user_id` = :userid AND `type` = :type LIMIT 1
+        """
+        self.execute(sql, {"userid": userid, "type": notificationtype})

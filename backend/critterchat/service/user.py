@@ -1,7 +1,9 @@
 import io
 import json
+import tempfile
 from PIL import Image
-from typing import Dict, Optional
+from pydub import AudioSegment  # type: ignore
+from typing import Dict, Optional, Set
 
 from ..common import Time
 from ..config import Config
@@ -10,6 +12,7 @@ from ..data import (
     UserPreferences,
     UserSettings,
     UserPermission,
+    UserNotification,
     User,
     Action,
     ActionType,
@@ -53,15 +56,80 @@ class UserService:
 
     def get_preferences(self, userid: UserID) -> UserPreferences:
         prefs = self.__data.user.get_preferences(userid)
-        if prefs:
-            return prefs
+        if not prefs:
+            prefs = UserPreferences(
+                userid=userid,
+                title_notifs=True,
+                audio_notifs=set(),
+            )
 
-        return UserPreferences(
-            userid=userid,
-            title_notifs=True,
-        )
+        notifs = self.__data.attachment.get_notifications(userid)
+        prefs.notif_sounds = {key: self.__attachments.get_attachment_url(value.id) for key, value in notifs.items()}
+        return prefs
 
-    def update_preferences(self, prefs: UserPreferences) -> None:
+    def update_preferences(
+        self,
+        userid: UserID,
+        title_notifs: Optional[bool] = None,
+        audio_notifs: Optional[Set[str]] = None,
+        notif_sounds: Optional[Dict[str, bytes]] = None,
+    ) -> None:
+        prefs = self.__data.user.get_preferences(userid)
+        if not prefs:
+            prefs = UserPreferences(
+                userid=userid,
+                title_notifs=True,
+                audio_notifs=set(),
+            )
+
+        # First, update any changed booleans/flags/etc.
+        if title_notifs is not None:
+            prefs.title_notifs = title_notifs
+        if audio_notifs is not None:
+            try:
+                prefs.audio_notifs = {UserNotification[an] for an in audio_notifs}
+            except KeyError:
+                pass
+
+        # Now, handle uploading any new notification sounds.
+        for alias, data in (notif_sounds or {}).items():
+            try:
+                actual = UserNotification[alias]
+            except KeyError:
+                continue
+
+            with tempfile.NamedTemporaryFile(delete_on_close=False) as fp1:
+                fp1.write(data)
+                fp1.close()
+
+                segment = AudioSegment.from_file(fp1.name)
+
+                with tempfile.NamedTemporaryFile(delete_on_close=False) as fp2:
+                    fp2.close()
+
+                    segment.export(fp2.name, format="mp3")
+
+                    with open(fp2.name, "rb") as bfp:
+                        actual_data = bfp.read()
+
+                        attachmentid = self.__attachments.create_attachment("audio/mpeg")
+                        if attachmentid is None:
+                            raise UserServiceException("Could not insert new user notification sound!")
+                        self.__attachments.put_attachment_data(attachmentid, actual_data)
+                        self.__data.attachment.set_notification(userid, str(actual.name), attachmentid)
+
+        # Now, figure out what notifications should be enabled based on what
+        # sounds are uploaded.
+        notifs = self.__data.attachment.get_notifications(userid)
+        actual_set: Set[UserNotification] = set()
+        for alias in notifs:
+            try:
+                actual_set.add(UserNotification[alias])
+            except KeyError:
+                continue
+        prefs.audio_notifs = prefs.audio_notifs.intersection(actual_set)
+
+        # And persist!
         self.__data.user.put_preferences(prefs)
 
     def has_updated_preferences(self, userid: UserID, last_checked: int) -> bool:

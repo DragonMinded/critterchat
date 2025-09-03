@@ -80,22 +80,27 @@ class UserSettings:
         )
 
 
+class UserNotification(IntEnum):
+    CHAT_SENT = 0x1
+    CHAT_RECEIVED = 0x2
+    MESSAGE_SENT = 0x4
+    MESSAGE_RECEIVED = 0x8
+    MENTIONED = 0x10
+
+
 class UserPreferences:
-    def __init__(self, userid: UserID, *, title_notifs: bool) -> None:
+    def __init__(self, userid: UserID, *, title_notifs: bool, audio_notifs: Set[UserNotification]) -> None:
         self.userid = userid
         self.title_notifs = title_notifs
+        self.audio_notifs = audio_notifs
+        self.notif_sounds: Dict[str, str] = {}
 
     def to_dict(self) -> Dict[str, object]:
         return {
             "title_notifs": self.title_notifs,
+            "audio_notifs": [str(an.name) for an in self.audio_notifs],
+            "notif_sounds": self.notif_sounds,
         }
-
-    @staticmethod
-    def from_dict(userid: UserID, values: Dict[str, object]) -> "UserPreferences":
-        return UserPreferences(
-            userid=userid,
-            title_notifs=bool(values.get('title_notifs')),
-        )
 
 
 class Attachment:

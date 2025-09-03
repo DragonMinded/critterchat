@@ -524,6 +524,14 @@ div.editpreferences > div.actions
     gap: 10px;
 }
 
+div.preference img.preview {
+    margin-bottom: -2px;
+}
+
+div.preference input.notification {
+    padding-bottom: 10px;
+}
+
 div.warning > div.warning-text, div.information > div.information-text {
     flex-grow: 1;
 }

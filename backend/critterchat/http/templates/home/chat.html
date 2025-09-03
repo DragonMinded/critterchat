@@ -128,9 +128,51 @@
     <form id="editpreferences-form" class="modal editpreferences">
         <div class="editpreferences">
             <div class="preferences">
+                <h2>Notifications</h2>
                 <div class="preference">
                     <input type="checkbox" id="editpreferences-title-notifications">
-                    <label for="editpreferences-title-notifications">Add notification indicator to title bar</label>
+                    <label for="editpreferences-title-notifications">Add unread notification indicator to title bar</label>
+                </div>
+                <h3>Audio Notifications</h3>
+                <div class="preference">
+                    <input type="checkbox" id="editpreferences-audio-notification-chat_sent">
+                    <label for="editpreferences-audio-notification-chat_sent">Chat Message Sent</label>
+                    <img class="preview" id="editpreferences-audio-notification-chat_sent-preview" src="{{ url_for('static', filename='preview.svg') }}" width="16" height="16" />
+                    <div>
+                        <input class="notification" type="file" id="editpreferences-audio-notification-chat_sent-file" accept="audio/*" />
+                    </div>
+                </div>
+                <div class="preference">
+                    <input type="checkbox" id="editpreferences-audio-notification-chat_received">
+                    <label for="editpreferences-audio-notification-chat_received">Chat Message Received</label>
+                    <img class="preview" id="editpreferences-audio-notification-chat_received-preview" src="{{ url_for('static', filename='preview.svg') }}" width="16" height="16" />
+                    <div>
+                        <input class="notification" type="file" id="editpreferences-audio-notification-chat_received-file" accept="audio/*" />
+                    </div>
+                </div>
+                <div class="preference">
+                    <input type="checkbox" id="editpreferences-audio-notification-message_sent">
+                    <label for="editpreferences-audio-notification-message_sent">Direct Message Sent</label>
+                    <img class="preview" id="editpreferences-audio-notification-message_sent-preview" src="{{ url_for('static', filename='preview.svg') }}" width="16" height="16" />
+                    <div>
+                        <input class="notification" type="file" id="editpreferences-audio-notification-message_sent-file" accept="audio/*" />
+                    </div>
+                </div>
+                <div class="preference">
+                    <input type="checkbox" id="editpreferences-audio-notification-message_received">
+                    <label for="editpreferences-audio-notification-message_received">Direct Message Received</label>
+                    <img class="preview" id="editpreferences-audio-notification-message_received-preview" src="{{ url_for('static', filename='preview.svg') }}" width="16" height="16" />
+                    <div>
+                        <input class="notification" type="file" id="editpreferences-audio-notification-message_received-file" accept="audio/*" />
+                    </div>
+                </div>
+                <div class="preference">
+                    <input type="checkbox" id="editpreferences-audio-notification-mentioned">
+                    <label for="editpreferences-audio-notification-mentioned">Mentioned by Username</label>
+                    <img class="preview" id="editpreferences-audio-notification-mentioned-preview" src="{{ url_for('static', filename='preview.svg') }}" width="16" height="16" />
+                    <div>
+                        <input class="notification" type="file" id="editpreferences-audio-notification-mentioned-file" accept="audio/*" />
+                    </div>
                 </div>
             </div>
             <div class="actions">
