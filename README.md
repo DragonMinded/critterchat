@@ -101,6 +101,14 @@ frontend JS. Note, however, that the frontend does not come pre-compiled, so you
 will want to compile a debug build of that which the debug server will serve. See
 the frontend section below for how to do that.
 
+Note also that when running with `--debug` the server will use Flask's auto-reload
+feature. That means that when you save a python file or a dependency the server
+will auto-reload for you so that you don't have to kill and restart it. Note that
+when doing so, you may get `gevent` exception ignored errors under some circumstances.
+This appears to be a minor incompatibility between the latest gevent and Flask
+when using hot-reloading. This does not seem to affect the server when in production
+mode.
+
 The backend attempts to remain free of lint issues or type checking issues. To
 verify that you haven't broken anything, you can run `mypy .` and `flake8 .` in
 the `backend/` directory. CritterChat provides configuration for both so you don't

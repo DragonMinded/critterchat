@@ -20,5 +20,4 @@ TODO For Post Test Build
  - Favicon support.
  - Delayed loading of all emoji/emotes until after search/picker selected.
  - Setting for keeping public rooms on top of the sorted LHS list.
- - Fix audio conversion thread/proc causes exceptions in gevent.
  - Fix modal popover not allowing scrollable content when sizing down.
