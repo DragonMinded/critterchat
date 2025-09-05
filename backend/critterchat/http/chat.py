@@ -5,8 +5,8 @@ from typing import Dict
 
 from .app import app, static_location, templates_location, loginrequired, jsonify, g
 from ..common import get_emoji_unicode_dict, get_aliases_unicode_dict
-from ..data import Data
-from ..service import EmoteService
+from ..data import Data, DefaultAvatarID, DefaultRoomID
+from ..service import AttachmentService, EmoteService
 
 
 chat = Blueprint(
@@ -34,6 +34,7 @@ def _get_frontend_version() -> str:
 @loginrequired
 def home() -> Response:
     data = Data(g.config)
+    attachmentservice = AttachmentService(g.config, data)
     emoteservice = EmoteService(g.config, data)
 
     emojis = {
@@ -56,6 +57,8 @@ def home() -> Response:
         emojis=emojis,
         emotes=emotes,
         username=username,
+        defavi=attachmentservice.get_attachment_url(DefaultAvatarID),
+        defroom=attachmentservice.get_attachment_url(DefaultRoomID),
     ))
 
 

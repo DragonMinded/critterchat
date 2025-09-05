@@ -1,7 +1,6 @@
 TODO For Installable
 ====================
 
- - Notification audio prompt support or other workaround for silence until first interaction.
  - Fix PIL.UnidentifiedImageError on invalid image upload.
  - Fix cachebusting only working on minified JS change, and not on html or css changes.
 

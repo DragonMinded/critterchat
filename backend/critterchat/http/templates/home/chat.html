@@ -14,6 +14,9 @@
     window.emojis = {{ emojis|tojson|safe }};
     window.emotes = {{ emotes|tojson|safe }};
     window.username = {{ username|tojson|safe }};
+    window.defavi = {{ defavi|tojson|safe }};
+    window.defroom = {{ defroom|tojson|safe }};
+    window.silence = {{ url_for('static', filename='silence.mp3')|tojson|safe }};
   </script>
 {% endblock %}
 {% block content %}

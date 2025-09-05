@@ -1,3 +1,5 @@
+import { flash } from "../utils.js";
+
 import { CHAT_SENT, MESSAGE_SENT, CHAT_RECEIVED, MESSAGE_RECEIVED, MENTIONED, USER_JOINED, USER_LEFT, AUDIO_PREFS } from "../common.js";
 
 class AudioNotifications {
@@ -6,6 +8,7 @@ class AudioNotifications {
         this.sounds = {};
         this.preferences = {};
         this.preferencesLoaded = false;
+        this.verifiedAudio = false;
 
         this.eventBus.on( 'notification', (notif) => {
             var sound = undefined;
@@ -49,6 +52,20 @@ class AudioNotifications {
         this.cacheAudio();
     }
 
+    verifyAudio() {
+        // Verifies that we can send audio notifications, and prompts to activate if we can't.
+        const sound = new Audio(window.silence);
+        sound.play()
+            .catch(() => {
+                flash(
+                    'warning',
+                    'You have audio notifications enabled but haven\'t allowed Autoplay for ' + window.appname +
+                    '! Audio notifications will not work until you interact with the page or enable Autoplay.'
+                );
+            });
+        this.verifiedAudio = true;
+    }
+
     cacheAudio() {
         this.sounds = {};
         AUDIO_PREFS.forEach((pref) => {
@@ -57,6 +74,9 @@ class AudioNotifications {
 
             if (checked && sound) {
                 this.sounds[pref] = new Audio(sound);
+                if (!this.verifiedAudio) {
+                    this.verifyAudio();
+                }
             }
         });
     }
