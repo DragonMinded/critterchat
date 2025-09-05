@@ -183,7 +183,11 @@ class UserService:
                 changed = True
             if icon is not None:
                 # Need to store this as a new attachment, and then get back the ID.
-                img = Image.open(io.BytesIO(icon))
+                try:
+                    img = Image.open(io.BytesIO(icon))
+                except Exception:
+                    raise UserServiceException("Unsupported image provided for user avatar")
+
                 width, height = img.size
 
                 if width > AttachmentService.MAX_ICON_WIDTH or height > AttachmentService.MAX_ICON_HEIGHT:

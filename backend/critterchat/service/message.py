@@ -182,7 +182,11 @@ class MessageService:
                 room.topic = topic
             if icon is not None:
                 # Need to store this as a new attachment, and then get back the ID.
-                img = Image.open(io.BytesIO(icon))
+                try:
+                    img = Image.open(io.BytesIO(icon))
+                except Exception:
+                    raise MessageServiceException("Unsupported image provided for room icon")
+
                 width, height = img.size
 
                 if width > AttachmentService.MAX_ICON_WIDTH or height > AttachmentService.MAX_ICON_HEIGHT:
