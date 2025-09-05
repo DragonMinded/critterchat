@@ -11,4 +11,5 @@ include critterchat/http/static/*.LICENSE.txt
 include critterchat/http/static/*.json
 include critterchat/http/static/*.png
 include critterchat/http/static/*.svg
+include critterchat/http/static/*.mp3
 graft critterchat/http/static/twemoji
