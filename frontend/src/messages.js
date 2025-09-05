@@ -87,6 +87,13 @@ class Messages {
             }
         });
 
+        $( '#message' ).on('keydown', () => {
+            // Let user press "ESC" on the main input box to close search box.
+            if(this.inputState.current == "search") {
+                this.inputState.setState("empty");
+            }
+        });
+
         // Set up dynamic mobile detection.
         eventBus.on( 'resize', (newSize) => {
             this.size = newSize;

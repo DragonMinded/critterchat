@@ -21,3 +21,4 @@ TODO For Post Test Build
  - Delayed loading of all emoji/emotes until after search/picker selected.
  - Setting for keeping public rooms on top of the sorted LHS list.
  - Fix modal popover not allowing scrollable content when sizing down.
+ - Notification indicator on back button in chat and info on mobile.
