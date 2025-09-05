@@ -288,6 +288,38 @@ class Messages {
     }
 
     updateActions( roomid, actions ) {
+        // First, regardless of the room, figure out if any notification sounds should be
+        // generated from these messages.
+        var roomType = undefined;
+        if (this.rooms.has(roomid)) {
+            roomType = this.rooms.get(roomid).type;
+        }
+
+        if (roomType) {
+            actions.forEach((message) => {
+                if (message.action == "join") {
+                    if (message.occupant.username != window.username) {
+                        this.eventBus.emit("notification", {"action": "join", "type": roomType});
+                    }
+                } else if (message.action == "leave") {
+                    if (message.occupant.username != window.username) {
+                        this.eventBus.emit("notification", {"action": "leave", "type": roomType});
+                    }
+                } else if (message.action == "message") {
+                    if (message.occupant.username == window.username) {
+                        this.eventBus.emit("notification", {"action": "messageSend", "type": roomType})
+                    } else {
+                        let highlighted = this.wasHighlighted(message.details);
+                        if (highlighted) {
+                            this.eventBus.emit("notification", {"action": "mention", "type": roomType});
+                        } else {
+                            this.eventBus.emit("notification", {"action": "messageReceive", "type": roomType});
+                        }
+                    }
+                }
+            });
+        }
+
         if (roomid != this.roomid) {
             // Must be an out of date lookup, ignore it.
             return;

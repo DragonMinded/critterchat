@@ -1,6 +1,5 @@
 import $ from "jquery";
-
-const audio_prefs = ['CHAT_SENT', 'CHAT_RECEIVED', 'MESSAGE_SENT', 'MESSAGE_RECEIVED', 'MENTIONED'];
+import { AUDIO_PREFS } from "../common.js";
 
 class EditPreferences {
     constructor( eventBus, inputState ) {
@@ -22,7 +21,7 @@ class EditPreferences {
 
             if (this.preferencesLoaded) {
                 let set_audio_notifs = [];
-                audio_prefs.forEach((pref) => {
+                AUDIO_PREFS.forEach((pref) => {
                     if ($('#editpreferences-audio-notification-' + pref.toLowerCase()).prop('checked')) {
                         set_audio_notifs.push(pref);
                     }
@@ -47,7 +46,7 @@ class EditPreferences {
             const file = event.target.files[0];
 
             var key = "";
-            audio_prefs.forEach((pref) => {
+            AUDIO_PREFS.forEach((pref) => {
                 const expected = 'editpreferences-audio-notification-' + pref.toLowerCase() + '-file';
                 if (jqe.attr('id') == expected) {
                     key = pref;
@@ -74,7 +73,7 @@ class EditPreferences {
 
             const jqe = $(event.target);
             var key = "";
-            audio_prefs.forEach((pref) => {
+            AUDIO_PREFS.forEach((pref) => {
                 const expected = 'editpreferences-audio-notification-' + pref.toLowerCase() + '-preview';
                 if (jqe.attr('id') == expected) {
                     key = pref;
@@ -94,7 +93,7 @@ class EditPreferences {
             $('#editpreferences-form').modal();
             $('#editpreferences-title-notifications').prop('checked', this.preferences.title_notifs);
 
-            audio_prefs.forEach((pref) => {
+            AUDIO_PREFS.forEach((pref) => {
                 const checked = this.preferences.audio_notifs.includes(pref);
                 const sound = this.preferences.notif_sounds[pref];
 

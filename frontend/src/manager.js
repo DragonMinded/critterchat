@@ -7,6 +7,7 @@ import { Info } from "./info.js";
 import { Search } from "./search.js";
 import { InputState } from "./inputstate.js";
 import { ScreenState } from "./screenstate.js";
+import { AudioNotifications } from "./components/audionotifs.js";
 
 import { escapeHtml, flash, flashHook } from "./utils.js";
 import { displayInfo } from "./modals/infomodal.js";
@@ -24,6 +25,7 @@ export function manager(socket) {
     var messagesInst = new Messages(eventBus, screenState, inputState, size, visibility);
     var infoInst = new Info(eventBus, screenState, inputState, size, visibility);
     var searchInst = new Search(eventBus, screenState, inputState);
+    var notifInst = new AudioNotifications(eventBus);
 
     // Ensure any server-generated messages are closeable.
     flashHook();
@@ -138,6 +140,7 @@ export function manager(socket) {
         menuInst.setPreferences(msg);
         messagesInst.setPreferences(msg);
         infoInst.setPreferences(msg);
+        notifInst.setPreferences(msg);
     });
 
     socket.on('chathistory', (msg) => {
