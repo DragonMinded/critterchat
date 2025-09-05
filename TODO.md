@@ -1,7 +1,6 @@
 TODO For Installable
 ====================
 
- - Fix cachebusting only working on minified JS change, and not on html or css changes.
  - Setting for keeping public rooms on top of the sorted LHS list.
  - Support being able to delete a chat icon or your own icon.
 

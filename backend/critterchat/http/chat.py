@@ -1,3 +1,4 @@
+import hashlib
 import json
 import os
 from flask import Blueprint, Response, render_template
@@ -17,8 +18,30 @@ chat = Blueprint(
 )
 
 
+FINGERPRINT_INCLUDE_FILES = [
+    "autocomplete.css",
+    "chat.css",
+    "emojisearch.css",
+    "jquery.modal.min.css",
+]
+
+
+def _get_fingerprint_hash() -> str:
+    # Intentionally not caching, because if we cache this but not the below chat.js,
+    # then on deploy users might get two notifications for an update instead of one
+    # depending on how fast the deploy happens.
+
+    file_hash = hashlib.md5()
+    for file in FINGERPRINT_INCLUDE_FILES:
+        filepath = os.path.join(static_location, file)
+        with open(filepath, "rb") as bfp:
+            file_hash.update(bfp.read())
+
+    return file_hash.hexdigest()
+
+
 def _get_frontend_filename() -> str:
-    # Attempt to look up our frontend JS.
+    # Attempt to look up our frontend JS, used also for cache-busting.
     jspath = os.path.join(static_location, "webpack-assets.json")
     with open(jspath, "rb") as bfp:
         jsdata = bfp.read().decode('utf-8')
@@ -46,7 +69,7 @@ def home() -> Response:
 
     username = None if (not g.user) else g.user.username
     jsname = _get_frontend_filename()
-    cachebust = _get_frontend_version()
+    cachebust = _get_frontend_version() + "-" + _get_fingerprint_hash()
 
     return Response(render_template(
         "home/chat.html",
@@ -65,7 +88,7 @@ def home() -> Response:
 @chat.route("/chat/version.json")
 @jsonify
 def version() -> Dict[str, object]:
-    return {"js": _get_frontend_version()}
+    return {"js": _get_frontend_version() + "-" + _get_fingerprint_hash()}
 
 
 app.register_blueprint(chat)
