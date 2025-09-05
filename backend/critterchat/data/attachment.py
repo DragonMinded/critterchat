@@ -229,7 +229,6 @@ class AttachmentData(BaseData):
         sql = """
             SELECT
                 attachment.id AS attachment_id, attachment.system AS `system`, attachment.content_type AS content_type,
-                emote.alias AS alias
                 notification.type AS type
             FROM notification
             JOIN attachment ON attachment.id = notification.attachment_id

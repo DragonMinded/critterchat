@@ -73,6 +73,7 @@ class UserService:
         title_notifs: Optional[bool] = None,
         audio_notifs: Optional[Set[str]] = None,
         notif_sounds: Optional[Dict[str, bytes]] = None,
+        notif_sounds_delete: Optional[Set[str]] = None,
     ) -> None:
         prefs = self.__data.user.get_preferences(userid)
         if not prefs:
@@ -117,6 +118,19 @@ class UserService:
                             raise UserServiceException("Could not insert new user notification sound!")
                         self.__attachments.put_attachment_data(attachmentid, actual_data)
                         self.__data.attachment.set_notification(userid, str(actual.name), attachmentid)
+
+        # Now, handle deleting any deleted notification sounds.
+        for alias in notif_sounds_delete or {}:
+            try:
+                actual = UserNotification[alias]
+            except KeyError:
+                continue
+
+            existing = self.__data.attachment.get_notification(userid, str(actual.name))
+            if existing:
+                self.__data.attachment.remove_notification(userid, str(actual.name))
+                self.__attachments.delete_attachment_data(existing.id)
+                self.__data.attachment.remove_attachment(existing.id)
 
         # Now, figure out what notifications should be enabled based on what
         # sounds are uploaded.

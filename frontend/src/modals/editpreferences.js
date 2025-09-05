@@ -9,6 +9,7 @@ class EditPreferences {
         this.preferencesLoaded = false;
         this.sounds = {};
         this.newnotifications = {};
+        this.deletednotifications = {};
 
         $( '#editpreferences-form' ).on( 'submit', (event) => {
             event.preventDefault();
@@ -31,6 +32,7 @@ class EditPreferences {
                     'title_notifs': $('#editpreferences-title-notifications').is(":checked"),
                     'audio_notifs': set_audio_notifs,
                     'notif_sounds': this.newnotifications,
+                    'notif_sounds_delete': Object.keys(this.deletednotifications),
                 });
             }
         });
@@ -57,12 +59,15 @@ class EditPreferences {
                 var fr = new FileReader();
                 fr.onload = () => {
                     this.newnotifications[key] = fr.result;
+                    delete this.deletednotifications[key];
 
                     // Also auto-check since that would be a default assumption when uploading a file.
                     $('#editpreferences-audio-notification-' + key.toLowerCase()).prop('checked', true);
 
                     this.sounds[key] = new Audio(fr.result);
+
                     $('#editpreferences-audio-notification-' + key.toLowerCase() + '-preview').show();
+                    $('#editpreferences-audio-notification-' + key.toLowerCase() + '-cancel').show();
                 };
                 fr.readAsDataURL(file);
             }
@@ -72,7 +77,7 @@ class EditPreferences {
             event.preventDefault();
 
             const jqe = $(event.target);
-            var key = "";
+            var key = undefined;
             AUDIO_PREFS.forEach((pref) => {
                 const expected = 'editpreferences-audio-notification-' + pref.toLowerCase() + '-preview';
                 if (jqe.attr('id') == expected) {
@@ -82,6 +87,31 @@ class EditPreferences {
 
             if (key && this.sounds[key]) {
                 this.sounds[key].play();
+            }
+        });
+
+        $( 'img.cancel' ).on('click', (event) => {
+            event.preventDefault();
+
+            const jqe = $(event.target);
+            var key = undefined;
+            AUDIO_PREFS.forEach((pref) => {
+                const expected = 'editpreferences-audio-notification-' + pref.toLowerCase() + '-cancel';
+                if (jqe.attr('id') == expected) {
+                    key = pref;
+                }
+            });
+
+            if (key) {
+                delete this.sounds[key];
+                delete this.newnotifications[key];
+                this.deletednotifications[key] = "";
+
+                $('#editpreferences-audio-notification-' + key.toLowerCase() + '-preview').hide();
+                $('#editpreferences-audio-notification-' + key.toLowerCase() + '-cancel').hide();
+
+                // Also auto-uncheck since that would be a default assumption when deleting a notification sound.
+                $('#editpreferences-audio-notification-' + key.toLowerCase()).prop('checked', false);
             }
         });
     }
@@ -102,8 +132,10 @@ class EditPreferences {
                 if (sound) {
                     this.sounds[pref] = new Audio(sound);
                     $('#editpreferences-audio-notification-' + pref.toLowerCase() + '-preview').show();
+                    $('#editpreferences-audio-notification-' + pref.toLowerCase() + '-cancel').show();
                 } else {
                     $('#editpreferences-audio-notification-' + pref.toLowerCase() + '-preview').hide();
+                    $('#editpreferences-audio-notification-' + pref.toLowerCase() + '-cancel').hide();
                 }
             });
         }
@@ -112,6 +144,7 @@ class EditPreferences {
     setPreferences( preferences ) {
         this.preferences = preferences;
         this.newnotifications = {};
+        this.deletednotifications = {};
         this.preferencesLoaded = true;
     }
 }

@@ -523,6 +523,12 @@ def updatepreferences(json: Dict[str, object]) -> None:
             new_audio_notifs = {str(x) for x in new_audio_notifs}
         else:
             new_audio_notifs = None
+    notif_delete = json.get('notif_sounds_delete', None)
+    if notif_delete is not None:
+        if isinstance(notif_delete, list):
+            notif_delete = {str(x) for x in notif_delete}
+        else:
+            notif_delete = None
 
     new_notif_sounds: Dict[str, bytes] = {}
     notif_dict = json.get('notif_sounds', {}) or {}
@@ -553,6 +559,7 @@ def updatepreferences(json: Dict[str, object]) -> None:
         title_notifs=new_title_notifs,
         audio_notifs=new_audio_notifs,
         notif_sounds=new_notif_sounds,
+        notif_sounds_delete=notif_delete,
     )
 
 

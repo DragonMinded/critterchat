@@ -524,7 +524,7 @@ div.editpreferences > div.actions
     gap: 10px;
 }
 
-div.preference img.preview {
+div.preference img.preview, div.preference img.cancel {
     margin-bottom: -2px;
 }
 
