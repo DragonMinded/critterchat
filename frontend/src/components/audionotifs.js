@@ -1,4 +1,4 @@
-import { CHAT_SENT, CHAT_RECEIVED, MESSAGE_SENT, MESSAGE_RECEIVED, MENTIONED, AUDIO_PREFS } from "../common.js";
+import { CHAT_SENT, MESSAGE_SENT, CHAT_RECEIVED, MESSAGE_RECEIVED, MENTIONED, USER_JOINED, USER_LEFT, AUDIO_PREFS } from "../common.js";
 
 class AudioNotifications {
     constructor( eventBus ) {
@@ -31,7 +31,11 @@ class AudioNotifications {
                         sound = this.sounds[MESSAGE_RECEIVED];
                     }
                 }
-            }
+            } else if (notif.action == "join") {
+                sound = this.sounds[USER_JOINED];
+            } else if (notif.action == "leave") {
+                sound = this.sounds[USER_LEFT];
+            } 
 
             if (sound) {
                 sound.play();

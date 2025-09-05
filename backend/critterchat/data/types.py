@@ -86,6 +86,8 @@ class UserNotification(IntEnum):
     MESSAGE_SENT = 0x4
     MESSAGE_RECEIVED = 0x8
     MENTIONED = 0x10
+    USER_JOINED = 0x20
+    USER_LEFT = 0x40
 
 
 class UserPreferences:
