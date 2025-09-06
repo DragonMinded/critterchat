@@ -91,8 +91,9 @@ class UserNotification(IntEnum):
 
 
 class UserPreferences:
-    def __init__(self, userid: UserID, *, title_notifs: bool, mobile_audio_notifs: bool, audio_notifs: Set[UserNotification]) -> None:
+    def __init__(self, userid: UserID, *, rooms_on_top: bool, title_notifs: bool, mobile_audio_notifs: bool, audio_notifs: Set[UserNotification]) -> None:
         self.userid = userid
+        self.rooms_on_top = rooms_on_top
         self.title_notifs = title_notifs
         self.mobile_audio_notifs = mobile_audio_notifs
         self.audio_notifs = audio_notifs
@@ -100,6 +101,7 @@ class UserPreferences:
 
     def to_dict(self) -> Dict[str, object]:
         return {
+            "rooms_on_top": self.rooms_on_top,
             "title_notifs": self.title_notifs,
             "mobile_audio_notifs": self.mobile_audio_notifs,
             "audio_notifs": [str(an.name) for an in self.audio_notifs],

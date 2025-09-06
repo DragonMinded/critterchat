@@ -59,6 +59,7 @@ class UserService:
         if not prefs:
             prefs = UserPreferences(
                 userid=userid,
+                rooms_on_top=False,
                 title_notifs=True,
                 mobile_audio_notifs=False,
                 audio_notifs=set(),
@@ -71,6 +72,7 @@ class UserService:
     def update_preferences(
         self,
         userid: UserID,
+        rooms_on_top: Optional[bool] = None,
         title_notifs: Optional[bool] = None,
         mobile_audio_notifs: Optional[bool] = None,
         audio_notifs: Optional[Set[str]] = None,
@@ -81,12 +83,15 @@ class UserService:
         if not prefs:
             prefs = UserPreferences(
                 userid=userid,
+                rooms_on_top=False,
                 title_notifs=True,
                 mobile_audio_notifs=False,
                 audio_notifs=set(),
             )
 
         # First, update any changed booleans/flags/etc.
+        if rooms_on_top is not None:
+            prefs.rooms_on_top = rooms_on_top
         if title_notifs is not None:
             prefs.title_notifs = title_notifs
         if mobile_audio_notifs is not None:

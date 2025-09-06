@@ -102,21 +102,42 @@ class Menu {
         this.updateTitleBadge();
     }
 
-    setRooms( rooms ) {
-        // Redraw if the room length or ordering changed, otherwise refresh in place.
-        var needsEmpty = false;
-        if (rooms.length == this.rooms.length) {
-            for (var i = 0; i < rooms.length; i++) {
-                if (rooms[i].id != this.rooms[i].id) {
-                    needsEmpty = true;
-                    break;
+    setRooms( rooms, forceDraw ) {
+        // First, sort rooms based on preferences.
+        var sortedRooms = [];
+        if (this.preferencesLoaded && this.preferences.rooms_on_top) {
+            rooms.forEach((room) => {
+                if (room.type == "room") {
+                    sortedRooms.push(room);
                 }
-            }
+            });
+            rooms.forEach((room) => {
+                if (room.type == "chat") {
+                    sortedRooms.push(room);
+                }
+            });
         } else {
-            needsEmpty = true;
+            sortedRooms = rooms;
         }
 
-        // Make sure to preserve badge counts.
+        // Redraw if the room length or ordering changed, otherwise refresh in place.
+        var needsEmpty = false;
+        if (forceDraw) {
+            needsEmpty = true;
+        } else {
+            if (sortedRooms.length == this.rooms.length) {
+                for (var i = 0; i < sortedRooms.length; i++) {
+                    if (sortedRooms[i].id != this.rooms[i].id) {
+                        needsEmpty = true;
+                        break;
+                    }
+                }
+            } else {
+                needsEmpty = true;
+            }
+        }
+
+        // Make sure to preserve badge counts since we're overwriting our rooms list.
         var counts = {};
         this.rooms.forEach((room) => {
             counts[room.id] = room.count;
@@ -126,9 +147,14 @@ class Menu {
         this.rooms = rooms.filter(() => true);
         this.roomsLoaded = true;
 
-        // Copy badge counts over.
+        // Copy badge counts over to both our stored and rendered lists.
         this.rooms.forEach((room) => {
             room.count = counts[room.id];
+        });
+        sortedRooms.forEach((room) => {
+            if (counts[room.id] != undefined) {
+                room.count = counts[room.id];
+            }
         });
 
         // If we re-arranged anything, nuke our existing.
@@ -137,8 +163,8 @@ class Menu {
             $('div.menu > div.rooms').empty();
         }
 
-        // Draw, and then select the room.
-        this.rooms.forEach((room) => this.drawRoom(room));
+        // Draw the sorted order, and then select the room.
+        sortedRooms.forEach((room) => this.drawRoom(room));
         $('div.menu > div.rooms').scrollTop(scrollPos);
 
         if (this.lastSettingsLoaded) {
@@ -164,6 +190,9 @@ class Menu {
         this.preferencesLoaded = true;
         this.editPreferences.setPreferences( preferences );
         this.updateTitleBadge();
+        if (this.roomsLoaded) {
+            this.setRooms(this.rooms, true);
+        }
     }
 
     drawRoom( room ) {
@@ -184,7 +213,7 @@ class Menu {
             } else {
                 html    += '    <div class="badge empty"><div class="count"></div></div>';
             }
-            if (type == 'room') {
+            if (room.type == 'room') {
                 html    += '    <div class="room-indicator">#</div>';
             }
             html    += '  </div>';

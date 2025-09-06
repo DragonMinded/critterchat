@@ -514,6 +514,9 @@ def updatepreferences(json: Dict[str, object]) -> None:
         return
 
     # Save preferences for this user.
+    new_rooms_on_top = json.get('rooms_on_top', None)
+    if new_rooms_on_top is not None:
+        new_rooms_on_top = bool(new_rooms_on_top)
     new_title_notifs = json.get('title_notifs', None)
     if new_title_notifs is not None:
         new_title_notifs = bool(new_title_notifs)
@@ -559,6 +562,7 @@ def updatepreferences(json: Dict[str, object]) -> None:
 
     userservice.update_preferences(
         userid,
+        rooms_on_top=new_rooms_on_top,
         title_notifs=new_title_notifs,
         mobile_audio_notifs=new_mobile_audio_notifs,
         audio_notifs=new_audio_notifs,

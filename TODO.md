@@ -1,7 +1,6 @@
 TODO For Installable
 ====================
 
- - Setting for keeping public rooms on top of the sorted LHS list.
  - Support being able to delete a chat icon or your own icon.
  - Handle CouldntDecodeError instead of crashing when converting audio.
  - Favicon support.
