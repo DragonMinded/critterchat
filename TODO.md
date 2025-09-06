@@ -3,6 +3,7 @@ TODO For Installable
 
  - Setting for keeping public rooms on top of the sorted LHS list.
  - Support being able to delete a chat icon or your own icon.
+ - Handle CouldntDecodeError instead of crashing when converting audio.
 
 TODO For Post Test Build
 ========================
@@ -14,6 +15,7 @@ TODO For Post Test Build
  - Mentioning typeahead should allow searching by display nick as well as username.
  - Support creating an account flow with ability to disable instance-side and setting for auto-activate or moderator activate.
  - Support editing your nickname per-chat.
+ - Source code documentation and comments, use JS feature for private methods and attributes.
  - Protocol documentation.
  - Favicon support.
  - Delayed loading of all emoji/emotes until after search/picker selected.
