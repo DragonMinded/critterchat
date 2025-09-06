@@ -517,6 +517,9 @@ def updatepreferences(json: Dict[str, object]) -> None:
     new_title_notifs = json.get('title_notifs', None)
     if new_title_notifs is not None:
         new_title_notifs = bool(new_title_notifs)
+    new_mobile_audio_notifs = json.get('mobile_audio_notifs', None)
+    if new_mobile_audio_notifs is not None:
+        new_mobile_audio_notifs = bool(new_mobile_audio_notifs)
     new_audio_notifs = json.get('audio_notifs', None)
     if new_audio_notifs is not None:
         if isinstance(new_audio_notifs, list):
@@ -557,6 +560,7 @@ def updatepreferences(json: Dict[str, object]) -> None:
     userservice.update_preferences(
         userid,
         title_notifs=new_title_notifs,
+        mobile_audio_notifs=new_mobile_audio_notifs,
         audio_notifs=new_audio_notifs,
         notif_sounds=new_notif_sounds,
         notif_sounds_delete=notif_delete,

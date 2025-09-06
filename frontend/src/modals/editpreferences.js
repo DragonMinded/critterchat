@@ -30,6 +30,7 @@ class EditPreferences {
 
                 this.eventBus.emit('updatepreferences', {
                     'title_notifs': $('#editpreferences-title-notifications').is(":checked"),
+                    'mobile_audio_notifs': $('#editpreferences-mobile-audio-notifications').is(":checked"),
                     'audio_notifs': set_audio_notifs,
                     'notif_sounds': this.newnotifications,
                     'notif_sounds_delete': Object.keys(this.deletednotifications),
@@ -122,6 +123,7 @@ class EditPreferences {
 
             $('#editpreferences-form').modal();
             $('#editpreferences-title-notifications').prop('checked', this.preferences.title_notifs);
+            $('#editpreferences-mobile-audio-notifications').prop('checked', this.preferences.mobile_audio_notifs);
 
             AUDIO_PREFS.forEach((pref) => {
                 const checked = this.preferences.audio_notifs.includes(pref);

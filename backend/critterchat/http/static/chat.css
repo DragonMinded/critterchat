@@ -1,6 +1,7 @@
 :root {
     --application-background: #ffffff;
     --application-text: #000000;
+    --application-subtle-text: #5f5f5f;
 
     --sidebar-background: #dddddd;
     --sidebar-text: #000000;
@@ -530,6 +531,10 @@ div.preference img.preview, div.preference img.cancel {
 
 div.preference input.notification {
     padding-bottom: 10px;
+}
+
+div.preference div.explain {
+    color: var(--application-subtle-text);
 }
 
 div.warning > div.warning-text, div.information > div.information-text {

@@ -75,6 +75,7 @@ preferences = Table(
     metadata,
     Column("user_id", Integer, nullable=False, unique=True, index=True),
     Column("title_notifs", Boolean),
+    Column("mobile_audio_notifs", Boolean),
     Column("audio_notifs", Integer),
     Column("timestamp", Integer),
     mysql_charset="utf8mb4",
@@ -385,6 +386,7 @@ class UserData(BaseData):
         return UserPreferences(
             userid=UserID(result['user_id']),
             title_notifs=bool(result['title_notifs']),
+            mobile_audio_notifs=bool(result['mobile_audio_notifs']),
             audio_notifs=notifications,
         )
 
@@ -416,14 +418,15 @@ class UserData(BaseData):
 
         sql = """
             INSERT INTO `preferences`
-                (`user_id`, `title_notifs`, `audio_notifs`, `timestamp`)
-            VALUES (:userid, :title_notifs, :audio_notifs, :ts)
+                (`user_id`, `title_notifs`, `mobile_audio_notifs`, `audio_notifs`, `timestamp`)
+            VALUES (:userid, :title_notifs, :mobile_audio_notifs, :audio_notifs, :ts)
             ON DUPLICATE KEY UPDATE
-            `title_notifs` = :title_notifs, `audio_notifs` = :audio_notifs, `timestamp` = :ts
+            `title_notifs` = :title_notifs, `mobile_audio_notifs` = :mobile_audio_notifs, `audio_notifs` = :audio_notifs, `timestamp` = :ts
         """
         self.execute(sql, {
             "userid": preferences.userid,
             "title_notifs": preferences.title_notifs,
+            "mobile_audio_notifs": preferences.mobile_audio_notifs,
             "audio_notifs": audio_notifs,
             "ts": Time.now()
         })

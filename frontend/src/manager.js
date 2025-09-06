@@ -25,7 +25,7 @@ export function manager(socket) {
     var messagesInst = new Messages(eventBus, screenState, inputState, size, visibility);
     var infoInst = new Info(eventBus, screenState, inputState, size, visibility);
     var searchInst = new Search(eventBus, screenState, inputState);
-    var notifInst = new AudioNotifications(eventBus);
+    var notifInst = new AudioNotifications(eventBus, size, visibility);
 
     // Ensure any server-generated messages are closeable.
     flashHook();

@@ -3,8 +3,10 @@ import { flash } from "../utils.js";
 import { CHAT_SENT, MESSAGE_SENT, CHAT_RECEIVED, MESSAGE_RECEIVED, MENTIONED, USER_JOINED, USER_LEFT, AUDIO_PREFS } from "../common.js";
 
 class AudioNotifications {
-    constructor( eventBus ) {
+    constructor( eventBus, initialSize, initialVisibility ) {
         this.eventBus = eventBus;
+        this.size = initialSize;
+        this.visibility = initialVisibility;
         this.sounds = {};
         this.preferences = {};
         this.preferencesLoaded = false;
@@ -44,6 +46,15 @@ class AudioNotifications {
                 sound.play();
             }
         });
+
+        eventBus.on( 'resize', (newSize) => {
+            this.size = newSize;
+            this.cacheAudio();
+        });
+
+        eventBus.on( 'updatevisibility', (newVisibility) => {
+            this.visibility = newVisibility;
+        });
     }
 
     setPreferences( preferences ) {
@@ -67,7 +78,14 @@ class AudioNotifications {
     }
 
     cacheAudio() {
+        // Start with a clean slate so that we can delete existing sounds if they're disabled.
         this.sounds = {};
+
+        const mobile_notifs = this.preferences.mobile_audio_notifs;
+        if (this.size == "mobile" && !mobile_notifs) {
+            return;
+        }
+
         AUDIO_PREFS.forEach((pref) => {
             const checked = this.preferences.audio_notifs.includes(pref);
             const sound = this.preferences.notif_sounds[pref];

@@ -4,6 +4,7 @@ TODO For Installable
  - Setting for keeping public rooms on top of the sorted LHS list.
  - Support being able to delete a chat icon or your own icon.
  - Handle CouldntDecodeError instead of crashing when converting audio.
+ - Favicon support.
 
 TODO For Post Test Build
 ========================
@@ -17,7 +18,6 @@ TODO For Post Test Build
  - Support editing your nickname per-chat.
  - Source code documentation and comments, use JS feature for private methods and attributes.
  - Protocol documentation.
- - Favicon support.
  - Delayed loading of all emoji/emotes until after search/picker selected.
  - Fix modal popover not allowing scrollable content when sizing down.
  - Notification indicator on back button in chat and info on mobile.

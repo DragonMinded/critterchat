@@ -60,6 +60,7 @@ class UserService:
             prefs = UserPreferences(
                 userid=userid,
                 title_notifs=True,
+                mobile_audio_notifs=False,
                 audio_notifs=set(),
             )
 
@@ -71,6 +72,7 @@ class UserService:
         self,
         userid: UserID,
         title_notifs: Optional[bool] = None,
+        mobile_audio_notifs: Optional[bool] = None,
         audio_notifs: Optional[Set[str]] = None,
         notif_sounds: Optional[Dict[str, bytes]] = None,
         notif_sounds_delete: Optional[Set[str]] = None,
@@ -80,12 +82,15 @@ class UserService:
             prefs = UserPreferences(
                 userid=userid,
                 title_notifs=True,
+                mobile_audio_notifs=False,
                 audio_notifs=set(),
             )
 
         # First, update any changed booleans/flags/etc.
         if title_notifs is not None:
             prefs.title_notifs = title_notifs
+        if mobile_audio_notifs is not None:
+            prefs.mobile_audio_notifs = mobile_audio_notifs
         if audio_notifs is not None:
             try:
                 prefs.audio_notifs = {UserNotification[an] for an in audio_notifs}
