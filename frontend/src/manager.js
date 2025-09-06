@@ -43,13 +43,13 @@ export function manager(socket) {
     setInterval(checkForUpdates, 1000 * 15);
 
     socket.on('connect', () => {
-        // Ask for our list of rooms that we're in.
-        socket.emit('roomlist', {});
-
         // Ask for our profile and last settings so we can refresh where we left off.
         socket.emit('profile', {});
         socket.emit('preferences', {});
         socket.emit('lastsettings', {});
+
+        // Ask for our list of rooms that we're in.
+        socket.emit('roomlist', {});
 
         // Ask for any server MOTD or admin messages.
         socket.emit('motd', {});

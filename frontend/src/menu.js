@@ -380,6 +380,10 @@ class Menu {
     }
 
     updateTitleBadge() {
+        if (!this.roomsLoaded) {
+            return;
+        }
+
         var hasBadges = false;
         this.rooms.forEach((room) => {
             if (room.count) {
