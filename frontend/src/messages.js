@@ -18,6 +18,7 @@ class Messages {
         this.messages = [];
         this.occupants = [];
         this.rooms = new Map();
+        this.pendingroomid = "";
         this.roomid = "";
         this.roomType = "chat";
         this.autoscroll = true;
@@ -180,23 +181,32 @@ class Messages {
 
         this.rooms = newRooms;
         this.roomsLoaded = true;
+
+        if (this.pendingroomid) {
+            this.setRoom(this.pendingroomid);
+        }
     }
 
     setRoom( roomid ) {
-        if (roomid != this.roomid) {
-            if (this.rooms.has(roomid)) {
-                this.messages = [];
-                this.roomid = roomid;
-                this.lastAction = {};
-                this.autoscroll = true;
-                this.occupants = [];
-                this.occupantsLoaded = false;
-                this.roomType = this.rooms.get(roomid).type;
-                this.updateUsers();
+        if (this.roomsLoaded) {
+            this.pendingroomid = "";
+            if (roomid != this.roomid) {
+                if (this.rooms.has(roomid)) {
+                    this.messages = [];
+                    this.roomid = roomid;
+                    this.lastAction = {};
+                    this.autoscroll = true;
+                    this.occupants = [];
+                    this.occupantsLoaded = false;
+                    this.roomType = this.rooms.get(roomid).type;
+                    this.updateUsers();
 
-                $('div.chat > div.conversation-wrapper > div.conversation').empty();
-                $( '#message-actions' ).attr('roomid', roomid);
+                    $('div.chat > div.conversation-wrapper > div.conversation').empty();
+                    $( '#message-actions' ).attr('roomid', roomid);
+                }
             }
+        } else {
+            this.pendingroomid = roomid;
         }
     }
 
