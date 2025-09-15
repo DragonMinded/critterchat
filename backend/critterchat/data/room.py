@@ -6,7 +6,7 @@ from sqlalchemy import Table, Column
 from sqlalchemy.schema import UniqueConstraint
 from sqlalchemy.types import String, Integer, Boolean, Text
 
-from ..common import Time
+from ..common import Time, convert_spaces
 from .base import BaseData, metadata
 from .types import (
     Action,
@@ -465,10 +465,10 @@ class RoomData(BaseData):
         """
         Given a result set, spawn an occupant for that result.
         """
-        nickname = result['onick']
-        if not nickname:
-            nickname = result['pnick']
-        if not nickname:
+        nickname = result['onick'] or ""
+        if not convert_spaces(nickname).strip():
+            nickname = result['pnick'] or ""
+        if not convert_spaces(nickname).strip():
             nickname = result['unick']
 
         icon = result['oicon']
