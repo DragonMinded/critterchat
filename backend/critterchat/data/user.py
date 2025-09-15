@@ -8,7 +8,7 @@ from typing import Any, List, Optional, Tuple
 from typing_extensions import Final
 from passlib.hash import pbkdf2_sha512  # type: ignore
 
-from ..common import Time
+from ..common import Time, convert_spaces
 from .base import BaseData, metadata
 from .types import (
     ActionType,
@@ -438,8 +438,8 @@ class UserData(BaseData):
         """
         Given a result set, spawn a user for that result.
         """
-        nickname = result['pname']
-        if not nickname:
+        nickname = (result['pname'] or "").strip()
+        if not convert_spaces(nickname).strip():
             nickname = result['uname']
 
         permissions = set()
@@ -503,7 +503,7 @@ class UserData(BaseData):
         else:
             iconid = None
 
-        if (user.username == user.nickname) or (not user.nickname):
+        if (user.username == user.nickname) or (not convert_spaces(user.nickname).strip()):
             nickname = None
         else:
             nickname = user.nickname

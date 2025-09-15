@@ -5,7 +5,7 @@ from typing import Any, Dict, List, Optional, Set, cast
 from typing_extensions import Final
 
 from .app import socketio, config, request
-from ..common import AESCipher, Time
+from ..common import AESCipher, Time, convert_spaces
 from ..service import EmoteService, UserService, MessageService, UserServiceException, MessageServiceException
 from ..data import (
     Data,
@@ -470,8 +470,12 @@ def updateprofile(json: Dict[str, object]) -> None:
         return
 
     # Save last settings for this user.
-    newname = str(json.get('name', ''))
+    newname = str(json.get('name', '')).strip()
     newicon = str(json.get('icon', ''))
+
+    # We allow spaces inside names, but not space-only names.
+    if not convert_spaces(newname).strip():
+        newname = ""
 
     if newname and len(newname) > 255:
         socketio.emit('error', {'error': 'Your nickname is too long!'}, room=request.sid)
@@ -560,15 +564,18 @@ def updatepreferences(json: Dict[str, object]) -> None:
 
             new_notif_sounds[name] = notif_data
 
-    userservice.update_preferences(
-        userid,
-        rooms_on_top=new_rooms_on_top,
-        title_notifs=new_title_notifs,
-        mobile_audio_notifs=new_mobile_audio_notifs,
-        audio_notifs=new_audio_notifs,
-        notif_sounds=new_notif_sounds,
-        notif_sounds_delete=notif_delete,
-    )
+    try:
+        userservice.update_preferences(
+            userid,
+            rooms_on_top=new_rooms_on_top,
+            title_notifs=new_title_notifs,
+            mobile_audio_notifs=new_mobile_audio_notifs,
+            audio_notifs=new_audio_notifs,
+            notif_sounds=new_notif_sounds,
+            notif_sounds_delete=notif_delete,
+        )
+    except UserServiceException as e:
+        socketio.emit('error', {'error': str(e)}, room=request.sid)
 
 
 @socketio.on('chathistory')  # type: ignore
@@ -637,8 +644,10 @@ def message(json: Dict[str, object]) -> None:
         return
 
     roomid = Room.to_id(str(json.get('roomid')))
-    message = json.get('message')
-    if roomid and message:
+
+    # While we allow funny formatting and spaces, we don't allow space-only messages.
+    message = str(json.get('message')).strip()
+    if roomid and convert_spaces(message).strip():
         rooms = messageservice.get_joined_rooms(userid)
         joinedrooms = {room.id for room in rooms}
         if roomid not in joinedrooms:
@@ -646,7 +655,7 @@ def message(json: Dict[str, object]) -> None:
             return
 
         try:
-            messageservice.add_message(roomid, userid, str(message))
+            messageservice.add_message(roomid, userid, message)
         except MessageServiceException as e:
             socketio.emit('error', {'error': str(e)}, room=request.sid)
 
@@ -763,9 +772,14 @@ def updateroom(json: Dict[str, object]) -> None:
     roomid = Room.to_id(str(json.get('roomid')))
     if roomid is not None:
         details = cast(Dict[str, object], json.get('details', {}))
-        newname = str(details.get('name', ''))
-        newtopic = str(details.get('topic', ''))
+        newname = str(details.get('name', '')).strip()
+        newtopic = str(details.get('topic', '')).strip()
         newicon = str(details.get('icon', ''))
+
+        if not convert_spaces(newname).strip():
+            newname = ""
+        if not convert_spaces(newtopic).strip():
+            newtopic = ""
 
         rooms = messageservice.get_joined_rooms(userid)
         joinedrooms = {room.id for room in rooms}
