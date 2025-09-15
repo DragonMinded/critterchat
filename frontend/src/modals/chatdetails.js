@@ -50,6 +50,9 @@ class ChatDetails {
         if (this.roomLoaded && this.room.id == roomid) {
             $.modal.close();
 
+            // Start with a fresh form (clear bad file inputs).
+            $('#chatdetails-form')[0].reset()
+
             // Make sure we don't accidentally set a previous icon.
             this.icon = "";
 

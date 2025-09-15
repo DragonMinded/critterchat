@@ -2,7 +2,6 @@ TODO For Installable
 ====================
 
  - Support being able to delete a chat icon or your own icon.
- - Handle CouldntDecodeError instead of crashing when converting audio.
  - Favicon support.
 
 TODO For Post Test Build

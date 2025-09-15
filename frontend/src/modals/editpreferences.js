@@ -122,7 +122,11 @@ class EditPreferences {
         if (this.preferencesLoaded) {
             $.modal.close();
 
-            $('#editpreferences-form').modal();
+            // Make sure we don't have anything left over from last time.
+            this.deletednotifications = {};
+            this.newnotifications = {};
+
+            $('#editpreferences-form')[0].reset();
             $('#editpreferences-rooms-on-top').prop('checked', this.preferences.rooms_on_top);
             $('#editpreferences-title-notifications').prop('checked', this.preferences.title_notifs);
             $('#editpreferences-mobile-audio-notifications').prop('checked', this.preferences.mobile_audio_notifs);
@@ -142,6 +146,7 @@ class EditPreferences {
                     $('#editpreferences-audio-notification-' + pref.toLowerCase() + '-cancel').hide();
                 }
             });
+            $('#editpreferences-form').modal();
         }
     }
 

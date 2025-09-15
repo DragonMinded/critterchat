@@ -52,6 +52,7 @@ class EditProfile {
             // Make sure we don't accidentally set a previous icon.
             this.icon = "";
 
+            $('#editprofile-form')[0].reset();
             $('#editprofile-name').val(this.profile.nickname);
             $('#editprofile-icon').attr('src', this.profile.icon);
             $('#editprofile-form').modal();
