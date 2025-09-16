@@ -1,5 +1,6 @@
 :root {
     --application-background: #ffffff;
+    --application-icon-background: #ffffff;
     --application-text: #000000;
     --application-subtle-text: #5f5f5f;
 
@@ -26,7 +27,6 @@
     --action-text: #000000;
 
     --edit-icon-background: #dddddd;
-    --edit-icon-image-background: #ffffff;
     --edit-icon-text: #000000;
 
     --button-background: #dddddd;
@@ -194,6 +194,7 @@ div.badge > div.count {
 }
 
 div.rooms div.item div.icon img, div.results div.item div.icon img, div.occupants div.item div.icon img {
+    background: var(--application-icon-background);
     display: block;
     width: 36px;
     height: 36px;
@@ -306,6 +307,7 @@ div.top-info div.icon {
 }
 
 div.top-info div.icon img {
+    background: var(--application-icon-background);
     display: block;
     width: 36px;
     height: 36px;
@@ -433,6 +435,7 @@ div.message.highlighted {
 }
 
 div.chat div.item div.icon img {
+    background: var(--application-icon-background);
     display: block;
     width: 36px;
     height: 36px;
@@ -576,7 +579,7 @@ div.chatdetails > div.icon-wrapper, div.editprofile > div.icon-wrapper {
 }
 
 div.chatdetails div.icon img, div.editprofile div.icon img {
-    background: var(--edit-icon-image-background);
+    background: var(--application-icon-background);
     display: block;
     width: 72px;
     height: 72px;
