@@ -242,7 +242,7 @@ class Info {
                             title = "Private chat";
                             iconType = 'avatar';
                         }
-                        $( 'div.chat div.top-info div.room-indicator' ).addClass('hidden');
+                        $( 'div.top-info div.room-indicator' ).addClass('hidden');
                     } else {
                         if (room['public']) {
                             title = "Public room";
@@ -251,7 +251,7 @@ class Info {
                             title = "Private room";
                             iconType = 'avatar';
                         }
-                        $( 'div.chat div.top-info div.room-indicator' ).removeClass('hidden');
+                        $( 'div.top-info div.room-indicator' ).removeClass('hidden');
                     }
                     $( '#room-title' ).text(title);
                     if (room.type == 'room') {
@@ -262,11 +262,11 @@ class Info {
 
                     $( 'div.info div.title-wrapper' ).show();
                     $( 'div.info div.actions' ).show();
-                    $( 'div.chat div.icon' ).removeClass('room').removeClass('avatar').addClass(iconType);
-                    $( 'div.chat div.icon img' ).attr('src', room.icon);
-                    $( 'div.chat div.icon' ).removeClass('hidden');
-                    $( 'div.chat div.title' ).html(escapeHtml(room.name));
-                    $( 'div.chat div.topic' ).html(linkifyHtml(escapeHtml(room.topic), linkifyOptions));
+                    $( 'div.top-info div.icon' ).removeClass('room').removeClass('avatar').addClass(iconType);
+                    $( 'div.top-info div.icon img' ).attr('src', room.icon);
+                    $( 'div.top-info div.icon' ).removeClass('hidden');
+                    $( 'div.top-info div.title' ).html(escapeHtml(room.name));
+                    $( 'div.top-info div.topic' ).html(linkifyHtml(escapeHtml(room.topic), linkifyOptions));
                     $( '#leave-room' ).attr('roomid', roomid);
                     $( '#edit-info' ).attr('roomid', roomid);
 
@@ -295,14 +295,14 @@ class Info {
                         } else {
                             title = "Private chat";
                         }
-                        $( 'div.chat div.top-info div.room-indicator' ).addClass('hidden');
+                        $( 'div.top-info div.room-indicator' ).addClass('hidden');
                     } else {
                         if (room['public']) {
                             title = "Public room";
                         } else {
                             title = "Private room";
                         }
-                        $( 'div.chat div.top-info div.room-indicator' ).removeClass('hidden');
+                        $( 'div.top-info div.room-indicator' ).removeClass('hidden');
                     }
                     $( '#room-title' ).text(title);
                     if (room.type == 'room') {
@@ -311,8 +311,9 @@ class Info {
                         $( '#leave-type' ).text('chat');
                     }
 
-                    $( 'div.chat div.title' ).html(escapeHtml(room.name));
-                    $( 'div.chat div.topic' ).html(linkifyHtml(escapeHtml(room.topic), linkifyOptions));
+                    $( 'div.top-info div.title' ).html(escapeHtml(room.name));
+                    $( 'div.top-info div.topic' ).html(linkifyHtml(escapeHtml(room.topic), linkifyOptions));
+                    $( 'div.top-info div.icon img' ).attr('src', room.icon);
                     this.chatdetails.setRoom(room);
                 }
             });
@@ -330,8 +331,9 @@ class Info {
             $( 'div.info > div.occupants' ).empty();
             $( '#leave-room' ).attr('roomid', '');
             $( '#edit-info' ).attr('roomid', '');
-            $( 'div.chat div.title' ).html('&nbsp;');
-            $( 'div.chat div.topic' ).html('&nbsp;');
+            $( 'div.top-info div.title' ).html('&nbsp;');
+            $( 'div.top-info div.topic' ).html('&nbsp;');
+            $( 'div.top-info div.icon' ).addClass('hidden');
             $( 'div.info div.title-wrapper' ).hide();
             $( 'div.info div.actions' ).hide();
         }

@@ -160,6 +160,7 @@ class Room:
         topic: str,
         public: bool,
         iconid: Optional[AttachmentID],
+        deficonid: Optional[AttachmentID],
         oldest_action: Optional[ActionID] = None,
         last_action: int = 0,
     ) -> None:
@@ -172,7 +173,9 @@ class Room:
         self.oldest_action = oldest_action
         self.last_action = last_action
         self.iconid = iconid
+        self.deficonid = deficonid
         self.icon: Optional[str] = None
+        self.deficon: Optional[str] = None
 
     def to_dict(self) -> Dict[str, object]:
         return {
@@ -185,6 +188,7 @@ class Room:
             "oldest_action": Action.from_id(self.oldest_action) if self.oldest_action else None,
             "last_action": self.last_action,
             "icon": self.icon,
+            "deficon": self.deficon,
         }
 
     @staticmethod

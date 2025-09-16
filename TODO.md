@@ -1,7 +1,6 @@
 TODO For Installable
 ====================
 
- - Support being able to delete a chat icon or your own icon.
  - Favicon support.
 
 TODO For Post Test Build

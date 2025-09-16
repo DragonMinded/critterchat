@@ -127,6 +127,7 @@ class RoomData(BaseData):
                 public=bool(result['public']),
                 last_action=result['last_action'],
                 iconid=AttachmentID(result['icon']) if result['icon'] else None,
+                deficonid=None,
             )
             for result in cursor.mappings()
         ])
@@ -193,6 +194,7 @@ class RoomData(BaseData):
                 public=bool(result['public']),
                 last_action=result['last_action'],
                 iconid=AttachmentID(result['icon']) if result['icon'] else None,
+                deficonid=None,
             )
             for result in cursor.mappings()
         ])
@@ -222,6 +224,7 @@ class RoomData(BaseData):
                 public=bool(result['public']),
                 last_action=result['last_action'],
                 iconid=AttachmentID(result['icon']) if result['icon'] else None,
+                deficonid=None,
             )
             for result in cursor.mappings()
         ])
@@ -257,6 +260,7 @@ class RoomData(BaseData):
                 public=bool(result['public']),
                 last_action=result['last_action'],
                 iconid=AttachmentID(result['icon']) if result['icon'] else None,
+                deficonid=None,
             )
             for result in cursor.mappings()
         ])
@@ -281,6 +285,7 @@ class RoomData(BaseData):
                 public=bool(result['public']),
                 last_action=result['last_action'],
                 iconid=AttachmentID(result['icon']) if result['icon'] else None,
+                deficonid=None,
             )
             for result in cursor.mappings()
         ])
@@ -330,6 +335,7 @@ class RoomData(BaseData):
             last_action=result['last_action'],
             oldest_action=actions.get(room_id),
             iconid=AttachmentID(result['icon']) if result['icon'] else None,
+            deficonid=None,
         )
 
     def create_room(self, room: Room) -> None:

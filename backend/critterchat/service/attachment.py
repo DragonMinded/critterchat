@@ -240,6 +240,10 @@ class AttachmentService:
             room.icon = self.get_attachment_url(DefaultAvatarID)
         else:
             room.icon = self.get_attachment_url(room.iconid)
+        if room.deficonid is None:
+            room.deficon = self.get_attachment_url(DefaultAvatarID)
+        else:
+            room.deficon = self.get_attachment_url(room.deficonid)
         return room
 
     def resolve_room_icon(self, room: Room) -> Room:
@@ -247,6 +251,10 @@ class AttachmentService:
             room.icon = self.get_attachment_url(DefaultRoomID)
         else:
             room.icon = self.get_attachment_url(room.iconid)
+        if room.deficonid is None:
+            room.deficon = self.get_attachment_url(DefaultRoomID)
+        else:
+            room.deficon = self.get_attachment_url(room.deficonid)
         return room
 
     def get_attachment_url(self, attachmentid: AttachmentID) -> str:

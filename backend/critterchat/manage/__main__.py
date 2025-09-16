@@ -283,7 +283,7 @@ def create_public_room(config: Config, name: Optional[str], topic: Optional[str]
 
     data = Data(config)
     messageservice = MessageService(config, data)
-    room = Room(NewRoomID, name or "", topic or "", True, None)
+    room = Room(NewRoomID, name or "", topic or "", True, None, None)
     data.room.create_room(room)
 
     if autojoin == "on":

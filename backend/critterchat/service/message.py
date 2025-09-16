@@ -103,6 +103,7 @@ class MessageService:
                 room_type = RoomType.CHAT
                 if room.iconid is None or room.iconid in {DefaultAvatarID, DefaultRoomID}:
                     room.iconid = occupants[0].iconid
+                room.deficonid = occupants[0].iconid
             elif len(occupants) == 2:
                 not_me = [o for o in occupants if o.userid != userid]
                 if len(not_me) == 1:
@@ -110,6 +111,7 @@ class MessageService:
                     room_type = RoomType.CHAT
                     if room.iconid is None or room.iconid in {DefaultAvatarID, DefaultRoomID}:
                         room.iconid = not_me[0].iconid
+                    room.deficonid = not_me[0].iconid
                 else:
                     room_name = "Unnamed Private Chat"
                     room_type = RoomType.ROOM
@@ -150,7 +152,7 @@ class MessageService:
                     return room
 
         # Now, create a new room since we don't have an existing one.
-        room = Room(NewRoomID, "", "", False, None)
+        room = Room(NewRoomID, "", "", False, None, None)
         self.__data.room.create_room(room)
         self.join_room(room.id, userid)
         self.join_room(room.id, otherid)

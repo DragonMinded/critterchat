@@ -39,7 +39,7 @@ class ChatDetails {
             this.icon = "";
             this.iconDelete = true;
 
-            $( '#chatdetails-icon' ).attr('src', this.room['public'] ? window.defroom : window.defavi);
+            $( '#chatdetails-icon' ).attr('src', this.room['deficon']);
         });
 
         $( '#chatdetails-iconpicker' ).on( 'change', (event) => {
