@@ -47,7 +47,6 @@ class EditProfile {
             if (file && file.size < 128 * 1024) {
                 var fr = new FileReader();
                 fr.onload = () => {
-                    console.log("yeah");
                     this.icon = fr.result;
                     this.iconDelete = false;
                     $( '#editprofile-icon' ).attr('src', this.icon);
