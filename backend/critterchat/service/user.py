@@ -43,6 +43,7 @@ class UserService:
             if user.nickname and not represents_real_text(user.nickname):
                 user.nickname = ""
                 self.__data.user.update_user(user)
+                self.__notify_user_changed(user.id)
 
     def get_settings(self, session: str, userid: UserID) -> UserSettings:
         settings = self.__data.user.get_settings(session)
@@ -239,6 +240,10 @@ class UserService:
 
         # Now, grab the occupants for the same user and write an action event for
         # every one that changed.
+        self.__notify_user_changed(userid, old_occupancy)
+
+    def __notify_user_changed(self, userid: UserID, old_occupancy: Optional[Dict[RoomID, Occupant]] = None) -> None:
+        old_occupancy = old_occupancy or {}
         new_occupancy = self.__data.room.get_joined_room_occupants(userid)
         changes: Dict[RoomID, Occupant] = {}
 
