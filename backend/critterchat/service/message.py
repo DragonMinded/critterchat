@@ -15,6 +15,7 @@ from ..data import (
     RoomSearchResult,
     DefaultAvatarID,
     DefaultRoomID,
+    FaviconID,
     NewOccupantID,
     NewActionID,
     NewRoomID,
@@ -214,10 +215,15 @@ class MessageService:
                 changed = True
                 room.iconid = attachmentid
             elif icon_delete:
-                changed = room.iconid is not None and room.iconid != DefaultAvatarID and room.iconid != DefaultRoomID
+                changed = (
+                    room.iconid is not None and
+                    room.iconid != DefaultAvatarID and
+                    room.iconid != DefaultRoomID and
+                    room.iconid != FaviconID
+                )
                 room.iconid = None
 
-            if room.iconid == DefaultAvatarID or room.iconid == DefaultRoomID:
+            if room.iconid == DefaultAvatarID or room.iconid == DefaultRoomID or room.iconid == FaviconID:
                 room.iconid = None
 
             if changed:

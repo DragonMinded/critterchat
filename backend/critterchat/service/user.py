@@ -18,6 +18,8 @@ from ..data import (
     Action,
     ActionType,
     DefaultAvatarID,
+    DefaultRoomID,
+    FaviconID,
     NewActionID,
     ActionID,
     Occupant,
@@ -232,7 +234,7 @@ class UserService:
             elif icon_delete:
                 user.iconid = None
 
-            if user.iconid == DefaultAvatarID:
+            if user.iconid == DefaultAvatarID or user.iconid == DefaultRoomID or user.iconid == FaviconID:
                 user.iconid = None
 
             if changed:

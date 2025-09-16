@@ -6,7 +6,7 @@ from typing import Dict
 
 from .app import app, static_location, templates_location, loginrequired, jsonify, g
 from ..common import get_emoji_unicode_dict, get_aliases_unicode_dict
-from ..data import Data, DefaultAvatarID, DefaultRoomID
+from ..data import DefaultAvatarID, DefaultRoomID, FaviconID
 from ..service import AttachmentService, EmoteService
 
 
@@ -56,9 +56,8 @@ def _get_frontend_version() -> str:
 @chat.route("/chat")
 @loginrequired
 def home() -> Response:
-    data = Data(g.config)
-    attachmentservice = AttachmentService(g.config, data)
-    emoteservice = EmoteService(g.config, data)
+    attachmentservice = AttachmentService(g.config, g.data)
+    emoteservice = EmoteService(g.config, g.data)
 
     emojis = {
         **get_emoji_unicode_dict('en'),
@@ -82,6 +81,7 @@ def home() -> Response:
         username=username,
         defavi=attachmentservice.get_attachment_url(DefaultAvatarID),
         defroom=attachmentservice.get_attachment_url(DefaultRoomID),
+        favicon=attachmentservice.get_attachment_url(FaviconID),
     ))
 
 

@@ -16,6 +16,7 @@ NewActionID = ActionID(-1)
 NewAttachmentID = AttachmentID(-1)
 DefaultAvatarID = AttachmentID(-100)
 DefaultRoomID = AttachmentID(-200)
+FaviconID = AttachmentID(-300)
 
 
 class UserPermission(IntEnum):
@@ -128,6 +129,8 @@ class Attachment:
             return "defavi"
         if attachmentid == DefaultRoomID:
             return "defroom"
+        if attachmentid == FaviconID:
+            return "deficon"
         return f"d{attachmentid}"
 
     @staticmethod
@@ -136,6 +139,8 @@ class Attachment:
             return DefaultAvatarID
         if idstr == "defroom":
             return DefaultRoomID
+        if idstr == "deficon":
+            return FaviconID
 
         if idstr[0] != 'd':
             return None

@@ -6,8 +6,20 @@ from typing import Dict, Optional, Tuple
 from typing_extensions import Final
 
 from ..config import Config
-from ..data import Data, Attachment, Action, ActionType, User, Occupant, Room, AttachmentID, DefaultAvatarID, DefaultRoomID
-from ..http.static import default_avatar, default_room
+from ..data import (
+    Data,
+    Attachment,
+    Action,
+    ActionType,
+    User,
+    Occupant,
+    Room,
+    AttachmentID,
+    DefaultAvatarID,
+    DefaultRoomID,
+    FaviconID,
+)
+from ..http.static import default_avatar, default_room, default_icon
 
 
 # Guess we need to init this. Feel like I'm doing embedded again.
@@ -36,7 +48,7 @@ class AttachmentService:
             return "application/octet-stream"
 
     def _get_hashed_attachment_name(self, aid: AttachmentID) -> str:
-        if aid in {DefaultAvatarID, DefaultRoomID}:
+        if aid in {DefaultAvatarID, DefaultRoomID, FaviconID}:
             return Attachment.from_id(aid)
 
         hashkey = self.__config.attachments.attachment_key
@@ -53,7 +65,8 @@ class AttachmentService:
     def create_default_attachments(self) -> None:
         for aid, default in [
             (DefaultAvatarID, default_avatar),
-            (DefaultRoomID, default_room)
+            (DefaultRoomID, default_room),
+            (FaviconID, default_icon),
         ]:
             if self.__config.attachments.system == "local":
                 # Local storage, copy the system default into the attachment directory if needed.
@@ -100,6 +113,8 @@ class AttachmentService:
             return DefaultAvatarID
         if path == Attachment.from_id(DefaultRoomID):
             return DefaultRoomID
+        if path == Attachment.from_id(FaviconID):
+            return FaviconID
         if path in _hash_to_id_lut:
             return _hash_to_id_lut[path]
 
@@ -119,7 +134,7 @@ class AttachmentService:
 
     def get_attachment_data(self, attachmentid: AttachmentID) -> Optional[Tuple[str, bytes]]:
         # Check for default avatar.
-        if attachmentid == DefaultAvatarID or attachmentid == DefaultRoomID:
+        if attachmentid == DefaultAvatarID or attachmentid == DefaultRoomID or attachmentid == FaviconID:
             if self.__config.attachments.system == "local":
                 # Local storage, look up the storage directory and return that data.
                 path = self._get_local_attachment_path(attachmentid)

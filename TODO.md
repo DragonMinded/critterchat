@@ -1,8 +1,3 @@
-TODO For Installable
-====================
-
- - Favicon support.
-
 TODO For Post Test Build
 ========================
 

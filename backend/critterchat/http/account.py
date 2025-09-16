@@ -3,8 +3,8 @@ from flask import Blueprint, Response, make_response, render_template, url_for, 
 
 from .app import app, request, static_location, templates_location, loginprohibited, loginrequired, error, info, g
 from ..common import AESCipher, Time
-from ..data import Data, UserPermission
-from ..service import UserService, UserServiceException
+from ..data import UserPermission, FaviconID
+from ..service import AttachmentService, UserService, UserServiceException
 
 
 account = Blueprint(
@@ -18,6 +18,7 @@ account = Blueprint(
 @account.route("/login", methods=["POST"])
 @loginprohibited
 def loginpost() -> Response:
+    attachmentservice = AttachmentService(g.config, g.data)
     username = request.form["username"]
     password = request.form["password"]
 
@@ -29,6 +30,7 @@ def loginpost() -> Response:
                 "account/login.html",
                 title="Log In",
                 username=username,
+                favicon=attachmentservice.get_attachment_url(FaviconID),
             )
         )
 
@@ -39,6 +41,7 @@ def loginpost() -> Response:
                 "account/login.html",
                 title="Log In",
                 username=username,
+                favicon=attachmentservice.get_attachment_url(FaviconID),
             )
         )
 
@@ -59,6 +62,7 @@ def loginpost() -> Response:
                 "account/login.html",
                 title="Log In",
                 username=username,
+                favicon=attachmentservice.get_attachment_url(FaviconID),
             )
         )
 
@@ -66,9 +70,12 @@ def loginpost() -> Response:
 @account.route("/login")
 @loginprohibited
 def login() -> Response:
+    attachmentservice = AttachmentService(g.config, g.data)
+
     return Response(render_template(
         "account/login.html",
         title="Log In",
+        favicon=attachmentservice.get_attachment_url(FaviconID),
     ))
 
 
@@ -82,6 +89,7 @@ def logout() -> Response:
 @account.route("/register", methods=["POST"])
 @loginprohibited
 def registerpost() -> Response:
+    attachmentservice = AttachmentService(g.config, g.data)
     username = request.form["username"]
     password1 = request.form["password1"]
     password2 = request.form["password2"]
@@ -92,6 +100,7 @@ def registerpost() -> Response:
             render_template(
                 "account/register.html",
                 title="Register Account",
+                favicon=attachmentservice.get_attachment_url(FaviconID),
             )
         )
 
@@ -103,6 +112,7 @@ def registerpost() -> Response:
                 render_template(
                     "account/register.html",
                     title="Register Account",
+                    favicon=attachmentservice.get_attachment_url(FaviconID),
                 )
             )
 
@@ -112,6 +122,7 @@ def registerpost() -> Response:
             render_template(
                 "account/register.html",
                 title="Register Account",
+                favicon=attachmentservice.get_attachment_url(FaviconID),
             )
         )
 
@@ -122,6 +133,7 @@ def registerpost() -> Response:
                 "account/register.html",
                 title="Register Account",
                 username=username,
+                favicon=attachmentservice.get_attachment_url(FaviconID),
             )
         )
 
@@ -132,12 +144,12 @@ def registerpost() -> Response:
                 "account/register.html",
                 title="Register Account",
                 username=username,
+                favicon=attachmentservice.get_attachment_url(FaviconID),
             )
         )
 
     try:
-        data = Data(g.config)
-        userservice = UserService(g.config, data)
+        userservice = UserService(g.config, g.data)
         user = userservice.create_user(username, password1)
         if UserPermission.ACTIVATED not in user.permissions:
             info("Your account has been created but has not been activated yet!")
@@ -146,6 +158,7 @@ def registerpost() -> Response:
                     "account/login.html",
                     title="Log In",
                     username=username,
+                    favicon=attachmentservice.get_attachment_url(FaviconID),
                 )
             )
         else:
@@ -155,6 +168,7 @@ def registerpost() -> Response:
                     "account/login.html",
                     title="Log In",
                     username=username,
+                    favicon=attachmentservice.get_attachment_url(FaviconID),
                 )
             )
 
@@ -165,6 +179,7 @@ def registerpost() -> Response:
                 "account/register.html",
                 title="Register Account",
                 username=username,
+                favicon=attachmentservice.get_attachment_url(FaviconID),
             )
         )
 
@@ -172,9 +187,12 @@ def registerpost() -> Response:
 @account.route("/register")
 @loginprohibited
 def register() -> Response:
+    attachmentservice = AttachmentService(g.config, g.data)
+
     return Response(render_template(
         "account/register.html",
         title="Register Account",
+        favicon=attachmentservice.get_attachment_url(FaviconID),
     ))
 
 
