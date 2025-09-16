@@ -185,6 +185,7 @@ class UserService:
         userid: UserID,
         name: Optional[str] = None,
         icon: Optional[bytes] = None,
+        icon_delete: bool = False,
     ) -> None:
         # Grab rooms the user is in so we can figure out which ones need updating.
         old_occupancy = self.__data.room.get_joined_room_occupants(userid)
@@ -220,6 +221,8 @@ class UserService:
 
                 changed = True
                 user.iconid = attachmentid
+            elif icon_delete:
+                user.iconid = None
 
             if user.iconid == DefaultAvatarID:
                 user.iconid = None

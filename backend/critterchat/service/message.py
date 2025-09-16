@@ -170,6 +170,7 @@ class MessageService:
         name: Optional[str] = None,
         topic: Optional[str] = None,
         icon: Optional[bytes] = None,
+        icon_delete: bool = False,
     ) -> None:
         room = self.__data.room.get_room(roomid)
         if room:
@@ -205,6 +206,9 @@ class MessageService:
 
                 changed = True
                 room.iconid = attachmentid
+            elif icon_delete:
+                changed = room.iconid is not None and room.iconid != DefaultAvatarID and room.iconid != DefaultRoomID
+                room.iconid = None
 
             if room.iconid == DefaultAvatarID or room.iconid == DefaultRoomID:
                 room.iconid = None

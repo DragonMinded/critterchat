@@ -472,6 +472,7 @@ def updateprofile(json: Dict[str, object]) -> None:
     # Save last settings for this user.
     newname = str(json.get('name', '')).strip()
     newicon = str(json.get('icon', ''))
+    icondelete = bool(json.get('icon_delete', ''))
 
     # We allow spaces inside names, but not space-only names.
     if not convert_spaces(newname).strip():
@@ -499,7 +500,7 @@ def updateprofile(json: Dict[str, object]) -> None:
             icon = fp.read()
 
     try:
-        userservice.update_user(userid, name=newname, icon=icon)
+        userservice.update_user(userid, name=newname, icon=icon, icon_delete=icondelete)
         userprofile = userservice.lookup_user(userid)
         if userprofile:
             socketio.emit('profile', userprofile.to_dict(), room=request.sid)
@@ -775,6 +776,7 @@ def updateroom(json: Dict[str, object]) -> None:
         newname = str(details.get('name', '')).strip()
         newtopic = str(details.get('topic', '')).strip()
         newicon = str(details.get('icon', ''))
+        icondelete = bool(details.get('icon_delete', ''))
 
         if not convert_spaces(newname).strip():
             newname = ""
@@ -805,6 +807,6 @@ def updateroom(json: Dict[str, object]) -> None:
                 icon = fp.read()
 
         try:
-            messageservice.update_room(roomid, userid, name=newname, topic=newtopic, icon=icon)
+            messageservice.update_room(roomid, userid, name=newname, topic=newtopic, icon=icon, icon_delete=icondelete)
         except MessageServiceException as e:
             socketio.emit('error', {'error': str(e)}, room=request.sid)

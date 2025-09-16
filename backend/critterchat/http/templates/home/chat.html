@@ -118,6 +118,7 @@
             </div>
         </div>
     </div>
+
     <form id="search-form" class="modal search">
         <div class="search">
             <div class="actions">
@@ -128,6 +129,7 @@
             <div class="results"></div>
         </div>
     </form>
+
     <form id="editpreferences-form" class="modal editpreferences">
         <div class="editpreferences">
             <div class="preferences">
@@ -231,6 +233,7 @@
             </div>
         </div>
     </form>
+
     <form id="editprofile-form" class="modal editprofile">
         <div class="editprofile">
             <div class="icon-wrapper">
@@ -239,6 +242,9 @@
                 </div>
                 <div class="picker">
                     <input type="file" id="editprofile-iconpicker" accept="image/*" />
+                </div>
+                <div class="picker">
+                    <input type="button" id="editprofile-remove-icon" value="revert to default" />
                 </div>
                 <div class="details">
                     Avatar should be square, no more than 256x256 pixels, and less than 128kb in size.
@@ -258,6 +264,7 @@
             </div>
         </div>
     </form>
+
     <form id="chatdetails-form" class="modal chatdetails">
         <div class="chatdetails">
             <div class="icon-wrapper">
@@ -266,6 +273,9 @@
                 </div>
                 <div class="picker">
                     <input type="file" id="chatdetails-iconpicker" accept="image/*" />
+                </div>
+                <div class="picker">
+                    <input type="button" id="chatdetails-remove-icon" value="revert to default" />
                 </div>
                 <div class="details">
                     Icon should be square, no more than 256x256 pixels, and less than 128kb in size.
@@ -289,6 +299,7 @@
             </div>
         </div>
     </form>
+
     <form id="warning-form" class="modal warning">
         <div class="warning">
             <div class="warning-text" id="warning-text">
@@ -303,6 +314,7 @@
             </div>
         </div>
     </form>
+
     <form id="info-form" class="modal information">
         <div class="information">
             <div class="information-text" id="info-text">

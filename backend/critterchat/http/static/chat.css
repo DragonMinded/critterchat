@@ -26,6 +26,7 @@
     --action-text: #000000;
 
     --edit-icon-background: #dddddd;
+    --edit-icon-image-background: #ffffff;
     --edit-icon-text: #000000;
 
     --button-background: #dddddd;
@@ -575,6 +576,7 @@ div.chatdetails > div.icon-wrapper, div.editprofile > div.icon-wrapper {
 }
 
 div.chatdetails div.icon img, div.editprofile div.icon img {
+    background: var(--edit-icon-image-background);
     display: block;
     width: 72px;
     height: 72px;

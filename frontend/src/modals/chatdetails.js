@@ -7,6 +7,7 @@ class ChatDetails {
         this.room = {};
         this.roomLoaded = false;
         this.icon = "";
+        this.iconDelete = false;
 
         $( '#chatdetails-form' ).on( 'submit', (event) => {
             event.preventDefault();
@@ -22,6 +23,7 @@ class ChatDetails {
                     'name': $('#chatdetails-name').val().substring(0, 255),
                     'topic': $('#chatdetails-topic').val().substring(0, 255),
                     'icon': this.icon,
+                    'icon_delete': this.iconDelete,
                 }});
             }
         });
@@ -32,6 +34,14 @@ class ChatDetails {
             this.inputState.setState("empty");
         });
 
+        $( '#chatdetails-remove-icon' ).on( 'click', (event) => {
+            event.preventDefault();
+            this.icon = "";
+            this.iconDelete = true;
+
+            $( '#chatdetails-icon' ).attr('src', this.room['public'] ? window.defroom : window.defavi);
+        });
+
         $( '#chatdetails-iconpicker' ).on( 'change', (event) => {
             const file = event.target.files[0];
 
@@ -39,6 +49,7 @@ class ChatDetails {
                 var fr = new FileReader();
                 fr.onload = () => {
                     this.icon = fr.result;
+                    this.iconDelete = false;
                     $( '#chatdetails-icon' ).attr('src', this.icon);
                 };
                 fr.readAsDataURL(file);
@@ -55,6 +66,7 @@ class ChatDetails {
 
             // Make sure we don't accidentally set a previous icon.
             this.icon = "";
+            this.iconDelete = false;
 
             var photoType = this.room['public'] ? 'room' : 'avatar';
             $('div.chatdetails div.icon').removeClass('avatar').removeClass('room').addClass(photoType);

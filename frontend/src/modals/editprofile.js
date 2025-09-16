@@ -7,6 +7,7 @@ class EditProfile {
         this.profile = {};
         this.profileLoaded = false;
         this.icon = "";
+        this.iconDelete = false;
 
         $( '#editprofile-form' ).on( 'submit', (event) => {
             event.preventDefault();
@@ -21,6 +22,7 @@ class EditProfile {
                 this.eventBus.emit('updateprofile', {
                     'name': $('#editprofile-name').val().substring(0, 255),
                     'icon': this.icon,
+                    'icon_delete': this.iconDelete,
                 });
             }
         });
@@ -31,13 +33,23 @@ class EditProfile {
             this.inputState.setState("empty");
         });
 
+        $( '#editprofile-remove-icon' ).on( 'click', (event) => {
+            event.preventDefault();
+            this.icon = "";
+            this.iconDelete = true;
+
+            $( '#editprofile-icon' ).attr('src', window.defavi);
+        });
+
         $( '#editprofile-iconpicker' ).on( 'change', (event) => {
             const file = event.target.files[0];
 
             if (file && file.size < 128 * 1024) {
                 var fr = new FileReader();
                 fr.onload = () => {
+                    console.log("yeah");
                     this.icon = fr.result;
+                    this.iconDelete = false;
                     $( '#editprofile-icon' ).attr('src', this.icon);
                 };
                 fr.readAsDataURL(file);
@@ -51,6 +63,7 @@ class EditProfile {
 
             // Make sure we don't accidentally set a previous icon.
             this.icon = "";
+            this.iconDelete = false;
 
             $('#editprofile-form')[0].reset();
             $('#editprofile-name').val(this.profile.nickname);
