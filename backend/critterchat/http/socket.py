@@ -5,7 +5,7 @@ from typing import Any, Dict, List, Optional, Set, cast
 from typing_extensions import Final
 
 from .app import socketio, config, request
-from ..common import AESCipher, Time, convert_spaces
+from ..common import AESCipher, Time, represents_real_text
 from ..service import EmoteService, UserService, MessageService, UserServiceException, MessageServiceException
 from ..data import (
     Data,
@@ -475,7 +475,7 @@ def updateprofile(json: Dict[str, object]) -> None:
     icondelete = bool(json.get('icon_delete', ''))
 
     # We allow spaces inside names, but not space-only names.
-    if not convert_spaces(newname).strip():
+    if not represents_real_text(newname):
         newname = ""
 
     if newname and len(newname) > 255:
@@ -648,7 +648,7 @@ def message(json: Dict[str, object]) -> None:
 
     # While we allow funny formatting and spaces, we don't allow space-only messages.
     message = str(json.get('message')).strip()
-    if roomid and convert_spaces(message).strip():
+    if roomid and represents_real_text(message):
         rooms = messageservice.get_joined_rooms(userid)
         joinedrooms = {room.id for room in rooms}
         if roomid not in joinedrooms:
@@ -778,9 +778,9 @@ def updateroom(json: Dict[str, object]) -> None:
         newicon = str(details.get('icon', ''))
         icondelete = bool(details.get('icon_delete', ''))
 
-        if not convert_spaces(newname).strip():
+        if not represents_real_text(newname):
             newname = ""
-        if not convert_spaces(newtopic).strip():
+        if not represents_real_text(newtopic):
             newtopic = ""
 
         rooms = messageservice.get_joined_rooms(userid)

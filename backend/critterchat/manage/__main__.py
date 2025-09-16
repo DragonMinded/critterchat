@@ -1,6 +1,7 @@
 import argparse
 import getpass
 import os
+import string
 import sys
 from typing import Optional
 
@@ -84,6 +85,11 @@ def create_user(config: Config, username: str, password: Optional[str]) -> None:
     Create a new user that logs in with username, and uses password to login. If the password is
     not provided at the CLI, instead prompts for a password interactively.
     """
+
+    valid_names = string.ascii_letters + string.digits + "_."
+    for ch in username:
+        if ch not in valid_names:
+            raise CommandException("You cannot use non-alphanumeric characters in a username!")
 
     if not password:
         # Prompt for it at the CLI instead.
