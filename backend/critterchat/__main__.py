@@ -8,7 +8,7 @@ from critterchat.http import app, config, socketio  # noqa
 
 from critterchat.config import Config, load_config  # noqa
 from critterchat.data import Data  # noqa
-from critterchat.service import AttachmentService  # noqa
+from critterchat.service import AttachmentService, MessageService, UserService  # noqa
 
 # Since the sockets and REST files use decorators for hooking, simply importing these hooks the desired functions
 import critterchat.http.welcome  # noqa
@@ -29,6 +29,17 @@ def perform_initialization_work(config: Config) -> None:
     attachmentservice.create_default_attachments()
     print("Migrating any legacy attachments to current system.")
     attachmentservice.migrate_legacy_attachments()
+
+    # Ensure that any nickname loopholes are fixed.
+    userservice = UserService(config, data)
+    print("Migrating any legacy names to current rules.")
+    userservice.migrate_legacy_names()
+
+    # Ensure any per-room nicknames loopholes are fixed.
+    messageservice = MessageService(config, data)
+    print("Migrating any per-room legacy names to current rules.")
+    messageservice.migrate_legacy_names()
+
     print("Done with initialization.")
 
 

@@ -6,7 +6,7 @@ from pydub import AudioSegment  # type: ignore
 from pydub.exceptions import CouldntDecodeError  # type: ignore
 from typing import Dict, Optional, Set
 
-from ..common import Time
+from ..common import Time, represents_real_text
 from ..config import Config
 from ..data import (
     Data,
@@ -36,6 +36,13 @@ class UserService:
         self.__config = config
         self.__data = data
         self.__attachments = AttachmentService(self.__config, self.__data)
+
+    def migrate_legacy_names(self) -> None:
+        users = self.__data.user.get_users()
+        for user in users:
+            if user.nickname and not represents_real_text(user.nickname):
+                user.nickname = ""
+                self.__data.user.update_user(user)
 
     def get_settings(self, session: str, userid: UserID) -> UserSettings:
         settings = self.__data.user.get_settings(session)

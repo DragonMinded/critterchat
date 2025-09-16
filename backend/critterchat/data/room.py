@@ -6,7 +6,7 @@ from sqlalchemy import Table, Column
 from sqlalchemy.schema import UniqueConstraint
 from sqlalchemy.types import String, Integer, Boolean, Text
 
-from ..common import Time, represents_real_text
+from ..common import Time
 from .base import BaseData, metadata
 from .types import (
     Action,
@@ -186,6 +186,36 @@ class RoomData(BaseData):
             sql += " AND (name IS NULL OR name = '' OR name COLLATE utf8mb4_general_ci LIKE :name)"
 
         cursor = self.execute(sql, {"userid": userid, "name": f"%{name}%"})
+        return self._hydrate_oldest_action([
+            Room(
+                roomid=RoomID(result['id']),
+                name=result['name'],
+                topic=result['topic'],
+                public=bool(result['public']),
+                last_action=result['last_action'],
+                iconid=AttachmentID(result['icon']) if result['icon'] else None,
+                deficonid=None,
+            )
+            for result in cursor.mappings()
+        ])
+
+    def get_rooms(self, name: Optional[str] = None) -> List[Room]:
+        """
+        Look up all existing rooms, potentially matching any that match the name.
+
+        Parameters:
+            name - The name of the room we want to match.
+
+        Returns:
+            list of Room objects representing the rooms on the network
+        """
+        sql = """
+            SELECT id, name, topic, icon, public, last_action FROM room
+        """
+        if name is not None:
+            sql += " WHERE (name IS NULL OR name = '' OR name COLLATE utf8mb4_general_ci LIKE :name)"
+
+        cursor = self.execute(sql, {"name": f"%{name}%"})
         return self._hydrate_oldest_action([
             Room(
                 roomid=RoomID(result['id']),
@@ -471,10 +501,10 @@ class RoomData(BaseData):
         """
         Given a result set, spawn an occupant for that result.
         """
-        nickname = result['onick'] or ""
-        if not represents_real_text(nickname):
-            nickname = result['pnick'] or ""
-        if not represents_real_text(nickname):
+        nickname = (result['onick'] or "").strip()
+        if not nickname:
+            nickname = (result['pnick'] or "").strip()
+        if not nickname:
             nickname = result['unick']
 
         icon = result['oicon']

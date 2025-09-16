@@ -36,6 +36,11 @@ class MessageService:
         self.__data = data
         self.__attachments = AttachmentService(self.__config, self.__data)
 
+    def migrate_legacy_names(self) -> None:
+        # TODO: Once the implementation for per-room nicknames is done, this will need to
+        # sweep those and ensure they're not messed up.
+        pass
+
     def get_last_action(self) -> Optional[ActionID]:
         return self.__data.room.get_last_action()
 
