@@ -133,7 +133,7 @@ class AttachmentService:
         self.__data.attachment.remove_attachment(attachmentid)
 
     def get_attachment_data(self, attachmentid: AttachmentID) -> Optional[Tuple[str, bytes]]:
-        # Check for default avatar.
+        # Check for default images which aren't stored in the DB.
         if attachmentid == DefaultAvatarID or attachmentid == DefaultRoomID or attachmentid == FaviconID:
             if self.__config.attachments.system == "local":
                 # Local storage, look up the storage directory and return that data.
@@ -167,6 +167,19 @@ class AttachmentService:
             raise AttachmentServiceException("Unrecognized backend system!")
 
     def put_attachment_data(self, attachmentid: AttachmentID, data: bytes) -> None:
+        # Check for default images which aren't stored in the DB.
+        if attachmentid == DefaultAvatarID or attachmentid == DefaultRoomID or attachmentid == FaviconID:
+            if self.__config.attachments.system == "local":
+                # Local storage, look up the storage directory and return that data.
+                path = self._get_local_attachment_path(attachmentid)
+                with open(path, "wb") as bfp:
+                    bfp.write(data)
+            else:
+                # Unknown backend, throw.
+                raise AttachmentServiceException("Unrecognized backend system!")
+
+            return
+
         attachment = self.__data.attachment.lookup_attachment(attachmentid)
         if not attachment:
             return

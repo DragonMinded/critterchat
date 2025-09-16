@@ -1,13 +1,27 @@
 import argparse
 import getpass
+import io
 import os
 import string
 import sys
+from PIL import Image
 from typing import Optional
 
-from critterchat.data import Data, DBCreateException, UserPermission, User, Room, NewRoomID, NewUserID
+from critterchat.data import (
+    Data,
+    DBCreateException,
+    UserPermission,
+    User,
+    Room,
+    NewRoomID,
+    NewUserID,
+    DefaultAvatarID,
+    DefaultRoomID,
+    FaviconID,
+)
 from critterchat.config import Config, load_config
 from critterchat.service import AttachmentService, EmoteService, EmoteServiceException, MessageService, UserService
+from critterchat.http.static import default_avatar, default_room, default_icon
 
 
 class CLIException(Exception):
@@ -260,6 +274,51 @@ def drop_emote(config: Config, alias: str) -> None:
         raise CommandException(str(e))
 
     data.close()
+
+
+def update_attachment(config: Config, attachment: str, file: str) -> None:
+    """
+    Given an attachment to update, update it with new file data.
+    """
+
+    actual = {
+        "room": DefaultRoomID,
+        "avatar": DefaultAvatarID,
+        "favicon": FaviconID,
+    }.get(attachment)
+    if not actual:
+        raise CommandException(f"Invalid attachment {attachment} to update!")
+
+    if file == "default":
+        file = {
+            DefaultAvatarID: default_avatar,
+            DefaultRoomID: default_room,
+            FaviconID: default_icon,
+        }.get(actual, "")
+
+    if not os.path.isfile(file):
+        raise CommandException("Invalid file path given to update attachment!")
+
+    with open(file, "rb") as bfp:
+        attachmentdata = bfp.read()
+
+    try:
+        img = Image.open(io.BytesIO(attachmentdata))
+    except Exception:
+        raise CommandException(f"Unsupported image provided for {attachment} image.")
+
+    width, height = img.size
+    if width > AttachmentService.MAX_ICON_WIDTH or height > AttachmentService.MAX_ICON_HEIGHT:
+        raise CommandException(f"Invalid image size for {attachment} image.")
+    if width != height:
+        raise CommandException(f"Image for {attachment} is not square.")
+
+    data = Data(config)
+    attachmentservice = AttachmentService(config, data)
+    attachmentservice.put_attachment_data(actual, attachmentdata)
+    data.close()
+
+    print(f"Updated {attachment} image with new data from {file}.")
 
 
 def list_public_rooms(config: Config) -> None:
@@ -540,6 +599,36 @@ def main() -> None:
     )
 
     # Another subcommand here.
+    attachment_parser = commands.add_parser(
+        "attachment",
+        help="modify attachments on the network",
+        description="Modify attachments on the network.",
+    )
+    attachment_commands = attachment_parser.add_subparsers(dest="attach")
+
+    # A few params for this one.
+    updateattachment_parser = attachment_commands.add_parser(
+        "update",
+        help="update a particular attachment",
+        description="Update a particular attachment.",
+    )
+    updateattachment_parser.add_argument(
+        "-a",
+        "--attachment",
+        type=str,
+        required=True,
+        choices=["room", "avatar", "favicon"],
+        help="update this particular attachment",
+    )
+    updateattachment_parser.add_argument(
+        "-f",
+        "--file",
+        type=str,
+        required=True,
+        help="file you would like to use as the new attachment, or \"default\" to revert to the default",
+    )
+
+    # Another subcommand here.
     room_parser = commands.add_parser(
         "room",
         help="modify public rooms on the network",
@@ -654,6 +743,14 @@ def main() -> None:
                 drop_emote(config, args.alias)
             else:
                 raise CLIException(f"Unknown emote operation '{args.emote}'")
+
+        elif args.operation == "attachment":
+            if args.attach is None:
+                raise CLIException("Unspecified attachment operation!")
+            elif args.attach == "update":
+                update_attachment(config, args.attachment, args.file)
+            else:
+                raise CLIException(f"Unknown attachment operation '{args.attach}'")
 
         elif args.operation == "room":
             if args.room is None:
