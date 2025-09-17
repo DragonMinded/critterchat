@@ -98,6 +98,7 @@ KNOWN_CONTROL: List[str] = [
     "\u009D",
     "\u009E",
     "\u009F",
+    "\u00AD",
     "\u061C",
     "\u180E",
     "\u200C",
@@ -115,11 +116,32 @@ KNOWN_CONTROL: List[str] = [
     "\u2067",
     "\u2068",
     "\u2069",
+    "\u206A",
+    "\u206B",
+    "\u206C",
+    "\u206D",
+    "\u206E",
+    "\u206F",
     "\u3164",
     "\uFEFF",
     "\uFFF9",
     "\uFFFA",
     "\uFFFB",
+    "\uFFFC",
+]
+
+
+KNOWN_MUSICAL_SYMBOLS = [
+    "\U0001D150",
+    "\U0001D159",
+    "\U0001D173",
+    "\U0001D174",
+    "\U0001D175",
+    "\U0001D176",
+    "\U0001D177",
+    "\U0001D178",
+    "\U0001D179",
+    "\U0001D17A",
 ]
 
 
@@ -139,8 +161,16 @@ def represents_real_text(string: str) -> bool:
     # Control characters that aren't rendered directly.
     for char in KNOWN_CONTROL:
         string = string.replace(char, "")
+    # Musical symbols that on their own don't represent anything.
+    for char in KNOWN_MUSICAL_SYMBOLS:
+        string = string.replace(char, "")
     # Language tags, deprecated but somebody could still use one.
     for val in range(0xE0001, 0xE0080):
+        string = string.replace(chr(val), "")
+    # Variation selectors.
+    for val in range(0xFE00, 0xFE10):
+        string = string.replace(chr(val), "")
+    for val in range(0xE0100, 0xE01F0):
         string = string.replace(chr(val), "")
 
     return bool(string.strip())
