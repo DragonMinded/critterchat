@@ -13,3 +13,4 @@ TODO For Post Test Build
  - Delayed loading of all emoji/emotes until after search/picker selected.
  - Fix modal popover not allowing scrollable content when sizing down.
  - Notification indicator on back button in chat and info on mobile.
+ - Notification indicator by changing favicon to a notifications version.
