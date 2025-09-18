@@ -1,3 +1,8 @@
+TODO
+====
+
+ - Fix possibly missing messages when disconnected and reconnecting an existing client instance through a server restart or a network outage.
+
 TODO For Post Test Build
 ========================
 
