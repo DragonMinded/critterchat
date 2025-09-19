@@ -92,9 +92,19 @@ class UserNotification(IntEnum):
 
 
 class UserPreferences:
-    def __init__(self, userid: UserID, *, rooms_on_top: bool, title_notifs: bool, mobile_audio_notifs: bool, audio_notifs: Set[UserNotification]) -> None:
+    def __init__(
+        self,
+        userid: UserID,
+        *,
+        rooms_on_top: bool,
+        color_scheme: str,
+        title_notifs: bool,
+        mobile_audio_notifs: bool,
+        audio_notifs: Set[UserNotification],
+    ) -> None:
         self.userid = userid
         self.rooms_on_top = rooms_on_top
+        self.color_scheme = color_scheme
         self.title_notifs = title_notifs
         self.mobile_audio_notifs = mobile_audio_notifs
         self.audio_notifs = audio_notifs
@@ -103,11 +113,23 @@ class UserPreferences:
     def to_dict(self) -> Dict[str, object]:
         return {
             "rooms_on_top": self.rooms_on_top,
+            "color_scheme": self.color_scheme,
             "title_notifs": self.title_notifs,
             "mobile_audio_notifs": self.mobile_audio_notifs,
             "audio_notifs": [str(an.name) for an in self.audio_notifs],
             "notif_sounds": self.notif_sounds,
         }
+
+    @staticmethod
+    def default(userid: UserID) -> "UserPreferences":
+        return UserPreferences(
+            userid=userid,
+            rooms_on_top=False,
+            color_scheme="system",
+            title_notifs=True,
+            mobile_audio_notifs=False,
+            audio_notifs=set(),
+        )
 
 
 class Attachment:

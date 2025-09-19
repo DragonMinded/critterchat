@@ -68,13 +68,7 @@ class UserService:
     def get_preferences(self, userid: UserID) -> UserPreferences:
         prefs = self.__data.user.get_preferences(userid)
         if not prefs:
-            prefs = UserPreferences(
-                userid=userid,
-                rooms_on_top=False,
-                title_notifs=True,
-                mobile_audio_notifs=False,
-                audio_notifs=set(),
-            )
+            prefs = UserPreferences.default(userid)
 
         notifs = self.__data.attachment.get_notifications(userid)
         prefs.notif_sounds = {key: self.__attachments.get_attachment_url(value.id) for key, value in notifs.items()}
@@ -83,7 +77,9 @@ class UserService:
     def update_preferences(
         self,
         userid: UserID,
+        *,
         rooms_on_top: Optional[bool] = None,
+        color_scheme: Optional[str] = None,
         title_notifs: Optional[bool] = None,
         mobile_audio_notifs: Optional[bool] = None,
         audio_notifs: Optional[Set[str]] = None,
@@ -92,17 +88,13 @@ class UserService:
     ) -> None:
         prefs = self.__data.user.get_preferences(userid)
         if not prefs:
-            prefs = UserPreferences(
-                userid=userid,
-                rooms_on_top=False,
-                title_notifs=True,
-                mobile_audio_notifs=False,
-                audio_notifs=set(),
-            )
+            prefs = UserPreferences.default(userid)
 
         # First, update any changed booleans/flags/etc.
         if rooms_on_top is not None:
             prefs.rooms_on_top = rooms_on_top
+        if color_scheme is not None:
+            prefs.color_scheme = color_scheme
         if title_notifs is not None:
             prefs.title_notifs = title_notifs
         if mobile_audio_notifs is not None:

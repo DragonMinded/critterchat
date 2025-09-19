@@ -145,6 +145,13 @@ export function manager(socket) {
     });
 
     socket.on('preferences', (msg) => {
+        if (msg.color_scheme == "light") {
+            $( "body" ).removeClass("dark").addClass("light");
+        } else if (msg.color_scheme == "dark") {
+            $( "body" ).removeClass("light").addClass("dark");
+        } else {
+            $( "body" ).removeClass("light").removeClass("dark");
+        }
         menuInst.setPreferences(msg);
         messagesInst.setPreferences(msg);
         infoInst.setPreferences(msg);

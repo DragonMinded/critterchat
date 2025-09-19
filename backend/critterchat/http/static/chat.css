@@ -650,6 +650,7 @@ div.preference input.notification {
 
 div.preference div.explain {
     color: var(--application-subtle-text);
+    padding-bottom: 5px;
 }
 
 div.warning > div.warning-text, div.information > div.information-text {
