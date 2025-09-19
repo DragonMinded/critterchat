@@ -579,6 +579,45 @@ def updatepreferences(json: Dict[str, object]) -> None:
         socketio.emit('error', {'error': str(e)}, room=request.sid)
 
 
+@socketio.on('chatactions')  # type: ignore
+def chatactions(json: Dict[str, object]) -> None:
+    data = Data(config)
+    messageservice = MessageService(config, data)
+
+    # Try to associate with a user if there is one.
+    userid = recover_userid(data, request.sid)
+    info = recover_info(request.sid)
+    if userid is None or info is None:
+        return
+
+    # Locking our socket info so we can keep track of what history we've seen,
+    # so that we can send deltas afterwards to the client when new chats happen.
+    with info.lock:
+        roomid = Room.to_id(str(json.get('roomid')))
+        if roomid:
+            rooms = messageservice.get_joined_rooms(userid)
+            joinedrooms = {room.id for room in rooms}
+            if roomid not in joinedrooms:
+                # Trying to grab chat for a room we're not in!
+                return
+
+            if (after := json.get('after', None)) and (afterid := Action.to_id(str(after))):
+                actions = messageservice.get_room_updates(roomid, after=afterid)
+
+                # Starting from the known last seen action ID here, since this is a client
+                # catch-up message after reconnecting. With this pre-charged, we won't end
+                # up re-sending the messages again in the message pump thread above.
+                fetchlimit = afterid
+                for action in actions:
+                    fetchlimit = max(fetchlimit, action.id)
+                info.fetchlimit[roomid] = fetchlimit
+
+                socketio.emit('chatactions', {
+                    'roomid': Room.from_id(roomid),
+                    'actions': [action.to_dict() for action in actions],
+                }, room=request.sid)
+
+
 @socketio.on('chathistory')  # type: ignore
 def chathistory(json: Dict[str, object]) -> None:
     data = Data(config)

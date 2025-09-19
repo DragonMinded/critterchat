@@ -501,9 +501,9 @@ class RoomData(BaseData):
         """
         Given a result set, spawn an occupant for that result.
         """
-        nickname = (result['onick'] or "").strip()
+        nickname = (result['onick'] or None)
         if not nickname:
-            nickname = (result['pnick'] or "").strip()
+            nickname = (result['pnick'] or None)
         if not nickname:
             nickname = result['unick']
 

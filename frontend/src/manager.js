@@ -43,6 +43,9 @@ export function manager(socket) {
     setInterval(checkForUpdates, 1000 * 15);
 
     socket.on('connect', () => {
+        // Let our various subsystems know we made a connection to the server.
+        eventBus.emit('connected', {});
+
         // Ask for our profile and last settings so we can refresh where we left off.
         socket.emit('profile', {});
         socket.emit('preferences', {});
@@ -53,6 +56,11 @@ export function manager(socket) {
 
         // Ask for any server MOTD or admin messages.
         socket.emit('motd', {});
+    });
+
+    socket.on('disconnect', () => {
+        // Let our various subsystems know we lost our connection to the server.
+        eventBus.emit('disconnected', {});
     });
 
     socket.on('reload', () => {
@@ -177,6 +185,10 @@ export function manager(socket) {
 
     eventBus.on('loadhistory', (info) => {
         socket.emit('chathistory', {roomid: info.roomid, before: info.before});
+    });
+
+    eventBus.on('loadactions', (info) => {
+        socket.emit('chatactions', {roomid: info.roomid, after: info.after});
     });
 
     eventBus.on('updateinfo', (info) => {

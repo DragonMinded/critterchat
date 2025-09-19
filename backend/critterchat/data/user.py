@@ -438,7 +438,7 @@ class UserData(BaseData):
         """
         Given a result set, spawn a user for that result.
         """
-        nickname = (result['pname'] or "").strip()
+        nickname = (result['pname'] or None)
         if not nickname:
             nickname = result['uname']
 
