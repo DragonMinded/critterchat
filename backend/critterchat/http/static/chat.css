@@ -20,7 +20,7 @@
 
     --button-background: light-dark(#dddddd, #555555);
     --button-border: light-dark(#bcbcbc, #444444);
-    --botton-text: light-dark(#000000, #ffffff);
+    --button-text: light-dark(#000000, #ffffff);
     --button-hover-background: light-dark(#bcbcbc, #444444);
     --button-hover-border: light-dark(#bcbcbc, #444444);
     --button-hover-text: light-dark(#000000, #ffffff);
@@ -156,6 +156,40 @@ li.success {
 
 li.info {
     background: #a7d0e4;
+}
+
+div.maskable {
+    display: inline-block;
+    background-color: currentColor;
+    mask-size: contain;
+}
+
+div.search-svg {
+    width: 16px;
+    height: 16px;
+    margin-bottom: -3px;
+    mask-image: url('search.svg');
+}
+
+div.edit-svg {
+    width: 16px;
+    height: 16px;
+    margin-bottom: -3px;
+    mask-image: url('edit.svg');
+}
+
+div.leave-svg {
+    width: 16px;
+    height: 16px;
+    margin-bottom: -3px;
+    mask-image: url('leave.svg');
+}
+
+div.logout-svg {
+    width: 16px;
+    height: 16px;
+    margin-bottom: -3px;
+    mask-image: url('logout.svg');
 }
 
 div.container {
@@ -358,10 +392,10 @@ div.top-info div.back, div.info div.back {
     display: none;
 }
 
-div.back > img {
+div.back-button-svg {
     width: 36px;
     height: 36px;
-    display: block;
+    mask-image: url('left-arrow-circle.svg');
 }
 
 div.top-info div.icon {
@@ -596,8 +630,18 @@ div.editpreferences > div.actions
     gap: 10px;
 }
 
-div.preference img.preview, div.preference img.cancel {
-    margin-bottom: -2px;
+div.preview {
+    width: 16px;
+    height: 16px;
+    margin-bottom: -3px;
+    mask-image: url('preview.svg');
+}
+
+div.cancel {
+    width: 16px;
+    height: 16px;
+    margin-bottom: -3px;
+    mask-image: url('cancel.svg');
 }
 
 div.preference input.notification {

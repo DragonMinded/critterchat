@@ -75,7 +75,7 @@ class EditPreferences {
             }
         });
 
-        $( 'img.preview' ).on('click', (event) => {
+        $( 'div.preview' ).on('click', (event) => {
             event.preventDefault();
 
             const jqe = $(event.target);
@@ -92,7 +92,7 @@ class EditPreferences {
             }
         });
 
-        $( 'img.cancel' ).on('click', (event) => {
+        $( 'div.cancel' ).on('click', (event) => {
             event.preventDefault();
 
             const jqe = $(event.target);
