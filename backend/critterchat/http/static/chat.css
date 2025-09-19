@@ -1,20 +1,42 @@
 :root {
     /* Theme colors */
-    --application-background: #ffffff;
-    --application-icon-background: #ffffff;
-    --application-text: #000000;
-    --application-subtle-text: #5f5f5f;
+    --application-background: light-dark(#ffffff, #222222);
+    --application-icon-background: light-dark(#ffffff, #222222);
+    --application-text: light-dark(#000000, #ffffff);
+    --application-subtle-text: light-dark(#5f5f5f, #5f5f5f);
 
-    --sidebar-background: #dddddd;
-    --sidebar-text: #000000;
-    --sidebar-hover-background: #bcbcbc;
+    --sidebar-background: light-dark(#dddddd, #222222);
+    --sidebar-text: light-dark(#000000, #cccccc);
+    --sidebar-hover-background: light-dark(#bcbcbc, #444444);
 
-    --conversation-background: #efefef;
-    --conversation-text: #000000;
-    --conversation-topic: #707070;
-    --conversation-timestamp: #666666;
-    --conversation-highlighted-background: #e0e0e0;
+    --conversation-background: light-dark(#efefef, #373737);
+    --conversation-text: light-dark(#000000, #dddddd);
+    --conversation-topic: light-dark(#707070, #707070);
+    --conversation-timestamp: light-dark(#666666, #666666);
+    --conversation-highlighted-background: light-dark(#e0e0e0, #242424);
 
+    --edit-icon-background: light-dark(#dddddd, #333333);
+    --edit-icon-text: light-dark(#000000, #ffffff);
+
+    --button-background: light-dark(#dddddd, #555555);
+    --button-border: light-dark(#bcbcbc, #444444);
+    --botton-text: light-dark(#000000, #ffffff);
+    --button-hover-background: light-dark(#bcbcbc, #444444);
+    --button-hover-border: light-dark(#bcbcbc, #444444);
+    --button-hover-text: light-dark(#000000, #ffffff);
+
+    --input-background: light-dark(#ffffff, #2b2a33);
+    --input-text: light-dark(#000000, #ffffff);
+    --input-border: light-dark(#bcbcbc, #444444);
+
+    --input-button-background: light-dark(#efefef, #2b2a33);
+    --input-button-text: light-dark(#000000, #ffffff);
+    --input-button-border: light-dark(#bcbcbc, #444444);
+    --input-button-hover-background: light-dark(#bcbcbc, #444444);
+    --input-button-hover-text: light-dark(#000000, #ffffff);
+    --input-button-hover-border: light-dark(#bcbcbc, #444444);
+
+    /* Random element colors that don't get themed with light/dark */
     --new-messages-background: #bf32a9;
     --new-messages-text: #ffffff;
 
@@ -27,26 +49,6 @@
     --action-background: #d372fd;
     --action-text: #000000;
 
-    --edit-icon-background: #dddddd;
-    --edit-icon-text: #000000;
-
-    --button-background: #dddddd;
-    --button-border: #bcbcbc;
-    --botton-text: #000000;
-    --button-hover-background: #bcbcbc;
-    --button-hover-border: #bcbcbc;
-    --button-hover-text: #000000;
-
-    --input-background: #ffffff;
-    --input-text: #000000;
-    --input-border: #bcbcbc;
-
-    --input-button-background: #efefef;
-    --input-button-text: #000000;
-    --input-button-border: #bcbcbc;
-    --input-button-hover-background: #bcbcbc;
-    --input-button-hover-text: #000000;
-    --input-button-hover-border: #bcbcbc;
 
     /* Theme styling attributes. */
     --button-border-radius: 5px;
@@ -62,7 +64,18 @@ html, body {
     background: var(--application-background);
     color: var(--application-text);
     overflow: hidden;
-    color-scheme: light;
+}
+
+body {
+    color-scheme: light dark;
+}
+
+body.light {
+    color-scheme: light ! important;
+}
+
+body.dark {
+    color-scheme: dark ! important;
 }
 
 input:not([type=file]):not([type=button]) {
@@ -91,6 +104,10 @@ button:hover, input[type=button]:hover, input::file-selector-button:hover {
     color: var(--input-button-hover-text);
     background: var(--input-button-hover-background);
     border: 1px solid var(--input-button-hover-border);
+}
+
+form.modal {
+    background: var(--application-background) ! important;
 }
 
 div.errors {
