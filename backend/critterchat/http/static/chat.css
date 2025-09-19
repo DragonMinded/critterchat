@@ -1,4 +1,5 @@
 :root {
+    /* Theme colors */
     --application-background: #ffffff;
     --application-icon-background: #ffffff;
     --application-text: #000000;
@@ -35,6 +36,21 @@
     --button-hover-background: #bcbcbc;
     --button-hover-border: #bcbcbc;
     --button-hover-text: #000000;
+
+    --input-background: #ffffff;
+    --input-text: #000000;
+    --input-border: #bcbcbc;
+
+    --input-button-background: #efefef;
+    --input-button-text: #000000;
+    --input-button-border: #bcbcbc;
+    --input-button-hover-background: #bcbcbc;
+    --input-button-hover-text: #000000;
+    --input-button-hover-border: #bcbcbc;
+
+    /* Theme styling attributes. */
+    --button-border-radius: 5px;
+    --input-border-radius: 3px;
 }
 
 html, body {
@@ -46,6 +62,35 @@ html, body {
     background: var(--application-background);
     color: var(--application-text);
     overflow: hidden;
+    color-scheme: light;
+}
+
+input:not([type=file]):not([type=button]) {
+    color: var(--input-text);
+    background: var(--input-background);
+    border: 1px solid var(--input-border);
+    border-radius: var(--input-border-radius);
+    padding-top: 2px;
+    padding-bottom: 2px;
+    padding-left: 5px;
+    padding-right: 5px;
+}
+
+button, input[type=button], input::file-selector-button {
+    color: var(--input-button-text);
+    background: var(--input-button-background);
+    border: 1px solid var(--input-button-border);
+    border-radius: var(--input-border-radius);
+    padding-top: 2px;
+    padding-bottom: 2px;
+    padding-left: 10px;
+    padding-right: 10px;
+}
+
+button:hover, input[type=button]:hover, input::file-selector-button:hover {
+    color: var(--input-button-hover-text);
+    background: var(--input-button-hover-background);
+    border: 1px solid var(--input-button-hover-border);
 }
 
 div.errors {
@@ -61,7 +106,7 @@ ul.errors {
 }
 
 ul.errors li {
-    border-radius: 5px;
+    border-radius: var(--button-border-radius);
     padding: 10px;
     margin: 0px;
     display: flex;
@@ -126,7 +171,7 @@ div.rooms div.item, div.results div.item, div.occupants div.item {
     flex-direction: row;
     display: flex;
     padding: 5px;
-    border-radius: 5px;
+    border-radius: var(--button-border-radius);
     cursor: default;
     border: 1px solid transparent;
 }
@@ -232,7 +277,7 @@ div.results div.item div.action-wrapper {
 }
 
 div.results div.item div.action {
-    border-radius: 5px;
+    border-radius: var(--button-border-radius);
     background: var(--action-background);
     color: var(--action-text);
     max-height: 36px;
@@ -255,7 +300,7 @@ div.actions div.item button {
     background: var(--button-background);
     border: 1px solid var(--button-border);
     color: var(--button-text);
-    border-radius: 5px;
+    border-radius: var(--button-border-radius);
     width: 100%;
     height: 100%;
     font-size: 12px;
@@ -388,7 +433,12 @@ div.chat form.actions div.newmessage {
 
 div.newmessage input {
     width: 100%;
-    padding-right: 20px;
+    padding-right: 22px;
+}
+
+div.send button, div.info button {
+    padding-left: 5px;
+    padding-right: 5px;
 }
 
 div.chat div.conversation div.item {
@@ -504,7 +554,7 @@ div.occupants div.item {
     flex-direction: row;
     display: flex;
     padding: 5px;
-    border-radius: 5px;
+    border-radius: var(--button-border-radius);
     cursor: default;
     border: 1px solid transparent;
 }
