@@ -83,10 +83,10 @@ input:not([type=file]):not([type=button]) {
     background: var(--input-background);
     border: 1px solid var(--input-border);
     border-radius: var(--input-border-radius);
-    padding-top: 2px;
-    padding-bottom: 2px;
-    padding-left: 5px;
-    padding-right: 5px;
+    padding-top: 4px;
+    padding-bottom: 4px;
+    padding-left: 7px;
+    padding-right: 7px;
 }
 
 button, input[type=button], input::file-selector-button {
@@ -94,8 +94,8 @@ button, input[type=button], input::file-selector-button {
     background: var(--input-button-background);
     border: 1px solid var(--input-button-border);
     border-radius: var(--input-border-radius);
-    padding-top: 2px;
-    padding-bottom: 2px;
+    padding-top: 4px;
+    padding-bottom: 4px;
     padding-left: 10px;
     padding-right: 10px;
 }
@@ -200,7 +200,7 @@ div.container {
 
 div.container > div.menu {
     width: 250px;
-    border: 10px solid var(--sidebar-background);
+    border: 8px solid var(--sidebar-background);
     background: var(--sidebar-background);
     color: var(--sidebar-text);
     overflow: hidden;
@@ -484,12 +484,7 @@ div.chat form.actions div.newmessage {
 
 div.newmessage input {
     width: 100%;
-    padding-right: 22px;
-}
-
-div.send button, div.info button {
-    padding-left: 5px;
-    padding-right: 5px;
+    padding-right: 25px ! important;
 }
 
 div.chat div.conversation div.item {
@@ -765,8 +760,8 @@ img.emote-big, img.emoji-big {
 
 div.emoji-search {
     position: absolute;
-    right: 4px;
-    padding-top: 3px;
+    right: 5px;
+    padding-top: 5px;
     filter: grayscale(100%);
 }
 
