@@ -573,6 +573,9 @@ class UserData(BaseData):
         cursor = self.execute(sql, {"myid": userid, "name": f"%{name}%"})
         users = [self.__to_user(u) for u in cursor.mappings()]
 
+        # Post-filter by users who are activated, so we don't display deactivated users.
+        users = [u for u in users if UserPermission.ACTIVATED in u.permissions]
+
         # Post-filter by name if requested, so we don't find ourselves all the time.
         if name:
             users = [u for u in users if (name in u.username) or (name in u.nickname)]

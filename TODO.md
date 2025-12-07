@@ -2,7 +2,6 @@ TODO
 ====
 
  - Search duplicates chats confusingly, figure out better presentation there.
- - Don't show deactivated users on user search.
  - New chats that came in when you were away from the interface don't get badged.
 
 TODO For Post Test Build
