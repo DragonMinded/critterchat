@@ -631,7 +631,7 @@ class UserData(BaseData):
             for result in cursor.mappings()
         ]
 
-        def hydrate_count(roomid: RoomID, actionid: ActionID) -> int:
+        def hydrate_existing_count(roomid: RoomID, actionid: ActionID) -> int:
             sql = """
                 SELECT COUNT(id) AS count FROM action WHERE `room_id` = :roomid AND `id` > :actionid AND `action` IN :types
             """
@@ -643,7 +643,38 @@ class UserData(BaseData):
 
         # There's probably a SQL way to do this, but I don't want to bang my head against
         # it right now, so it can come in a future improvement.
-        return [(c[0], hydrate_count(c[0], c[1])) for c in counts]
+        computed_counts = [(c[0], hydrate_existing_count(c[0], c[1])) for c in counts]
+
+        # Now, make sure if we were joined to a room or a chat while we were completely gone
+        # that we still count the actions for that room or chat as well.
+        seen = [c[0] for c in computed_counts]
+        if seen:
+            sql = """
+                SELECT id FROM room WHERE id NOT IN :seen AND id IN (
+                    SELECT room_id FROM occupant WHERE user_id = :userid AND inactive != TRUE
+                )
+            """
+        else:
+            sql = """
+                SELECT id FROM room WHERE id IN (
+                    SELECT room_id FROM occupant WHERE user_id = :userid AND inactive != TRUE
+                )
+            """
+        cursor = self.execute(sql, {"seen": seen, "userid": userid})
+        extra_rooms = [RoomID(result['id']) for result in cursor.mappings()]
+
+        def hydrate_new_count(roomid: RoomID) -> int:
+            sql = """
+                SELECT COUNT(id) AS count FROM action WHERE `room_id` = :roomid AND `action` IN :types
+            """
+            cursor = self.execute(sql, {"roomid": roomid, "types": list(ActionType.unread_types())})
+            if cursor.rowcount != 1:
+                return 0
+            result = cursor.mappings().fetchone()
+            return int(result["count"])
+
+        computed_counts += [(c, hydrate_new_count(c)) for c in extra_rooms]
+        return computed_counts
 
     def get_last_seen_actions(self, userid: UserID) -> List[Tuple[RoomID, ActionID]]:
         """

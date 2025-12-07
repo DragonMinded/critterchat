@@ -1,11 +1,6 @@
 TODO
 ====
 
- - New chats that came in when you were away from the interface don't get badged.
-
-TODO For Post Test Build
-========================
-
  - URL for public chats to link directly as an invite.
  - Start on profile view to look at a person's profile.
  - Chat info name and topic should support emoji autocomplete and emoji search.

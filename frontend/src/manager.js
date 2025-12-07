@@ -89,11 +89,14 @@ export function manager(socket) {
         var html = "";
         msg.rooms.forEach((result) => {
             var id = result.roomid;
-            var type = result['public'] ? 'room' : 'avatar';
+            var type = result.type == "room" ? 'room' : 'avatar';
 
             html += '<div class="item" id="' + id + '">';
             html += '  <div class="icon ' + type + '">';
             html += '    <img src="' + result.icon + '" />';
+            if (result.type == 'room') {
+                html    += '    <div class="room-indicator">#</div>';
+            }
             html += '  </div>';
             html += '  <div class="name-wrapper"><div class="name">' + escapeHtml(result.name) + '</div></div>';
             html += '</div>';
