@@ -6,42 +6,42 @@
     --application-subtle-text: light-dark(#5f5f5f, #5f5f5f);
 
     --sidebar-background: light-dark(#dddddd, #222222);
-    --sidebar-text: light-dark(#000000, #cccccc);
+    --sidebar-text: light-dark(#000000, #e1e1e1);
     --sidebar-hover-background: light-dark(#bcbcbc, #444444);
 
     --conversation-background: light-dark(#efefef, #373737);
     --conversation-text: light-dark(#000000, #dddddd);
     --conversation-topic: light-dark(#707070, #707070);
-    --conversation-timestamp: light-dark(#666666, #666666);
+    --conversation-timestamp: light-dark(#666666, #848484);
     --conversation-highlighted-background: light-dark(#e0e0e0, #242424);
 
     --edit-icon-background: light-dark(#dddddd, #333333);
     --edit-icon-text: light-dark(#000000, #ffffff);
 
     --button-background: light-dark(#dddddd, #555555);
-    --button-border: light-dark(#bcbcbc, #444444);
+    --button-border: light-dark(#bcbcbc, #424242);
     --button-text: light-dark(#000000, #ffffff);
-    --button-hover-background: light-dark(#bcbcbc, #444444);
-    --button-hover-border: light-dark(#bcbcbc, #444444);
+    --button-hover-background: light-dark(#bcbcbc, #424242);
+    --button-hover-border: light-dark(#bcbcbc, #424242);
     --button-hover-text: light-dark(#000000, #ffffff);
 
-    --input-background: light-dark(#ffffff, #2b2a33);
+    --input-background: light-dark(#ffffff, #1c1c1c);
     --input-text: light-dark(#000000, #ffffff);
-    --input-border: light-dark(#bcbcbc, #444444);
+    --input-border: light-dark(#bcbcbc, #6d6d6d);
 
-    --input-button-background: light-dark(#efefef, #2b2a33);
+    --input-button-background: light-dark(#efefef, #373737);
     --input-button-text: light-dark(#000000, #ffffff);
-    --input-button-border: light-dark(#bcbcbc, #444444);
-    --input-button-hover-background: light-dark(#bcbcbc, #444444);
+    --input-button-border: light-dark(#bcbcbc, #6d6d6d);
+    --input-button-hover-background: light-dark(#bcbcbc, #6d6d6d);
     --input-button-hover-text: light-dark(#000000, #ffffff);
-    --input-button-hover-border: light-dark(#bcbcbc, #444444);
+    --input-button-hover-border: light-dark(#bcbcbc, #6d6d6d);
 
-    --autocomplete-border: light-dark(#bcbcbc, #444444);
+    --autocomplete-border: light-dark(#bcbcbc, #6d6d6d);
     --autocomplete-text: light-dark(#000000, #ffffff);
-    --autocomplete-background: light-dark(#ffffff, #2b2a33);
+    --autocomplete-background: light-dark(#ffffff, #1c1c1c);
     --autocomplete-selected: light-dark(#aaaaaa, #555555);
 
-    --emojisearch-border: light-dark(#bcbcbc, #444444);
+    --emojisearch-border: light-dark(#bcbcbc, #6d6d6d);
     --emojisearch-text: light-dark(#000000, #ffffff);
     --emojisearch-background: light-dark(#ffffff, #222222);
     --emojisearch-selected: light-dark(#aaaaaa, #555555);
