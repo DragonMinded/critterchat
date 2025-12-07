@@ -588,10 +588,10 @@ class Messages {
                 html += '  </div>';
                 html += '  <div class="content-wrapper">';
                 html += '    <div class="meta-wrapper">';
-                html += '      <span class="name" id="' + message.occupant.id + '">' + escapeHtml(message.occupant.nickname) + '</span>';
+                html += '      <span class="name" dir="auto" id="' + message.occupant.id + '">' + escapeHtml(message.occupant.nickname) + '</span>';
                 html += '      <span class="timestamp">' + formatDateTime(message.timestamp) + '</span>';
                 html += '    </div>';
-                html += '    <div class="message' + (highlighted ? " highlighted" : "") + '" id="' + message.id + '">' + content + '</div>';
+                html += '    <div class="message' + (highlighted ? " highlighted" : "") + '" dir="auto" id="' + message.id + '">' + content + '</div>';
                 html += '  </div>';
                 html += '</div>';
             } else if (message.action == "join") {
@@ -599,7 +599,7 @@ class Messages {
                 html += '  <div class="content-wrapper">';
                 html += '    <div class="meta-wrapper">';
                 html += '      <div class="action-wrapper">';
-                html += '        <span class="name" id="' + message.occupant.id + '">' + escapeHtml(message.occupant.nickname) + '</span>';
+                html += '        <span class="name" dir="auto" id="' + message.occupant.id + '">' + escapeHtml(message.occupant.nickname) + '</span>';
                 html += '        <span class="action">has joined!</span>';
                 html += '      </div>';
                 html += '      <span class="timestamp">' + formatDateTime(message.timestamp) + '</span>';
@@ -611,7 +611,7 @@ class Messages {
                 html += '  <div class="content-wrapper">';
                 html += '    <div class="meta-wrapper">';
                 html += '      <div class="action-wrapper">';
-                html += '        <span class="name" id="' + message.occupant.id + '">' + escapeHtml(message.occupant.nickname) + '</span>';
+                html += '        <span class="name" dir="auto" id="' + message.occupant.id + '">' + escapeHtml(message.occupant.nickname) + '</span>';
                 html += '        <span class="action">has left!</span>';
                 html += '      </div>';
                 html += '      <span class="timestamp">' + formatDateTime(message.timestamp) + '</span>';
@@ -625,7 +625,7 @@ class Messages {
                 html += '  <div class="content-wrapper">';
                 html += '    <div class="meta-wrapper">';
                 html += '      <div class="action-wrapper">';
-                html += '        <span class="name" id="' + message.occupant.id + '">' + escapeHtml(message.occupant.nickname) + '</span>';
+                html += '        <span class="name" dir="auto" id="' + message.occupant.id + '">' + escapeHtml(message.occupant.nickname) + '</span>';
                 html += '        <span class="action">has updated the ' + type + '\'s info!</span>';
                 html += '      </div>';
                 html += '      <span class="timestamp">' + formatDateTime(message.timestamp) + '</span>';
@@ -686,7 +686,7 @@ class Messages {
             return msg;
         }
 
-        var before = '<span class="name-highlight">';
+        var before = '<span class="name-highlight" dir="auto">';
         var after = '</span>';
         var pos = 0;
         while (pos <= (msg.length - actualuser.length)) {
