@@ -113,6 +113,9 @@ button, input[type=button], input::file-selector-button {
     border-radius: var(--input-border-radius);
     padding-top: 4px;
     padding-bottom: 4px;
+}
+
+form button, form input[type=button], form input::file-selector-button {
     padding-left: 10px;
     padding-right: 10px;
 }

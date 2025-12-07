@@ -1,7 +1,6 @@
 TODO
 ====
 
- - Log out button is cut off on some OSes, buttons/controls have too much padding to account for send/info buttons.
  - Search duplicates chats confusingly, figure out better presentation there.
  - Don't show deactivated users on user search.
  - New chats that came in when you were away from the interface don't get badged.
