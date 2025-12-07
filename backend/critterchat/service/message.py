@@ -291,6 +291,8 @@ class MessageService:
         # Now, figure out all of the private conversations that we shouldn't duplicate users for.
         ignored: Set[UserID] = set()
         for room in rooms:
+            if room.type != RoomType.CHAT:
+                continue
             if len(room.occupants) == 1:
                 ignored.add(room.occupants[0].userid)
             elif len(room.occupants) == 2:
@@ -314,16 +316,25 @@ class MessageService:
         results: List[RoomSearchResult] = []
         for room in rooms:
             icon = room.icon
+            handle: Optional[str] = None
+            if room.type == RoomType.CHAT:
+                if len(room.occupants) == 1:
+                    handle = "@" + room.occupants[0].username
+                elif len(room.occupants) == 2:
+                    not_me = [o for o in room.occupants if o.userid != userid]
+                    handle = "@" + not_me[0].username
+
             if not icon:
                 raise Exception("Logic error, should have been inferred above!")
+
             if room.id in memberof:
-                results.append(RoomSearchResult(room.name, True, room.public, room.id, None, icon))
+                results.append(RoomSearchResult(room.name, handle, room.type, True, room.public, room.id, None, icon))
             else:
-                results.append(RoomSearchResult(room.name, False, room.public, room.id, None, icon))
+                results.append(RoomSearchResult(room.name, handle, room.type, False, room.public, room.id, None, icon))
         for user in potentialusers:
             icon = user.icon
             if not icon:
                 raise Exception("Logic error, should have been inferred above!")
-            results.append(RoomSearchResult(user.nickname, False, False, None, user.id, icon))
+            results.append(RoomSearchResult(user.nickname, f"@{user.username}", RoomType.CHAT, False, False, None, user.id, icon))
 
         return results

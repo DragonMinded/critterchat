@@ -54,13 +54,21 @@ class Search {
             } else {
                 action = "message";
             }
-            var type = result['public'] ? 'room' : 'avatar';
+            var type = result.type == "room" ? 'room' : 'avatar';
+
+            var handleText = "";
+            if (result.handle) {
+                handleText = " <span>(" + escapeHtml(result.handle) + ")</span>";
+            }
 
             var html = '<div class="item" id="' + id + '">';
             html    += '  <div class="icon ' + type + '">';
             html    += '    <img src="' + result.icon + '" />';
+            if (result.type == 'room') {
+                html    += '    <div class="room-indicator">#</div>';
+            }
             html    += '  </div>';
-            html    += '  <div class="name-wrapper"><div class="name">' + escapeHtml(result.name) + '</div></div>';
+            html    += '  <div class="name-wrapper"><div class="name">' + escapeHtml(result.name) + handleText + '</div></div>';
             html    += '  <div class="action-wrapper"><div class="action">' + action + '</div></div>';
             html    += '</div>';
             resultdom.append(html);

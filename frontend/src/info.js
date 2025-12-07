@@ -249,7 +249,7 @@ class Info {
                             iconType = 'room';
                         } else {
                             title = "Private room";
-                            iconType = 'avatar';
+                            iconType = 'room';
                         }
                         $( 'div.top-info div.room-indicator' ).removeClass('hidden');
                     }

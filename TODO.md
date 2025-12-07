@@ -8,7 +8,6 @@ TODO For Post Test Build
 
  - URL for public chats to link directly as an invite.
  - Start on profile view to look at a person's profile.
- - Display user name next to nickname in search as well as on profiles.
  - Chat info name and topic should support emoji autocomplete and emoji search.
  - Mentioning typeahead should allow searching by display nick as well as username.
  - Support creating an account flow with ability to disable instance-side and setting for auto-activate or moderator activate.
