@@ -1,12 +1,11 @@
 TODO
 ====
 
- - "new" HR doesn't get styled with current theme.
- - Double-check colors of flash banners in dark color scheme.
  - Emoji search and typeahead doesn't work properly in dark mode.
  - Log out button is cut off on some OSes, buttons/controls have too much padding to account for send/info buttons.
  - Search duplicates chats confusingly, figure out better presentation there.
  - Don't show deactivated users on user search.
+ - New chats that came in when you were away from the interface don't get badged.
 
 TODO For Post Test Build
 ========================

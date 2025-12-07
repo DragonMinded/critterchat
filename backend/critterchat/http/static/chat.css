@@ -36,6 +36,13 @@
     --input-button-hover-text: light-dark(#000000, #ffffff);
     --input-button-hover-border: light-dark(#bcbcbc, #444444);
 
+    /* Error flash messages */
+    --error-border: light-dark(#b3b3b3, #1c1c1c);
+    --error-error: light-dark(#e4a7a7, #d77575);
+    --error-warning: light-dark(#e4c9a7, #d0a46d);
+    --error-info: light-dark(#a7d0e4, #68a4c2);
+    --error-success: light-dark(#bde4a7, #74a659);
+
     /* Random element colors that don't get themed with light/dark */
     --new-messages-background: #bf32a9;
     --new-messages-text: #ffffff;
@@ -49,9 +56,9 @@
     --action-background: #d372fd;
     --action-text: #000000;
 
-
     /* Theme styling attributes. */
     --button-border-radius: 5px;
+    --error-border-radius: 5px;
     --input-border-radius: 3px;
 }
 
@@ -123,7 +130,8 @@ ul.errors {
 }
 
 ul.errors li {
-    border-radius: var(--button-border-radius);
+    border-radius: var(--error-border-radius);
+    border: 1px solid var(--error-border);
     padding: 10px;
     margin: 0px;
     display: flex;
@@ -133,9 +141,23 @@ ul.errors li:not(:last-child) {
    margin-bottom: 10px;
 }
 
-ul.errors li div {
+ul.errors li div.flash-message {
     flex-grow: 1;
     margin: 0px;
+    padding-top: 2px;
+}
+
+ul.errors li button {
+    background: var(--button-background);
+    border: 1px solid var(--button-border);
+    color: var(--button-text);
+    border-radius: var(--button-border-radius);
+}
+
+ul.errors li button:hover {
+    background: var(--button-hover-background);
+    border: 1px solid var(--button-hover-border);
+    color: var(--button-hover-text);
 }
 
 ul.errors li button.close {
@@ -143,25 +165,32 @@ ul.errors li button.close {
 }
 
 li.error {
-    background: #e4a7a7;
+    background: var(--error-error);
 }
 
 li.warning {
-    background: #e4c9a7;
+    background: var(--error-warning);
 }
 
 li.success {
-    background: #bde4a7;
+    background: var(--error-success);
 }
 
 li.info {
-    background: #a7d0e4;
+    background: var(--error-info);
 }
 
 div.maskable {
     display: inline-block;
     background-color: currentColor;
     mask-size: contain;
+}
+
+div.close-svg {
+    width: 16px;
+    height: 16px;
+    margin-bottom: -3px;
+    mask-image: url('close.svg');
 }
 
 div.search-svg {
@@ -779,7 +808,7 @@ div.newseparator > div.content-wrapper {
 }
 
 div.newseparator div.newline {
-    border-top: 1px solid black;
+    border-top: 1px solid var(--conversation-text);
     flex-grow: 1;
     margin-top: 12px;
     margin-bottom: -24px;

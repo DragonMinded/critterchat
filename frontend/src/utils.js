@@ -103,8 +103,10 @@ const flash = function( type, message ) {
     window.nonce = nonce + 1;
 
     var html = '<li class="' + type + '" id="flash' + ts + '' + nonce + '">';
-    html    += '  <div>' + message + '</div>';
-    html    += '  <button pid="flash' + ts + '' + nonce + '" class="close ' + type + '">&#10060;</button>';
+    html    += '  <div class="flash-message">' + message + '</div>';
+    html    += '  <button pid="flash' + ts + '' + nonce + '" class="close ' + type + '">';
+    html    += '    <div class="maskable close-svg"></div>';
+    html    += '</button>';
     html    += '</li>';
 
     $( 'ul.errors' ).append(html);
