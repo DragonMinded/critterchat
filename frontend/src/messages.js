@@ -517,7 +517,7 @@ class Messages {
             return {
                 text: "@" + user.username,
                 type: "user",
-                preview: "<img class=\"icon-preview\" src=\"" + user.icon + "\" />&nbsp;" + escapeHtml(user.nickname)
+                preview: "<img class=\"icon-preview\" src=\"" + user.icon + "\" />&nbsp;<span dir=\"auto\">" + escapeHtml(user.nickname) + "</span>",
             };
         });
         this.autocompleteUpdate(this.options.concat(acusers));
