@@ -1,8 +1,9 @@
 .emojisearch {
     position: aboslute;
     margin: 0px;
-    border: 1px solid gray;
-    background: #ffffff;
+    border: 1px solid var(--emojisearch-border);
+    background: var(--emojisearch-background);
+    color: var(--emojisearch-text);
     z-index: 200;
     height: 250px;
 }
@@ -35,7 +36,7 @@
 
 .emojisearch-category.selected {
     filter: none;
-    border-bottom: 1px solid black;
+    border-bottom: 1px solid var(--emojisearch-selected-category);
 }
 
 .emojisearch-element {
@@ -56,7 +57,7 @@
 }
 
 .emojisearch-element.selected {
-    background: #aaaaaa;
+    background: var(--emojisearch-selected);
 }
 
 .emoji-preview {

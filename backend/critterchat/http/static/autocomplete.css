@@ -1,8 +1,9 @@
 .autocomplete {
     position: aboslute;
     margin: 0px;
-    border: 1px solid gray;
-    background: #ffffff;
+    border: 1px solid var(--autocomplete-border);
+    background: var(--autocomplete-background);
+    color: var(--autocomplete-text);
     z-index: 200;
 }
 
@@ -24,7 +25,7 @@
 }
 
 .autocomplete-element.selected {
-    background: #aaaaaa;
+    background: var(--autocomplete-selected);
 }
 
 .emoji-preview {

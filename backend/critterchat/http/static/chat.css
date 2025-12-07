@@ -36,7 +36,17 @@
     --input-button-hover-text: light-dark(#000000, #ffffff);
     --input-button-hover-border: light-dark(#bcbcbc, #444444);
 
-    /* Error flash messages */
+    --autocomplete-border: light-dark(#bcbcbc, #444444);
+    --autocomplete-text: light-dark(#000000, #ffffff);
+    --autocomplete-background: light-dark(#ffffff, #2b2a33);
+    --autocomplete-selected: light-dark(#aaaaaa, #555555);
+
+    --emojisearch-border: light-dark(#bcbcbc, #444444);
+    --emojisearch-text: light-dark(#000000, #ffffff);
+    --emojisearch-background: light-dark(#ffffff, #222222);
+    --emojisearch-selected: light-dark(#aaaaaa, #555555);
+    --emojisearch-selected-category: light-dark(#000000, #ffffff);
+
     --error-border: light-dark(#b3b3b3, #1c1c1c);
     --error-error: light-dark(#e4a7a7, #d77575);
     --error-warning: light-dark(#e4c9a7, #d0a46d);
