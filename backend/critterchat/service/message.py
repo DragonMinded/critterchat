@@ -1,7 +1,7 @@
 import emoji
 import io
 from PIL import Image
-from typing import List, Optional
+from typing import List, Optional, Set
 
 from ..config import Config
 from ..common import Time
@@ -95,6 +95,7 @@ class MessageService:
         if room.public:
             room_name = "Unnamed Public Chat"
             room_type = RoomType.ROOM
+            occupants = self.__data.room.get_room_occupants(room.id)
         else:
             # Figure out how many people are in the chat, name it after them.
             occupants = self.__data.room.get_room_occupants(room.id, include_left=True)
@@ -126,6 +127,7 @@ class MessageService:
                 room_type = RoomType.ROOM
 
         room.type = room_type
+        room.occupants = occupants
         if not room.name:
             room.name = room_name
 
@@ -286,16 +288,29 @@ class MessageService:
             rooms = [r for r in rooms if lowername in r.name.lower()]
         rooms = sorted(rooms, key=lambda r: r.name)
 
+        # Now, figure out all of the private conversations that we shouldn't duplicate users for.
+        ignored: Set[UserID] = set()
+        for room in rooms:
+            if len(room.occupants) == 1:
+                ignored.add(room.occupants[0].userid)
+            elif len(room.occupants) == 2:
+                not_me = [o for o in room.occupants if o.userid != userid]
+                ignored.add(not_me[0].userid)
+
         # Now, look up all users we could chat with, given our criteria.
         potentialusers = sorted(
             self.__data.user.get_visible_users(userid, name=name),
             key=lambda u: u.nickname,
         )
 
+        # Now, filter out any users that we've already got a chat with.
+        potentialusers = [u for u in potentialusers if u.id not in ignored]
+
+        # Now, resolve the icons of anyone left.
         for user in potentialusers:
             self.__attachments.resolve_user_icon(user)
 
-        # Now, combined the two.
+        # Finally, combined the two.
         results: List[RoomSearchResult] = []
         for room in rooms:
             icon = room.icon

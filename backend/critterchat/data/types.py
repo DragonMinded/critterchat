@@ -1,5 +1,5 @@
 from enum import IntEnum, StrEnum
-from typing import Dict, NewType, Optional, Set
+from typing import Dict, List, NewType, Optional, Set
 
 
 UserID = NewType("UserID", int)
@@ -201,8 +201,13 @@ class Room:
         self.last_action = last_action
         self.iconid = iconid
         self.deficonid = deficonid
+
+        # Resolved only after lookup by attachment system.
         self.icon: Optional[str] = None
         self.deficon: Optional[str] = None
+
+        # Resolved only after lookup by message/search system, not sent to clients.
+        self.occupants: List[Occupant] = []
 
     def to_dict(self) -> Dict[str, object]:
         return {

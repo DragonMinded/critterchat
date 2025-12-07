@@ -1,7 +1,6 @@
 TODO
 ====
 
- - Search duplicates chats confusingly, figure out better presentation there.
  - New chats that came in when you were away from the interface don't get badged.
 
 TODO For Post Test Build
