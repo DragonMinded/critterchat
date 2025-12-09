@@ -375,7 +375,12 @@ class Messages {
                 // it can take a little while to round trip and the double change to the message
                 // window looks weird.
                 if (message.occupant.username == window.username) {
-                    selfMessage = true;
+                    if (
+                        message.action == "message" ||
+                        message.action == "change_info"
+                    ) {
+                        selfMessage = true;
+                    }
                 }
             });
         }
@@ -532,14 +537,9 @@ class Messages {
 
     // Whenever an emote is live-added, update the autocomplete typeahead for that emote.
     addEmotes( mapping ) {
-        var box = $( 'div.emote-preload' );
-
         for (const [alias, uri] of Object.entries(mapping)) {
             emotes[alias] = uri;
             this.options.push({text: alias, type: "emote", preview: "<img class=\"emoji-preview\" src=\"" + uri + "\" />"});
-
-            // Also be sure to reload the image.
-            box.append( '<img src="' + uri + '" />' );
         }
 
         this.emojisearchUpdate(this.options);
