@@ -276,14 +276,21 @@ class Messages {
         }
 
         // Now, grab all messages that are newer than this.
-        var newerMessages = [];
+        var newerMessages = 0;
         this.messages.forEach((message) => {
             if (message.order > lastMessage.order) {
-                newerMessages.push(message);
+                if (
+                    message.action == "message" ||
+                    message.action == "join" ||
+                    message.action == "leave" ||
+                    message.action == "change_info"
+                ) {
+                    newerMessages += 1;
+                }
             }
         });
 
-        if (newerMessages.length > 0) {
+        if (newerMessages) {
             var html = "";
 
             html  = '<div class="newseparator">';
@@ -638,11 +645,13 @@ class Messages {
                 $('div.chat > div.conversation-wrapper > div.conversation div.icon#' + message.occupant.id + ' img').attr('src', message.occupant.icon);
             }
 
-            if (loc == 'after') {
-                messages.append(html);
-                this.ensureScrolled();
-            } else {
-                messages.prepend(html);
+            if (html) {
+                if (loc == 'after') {
+                    messages.append(html);
+                    this.ensureScrolled();
+                } else {
+                    messages.prepend(html);
+                }
             }
         }
 
