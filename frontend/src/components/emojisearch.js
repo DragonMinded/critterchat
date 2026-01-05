@@ -75,7 +75,9 @@ export function emojisearch(state, button, textbox, items) {
         entries.forEach(function(entry) {
             var text = entry.text.toLowerCase();
             if (catkeys.hasOwnProperty(text)) {
-                catkeys[text] = entry.preview;
+                // We really need to rethink how this control is populated, we should probably
+                // be sending a preview src URI instead of a DOM element. Oh well, future FIXME.
+                catkeys[text] = entry.preview.replace('loading="lazy"', '');
             }
             emojimapping[text] = entry;
         });

@@ -8,6 +8,14 @@ import { displayInfo } from "./modals/infomodal.js";
 
 const linkifyOptions = { defaultProtocol: "http", target: "_blank", validate: { email: () => false } };
 
+const searchOptions = {
+    attributes: function( _icon, _variant ) {
+        return {
+            loading: "lazy",
+        }
+    }
+}
+
 class Messages {
     constructor( eventBus, screenState, inputState, initialSize, initialVisibility ) {
         this.eventBus = eventBus;
@@ -128,17 +136,20 @@ class Messages {
         this.updateSize();
 
         // Set up custom emotes, as well as normal emoji typeahead.
-        this.options = [];
+        this.autocompleteOptions = [];
+        this.emojiSearchOptions = [];
         for (const [key, value] of Object.entries(emojis)) {
-          this.options.push({text: key, type: "emoji", preview: twemoji.parse(value, twemojiOptions)});
+          this.autocompleteOptions.push({text: key, type: "emoji", preview: twemoji.parse(value, twemojiOptions)});
+          this.emojiSearchOptions.push({text: key, type: "emoji", preview: twemoji.parse(value, {...twemojiOptions, ...searchOptions})});
         }
         for (const [key, value] of Object.entries(emotes)) {
-          this.options.push({text: key, type: "emote", preview: "<img class=\"emoji-preview\" src=\"" + value + "\" />"});
+          this.autocompleteOptions.push({text: key, type: "emote", preview: "<img class=\"emoji-preview\" src=\"" + value + "\" />"});
+          this.emojiSearchOptions.push({text: key, type: "emote", preview: "<img class=\"emoji-preview\" src=\"" + value + "\" loading=\"lazy\" />"});
         }
-        this.emojisearchUpdate = emojisearch(this.inputState, '.emoji-search', '#message', this.options);
+        this.emojisearchUpdate = emojisearch(this.inputState, '.emoji-search', '#message', this.emojiSearchOptions);
 
         // Support tab-completing users as well.
-        this.autocompleteUpdate = autocomplete(this.inputState, '#message', this.options);
+        this.autocompleteUpdate = autocomplete(this.inputState, '#message', this.autocompleteOptions);
 
         // Set up the emoji search itself.
         $(".emoji-search").html(twemoji.parse(String.fromCodePoint(0x1F600), twemojiOptions));
@@ -542,17 +553,18 @@ class Messages {
                 preview: "<img class=\"icon-preview\" src=\"" + user.icon + "\" />&nbsp;<span dir=\"auto\">" + escapeHtml(user.nickname) + "</span>",
             };
         });
-        this.autocompleteUpdate(this.options.concat(acusers));
+        this.autocompleteUpdate(this.autocompleteOptions.concat(acusers));
     }
 
     // Whenever an emote is live-added, update the autocomplete typeahead for that emote.
     addEmotes( mapping ) {
         for (const [alias, uri] of Object.entries(mapping)) {
             emotes[alias] = uri;
-            this.options.push({text: alias, type: "emote", preview: "<img class=\"emoji-preview\" src=\"" + uri + "\" />"});
+            this.autocompleteOptions.push({text: alias, type: "emote", preview: "<img class=\"emoji-preview\" src=\"" + uri + "\" />"});
+            this.emojiSearchOptions.push({text: alias, type: "emote", preview: "<img class=\"emoji-preview\" src=\"" + uri + "\" loading=\"lazy\" />"});
         }
 
-        this.emojisearchUpdate(this.options);
+        this.emojisearchUpdate(this.emojiSearchOptions);
         this.updateUsers();
     }
 
@@ -560,9 +572,10 @@ class Messages {
     deleteEmotes( aliases ) {
         aliases.forEach((alias) => {
             delete emotes[alias];
-            this.options = this.options.filter((option) => !(option.type == "emote" && option.text == alias));
+            this.autocompleteOptions = this.autocompleteOptions.filter((option) => !(option.type == "emote" && option.text == alias));
+            this.emojiSearchOptions = this.emojiSearchOptions.filter((option) => !(option.type == "emote" && option.text == alias));
         });
-        this.emojisearchUpdate(this.options);
+        this.emojisearchUpdate(this.emojiSearchOptions);
         this.updateUsers();
     }
 
