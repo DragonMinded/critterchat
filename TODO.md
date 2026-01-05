@@ -1,7 +1,6 @@
 TODO Immediate
 ==============
 
- - Toggling info doesn't auto-scroll back to where you were before.
  - Fix modal popover not allowing scrollable content when sizing down.
  - Combine like messages together with a preference to do so.
 

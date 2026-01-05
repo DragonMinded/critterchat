@@ -105,6 +105,11 @@ class Messages {
             this.visibility = newVisibility;
         });
 
+        // Ensure that showing/hiding info keeps us auto-scrolled.
+        eventBus.on('updateinfo', (_info) => {
+            this.ensureScrolled(false);
+        });
+
         // Set up one-time poll for messages in the current room while we were offline.
         eventBus.on( 'connected', () => {
             if (this.roomid) {
@@ -236,12 +241,17 @@ class Messages {
         }
     }
 
-    ensureScrolled() {
+    ensureScrolled( causedByNewMessage ) {
         var box = $( 'div.chat > div.conversation-wrapper' );
         if (this.autoscroll) {
             box[0].scrollTop = scrollTopMax(box[0]) + 1;
         } else {
-            $( 'div.new-messages-alert' ).css( 'display', 'inline-block' );
+            // We don't want to display the alert in this case, possibly because we
+            // were not drawing new messages but instead trying to auto-scroll after
+            // a re-flow.
+            if (causedByNewMessage) {
+                $( 'div.new-messages-alert' ).css( 'display', 'inline-block' );
+            }
         }
     }
 
@@ -306,13 +316,13 @@ class Messages {
             this.removeNewIndicator();
             $(html).insertAfter(messages.find('div.item#' + lastMessage.id));
 
-            this.ensureScrolled();
+            this.ensureScrolled(true);
         }
     }
 
     removeNewIndicator() {
         $('div.newseparator').remove();
-        this.ensureScrolled();
+        this.ensureScrolled(true);
     }
 
     updateActions( roomid, actions ) {
@@ -648,7 +658,7 @@ class Messages {
             if (html) {
                 if (loc == 'after') {
                     messages.append(html);
-                    this.ensureScrolled();
+                    this.ensureScrolled(true);
                 } else {
                     messages.prepend(html);
                 }
