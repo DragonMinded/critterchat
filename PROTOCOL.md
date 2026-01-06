@@ -2,7 +2,7 @@
 
 This is an attempt to document the websocket protocol provided by CritterChat's backend and used by CritterChat's frontend. This serves two purposes. First, it allows a high-level overview that hopefully sidesteps some new developer ramp-up time. Second, it hopefully aids in alternative clients being developed without them having to reverse-engineer everything from as-built code.
 
-At the high level, communcation between the existing web-based JS client and the backend server is done via [https://socket.io/](socket.io) which uses websockets under the hood. Socket.IO presents an event-driven interface which we view as named JSON packets. The various packets, whether they are server or client-originated, what they do, and when you should expect to send or receive them is all documented below.
+At the high level, communcation between the existing web-based JS client and the backend server is done via [Socket.IO](https://socket.io/) which uses websockets under the hood. Socket.IO presents an event-driven interface which we view as named JSON packets. The various packets, whether they are server or client-originated, what they do, and when you should expect to send or receive them is all documented below.
 
 ## Authentication
 
