@@ -108,7 +108,19 @@ The `roomlist` packet is sent from the client to load or refresh the list of roo
 
 ### chathistory
 
+The `chathistory` packet is sent from the client to load history actions for a given room that the user has joined. This expects a request JSON with at least the `roomid` attribute, and optionally a `before` attribute. In both cases it will verify that the user is currently in the room and then return a list of actions for that room. The `roomid` attribute should be a string room identifier found in a room object as returned by a `roomlist` response from the server. When requesting without a `before` attribute this will grab the last 100 actions that occurred in the room. Note that the server expects the client to make a `chathistory` request to populate initial messages and occupants when selecting a room, either when the user clicks on a room to view messages or when the client selects a room for the user on behalf of a `selected` attribute in a `roomlist` response packet. If a `before` attribute is specified, it should be a string action identifier. The server will fetch the most recent 100 actions that come before the specified action ID placed in the `before` attribute. The client can use this behavior to implement history loading when a user scrolls up to the top of the currently populated room's actions. In both cases the server will respond with a `chathistory` response containing the following attributes:
+
+ - `roomid` - The ID of the room that this response is for. Should always match the room ID in the request `roomid`. Clients can use this to discard stale `chathistory` response packets if the user has clicked away to another room before the response could be returned.
+ - `history` - A list of action objects representing the chat history for the room. Clients wishing to request older messages can sort the received actions by the `order` attribute and then make another `chathistory` request with the action ID of the oldest action. Clients wishing to display whether there are more messages to fetch can look at the current room object's `oldest_action` identifier and compare it to the oldest action it has.
+ - `occupants` - A list of occupants in the room. Note that this is only returned when the `before` attribute is not specified since in that case the client is attempting to perform an intial populate. It is assumed that when the client specifies a `before` attribute that it is fetching older actions and already has the occupant list.
+ - `lastseen` - The last seen action ID for this room for the given user. Note that this is only returned when the `before` attribute is not specified. The client can use this to denote actions with a higher order than the last seen action ID as new, for the purpose of displaying what new activity has occurred since the last time the user has looked at the given room.
+
 ### chatactions
+
+The `chatactions` packet is sent from the client to poll for newer actions to a given room that the user has joined. This expects a request JSON with the `roomid` and `after` attributes. It will verify that the user is currently in the room and then return a list of actions for that room which are newer than the specified action. The `roomid` attribute should be a string room identifier found in a room object as returned by a `roomlist` response from the server. The `after` attribute should be a string action identifier. Note that clients do not normally need to poll for updates as the server will send updates to the client automatically for all joined rooms. This is provided so that a client which has been disconnected can grab missing actions upon successfully reconnecting. The server cannot compute a reconnected client's missing messages so the client is responsible for sending a `chatactions` request with the newest action ID it knows about when reconnecting to the server. The client can determine the newest action ID by sorting known actions for a room by the `order` attribute. The server will respond with a `chatactions` response containing the following attributes:
+
+ - `roomid` - The ID of the room that this response is for. Should always match the room ID in the request `roomid`. Clients can use this to discard stale `chatactions` response packets if the user has clicked away to another room before the response could be returned.
+ - `actions` - A list of action objects representing chat history for the room. Clients wishing to denote unread actions as new should consider all of these actions as new.
 
 ### welcomeaccept
 
@@ -135,6 +147,8 @@ The `searchrooms` packet is sent from the client to request a list of search res
 
 ### joinroom
 
+The `joinroom` packet is sent when the client requests to join a given room. This expects a request JSON that contains the `roomid` attribute which should be a string room ID to join. This room ID can be obtained from the `roomid` attribute in a room search result object. Upon receipt of a `joinroom` request containing a valid room ID that the user is allowed to join, the user will be joined to that room. Note that the `roomid` attribute can also include a user ID to start chatting with as well. The user ID can be obtained from the `userid` attribute in a room search result object. In the case that the `roomid` attribute is actually a user ID, the server will create a new 1:1 conversation between the current user and the specified user ID and then join both people to the room. Note that if there is an existing 1:1 conversation between the requested user and the current user it will be re-used, even if the users have previously left the conversation. In that case, both users will be re-added. In the case that the user successfully joined the requested room (or a new 1:1 chat was created) the server will respond with a `roomlist` response packet as documented above. Since the user was joined to a new room, clients should expect the `roomlist` response to contain a `selected` attribute which is the room the user just joined. The client should not expect to receive a `counts` list since CritterChat does not attempt to badge for actions taken in a room before the user joined it. Note that if the room does not exist no response will be returned. Note that if a user ID is specified and the room exists already, a `roomlist` response will be returned which includes the `selected` attribute correctly pointing to the existing 1:1 chat. Clients can use this to implement "message this user" functionality that will jump to the correct existing chat or create a new chat if one does not exist.
+
 ### updateroom
 
 ### message
@@ -142,3 +156,29 @@ The `searchrooms` packet is sent from the client to request a list of search res
 ### leaveroom
 
 ### lastaction
+
+## Server-Initated Packets
+
+The following packets are server initiated. The server will send them to correctly connected clients so that a client does not have to poll for updates.
+
+### emotechanges
+
+### reload
+
+The `reload` response packet will be sent to the client unsolicited whenever the server determines that the client is no longer authorized to be connected to the server. This can happen if the user's session is stale and times out, or if the user has been deactivated by an administrator. In the future this will also be used in conjunction with a "log out all other devices" feature to allow a user to safely de-authenticate any connected clients if they suspect they have been compromised. The client should respond to this by taking the user back to the login screen and asking them to re-authenticate. Upon receiving a `reload` packet, no additional requests will be handled. Instead, the server will continue sending `reload` packets to the client instead of the expected response.
+
+### chatactions
+
+The `chatactions` response packet will be sent to the client unsolicited whenever an action occurs in a room that the user has joined. The server has no concept of what room is active on the client so it sends all room updates to the client for every joined room. The client can use this to display new actions in the currently displayed room. For actions that are associated with a room that the client is not actively displaying, the client can instead use the actions to badge notification counts. Note that the server will only start tracking and sending new actions at the point when the client successfully connects using Socket.IO. The packet is documented in the above `chatactions` request and response for client-initiated packets since the response packet follows the same format.
+
+### roomlist
+
+The `roomlist` response packet will be sent to the client unsolicited when the user's joined room information is updated not in response to the client's request. Right now that includes when the user is joined to a room by another user (such as starting a new 1:1 chat and in the future being added to a chat by an administrator or by invite) and when notification badges are cleared for a given room. The latter happens when the user is using multiple devices and views new actions in a room on another device. CritterChat informs all other connected clients for that user so that the user doesn't have to manually click on each room to clear notifications for every device they are actively signed on with. It is documented in the above `roomlist` request and response for client-initiated packets since the response packet follows the same format.
+
+### profile
+
+The `profile` response packet will be sent to the client unsolicited when the user's profile is updated not in response to the client's request. This can happen if an administrator changes a user's profile information or when the user edits their own profile on another device. When this happens the server will send a `profile` response to all devices so that they can get an updated version of the user's profile. The packet is documented in the above `profile` request and response for client-initated packets since the response packet follows the same format.
+
+### preferences
+
+The `preferences` response packet will be sent to the client unsolicited when the user's preferences are updated not in response to the client's request. This happens when the user edits their preferences on another device. When this happens the server will send a `preferences` response to all devices so that they can get an updated version of the user's preferences. The packet is documented in the above `preferences` request and response for client-initated packets since the response packet follows the same format.
