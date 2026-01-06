@@ -13,6 +13,7 @@ TODO Short Term
  - Notification indicator by changing favicon to a notifications version.
  - Start on profile view to look at a person's profile.
  - Support editing your nickname and avatar per-chat (limit to public rooms).
+ - Rework attachments to properly identify mime type and preserve extensions.
 
 TODO Low Priority
 =================
