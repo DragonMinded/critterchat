@@ -89,10 +89,25 @@ class RoomData(BaseData):
             retval[RoomID(result['room_id'])] = ActionID(result['action_id'])
         return retval
 
-    def _hydrate_oldest_action(self, rooms: List[Room]) -> List[Room]:
+    def _get_newest_action(self, room_ids: List[RoomID]) -> Dict[RoomID, Optional[ActionID]]:
+        if not room_ids:
+            return {}
+
+        sql = """
+            SELECT room_id, MAX(id) AS action_id FROM action WHERE room_id IN :room_ids GROUP BY room_id
+        """
+        cursor = self.execute(sql, {'room_ids': room_ids})
+        retval: Dict[RoomID, Optional[ActionID]] = {rid: None for rid in room_ids}
+        for result in cursor.mappings():
+            retval[RoomID(result['room_id'])] = ActionID(result['action_id'])
+        return retval
+
+    def _hydrate_actions(self, rooms: List[Room]) -> List[Room]:
         oldest_actions = self._get_oldest_action([r.id for r in rooms])
+        newest_actions = self._get_newest_action([r.id for r in rooms])
         for room in rooms:
             room.oldest_action = oldest_actions[room.id]
+            room.newest_action = newest_actions[room.id]
         return rooms
 
     def get_joined_rooms(self, userid: UserID, include_left: bool = False) -> List[Room]:
@@ -119,13 +134,13 @@ class RoomData(BaseData):
             )
         """
         cursor = self.execute(sql, {"userid": userid})
-        return self._hydrate_oldest_action([
+        return self._hydrate_actions([
             Room(
                 roomid=RoomID(result['id']),
                 name=result['name'],
                 topic=result['topic'],
                 public=bool(result['public']),
-                last_action=result['last_action'],
+                last_action_timestamp=result['last_action'],
                 iconid=AttachmentID(result['icon']) if result['icon'] else None,
                 deficonid=None,
             )
@@ -186,13 +201,13 @@ class RoomData(BaseData):
             sql += " AND (name IS NULL OR name = '' OR name COLLATE utf8mb4_general_ci LIKE :name)"
 
         cursor = self.execute(sql, {"userid": userid, "name": f"%{name}%"})
-        return self._hydrate_oldest_action([
+        return self._hydrate_actions([
             Room(
                 roomid=RoomID(result['id']),
                 name=result['name'],
                 topic=result['topic'],
                 public=bool(result['public']),
-                last_action=result['last_action'],
+                last_action_timestamp=result['last_action'],
                 iconid=AttachmentID(result['icon']) if result['icon'] else None,
                 deficonid=None,
             )
@@ -216,13 +231,13 @@ class RoomData(BaseData):
             sql += " WHERE (name IS NULL OR name = '' OR name COLLATE utf8mb4_general_ci LIKE :name)"
 
         cursor = self.execute(sql, {"name": f"%{name}%"})
-        return self._hydrate_oldest_action([
+        return self._hydrate_actions([
             Room(
                 roomid=RoomID(result['id']),
                 name=result['name'],
                 topic=result['topic'],
                 public=bool(result['public']),
-                last_action=result['last_action'],
+                last_action_timestamp=result['last_action'],
                 iconid=AttachmentID(result['icon']) if result['icon'] else None,
                 deficonid=None,
             )
@@ -246,13 +261,13 @@ class RoomData(BaseData):
             sql += " AND (name IS NULL OR name = '' OR name COLLATE utf8mb4_general_ci LIKE :name)"
 
         cursor = self.execute(sql, {"name": f"%{name}%"})
-        return self._hydrate_oldest_action([
+        return self._hydrate_actions([
             Room(
                 roomid=RoomID(result['id']),
                 name=result['name'],
                 topic=result['topic'],
                 public=bool(result['public']),
-                last_action=result['last_action'],
+                last_action_timestamp=result['last_action'],
                 iconid=AttachmentID(result['icon']) if result['icon'] else None,
                 deficonid=None,
             )
@@ -282,13 +297,13 @@ class RoomData(BaseData):
             sql += " AND (name IS NULL OR name = '' OR name COLLATE utf8mb4_general_ci LIKE :name)"
 
         cursor = self.execute(sql, {"userid": userid, "name": f"%{name}%"})
-        return self._hydrate_oldest_action([
+        return self._hydrate_actions([
             Room(
                 roomid=RoomID(result['id']),
                 name=result['name'],
                 topic=result['topic'],
                 public=bool(result['public']),
-                last_action=result['last_action'],
+                last_action_timestamp=result['last_action'],
                 iconid=AttachmentID(result['icon']) if result['icon'] else None,
                 deficonid=None,
             )
@@ -307,13 +322,13 @@ class RoomData(BaseData):
         """
 
         cursor = self.execute(sql, {})
-        return self._hydrate_oldest_action([
+        return self._hydrate_actions([
             Room(
                 roomid=RoomID(result['id']),
                 name=result['name'],
                 topic=result['topic'],
                 public=bool(result['public']),
-                last_action=result['last_action'],
+                last_action_timestamp=result['last_action'],
                 iconid=AttachmentID(result['icon']) if result['icon'] else None,
                 deficonid=None,
             )
@@ -355,15 +370,17 @@ class RoomData(BaseData):
             return None
         result = cursor.mappings().fetchone()
         room_id = RoomID(result['id'])
-        actions = self._get_oldest_action([room_id])
+        oldest_actions = self._get_oldest_action([room_id])
+        newest_actions = self._get_newest_action([room_id])
 
         return Room(
             roomid=room_id,
             name=result['name'],
             topic=result['topic'],
             public=bool(result['public']),
-            last_action=result['last_action'],
-            oldest_action=actions.get(room_id),
+            last_action_timestamp=result['last_action'],
+            oldest_action=oldest_actions.get(room_id),
+            newest_action=newest_actions.get(room_id),
             iconid=AttachmentID(result['icon']) if result['icon'] else None,
             deficonid=None,
         )
@@ -393,7 +410,7 @@ class RoomData(BaseData):
             room.topic = newroom.topic
             room.public = newroom.public
             room.iconid = newroom.iconid
-            room.last_action = timestamp
+            room.last_action_timestamp = timestamp
 
     def join_room(self, roomid: RoomID, userid: UserID) -> None:
         """

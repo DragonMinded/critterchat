@@ -4,9 +4,6 @@ TODO Immediate
  - Fix modal popover not allowing scrollable content when sizing down.
  - Combine like messages together with a preference to do so.
  - Remove message fetch limit when fetching newer messages in "get_room_updates".
- - When reconnecting, request actions from all rooms, not just active one, or we might miss badges.
- - Include last action on 'roomlist' when requesting or when sending in event loop, use that to prime monitoring for events on reconnect.
- - Prime event monitoring with 'chatactions' responses.
 
 TODO Short Term
 ===============

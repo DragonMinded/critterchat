@@ -126,17 +126,6 @@ class Messages {
             this.ensureScrolled(false);
         });
 
-        // Set up one-time poll for messages in the current room while we were offline.
-        eventBus.on( 'connected', () => {
-            if (this.roomid) {
-                const lastMessage = this.getLatestMessage();
-                if (lastMessage) {
-                    // Poll the server to see if there were any messages sent while we were offline.
-                    this.eventBus.emit("loadactions", {"roomid": this.roomid, "after": lastMessage.id})
-                }
-            }
-        });
-
         this.screenState.registerStateChangeCallback(() => {
             this.updateSize();
         });

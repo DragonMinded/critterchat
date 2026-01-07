@@ -238,7 +238,7 @@ class MessageService:
         for room in rooms:
             self.__infer_room_info(userid, room)
 
-        return sorted(rooms, key=lambda r: r.last_action, reverse=True)
+        return sorted(rooms, key=lambda r: r.last_action_timestamp, reverse=True)
 
     def get_room_occupants(self, roomid: RoomID) -> List[Occupant]:
         occupants = [self.__attachments.resolve_occupant_icon(o) for o in self.__data.room.get_room_occupants(roomid)]

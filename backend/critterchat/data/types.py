@@ -189,7 +189,8 @@ class Room:
         iconid: Optional[AttachmentID],
         deficonid: Optional[AttachmentID],
         oldest_action: Optional[ActionID] = None,
-        last_action: int = 0,
+        newest_action: Optional[ActionID] = None,
+        last_action_timestamp: int = 0,
     ) -> None:
         self.id = roomid
         self.type = RoomType.UNKNOWN
@@ -198,7 +199,8 @@ class Room:
         self.topic = topic or ""
         self.public = public
         self.oldest_action = oldest_action
-        self.last_action = last_action
+        self.newest_action = newest_action
+        self.last_action_timestamp = last_action_timestamp
         self.iconid = iconid
         self.deficonid = deficonid
 
@@ -218,7 +220,8 @@ class Room:
             "topic": self.topic,
             "public": self.public,
             "oldest_action": Action.from_id(self.oldest_action) if self.oldest_action else None,
-            "last_action": self.last_action,
+            "newest_action": Action.from_id(self.newest_action) if self.newest_action else None,
+            "last_action_timestamp": self.last_action_timestamp,
             "icon": self.icon,
             "deficon": self.deficon,
         }

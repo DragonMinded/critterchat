@@ -52,6 +52,12 @@ export function manager(socket) {
         socket.emit('preferences', {});
         socket.emit('lastsettings', {});
 
+        // Poll the server for any missed updates while we were potentially disconnected. Do
+        // this before the room list so we don't get our last events overwritten.
+        rooms.forEach((room) => {
+            socket.emit('chatactions', {roomid: room.id, after: room.newest_action})
+        });
+
         // Ask for our list of rooms that we're in.
         socket.emit('roomlist', {});
 
@@ -210,6 +216,21 @@ export function manager(socket) {
                     }
                 }
             });
+        }
+
+        // Grab the newest action out of the action list so we can update our room action tracker.
+        if (rooms.has(msg.roomid)) {
+            var lastAction = {};
+            msg.actions.forEach((message) => {
+                if (!lastAction?.order) {
+                    lastAction = message;
+                } else {
+                    if (message.order > lastAction.order) {
+                        lastAction = message;
+                    }
+                }
+            });
+            rooms.get(msg.roomid).newest_action = lastAction;
         }
 
         // Now, notify various subsystems of new actions.
