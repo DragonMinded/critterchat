@@ -4,12 +4,15 @@ TODO Immediate
  - Fix modal popover not allowing scrollable content when sizing down.
  - Combine like messages together with a preference to do so.
  - Remove message fetch limit when fetching newer messages in "get_room_updates".
+ - When reconnecting, request actions from all rooms, not just active one, or we might miss badges.
+ - Move notification event generation and reconnect support out of message.js and into manager.js.
+ - Include last action on 'roomlist' when requesting or when sending in event loop, use that to prime monitoring for events on reconnect.
+ - Prime event monitoring with 'chatactions' responses.
 
 TODO Short Term
 ===============
 
  - Source code documentation and comments, use JS feature for private methods and attributes.
- - Protocol documentation.
  - Notification indicator on back button in chat and info on mobile.
  - Notification indicator by changing favicon to a notifications version.
  - Start on profile view to look at a person's profile.

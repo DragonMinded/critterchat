@@ -141,9 +141,34 @@ The `searchrooms` packet is sent from the client to request a list of search res
 
 ### updateprofile
 
+The `updateprofile` packet is sent from the client to request the user's profile be updated. This expects a request JSON that contains the following attributes:
+
+ - `name` - A new nickname to set. This can be empty to unset a custom nickname and it can contain emoji. It must be 255 unicode code points or less in length. It cannot consist of solely unicode control characters or other non-printable characters. Note that the user's nickname will always be set, so clients should round-trip the existing custom name if the user does not edit it.
+ - `icon` - A base 64 encoded image that should be set as the new profile, following the `data:` URL specification. If this is left empty, the user's icon will not be updated. The image must be square and currently cannot exceed 128kb in size.
+ - `icon_delete` - An optional boolean specifying that the user wants to delete their custom icon. If the client leaves this out or sets this to an empty string or `False` then the server will not attempt to delete the user's custom icon. Setting this to `True` will cause the user's icon to revert to the instance's default icon.
+
+Upon successful update, the server will send a `profile` response packet which is identical to the response to a `profile` request. It will also send an unsolicited `profile` response packet to all other connected devices belonging to the user.
+
 ### updatepreferences
 
+The `updatepreferences` packet is sent from the client to request the user's preferences be updated. This expects a request JSON that contains the following attributes:
+
+ - `rooms_on_top` - A boolean representing whether the user wants rooms to always be displayed above conversations (true) or whether rooms and conversations should be sorted by last update (false). If not present, the preference will not be updated. If present, the preference will be updated to the specified value.
+ - `color_scheme` - A string representing the user's chosen color scheme. Valid values are "light" to force light mode, "dark" to force dark mode, and "system" to let the browser pick based on system settings. If not present, the preference will not be updated. If present, the preference will be updated to the specified value.
+ - `title_notifs` - A boolean representing whether the user wants notifications to show up in the tab title (true) or not (false). If not present, the preference will not be updated. If present, the preference will be updated to the specified value.
+ - `mobile_audio_notifs` - A boolean representing whether the user wants audio notifications on mobile (true) or whether mobile clients should be silent (false). If not present, the preference will not be updated. If present, the preference will be updated to the specified value.
+ - `audio_notifs` - A list of strings representing which audio notifications are enabled. If not present, individual audio notification enabled settings will be left as-is. If present, the user's audio notification enabled list is updated to match the specified list of notifications.
+ - `notif_sounds` - A dictionary keyed by audio notification type strings whose values are base 64 encoded audio files, following the `data:` URL specification. All audio notifications listed in this dictionary will be updated, overwriting any existing notification and adding new audio for notifications that did not have audio before. If not present, no audio notification sounds will be updated. Audio notifications not present in this dictionary will also be left as-is.
+ - `notif_sounds_delete` - A list of strings representing which audio notification files to delete. If not present, nothing will be deleted. If present, all notifications listed will be deleted. Note that the entries in this list are the same as the keys in `notif_sounds` and the values in the `audio_notifs` list.
+
+Upon successful update, the server will send a `preferences` response packet which is identical to the response to a `preferences` request. It will also send an unsolicited `preferences` response packet to all other connected devices belonging to the user.
+
 ### updatesettings
+
+The `updatesettings` packet is sent from the client any time the client toggles the "Info" panel or switches rooms, in order to inform the server of the last settings chosen by the client. Remember that settings are saved on a per-session basis so there is no need for the server to propagate settings outward to other clients nor echo the settings back to the client after successfully saving them. Therefore the client should not expect a response from this request packet. This expects a request JSON that contains the following attributes:
+
+ - `roomid` - A string representing the room that the user was last in, be it a public or private room or a 1:1 conversation.
+ - `info` - A string representing whether the right side info panel is currently visible. Valid values are "shown" for currently visible, and "hidden" for currently hidden.
 
 ### joinroom
 
@@ -153,17 +178,39 @@ In the case that the user successfully joined the requested room (or a new 1:1 c
 
 ### updateroom
 
+The `updateroom` packet is sent when the client requests to update the details of a particular room. This expects a request JSON that contains a `roomid` attribute representing the room being updated, as well as a `details` attribute which is a dictionary containing the attributes defined below. The server will check the user's permissions as well as verify that the user is in the room requested before performing the update. Upon successful update with at least one room detail updated, a "change_info" action will be generated for the room. The server will not respond with any specific response to this packet, but all existing clients in the room will end up receiving an unsolicited `chatactions` packet containing the "change_info" action that was generated based on this request.
+
+ - `name` - A new custom room name to set. This can be empty to unset a custom room name and it can contain emoji. It must be 255 unicode code points or less in length. It cannot consist of solely unicode control characters or other non-printable characters. Note that the room name will always be set so clients should round-trip the existing custom room name if the user does not edit it.
+ - `topic` - A new custom topic to set. Much like the above `name`, this can be empty to unset the topic, and it can contain emoji. It must also be 255 unicode code points or less and it cannot be only non-printable unicode characters. The topic will always be updated so clients should round-trip the existing topic if the user does not edit it.
+ - `icon` - A base 64 encoded image that should be set as the new custom room icon, following the `data:` URL specification. If this is left empty, the room's icon will not be updated. The image must be square and currently cannot exceed 128kb in size.
+ - `icon_delete` - An optional boolean specifying that the user wants to delete the custom room icon. If the client leaves this out or sets this to an empty string or `False` then the server will not attempt to delete the custom room icon. Setting this to `True` will cause the room's icon to revert to the instance's default icon.
+
 ### message
+
+The `message` packet is sent when the client wishes to send a message to a room. This expects a request JSON that contains a `roomid` attribute representing the room being updated and a `message` attribute representing a string message that should be sent to the room. The server will check the user's permissions as well as verify that the user is in the room requested before adding the message to the room's action history. Note that while the message can contain any valid unicode characters, it cannot be blank and it cannot consist solely of un-printable unicode characters. Upon successful insertion of the message into the room's action history, a "message" action will be generated for the room. The server will not respond with any specific response to this packet, but all existing clients that are in the room will end up receiving an unsolicited `chatactions` packet containing the "message" action that was generated based on this request.
 
 ### leaveroom
 
+The `leaveroom` packet is sent when the client exits a room and wishes to inform the server that it does not want updates to the room anymore, nor should it receive the room when requesting rooms in the `roomlist` packet. It expects a request JSON that contains a `roomid` attribute representing the room the user has left. Upon successfully leaving the room, a "leave" action will be generated for the room. The server will not respond with any specific response to this packet, but all remaining clients still in the room will end up receiving an unsolicited `chatactions` packet containing the "leave" action that was generated based on this request. Note that attempting to leave a room that the user is not in will result in a no-op. Note also that attempting to leave a non-existant room will result in a no-op.
+
 ### lastaction
+
+The `lastaction` packet is sent from the client when the client catches up to a particular action in a particular room. It is used when the client wants to acknowledge receipt of actions that it previously marked as new and displayed an unread notification badge for. It expects a request JSON that contains a `roomid` attribute representing the room that the user has caught up to as well as an `actionid` representing the action that the client wishes to acknowledge read receipt of. This packet is how the client can influence the `lastseen` action ID attribute in a `chathistory` response packet. The server will not respond with any specific response to this packet, but other devices in use by the same user which are currently connected may receive an unsolicited `roomlist` response packet with an updated `counts` attribute for the room that was just updated. This is the way in which the server can communicate notifications clearing to all connected devices for the same user.
 
 ## Server-Initated Packets
 
 The following packets are server initiated. The server will send them to correctly connected clients so that a client does not have to poll for updates.
 
 ### emotechanges
+
+The `emotechanges` response packet will be sent to the client unsolicited whenever an administrator adds or removes custom emotes on the instance. This is sent to every connected client at the point of change so that clients do not need to refresh in order to use newly-added cusom emotes. The response JSON contains the following attributes:
+
+ - `additions` - A dictionary keyed by string emote name, such as `:wiggle:`, with the value of each entry being the custom emote's URI as a string. Note that there is currently no way for a non-web client to retrieve the full list of custom emotes as they are embedded in the HTML template for the existing JS client. At some point when it becomes necessary this will change, but for now it is what it is.
+ - `deletions` - A list of strings represnting emote names that were deleted, such as `:wiggle:`. Clients should remove any emotes listed here from any typeahead or emote search functionality and should stop attempting to replace emote text with the known URI for the emotes that were deleted.
+
+### error
+
+The `error` response packet will be sent to the client under any circumstance where the client attempts to make an update which violates some parameters. Examples might be trying to change a nickname to something too long or trying to set a custom icon that is too large. The response packet JSON will contain an `error` attribute which is a string error. This can be directly displayed to the user in an error popup or similar modal. Currently there is no automated way for clients to determine the error returned and translate it for the user.
 
 ### reload
 
