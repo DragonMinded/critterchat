@@ -3,7 +3,6 @@ TODO Immediate
 
  - Fix modal popover not allowing scrollable content when sizing down.
  - Combine like messages together with a preference to do so.
- - Remove message fetch limit when fetching newer messages in "get_room_updates".
 
 TODO Short Term
 ===============

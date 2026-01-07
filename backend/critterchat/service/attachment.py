@@ -2,8 +2,7 @@ import hashlib
 import json
 import mimetypes
 import os
-from typing import Dict, Optional, Tuple
-from typing_extensions import Final
+from typing import Dict, Final, Optional, Tuple
 
 from ..config import Config
 from ..data import (

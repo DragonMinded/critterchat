@@ -4,8 +4,7 @@ import string
 from sqlalchemy import Table, Column
 from sqlalchemy.schema import UniqueConstraint
 from sqlalchemy.types import Boolean, String, Integer, Text
-from typing import Any, List, Optional, Tuple
-from typing_extensions import Final
+from typing import Any, Final, List, Optional, Tuple
 from passlib.hash import pbkdf2_sha512  # type: ignore
 
 from ..common import Time

@@ -1,7 +1,7 @@
 import emoji
 import io
 from PIL import Image
-from typing import List, Optional, Set
+from typing import Final, List, Optional, Set
 
 from ..config import Config
 from ..common import Time
@@ -32,6 +32,8 @@ class MessageServiceException(Exception):
 
 
 class MessageService:
+    MAX_HISTORY: Final[int] = 100
+
     def __init__(self, config: Config, data: Data) -> None:
         self.__config = config
         self.__data = data
@@ -50,7 +52,7 @@ class MessageService:
         return self.__attachments.resolve_action_icon(history[0]) if history else None
 
     def get_room_history(self, roomid: RoomID, before: Optional[ActionID] = None) -> List[Action]:
-        history = self.__data.room.get_room_history(roomid, before=before)
+        history = self.__data.room.get_room_history(roomid, before=before, limit=self.MAX_HISTORY)
         history = [
             self.__attachments.resolve_action_icon(e)
             for e in history

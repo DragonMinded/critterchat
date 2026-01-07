@@ -1,8 +1,7 @@
 import traceback
 import urllib.request
 from threading import Lock
-from typing import Any, Dict, List, Optional, Set, cast
-from typing_extensions import Final
+from typing import Any, Dict, Final, List, Optional, Set, cast
 
 from .app import socketio, config, request
 from ..common import AESCipher, Time, represents_real_text

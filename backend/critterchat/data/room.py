@@ -1,6 +1,5 @@
 import json
 from typing import Any, Dict, List, Optional
-from typing_extensions import Final
 
 from sqlalchemy import Table, Column
 from sqlalchemy.schema import UniqueConstraint
@@ -74,8 +73,6 @@ action = Table(
 
 
 class RoomData(BaseData):
-    MAX_HISTORY: Final[int] = 100
-
     def _get_oldest_action(self, room_ids: List[RoomID]) -> Dict[RoomID, Optional[ActionID]]:
         if not room_ids:
             return {}
@@ -645,14 +642,17 @@ class RoomData(BaseData):
         if after:
             limitclauses += " AND id > :after"
 
+        querylimit = ""
+        if limit:
+            querylimit = " LIMIT :limit"
+
         sql = f"""
             SELECT id, timestamp, occupant_id, action, details
             FROM action
-            WHERE room_id = :roomid
-            {limitclauses}
-            ORDER BY id DESC LIMIT :limit
+            WHERE room_id = :roomid {limitclauses}
+            ORDER BY id DESC {querylimit}
         """
-        cursor = self.execute(sql, {"roomid": roomid, "limit": limit or self.MAX_HISTORY, 'before': before, 'after': after})
+        cursor = self.execute(sql, {"roomid": roomid, "limit": limit, "before": before, "after": after})
         data = [x for x in cursor.mappings()]
 
         if not data:
