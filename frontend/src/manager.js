@@ -9,7 +9,7 @@ import { InputState } from "./inputstate.js";
 import { ScreenState } from "./screenstate.js";
 import { AudioNotifications } from "./components/audionotifs.js";
 
-import { escapeHtml, flash, flashHook } from "./utils.js";
+import { escapeHtml, flash, flashHook, containsStandaloneText } from "./utils.js";
 import { displayInfo } from "./modals/infomodal.js";
 
 export function manager(socket) {
@@ -17,6 +17,7 @@ export function manager(socket) {
     var inputState = new InputState();
     var screenState = new ScreenState();
 
+    var rooms = new Map();
     var settings = {};
     var size = $( window ).width() <= 700 ? "mobile" : "desktop";
     var visibility = document.visibilityState;
@@ -120,6 +121,14 @@ export function manager(socket) {
 
     socket.on('roomlist', (msg) => {
         if (msg.rooms) {
+            // First, track the rooms ourselves so we can handle notification generation.
+            const newRooms = new Map();
+            msg.rooms.forEach((room) => {
+                newRooms.set(room.id, room);
+            });
+            rooms = newRooms;
+
+            // Now, notify our various systems.
             menuInst.setRooms(msg.rooms);
             infoInst.setRooms(msg.rooms);
             messagesInst.setRooms(msg.rooms);
@@ -170,6 +179,40 @@ export function manager(socket) {
     });
 
     socket.on('chatactions', (msg) => {
+        // First, regardless of the room, figure out if any notification sounds should be
+        // generated from these messages.
+        var roomType = undefined;
+        if (rooms.has(msg.roomid)) {
+            roomType = rooms.get(msg.roomid).type;
+        }
+
+        if (roomType) {
+            msg.actions.forEach((message) => {
+                if (message.action == "join") {
+                    if (message.occupant.username != window.username) {
+                        eventBus.emit("notification", {"action": "join", "type": roomType});
+                    }
+                } else if (message.action == "leave") {
+                    if (message.occupant.username != window.username) {
+                        eventBus.emit("notification", {"action": "leave", "type": roomType});
+                    }
+                } else if (message.action == "message") {
+                    if (message.occupant.username == window.username) {
+                        eventBus.emit("notification", {"action": "messageSend", "type": roomType})
+                    } else {
+                        const escaped = escapeHtml(message.details);
+                        const actualuser = escapeHtml('@' + window.username);
+                        if (containsStandaloneText(escaped, actualuser)) {
+                            eventBus.emit("notification", {"action": "mention", "type": roomType});
+                        } else {
+                            eventBus.emit("notification", {"action": "messageReceive", "type": roomType});
+                        }
+                    }
+                }
+            });
+        }
+
+        // Now, notify various subsystems of new actions.
         messagesInst.updateActions(msg.roomid, msg.actions);
         menuInst.updateActions(msg.roomid, msg.actions);
         infoInst.updateActions(msg.roomid, msg.actions);

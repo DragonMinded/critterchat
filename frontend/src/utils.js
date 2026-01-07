@@ -125,6 +125,35 @@ const getSelectionText = function() {
     return text;
 }
 
+const containsStandaloneText = function( haystack, needle ) {
+    needle = needle.toLowerCase();
+
+    var pos = 0;
+    while (pos <= (haystack.length - needle.length)) {
+        if (pos > 0) {
+            if (haystack.substring(pos - 1, pos) != " ") {
+                pos ++;
+                continue;
+            }
+        }
+        if (pos < (haystack.length - needle.length)) {
+            if (haystack.substring(pos + needle.length, pos + needle.length + 1) != " ") {
+                pos ++;
+                continue;
+            }
+        }
+
+        if (haystack.substring(pos, pos + needle.length).toLowerCase() != needle) {
+            pos++;
+            continue;
+        }
+
+        return true;
+    }
+
+    return false;
+}
+
 export {
     escapeHtml,
     formatTime,
@@ -136,4 +165,5 @@ export {
     flash,
     flashHook,
     getSelectionText,
+    containsStandaloneText,
 };

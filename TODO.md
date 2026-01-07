@@ -5,7 +5,6 @@ TODO Immediate
  - Combine like messages together with a preference to do so.
  - Remove message fetch limit when fetching newer messages in "get_room_updates".
  - When reconnecting, request actions from all rooms, not just active one, or we might miss badges.
- - Move notification event generation and reconnect support out of message.js and into manager.js.
  - Include last action on 'roomlist' when requesting or when sending in event loop, use that to prime monitoring for events on reconnect.
  - Prime event monitoring with 'chatactions' responses.
 
