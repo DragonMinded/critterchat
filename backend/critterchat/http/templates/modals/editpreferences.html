@@ -1,0 +1,117 @@
+<form id="editpreferences-form" class="modal editpreferences">
+    <div class="editpreferences">
+        <div class="preferences">
+            <h2>Appearance</h2>
+            <div class="preference">
+                <input type="radio" id="editpreferences-color-scheme-light" name="color-scheme" value="light" />
+                <label for="editpreferences-color-scheme-light">use light color scheme</label>
+                <input type="radio" id="editpreferences-color-scheme-dark" name="color-scheme" value="dark" />
+                <label for="editpreferences-color-scheme-dark">use dark color scheme</label>
+                <input type="radio" id="editpreferences-color-scheme-system" name="color-scheme" value="system" />
+                <label for="editpreferences-color-scheme-system">use system setting</label>
+                <div class="explain">
+                    With this setting set to "light color scheme" light mode will be used no matter what your
+                    system setting is. With this setting set to "dark color scheme" dark mode will be used
+                    no matter what your system setting is. With this setting set to "system setting" light or
+                    dark mode will be chosen according to the rest of your system.
+                </div>
+            </div>
+            <div class="preference">
+                <input type="checkbox" id="editpreferences-rooms-on-top">
+                <label for="editpreferences-rooms-on-top">Keep rooms on top of chat menu</label>
+                <div class="explain">
+                    With this setting enabled, any rooms you are in will be ordered above any chats you are in. With it disabled,
+                    rooms and chats are ordered purely by last update.
+                </div>
+            </div>
+            <h2>Notifications</h2>
+            <div class="preference">
+                <input type="checkbox" id="editpreferences-title-notifications">
+                <label for="editpreferences-title-notifications">Add unread notification indicator to title bar</label>
+                <div class="explain">
+                    With this setting enabled, you will see a [&#x2605;] in the title bar when you have unread notifications.
+                </div>
+            </div>
+            <div class="preference">
+                <input type="checkbox" id="editpreferences-mobile-audio-notifications">
+                <label for="editpreferences-mobile-audio-notifications">Audio notifications on mobile devices</label>
+                <div class="explain">
+                    With this setting enabled, audio notifications will play on mobile devices. With it disabled, audio notifications
+                    will only play on desktop devices.
+                </div>
+            </div>
+            <h3>Audio Notifications</h3>
+            <div class="preference">
+                <input type="checkbox" id="editpreferences-audio-notification-chat_sent">
+                <label for="editpreferences-audio-notification-chat_sent">Chat Message Sent</label>
+                <div class="maskable preview" id="editpreferences-audio-notification-chat_sent-preview"></div>
+                <div class="maskable cancel" id="editpreferences-audio-notification-chat_sent-cancel"></div>
+                <div>
+                    <input class="notification" type="file" id="editpreferences-audio-notification-chat_sent-file" accept="audio/*" />
+                </div>
+            </div>
+            <div class="preference">
+                <input type="checkbox" id="editpreferences-audio-notification-chat_received">
+                <label for="editpreferences-audio-notification-chat_received">Chat Message Received</label>
+                <div class="maskable preview" id="editpreferences-audio-notification-chat_received-preview"></div>
+                <div class="maskable cancel" id="editpreferences-audio-notification-chat_received-cancel"></div>
+                <div>
+                    <input class="notification" type="file" id="editpreferences-audio-notification-chat_received-file" accept="audio/*" />
+                </div>
+            </div>
+            <div class="preference">
+                <input type="checkbox" id="editpreferences-audio-notification-message_sent">
+                <label for="editpreferences-audio-notification-message_sent">Direct Message Sent</label>
+                <div class="maskable preview" id="editpreferences-audio-notification-message_sent-preview"></div>
+                <div class="maskable cancel" id="editpreferences-audio-notification-message_sent-cancel"></div>
+                <div>
+                    <input class="notification" type="file" id="editpreferences-audio-notification-message_sent-file" accept="audio/*" />
+                </div>
+            </div>
+            <div class="preference">
+                <input type="checkbox" id="editpreferences-audio-notification-message_received">
+                <label for="editpreferences-audio-notification-message_received">Direct Message Received</label>
+                <div class="maskable preview" id="editpreferences-audio-notification-message_received-preview"></div>
+                <div class="maskable cancel" id="editpreferences-audio-notification-message_received-cancel"></div>
+                <div>
+                    <input class="notification" type="file" id="editpreferences-audio-notification-message_received-file" accept="audio/*" />
+                </div>
+            </div>
+            <div class="preference">
+                <input type="checkbox" id="editpreferences-audio-notification-mentioned">
+                <label for="editpreferences-audio-notification-mentioned">Mentioned by Username</label>
+                <div class="maskable preview" id="editpreferences-audio-notification-mentioned-preview"></div>
+                <div class="maskable cancel" id="editpreferences-audio-notification-mentioned-cancel"></div>
+                <div>
+                    <input class="notification" type="file" id="editpreferences-audio-notification-mentioned-file" accept="audio/*" />
+                </div>
+            </div>
+            <div class="preference">
+                <input type="checkbox" id="editpreferences-audio-notification-user_joined">
+                <label for="editpreferences-audio-notification-user_joined">User Joined Chat</label>
+                <div class="maskable preview" id="editpreferences-audio-notification-user_joined-preview"></div>
+                <div class="maskable cancel" id="editpreferences-audio-notification-user_joined-cancel"></div>
+                <div>
+                    <input class="notification" type="file" id="editpreferences-audio-notification-user_joined-file" accept="audio/*" />
+                </div>
+            </div>
+            <div class="preference">
+                <input type="checkbox" id="editpreferences-audio-notification-user_left">
+                <label for="editpreferences-audio-notification-user_left">User Left Chat</label>
+                <div class="maskable preview" id="editpreferences-audio-notification-user_left-preview"></div>
+                <div class="maskable cancel" id="editpreferences-audio-notification-user_left-cancel"></div>
+                <div>
+                    <input class="notification" type="file" id="editpreferences-audio-notification-user_left-file" accept="audio/*" />
+                </div>
+            </div>
+        </div>
+        <div class="actions">
+            <div class="item">
+                <button id="editpreferences-confirm">update preferences</button>
+            </div>
+            <div class="item">
+                <button id="editpreferences-cancel">nevermind</button>
+            </div>
+        </div>
+    </div>
+</form>

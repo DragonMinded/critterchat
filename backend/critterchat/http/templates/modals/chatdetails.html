@@ -1,0 +1,34 @@
+<form id="chatdetails-form" class="modal chatdetails">
+    <div class="chatdetails">
+        <div class="icon-wrapper">
+            <div class="icon">
+                <img id="chatdetails-icon" />
+            </div>
+            <div class="picker">
+                <input type="file" id="chatdetails-iconpicker" accept="image/*" />
+            </div>
+            <div class="picker">
+                <input type="button" id="chatdetails-remove-icon" value="revert to default" />
+            </div>
+            <div class="details">
+                Icon should be square, no more than 256x256 pixels, and less than 128kb in size.
+            </div>
+        </div>
+        <dl class="name">
+            <dt id="chatdetails-name-label"></dt>
+            <dd><input type="text" id="chatdetails-name" autocomplete="off" maxlength="255" /></dd>
+        </dl>
+        <dl class="topic">
+            <dt id="chatdetails-topic-label"></dt>
+            <dd><input type="text" id="chatdetails-topic" autocomplete="off" maxlength="255" /></dd>
+        </dl>
+        <div class="actions">
+            <div class="item">
+                <button id="chatdetails-confirm">update info</button>
+            </div>
+            <div class="item">
+                <button id="chatdetails-cancel">nevermind</button>
+            </div>
+        </div>
+    </div>
+</form>

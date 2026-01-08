@@ -1,0 +1,30 @@
+<form id="editprofile-form" class="modal editprofile">
+    <div class="editprofile">
+        <div class="icon-wrapper">
+            <div class="icon avatar">
+                <img id="editprofile-icon" />
+            </div>
+            <div class="picker">
+                <input type="file" id="editprofile-iconpicker" accept="image/*" />
+            </div>
+            <div class="picker">
+                <input type="button" id="editprofile-remove-icon" value="revert to default" />
+            </div>
+            <div class="details">
+                Avatar should be square, no more than 256x256 pixels, and less than 128kb in size.
+            </div>
+        </div>
+        <dl class="name">
+            <dt id="editprofile-name-label">nickname</dt>
+            <dd><input type="text" id="editprofile-name" placeholder="Type a custom nickname..." autocomplete="off" maxlength="255" /></dd>
+        </dl>
+        <div class="actions">
+            <div class="item">
+                <button id="editprofile-confirm">update profile</button>
+            </div>
+            <div class="item">
+                <button id="editprofile-cancel">nevermind</button>
+            </div>
+        </div>
+    </div>
+</form>
