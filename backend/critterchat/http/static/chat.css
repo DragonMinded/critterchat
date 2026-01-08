@@ -564,6 +564,19 @@ div.conversation div.item div.message {
     word-break: break-word;
 }
 
+div.conversation div.item.combined div.icon {
+    display: none;
+}
+
+div.conversation div.item.combined div.meta-wrapper {
+    display: none;
+}
+
+div.conversation div.item.combined div.message {
+    margin-left: 41px;
+    margin-top: -9px;
+}
+
 div.message.highlighted {
     background: var(--conversation-highlighted-background);
     padding-top: 2px;

@@ -39,10 +39,9 @@ class Messages {
         this.roomType = "chat";
         this.autoscroll = true;
         this.lastAction = {};
-        this.lastSettings = {};
+        this.preferences = {};
         this.scrollTo = {};
         this.roomsLoaded = false;
-        this.lastSettingsLoaded = false;
         this.occupantsLoaded = false;
 
         $( '#message-actions' ).on( 'submit', (event) => {
@@ -178,13 +177,13 @@ class Messages {
         // This page intentionally left blank.
     }
 
-    setPreferences( _preferences ) {
-        // This page intentionally left blank.
+    setPreferences( preferences ) {
+        this.preferences = preferences;
+        this.combineMessages(true);
     }
 
-    setLastSettings( settings ) {
-        this.lastSettings = settings;
-        this.lastSettingsLoaded = true;
+    setLastSettings( _settings ) {
+        // This page intentionally left blank.
     }
 
     setOccupants( roomid, occupants ) {
@@ -501,6 +500,7 @@ class Messages {
         prepend.forEach((message) => this.drawMessage(message, 'before'));
         append.forEach((message) => this.drawMessage(message, 'after'));
 
+        this.combineMessages(false);
         this.drawOlderMessagesLoader();
         this.scrollToMessage();
 
@@ -644,6 +644,68 @@ class Messages {
         }
 
         this.updateLastAction(message);
+    }
+
+    combineMessages( reflow ) {
+        var messages = $('div.chat > div.conversation-wrapper > div.conversation');
+
+        if (this.preferences.combined_messages) {
+            // Go through and update our combined messages because we either got a new
+            // message or the preference was toggled.
+            var lastOccupant = undefined;
+            var firstTimestamp = 0;
+            var combined = 0;
+
+            var indexedMessages = new Map();
+            this.messages.forEach((msg) => {
+                indexedMessages.set(msg.id, msg);
+            });
+
+            messages.find('div.item').each((_idx, elem) => {
+                const msg = indexedMessages.get($(elem).attr('id'));
+                if (msg.action != "message") {
+                    // This is a join/part/change info/etc, reset our combining.
+                    lastOccupant = undefined;
+                    firstTimestamp = 0;
+                    combined = 0;
+                }
+
+                const occupant = msg.occupant.id;
+                const timestamp = msg.timestamp;
+
+                // First, if it's a message by a different occupant, reset our combining.
+                if (lastOccupant != occupant) {
+                    lastOccupant = occupant;
+                    firstTimestamp = timestamp;
+                    combined = 1;
+                }
+                // Next, if the timestamp is more than 5 minutes later than the first combined
+                // message, split out to a new message.
+                else if (timestamp >= (firstTimestamp + (5 * 60))) {
+                    firstTimestamp = timestamp;
+                    combined = 1;
+                }
+                // Next, if we've combined more than 10 messages in a row, split out to a new
+                // message.
+                else if (combined >= 10) {
+                    firstTimestamp = timestamp;
+                    combined = 1;
+                }
+                // Finally, this message can be combined!
+                else {
+                    combined += 1;
+                    $(elem).addClass('combined');
+                }
+            });
+        } else {
+            // Go through and remove the combined messages class across the board because
+            // we do not want to combine messages.
+            messages.find('div.item').removeClass('combined');
+        }
+
+        if (reflow) {
+            this.ensureScrolled(false);
+        }
     }
 
     // Takes an alraedy HTML-stripped and emojified message and figures out if it contains only
