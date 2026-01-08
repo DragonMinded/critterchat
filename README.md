@@ -24,6 +24,7 @@ that can be enabled or disabled per-instance.
  - Now typing indicators.
  - Read receipts.
  - Pinned messages.
+ - Sticker support.
  - Moderation tools for network admin (global mute, global ban, etc).
  - Moderation tools for individuals (block user, allow messages, allow in search, etc.).
  - Sign-up modes (admin approval, open sign-ups, invite only, etc.).

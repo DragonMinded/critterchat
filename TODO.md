@@ -17,3 +17,11 @@ TODO Low Priority
  - Chat info name and topic should support emoji autocomplete and emoji search.
  - Mentioning typeahead should allow searching by display nick as well as username.
  - Support creating an account flow with ability to disable instance-side and setting for auto-activate or moderator activate.
+
+TODO For Public Instance
+========================
+
+ - Image attachments for messages.
+ - Stickers support in some form.
+ - Emote/emoji reactions to messages.
+ - Channel permissions.
