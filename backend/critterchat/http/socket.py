@@ -521,6 +521,9 @@ def updatepreferences(json: Dict[str, object]) -> None:
     new_rooms_on_top = json.get('rooms_on_top', None)
     if new_rooms_on_top is not None:
         new_rooms_on_top = bool(new_rooms_on_top)
+    new_combined_messages = json.get('combined_messages', None)
+    if new_combined_messages is not None:
+        new_combined_messages = bool(new_combined_messages)
     new_color_scheme = json.get('color_scheme', None)
     if new_color_scheme is not None:
         new_color_scheme = {
@@ -575,6 +578,7 @@ def updatepreferences(json: Dict[str, object]) -> None:
         userservice.update_preferences(
             userid,
             rooms_on_top=new_rooms_on_top,
+            combined_messages=new_combined_messages,
             color_scheme=new_color_scheme,
             title_notifs=new_title_notifs,
             mobile_audio_notifs=new_mobile_audio_notifs,

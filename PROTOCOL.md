@@ -77,6 +77,7 @@ Currently, the JS client will request the profile for the logged-in user immedia
 The `preferences` packet is sent from the client to load or refresh the current user's preferences. This expects an empty request JSON and looks up the preferences of the logged in user. The server will respond with a `preferences` packet with the user's preferences in the response JSON with the following attributes:
 
  - `rooms_on_top` - A boolean representing whether the user wants rooms to always be displayed above conversations (true) or whether rooms and conversations should be sorted by last update (false).
+ - `combined_messages` - A boolean representing whether messages sent right after each other by the same user should be combined into one chat block (true) or left as individual messages (false).
  - `color_scheme` - A string representing the user's chosen color scheme. Valid values are "light" to force light mode, "dark" to force dark mode, and "system" to let the browser pick based on system settings.
  - `title_notifs` - A boolean representing whether the user wants notifications to show up in the tab title (true) or not (false).
  - `mobile_audio_notifs` - A boolean representing whether the user wants audio notifications on mobile (true) or whether mobile clients should be silent (false).
@@ -155,6 +156,7 @@ Upon successful update, the server will send a `profile` response packet which i
 The `updatepreferences` packet is sent from the client to request the user's preferences be updated. This expects a request JSON that contains the following attributes:
 
  - `rooms_on_top` - A boolean representing whether the user wants rooms to always be displayed above conversations (true) or whether rooms and conversations should be sorted by last update (false). If not present, the preference will not be updated. If present, the preference will be updated to the specified value.
+ - `combined_messages` - A boolean representing whether messages sent right after each other by the same user should be combined into one chat block (true) or left as individual messages (false). If not present, the preference will not be updated. If present, the preference will be updated to the specified value.
  - `color_scheme` - A string representing the user's chosen color scheme. Valid values are "light" to force light mode, "dark" to force dark mode, and "system" to let the browser pick based on system settings. If not present, the preference will not be updated. If present, the preference will be updated to the specified value.
  - `title_notifs` - A boolean representing whether the user wants notifications to show up in the tab title (true) or not (false). If not present, the preference will not be updated. If present, the preference will be updated to the specified value.
  - `mobile_audio_notifs` - A boolean representing whether the user wants audio notifications on mobile (true) or whether mobile clients should be silent (false). If not present, the preference will not be updated. If present, the preference will be updated to the specified value.

@@ -97,6 +97,7 @@ class UserPreferences:
         userid: UserID,
         *,
         rooms_on_top: bool,
+        combined_messages: bool,
         color_scheme: str,
         title_notifs: bool,
         mobile_audio_notifs: bool,
@@ -104,6 +105,7 @@ class UserPreferences:
     ) -> None:
         self.userid = userid
         self.rooms_on_top = rooms_on_top
+        self.combined_messages = combined_messages
         self.color_scheme = color_scheme
         self.title_notifs = title_notifs
         self.mobile_audio_notifs = mobile_audio_notifs
@@ -113,6 +115,7 @@ class UserPreferences:
     def to_dict(self) -> Dict[str, object]:
         return {
             "rooms_on_top": self.rooms_on_top,
+            "combined_messages": self.combined_messages,
             "color_scheme": self.color_scheme,
             "title_notifs": self.title_notifs,
             "mobile_audio_notifs": self.mobile_audio_notifs,
@@ -125,6 +128,7 @@ class UserPreferences:
         return UserPreferences(
             userid=userid,
             rooms_on_top=False,
+            combined_messages=False,
             color_scheme="system",
             title_notifs=True,
             mobile_audio_notifs=False,

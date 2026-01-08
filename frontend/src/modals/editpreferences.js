@@ -30,6 +30,7 @@ class EditPreferences {
 
                 this.eventBus.emit('updatepreferences', {
                     'rooms_on_top': $('#editpreferences-rooms-on-top').is(":checked"),
+                    'combined_messages': $('#editpreferences-combined-messages').is(":checked"),
                     'color_scheme': $('input[type=radio][name="color-scheme"]:checked').val(),
                     'title_notifs': $('#editpreferences-title-notifications').is(":checked"),
                     'mobile_audio_notifs': $('#editpreferences-mobile-audio-notifications').is(":checked"),
@@ -129,6 +130,7 @@ class EditPreferences {
 
             $('#editpreferences-form')[0].reset();
             $('#editpreferences-rooms-on-top').prop('checked', this.preferences.rooms_on_top);
+            $('#editpreferences-combined-messages').prop('checked', this.preferences.combined_messages);
             $('#editpreferences-title-notifications').prop('checked', this.preferences.title_notifs);
             $('#editpreferences-mobile-audio-notifications').prop('checked', this.preferences.mobile_audio_notifs);
             $('input[type=radio][name="color-scheme"]').val([this.preferences.color_scheme]);
