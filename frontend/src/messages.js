@@ -663,18 +663,18 @@ class Messages {
 
             messages.find('div.item').each((_idx, elem) => {
                 const msg = indexedMessages.get($(elem).attr('id'));
+                const occupant = msg.occupant.id;
+                const timestamp = msg.timestamp;
+
+                // First, non-messages always break the chain.
                 if (msg.action != "message") {
                     // This is a join/part/change info/etc, reset our combining.
                     lastOccupant = undefined;
                     firstTimestamp = 0;
                     combined = 0;
                 }
-
-                const occupant = msg.occupant.id;
-                const timestamp = msg.timestamp;
-
-                // First, if it's a message by a different occupant, reset our combining.
-                if (lastOccupant != occupant) {
+                // Now, if it's a message by a different occupant, reset our combining.
+                else if (lastOccupant != occupant) {
                     lastOccupant = occupant;
                     firstTimestamp = timestamp;
                     combined = 1;
