@@ -1,7 +1,6 @@
 TODO Immediate
 ==============
 
- - Fix modal popover not allowing scrollable content when sizing down.
  - Combine like messages together with a preference to do so.
 
 TODO Short Term
