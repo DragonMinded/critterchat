@@ -233,7 +233,10 @@ export function manager(socket) {
         // Keep an updated copy of our settings for ourselves.
         settings = msg;
 
-        // Notify various systems that per-session settings have been updated.
+        // Notify various systems that per-session settings have been sent to us. Because the
+        // settings are per-session, we never receive a lastsettings that we didn't request.
+        // So, various systems should not expect to react to this message more than once per
+        // successful connection.
         menuInst.setLastSettings(msg);
         messagesInst.setLastSettings(msg);
         infoInst.setLastSettings(msg);

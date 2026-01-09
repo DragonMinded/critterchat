@@ -4,6 +4,14 @@ import { EditProfile } from "./modals/editprofile.js";
 import { EditPreferences } from "./modals/editpreferences.js";
 import { displayWarning } from "./modals/warningmodal.js";
 
+/**
+ * The class responsible for the left hand menu. This also generates room change request events
+ * when the user clicks on a new room. It also handles tab notifications and favicon notifications
+ * since it cares about notification badges on various rooms. Additionally, since various action
+ * buttons are in the menu panel, this manages the edit profile and edit preferences popover
+ * dialogs. Mostly it does that by ferrying various server information that was loaded and passed
+ * to us onward to these components.
+ */
 class Menu {
     constructor( eventBus, screenState, inputState, initialSize, initialVisibility ) {
         this.eventBus = eventBus;
@@ -66,7 +74,7 @@ class Menu {
 
         eventBus.on( 'resize', (newSize) => {
             this.size = newSize;
-            this.updateSize();
+            this._updateSize();
         });
 
         eventBus.on( 'updatevisibility', (newVisibility) => {
@@ -74,17 +82,22 @@ class Menu {
             if (this.visibility == "visible") {
                 this.selectedUnread = 0;
             }
-            this.updateVisibility();
+            this._updateVisibility();
         });
 
         this.screenState.registerStateChangeCallback(() => {
-            this.updateSize();
+            this._updateSize();
         });
 
-        this.updateSize();
+        this._updateSize();
     }
 
-    updateSize() {
+    /**
+     * Called whenever the manager notifies us that our screen size has moved from desktop to mobile
+     * or mobile to desktop. We use this to reflow whether we're pinned to the left side or possibly
+     * displayed as a full-size panel.
+     */
+    _updateSize() {
         if (this.size == "mobile") {
             $( 'div.top-info div.back' ).show();
             if (this.screenState.current == "menu") {
@@ -98,10 +111,23 @@ class Menu {
         }
     }
 
-    updateVisibility() {
-        this.updateTitleBadge();
+    /**
+     * Called whenever the manager notifies us that we have been backgrounded or foregrounded. We
+     * use this to allow for the tab itself to show notifications for events that happen in the current
+     * room when the tab is in the background, and to clear that notification when appropriate after
+     * the user tabs back to us.
+     */
+    _updateVisibility() {
+        this._updateTitleBadge();
     }
 
+    /**
+     * Called whenever the manager informs us of an updated room list from the server. The room list
+     * is always absolute and includes all relevant rooms that we're in, ordered by last update newest
+     * to oldest. We use this to re-order rooms when necessary, as well as add new rooms to the list
+     * if the user has joined a new room or started a new chat. If the last settings was loaded before
+     * this is called, the last thing we will do is select that room.
+     */
     setRooms( rooms, forceDraw ) {
         // First, sort rooms based on preferences.
         var sortedRooms = [];
@@ -164,7 +190,7 @@ class Menu {
         }
 
         // Draw the sorted order, and then select the room.
-        sortedRooms.forEach((room) => this.drawRoom(room));
+        sortedRooms.forEach((room) => this._drawRoom(room));
         $('div.menu > div.rooms').scrollTop(scrollPos);
 
         if (this.lastSettingsLoaded) {
@@ -172,6 +198,12 @@ class Menu {
         }
     }
 
+    /**
+     * Called whenever settings are received from the server. This only happens upon a successful
+     * connection and not any time after, so we use it to navigate to the last viewed room from before
+     * we were closed and reopened or refreshed. In the case that rooms aren't loaded, we simply set
+     * the settings and when the room list comes in we will navigate to the correct room at that time.
+     */
     setLastSettings( settings ) {
         this.lastSettings = settings;
         this.lastSettingsLoaded = true;
@@ -181,21 +213,36 @@ class Menu {
         }
     }
 
+    /**
+     * Called every time the server informs us that our profile was updated, as well as once every
+     * connection success or reconnect. We just use this to pass on the profile to the edit profile
+     * popover that we manage.
+     */
     setProfile( profile ) {
         this.editProfile.setProfile( profile );
     }
 
+    /**
+     * Called every time the server informs us that preferences were updated, as well as once every
+     * connection success or reconnet. We use this to pass on preferences to the edit preferences
+     * popover we manage, as well as update our title badge and room ordering, because both of those
+     * are affected by preferences.
+     */
     setPreferences( preferences ) {
         this.preferences = preferences;
         this.preferencesLoaded = true;
         this.editPreferences.setPreferences( preferences );
-        this.updateTitleBadge();
+        this._updateTitleBadge();
         if (this.roomsLoaded) {
             this.setRooms(this.rooms, true);
         }
     }
 
-    drawRoom( room ) {
+    /**
+     * Given a room object, either add a DOM element representing that room in the right place in the
+     * menu or update the existing DOM element that represents that room if it already exists.
+     */
+    _drawRoom( room ) {
         // First, see if this is an update.
         var conversations = $('div.menu > div.rooms');
         var drawnRoom = conversations.find('div.item#' + room.id);
@@ -232,9 +279,15 @@ class Menu {
             });
         }
 
-        this.updateSelected();
+        this._updateSelected();
     }
 
+    /**
+     * Called whenever the manager informs us that the server has requested we navigate to
+     * a specific room. This is used to automatically jump to a given room when joining a new
+     * room or starting a new chat. Additionally, called whenever the user clicks on a new room
+     * or whenever we choose to select a room such as when we get our settings loaded.
+     */
     selectRoom( roomid ) {
         var found = false;
         for (const room of this.rooms) {
@@ -251,8 +304,8 @@ class Menu {
         if (found && roomid != this.selected) {
             this.selected = roomid;
             this.selectedUnread = 0;
-            this.updateSelected();
-            this.clearBadges(roomid);
+            this._updateSelected();
+            this._clearBadges(roomid);
 
             this.eventBus.emit('selectroom', roomid);
         }
@@ -262,6 +315,12 @@ class Menu {
         }
     }
 
+    /**
+     * Called whenever the manager informs us that we've left a room. This can happen when
+     * the user chooses to leave a room via the info panel. There is not currently a method
+     * for having the server kick a user from a room and update the client, but when that's
+     * added the manager will call this function as well.
+     */
     closeRoom( roomid ) {
         if (this.selected == roomid ) {
             this.selected = "";
@@ -275,16 +334,25 @@ class Menu {
             this.screenState.setState("menu");
         }
 
-        this.updateSelected();
+        this._updateSelected();
     }
 
-    updateSelected() {
+    /**
+     * Manages the DOM to select the correct room and unselect the rest of the rooms. This
+     * is tracked via a selected class which is also used for styling via CSS.
+     */
+    _updateSelected() {
         $('div.menu > div.rooms div.item').removeClass('selected');
         if (this.selected) {
             $('div.menu > div.rooms div.item#' + this.selected).addClass('selected');
         }
     }
 
+    /**
+     * Called whenever new actions are sent from the server to inform us that an action occurred.
+     * We use this to track notification badges for rooms that we aren't in, as well as possibly
+     * update the title notification if actions occur in the room we're in but we're backgrounded.
+     */
     updateActions( roomid, actions ) {
         var count = 0;
         var notMeCount = 0;
@@ -304,11 +372,17 @@ class Menu {
         if (this.visibility == "hidden" && roomid == this.selected) {
             this.selectedUnread += notMeCount;
         }
-        this.updateBadges( roomid, count );
-        this.updateTitleBadge();
+        this._updateBadges( roomid, count );
+        this._updateTitleBadge();
     }
 
-    updateBadges( roomid, newactions ) {
+    /**
+     * Given a specific room and a number of new actions that are relevant to that room, updates
+     * the notification badge for that room to display the notification count. This is additive,
+     * so if there's already a few notifications displayed and this adds a few more, the end result
+     * will be the notification badge shows the sum of the new actions and existing actions.
+     */
+    _updateBadges( roomid, newactions ) {
         if (roomid == this.selected) {
             return;
         }
@@ -349,20 +423,29 @@ class Menu {
         }
     }
 
+    /**
+     * Called whenever the server informs us of a new set of badge counts for a room. The
+     * server can track the same badges as we can because the client sends last read notifications
+     * to the server. This allows us to synchronize notification badge clears across multiple
+     * devices and it is this function responsible for doing so.
+     */
     setBadges( badges ) {
         if (this.roomsLoaded) {
             badges.forEach((obj) => {
-                this.clearBadges(obj.roomid);
+                this._clearBadges(obj.roomid);
                 if (obj.count) {
-                    this.updateBadges(obj.roomid, obj.count);
+                    this._updateBadges(obj.roomid, obj.count);
                 }
             });
 
-            this.updateTitleBadge();
+            this._updateTitleBadge();
         }
     }
 
-    clearBadges( roomid ) {
+    /**
+     * Given a room ID, removes the notification badge from that room on the DOM.
+     */
+    _clearBadges( roomid ) {
         // Find the room to update
         var conversations = $('div.menu > div.rooms');
         var drawnRoom = conversations.find('div.item#' + roomid);
@@ -376,10 +459,18 @@ class Menu {
             });
         }
 
-        this.updateTitleBadge();
+        this._updateTitleBadge();
     }
 
-    updateTitleBadge() {
+    /**
+     * Manages determining whether the title should display a notification indicator or not
+     * and updates the title in the DOM respectively. The logic for this includes whether the
+     * uesr has configured title badge notification to be enabled, whether there are any
+     * notifications for rooms not being viewed currently, and whether we have un read
+     * notifications in the current channel (determined by checking whether we're a background
+     * tab or not when new actions come in from the server).
+     */
+    _updateTitleBadge() {
         if (!this.roomsLoaded) {
             return;
         }
