@@ -224,7 +224,7 @@ class Menu {
 
     /**
      * Called every time the server informs us that preferences were updated, as well as once every
-     * connection success or reconnet. We use this to pass on preferences to the edit preferences
+     * connection success or reconnect. We use this to pass on preferences to the edit preferences
      * popover we manage, as well as update our title badge and room ordering, because both of those
      * are affected by preferences.
      */

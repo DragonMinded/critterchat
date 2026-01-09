@@ -144,7 +144,7 @@ class Info {
 
     /**
      * Called every time the server informs us that preferences were updated, as well as once every
-     * connection success or reconnet. We don't care about this event but a handler was placed
+     * connection success or reconnect. We don't care about this event but a handler was placed
      * here for consistency across top-level components.
      */
     setPreferences( _preferences ) {
