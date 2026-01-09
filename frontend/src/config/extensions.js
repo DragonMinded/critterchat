@@ -1,5 +1,10 @@
 import $ from "jquery";
 
+/**
+ * Hook function that adds any custom jQuery handlers which this code provides.
+ * Called by the entrypoint in chat.js before even defining a document onReady
+ * handler, so that any use of jQuery across the client can use these functions.
+ */
 export function hook() {
     $.fn.setCursorPosition = function(pos) {
         this.each(function(index, elem) {

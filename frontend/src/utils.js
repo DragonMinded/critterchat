@@ -13,6 +13,11 @@ const entityMap = {
 
 const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
+/**
+ * Given a string, escape all HTML within that string by converting any unsafe characters to their
+ * HTML equivalent, and then convert all known emoji and emotes to the correct <img> tag pointing to
+ * the asset which should be displayed.
+ */
 const escapeHtml = function( str ) {
     str = String(str);
         str = str.replace(/[&<>"'`=/]/g, function (s) {
@@ -28,6 +33,10 @@ const escapeHtml = function( str ) {
     return str;
 }
 
+/**
+ * Given a unix timestamp, formats the time as human-readable within the day. Allows for 24 hour
+ * and 12 hour display as well as displaying or hiding seconds.
+ */
 const formatTime = function( ts, showseconds, twentyfour ) {
     var date = new Date(ts * 1000);
     var hours = date.getHours();
@@ -46,6 +55,9 @@ const formatTime = function( ts, showseconds, twentyfour ) {
     return formattedTime;
 }
 
+/**
+ * Given a unix timestamp, formats the date as human-readable, ignoring the time within the day.
+ */
 const formatDate = function( ts ) {
     var date = new Date(ts * 1000);
     var month = months[date.getMonth()];
@@ -55,21 +67,34 @@ const formatDate = function( ts ) {
     return formattedDate;
 }
 
+/**
+ * Given a unix timestamp, formats the date and time it represents as a human-readable string.
+ */
 const formatDateTime = function( ts ) {
     return formatDate( ts ) + " @ " + formatTime( ts );
 }
 
-// Calculate the integer scroll top of a given component.
+/*
+ * Given a DOM element, calculates the integer scroll top of a given component. Useful for
+ * scrolling back to an element after a full redraw as well as understanding whether the user
+ * is at the top or bottom of a scroll area.
+ */
 const scrollTop = function( obj ) {
     // Sometimes the chrome/firefox calculation of scrollTopMax is off by one
     return Math.floor(obj.scrollTop) + 1;
 }
 
-// Calculate the maximum scroll top of a given component.
+/*
+ * Given a DOM element, calculates the maximum scroll top of a given component.
+ */
 const scrollTopMax = function( obj ) {
     return obj.scrollHeight - obj.clientHeight;
 }
 
+/**
+ * Given a DOM element, returns true if that element is visible within the viewport that it
+ * resides in, or false if it is out of view usually via scrolling.
+ */
 const isInViewport = function( el ) {
     if (el) {
         el = el[0];
@@ -89,6 +114,13 @@ const isInViewport = function( el ) {
     }
 };
 
+/**
+ * Finds all displayed flash messages on the top of the screen and ensures that their close button
+ * is bound to a jQuery handler to remove the message from the DOM. Normally, when a new flash
+ * message is drawn this is done automatically. However, the rendered HTML template that we attach
+ * to can also add flash messages of its own such as a successful login acknowledgement. This goes
+ * through and ensures that those are also closeable.
+ */
 const flashHook = function() {
     $( 'ul.errors li button' ).on('click', function(event) {
         event.preventDefault();
@@ -97,6 +129,10 @@ const flashHook = function() {
     });
 };
 
+/**
+ * Displays a new flash message at the top, below all existing displayed flash messages. Also ensures
+ * that the message itself can be closed by clicking the [x] button on the right hand side.
+ */
 const flash = function( type, message ) {
     const ts = Date.now();
     const nonce = window.nonce || 0;
@@ -113,6 +149,10 @@ const flash = function( type, message ) {
     flashHook();
 }
 
+/**
+ * Grabs the selection text for the window. Essentially, this grabs whatever text the user has highlighted
+ * on the page by double or triple-clicking, or by click-dragging the text.
+ */
 const getSelectionText = function() {
     let text = "";
 
@@ -125,6 +165,11 @@ const getSelectionText = function() {
     return text;
 }
 
+/**
+ * Given a haystack to search through and a needle to search, this returns true if the haystack contains
+ * that needle standalone. By standalone, this means surrounded on both sides by a whitespace character
+ * or the start/end of the message.
+ */
 const containsStandaloneText = function( haystack, needle ) {
     needle = needle.toLowerCase();
 
