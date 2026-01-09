@@ -7,6 +7,13 @@ import { displayWarning } from "./modals/warningmodal.js";
 
 const linkifyOptions = { defaultProtocol: "http", target: "_blank", validate: { email: () => false } };
 
+/**
+ * The class responsible for the right hand menu. This also generates room leave request events
+ * when the user clicks the leave room button and confirms their intention. It also manages the
+ * chat details popover which allows users to edit the nickname, topic and icon of the room when
+ * they have appropriate permission to do so. It does this by ferrying server information that's
+ * relevant onward to the component that manages the popover.
+ */
 class Info {
     constructor( eventBus, screenState, inputState, initialSize, initialVisibility ) {
         this.eventBus = eventBus;
@@ -93,17 +100,22 @@ class Info {
         // Set up dynamic mobile detection.
         eventBus.on( 'resize', (newSize) => {
             this.size = newSize;
-            this.updateSize();
+            this._updateSize();
         });
 
         this.screenState.registerStateChangeCallback(() => {
-            this.updateSize();
+            this._updateSize();
         });
 
-        this.updateSize();
+        this._updateSize();
     }
 
-    updateSize() {
+    /**
+     * Called whenever the manager notifies us that our screen size has moved from desktop to mobile
+     * or mobile to desktop. We use this to reflow whether we're pinned to the right side or possibly
+     * displayed as a full-size panel.
+     */
+    _updateSize() {
         if (this.size == "mobile") {
             $( 'div.info div.back' ).show();
             if (this.screenState.current == "info") {
@@ -121,14 +133,31 @@ class Info {
         }
     }
 
+    /**
+     * Called every time the server informs us that our profile was updated, as well as once every
+     * connection success or reconnect. We don't care about this event but a handler was placed
+     * here for consistency across top-level components.
+     */
     setProfile( _profile ) {
         // This page intentionally left blank.
     }
 
+    /**
+     * Called every time the server informs us that preferences were updated, as well as once every
+     * connection success or reconnet. We don't care about this event but a handler was placed
+     * here for consistency across top-level components.
+     */
     setPreferences( _preferences ) {
         // This page intentionally left blank.
     }
 
+    /**
+     * Called whenever the manager informs us of an updated room list from the server. The room list
+     * is always absolute and includes all relevant rooms that we're in, ordered by last update newest
+     * to oldest. We don't really care much about most of the info, but we do use this to keep a map
+     * of room ID to various details since we manage the top info panel above the chat and want to
+     * make sure it's kept up-to-date with the correct topic, name and icon.
+     */
     setRooms( rooms ) {
         // Make a copy instead of keeping a reference, so we can safely mutate.
         this.rooms = rooms.filter(() => true);
@@ -137,11 +166,16 @@ class Info {
             if (!this.infoLoaded) {
                 this.setRoom(this.roomid);
             } else {
-                this.updateRoom(this.roomid);
+                this._updateRoom(this.roomid);
             }
         }
     }
 
+    /**
+     * Called wnever the manager informs us of room occupants for a given room. We only care about
+     * occupants for the room we're in, so ignore any out-of-date notifications for rooms we have
+     * clicked away from.
+     */
     setOccupants( roomid, occupants ) {
         if (roomid == this.roomid) {
             this.occupants = occupants.filter((occupant) => !occupant.inactive);
@@ -149,11 +183,16 @@ class Info {
             this.occupantsLoaded = true;
 
             if (this.roomsLoaded && this.occupantsLoaded) {
-                this.drawOccupants();
+                this._drawOccupants();
             }
         }
     }
 
+    /**
+     * Called whenever new actions are sent from the server to inform us that an action occurred.
+     * We use this to keep our occupant list in sync by tracking joins and leaves so we can avoid
+     * having to refresh the whole list every time it changes.
+     */
     updateActions( roomid, history ) {
         if (roomid != this.roomid) {
             // Must be an out of date lookup, ignore it.
@@ -185,11 +224,16 @@ class Info {
 
         if (changed) {
             this.occupants.sort((a, b) => { return a.nickname.localeCompare(b.nickname); });
-            this.drawOccupants();
+            this._drawOccupants();
         }
     }
 
-    drawOccupants() {
+    /**
+     * Update the DOM to include a mirror of our known occupants for a room. We always maintain the
+     * occupant list sorted alphabetically by nickname, so this function simply makes sure the right
+     * names are in the right order.
+     */
+    _drawOccupants() {
         var occupantElement = $('div.info > div.occupants')
         var scrollPos = occupantElement.scrollTop();
         occupantElement.empty();
@@ -208,6 +252,13 @@ class Info {
         occupantElement.scrollTop(scrollPos);
     }
 
+    /**
+     * Called whenever settings are received from the server. This only happens upon a successful
+     * connection and not any time after, so use this to do the initial info panel hide or show.
+     * This lets us preserve the info panel visibility across reloads/refreshes. In mobile mode
+     * this has no effect on the current page layout because the menu/chat/info panes are turned
+     * into screens that can be transitioned to by tapping various buttons on the screens themselves.
+     */
     setLastSettings( settings ) {
         this.lastSettings = settings;
         this.lastSettingsLoaded = true;
@@ -221,6 +272,11 @@ class Info {
         }
     }
 
+    /**
+     * Called when the manager informs us that the user has selected a new room, or when a new
+     * room has been selected for the user (such as selecting a room after joining it). In either
+     * case, all we care about is updating the info panel to reflect the newly-selected room.
+     */
     setRoom( roomid ) {
         if (roomid != this.roomid || !this.infoLoaded) {
             this.occupants = [];
@@ -284,7 +340,12 @@ class Info {
         }
     }
 
-    updateRoom( roomid ) {
+    /**
+     * Called internally when we need to update the information about the currently displayed room. This
+     * is the DOM update function which keeps the various elements on-screen in sync with info we know about
+     * the room.
+     */
+    _updateRoom( roomid ) {
         if (roomid == this.roomid && this.infoLoaded) {
             this.rooms.forEach((room) => {
                 if (room.id == roomid) {
@@ -320,6 +381,12 @@ class Info {
         }
     }
 
+    /**
+     * Called whenever the manager informs us that we've left a room. This can happen when
+     * the user chooses to leave a room via the info panel. There is not currently a method
+     * for having the server kick a user from a room and update the client, but when that's
+     * added the manager will call this function as well.
+     */
     closeRoom( roomid ) {
         if (roomid == this.roomid) {
             this.chatdetails.closeRoom(roomid);
