@@ -4,7 +4,6 @@ TODO Short Term
  - Notification indicator on back button in chat and info on mobile.
  - Notification indicator by changing favicon to a notifications version.
  - Start on profile view to look at a person's profile.
- - Support editing your nickname and avatar per-chat (limit to public rooms).
  - Rework attachments to properly identify mime type and preserve extensions.
 
 TODO Low Priority
@@ -15,6 +14,7 @@ TODO Low Priority
  - URL for public chats to link directly as an invite.
  - Chat info name and topic should support emoji autocomplete and emoji search.
  - Mentioning typeahead should allow searching by display nick as well as username.
+ - Support editing your nickname and avatar per-chat (limit to public rooms).
  - Support creating an account flow with ability to disable instance-side and setting for auto-activate or moderator activate.
 
 TODO For Public Instance
