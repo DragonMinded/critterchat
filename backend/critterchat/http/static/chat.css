@@ -120,10 +120,14 @@ form button, form input[type=button], form input::file-selector-button {
     padding-right: 10px;
 }
 
-button:hover, input[type=button]:hover, input::file-selector-button:hover {
+button:hover, button:focus-visible, input[type=button]:hover, input::file-selector-button:hover {
     color: var(--input-button-hover-text);
     background: var(--input-button-hover-background);
     border: 1px solid var(--input-button-hover-border);
+}
+
+input[type=text]:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-visible {
+    outline: none;
 }
 
 form.modal {
@@ -399,7 +403,7 @@ div.actions div.item button {
     font-size: 12px;
 }
 
-div.actions div.item button:hover {
+div.actions div.item button:hover, div.actions div.item button:focus-visible {
     background: var(--button-hover-background);
     border: 1px solid var(--button-hover-border);
     color: var(--button-hover-text);
