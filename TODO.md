@@ -2,7 +2,6 @@ TODO Short Term
 ===============
 
  - Source code documentation and comments, use JS feature for private methods and attributes.
-   - components/audionotifs.js
    - modals/chatdetails.js
    - modals/editpreferences.js
    - modals/editprofile.js
