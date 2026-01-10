@@ -3,7 +3,7 @@ from setuptools import setup
 
 setup(
     name='critterchat',
-    version='0.0.37',
+    version='0.0.38',
     description='CritterChat chat room software.',
     author='DragonMinded',
     license='Public Domain',
