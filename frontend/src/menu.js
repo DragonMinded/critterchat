@@ -27,6 +27,7 @@ class Menu {
 
         this.rooms = [];
         this.selected = "";
+        this.pendingRoomSelect = "";
         this.lastSettings = {};
         this.roomsLoaded = false;
         this.lastSettingsLoaded = false;
@@ -209,8 +210,9 @@ class Menu {
         sortedRooms.forEach((room) => this._drawRoom(room));
         $('div.menu > div.rooms').scrollTop(scrollPos);
 
-        if (this.lastSettingsLoaded) {
-            this.selectRoom(this.lastSettings.roomid);
+        if (this.pendingRoomSelect) {
+            this.selectRoom(this.pendingRoomSelect);
+            this.pendingRoomSelect = "";
         }
     }
 
@@ -226,6 +228,8 @@ class Menu {
 
         if (this.roomsLoaded) {
             this.selectRoom(this.lastSettings.roomid);
+        } else {
+            this.pendingRoomSelect = this.lastSettings.roomid;
         }
     }
 
