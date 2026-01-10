@@ -51,6 +51,11 @@ class Messages {
         this.roomsLoaded = false;
         this.occupantsLoaded = false;
 
+        // Handles only updating the server with the last action if we're really viewing
+        // the message.
+        this.lastActionUpdate = {};
+        this.lastActionPending = false;
+
         $( '#message-actions' ).on( 'submit', (event) => {
             event.preventDefault();
 
@@ -125,6 +130,7 @@ class Messages {
 
         eventBus.on( 'updatevisibility', (newVisibility) => {
             this.visibility = newVisibility;
+            this._sendPendingUpdates();
         });
 
         // Ensure that showing/hiding info keeps us auto-scrolled.
@@ -134,6 +140,7 @@ class Messages {
 
         this.screenState.registerStateChangeCallback(() => {
             this._updateSize();
+            this._sendPendingUpdates();
         });
 
         this._updateSize();
@@ -156,6 +163,17 @@ class Messages {
 
         // Set up the emoji search itself.
         $(".emoji-search").html(twemoji.parse(String.fromCodePoint(0x1F600), twemojiOptions));
+    }
+
+    /**
+     * Called whenever chat messages become visible after being hidden, where we update the server with
+     * last seen actions.
+     */
+    _sendPendingUpdates() {
+        if (this.lastActionPending && this.visibility != "hidden" && !(this.size == "mobile" && this.screenState.current != "chat")) {
+            this.eventBus.emit("lastaction", this.lastActionUpdate);
+            this.lastActionPending = false;
+        }
     }
 
     /**
@@ -273,6 +291,7 @@ class Messages {
                     this.autoscroll = true;
                     this.occupants = [];
                     this.occupantsLoaded = false;
+                    this.lastActionPending = false;
                     this.roomType = this.rooms.get(roomid).type;
                     this._updateUsers();
 
@@ -299,6 +318,7 @@ class Messages {
             this.autoscroll = true;
             this.occupants = [];
             this.occupantsLoaded = false;
+            this.lastActionPending = false;
             this._updateUsers();
 
             $('div.chat > div.conversation-wrapper > div.conversation').empty();
@@ -640,7 +660,14 @@ class Messages {
         this._scrollToMessage();
 
         if (this.lastAction.id != oldactionid) {
-            this.eventBus.emit("lastaction", {"roomid": this.roomid, "actionid": this.lastAction.id})
+            const update = {"roomid": this.roomid, "actionid": this.lastAction.id};
+            if (this.visibility == "hidden" || (this.size == "mobile" && this.screenState.current != "chat")) {
+                this.lastActionUpdate = update;
+                this.lastActionPending = true;
+            } else {
+                this.eventBus.emit("lastaction", update);
+                this.lastActionPending = false;
+            }
         }
     }
 

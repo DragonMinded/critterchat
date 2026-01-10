@@ -36,7 +36,6 @@ class Menu {
 
         // Handles figuring out if we need to put a title notification or badges up
         // on the various panes when the user is on mobile.
-        this.selectedUnread = 0;
         this.chatVisible = true;
 
         $( 'div.menu > div.rooms' ).on( 'click', () => {
@@ -113,7 +112,9 @@ class Menu {
         }
 
         if (this.chatVisible) {
-            this.selectedUnread = 0;
+            if (this.selected) {
+                this._clearBadges(this.selected);
+            }
         }
 
         this._updateGlobalBadges();
@@ -325,17 +326,16 @@ class Menu {
             }
         }
 
-        if (found) {
-            this.screenState.setState("chat");
-        }
-
         if (found && roomid != this.selected) {
             this.selected = roomid;
-            this.selectedUnread = 0;
             this._updateSelected();
             this._clearBadges(roomid);
 
             this.eventBus.emit('selectroom', roomid);
+        }
+
+        if (found) {
+            this.screenState.setState("chat");
         }
 
         if (this.size != "mobile") {
@@ -352,7 +352,6 @@ class Menu {
     closeRoom( roomid ) {
         if (this.selected == roomid ) {
             this.selected = "";
-            this.selectedUnread = 0;
 
             var conversations = $('div.menu > div.rooms');
             conversations.find('div.item#' + roomid).remove();
@@ -398,9 +397,10 @@ class Menu {
             }
         });
         if (!this.chatVisible && roomid == this.selected) {
-            this.selectedUnread += notMeCount;
+            this._updateBadges( roomid, notMeCount );
+        } else if (roomid != this.selected) {
+            this._updateBadges( roomid, count );
         }
-        this._updateBadges( roomid, count );
         this._updateGlobalBadges();
     }
 
@@ -411,9 +411,6 @@ class Menu {
      * will be the notification badge shows the sum of the new actions and existing actions.
      */
     _updateBadges( roomid, newactions ) {
-        if (roomid == this.selected) {
-            return;
-        }
         if (newactions == 0) {
             return;
         }
@@ -460,6 +457,12 @@ class Menu {
     setBadges( badges ) {
         if (this.roomsLoaded) {
             badges.forEach((obj) => {
+                // Skip clearing the current room altogether if we're not viewing it.
+                if (this.selected == obj.roomid && !this.chatvisible) {
+                    return;
+                }
+
+                // Update with new server counts since another client could have read the chat.
                 this._clearBadges(obj.roomid);
                 if (obj.count) {
                     this._updateBadges(obj.roomid, obj.count);
@@ -505,24 +508,15 @@ class Menu {
             return;
         }
 
-        var hasBadges = false;
-        this.rooms.forEach((room) => {
-            if (room.count) {
-                hasBadges = true;
-            }
-        });
-
         // This will be true if there is a pending action anywhere in any of the rooms that
         // the user hasn't seen. This includes the current room if the tab is hidden or if
         // the user is on mobile and is not on the chat pane.
         var notified = false;
-        if (hasBadges) {
-            notified = true;
-        } else {
-            if (!this.chatVisible && this.selectedUnread) {
+        this.rooms.forEach((room) => {
+            if (room.count) {
                 notified = true;
             }
-        }
+        });
 
         // Only show a title notification if the user asked us to do so.
         if (this.preferencesLoaded && this.preferences.title_notifs && notified) {
