@@ -1,12 +1,14 @@
 import $ from "jquery";
-import { escapeHtml } from "./utils.js";
+import { escapeHtml } from "../utils.js";
 
+/**
+ * Handles the search popover which is the main entrypoint for finding rooms to join,
+ * people to message, and existing rooms/chats that we are in to jump to that room.
+ */
 class Search {
-    constructor( eventBus, screenState, inputState ) {
+    constructor( eventBus, inputState ) {
         this.eventBus = eventBus;
         this.inputState = inputState;
-        this.lastSettings = {};
-        this.lastSettingsLoaded = false;
 
         $( '#search' ).on( 'input', (event) => {
             event.preventDefault();
@@ -19,7 +21,7 @@ class Search {
             event.preventDefault();
             this.inputState.setState("empty");
             $( '#search' ).val("");
-            this.populateResults([]);
+            this.populateSearchResults([]);
 
             this.eventBus.emit('searchrooms', "")
             $('#search-form').modal();
@@ -31,18 +33,11 @@ class Search {
         });
     }
 
-    setLastSettings( settings ) {
-        this.lastSettings = settings;
-        this.lastSettingsLoaded = true;
-
-        if (this.lastSettings.info == "shown") {
-            $('div.container > div.info').removeClass('hidden');
-        } else {
-            $('div.container > div.info').addClass('hidden');
-        }
-    }
-
-    populateResults( results ) {
+    /**
+     * Called every time we have updated search results from the server based on a search event
+     * that we generated. This function is responsible for updating the DOM to display the results.
+     */
+    populateSearchResults( results ) {
         var resultdom = $('div.search > div.results');
         resultdom.empty();
 
@@ -81,15 +76,19 @@ class Search {
                 event.stopImmediatePropagation();
 
                 var id = $(event.currentTarget).attr('id')
-                this.joinRoom( id );
+                this._joinRoom( id );
             });
         });
     }
 
-    joinRoom( id ) {
+    /**
+     * Called internally when we want to join a particular room. Note that regardless of the
+     * printed call to action, under the hood we always treat this as a room join.
+     */
+    _joinRoom( id ) {
         $.modal.close();
         $( '#search' ).val("");
-        this.populateResults([]);
+        this.populateSearchResults([]);
         this.eventBus.emit('joinroom', id);
     }
 }

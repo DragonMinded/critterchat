@@ -4,7 +4,6 @@ import { EventEmitter } from "events";
 import { Menu } from "./menu.js";
 import { Messages } from "./messages.js";
 import { Info } from "./info.js";
-import { Search } from "./search.js";
 import { InputState } from "./inputstate.js";
 import { ScreenState } from "./screenstate.js";
 import { AudioNotifications } from "./components/audionotifs.js";
@@ -66,9 +65,6 @@ export function manager(socket) {
     // Handles the right hand info panel which shows joined chatters, as well as handling the
     // info pane above the message instance.
     var infoInst = new Info(eventBus, screenState, inputState, size, visibility);
-
-    // Handles the search popover subsystem.
-    var searchInst = new Search(eventBus, screenState, inputState);
 
     // Handles audio notification playback.
     var notifInst = new AudioNotifications(eventBus, size, visibility);
@@ -352,7 +348,7 @@ export function manager(socket) {
     socket.on('searchrooms', (msg) => {
         // Pretty self-explanatory, handles ferrying any search results sent from the server to the
         // search instance for update.
-        searchInst.populateResults(msg.rooms);
+        menuInst.populateSearchResults(msg.rooms);
     });
 
     socket.on('emotechanges', (msg) => {

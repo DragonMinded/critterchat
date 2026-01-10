@@ -3,12 +3,13 @@ import { escapeHtml } from "./utils.js";
 import { EditProfile } from "./modals/editprofile.js";
 import { EditPreferences } from "./modals/editpreferences.js";
 import { displayWarning } from "./modals/warningmodal.js";
+import { Search } from "./modals/search.js";
 
 /**
  * The class responsible for the left hand menu. This also generates room change request events
  * when the user clicks on a new room. It also handles tab notifications and favicon notifications
  * since it cares about notification badges on various rooms. Additionally, since various action
- * buttons are in the menu panel, this manages the edit profile and edit preferences popover
+ * buttons are in the menu panel, this manages the search, edit profile and edit preferences popover
  * dialogs. Mostly it does that by ferrying various server information that was loaded and passed
  * to us onward to these components.
  */
@@ -19,6 +20,7 @@ class Menu {
         this.inputState = inputState;
         this.editProfile = new EditProfile( eventBus, inputState );
         this.editPreferences = new EditPreferences( eventBus, inputState );
+        this.search = new Search( eventBus, inputState )
         this.size = initialSize;
         this.visibility = initialVisibility;
         this.title = document.title;
@@ -236,6 +238,14 @@ class Menu {
         if (this.roomsLoaded) {
             this.setRooms(this.rooms, true);
         }
+    }
+
+    /**
+     * Called every time the server has updated search results which we pass onto the search instance
+     * that we manage.
+     */
+    populateSearchResults( results ) {
+        this.search.populateSearchResults( results );
     }
 
     /**
