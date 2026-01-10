@@ -142,6 +142,7 @@ class Messages {
         this.screenState.registerStateChangeCallback(() => {
             this._updateSize();
             this._sendPendingUpdates();
+            this._ensureScrolled();
         });
 
         this._updateSize();
