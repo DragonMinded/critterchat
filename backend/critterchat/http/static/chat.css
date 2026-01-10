@@ -304,7 +304,7 @@ div.icon div.room-indicator {
     justify-content: center
 }
 
-div.icon div.badge.empty {
+div.icon div.badge.empty, div.back div.badge.empty {
     display: none;
 }
 
@@ -312,7 +312,7 @@ div.rooms div.item div.icon, div.results div.item div.icon, div.occupants div.it
     position: relative;
 }
 
-div.icon div.badge {
+div.icon div.badge, div.back div.badge {
     position: absolute;
     top: 0px;
     left: 22px;
@@ -436,6 +436,7 @@ div.chat > div.top-info {
 div.top-info div.back, div.info div.back {
     cursor: default;
     display: none;
+    position: relative;
 }
 
 div.back-button-svg {

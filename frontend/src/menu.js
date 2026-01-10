@@ -81,6 +81,7 @@ class Menu {
         eventBus.on( 'resize', (newSize) => {
             this.size = newSize;
             this._updateSize();
+            this._recalculateVisibility();
         });
 
         eventBus.on( 'updatevisibility', (newVisibility) => {
@@ -512,11 +513,30 @@ class Menu {
         // the user hasn't seen. This includes the current room if the tab is hidden or if
         // the user is on mobile and is not on the chat pane.
         var notified = false;
+        var total = 0;
         this.rooms.forEach((room) => {
             if (room.count) {
+                if (room.count == "!!") {
+                    total += 10;
+                } else {
+                    total += parseInt(room.count);
+                }
                 notified = true;
             }
         });
+
+        // Display notification count badges on various back buttons in mobile.
+        if (total > 0) {
+            $('div.back > div.badge').removeClass('empty');
+            if (total > 9) {
+                $('div.back > div.badge div.count').text('!!');
+            } else {
+                $('div.back > div.badge div.count').text(total);
+            }
+        } else {
+            $('div.back > div.badge').addClass('empty');
+            $('div.back > div.badge div.count').text("");
+        }
 
         // Only show a title notification if the user asked us to do so.
         if (this.preferencesLoaded && this.preferences.title_notifs && notified) {

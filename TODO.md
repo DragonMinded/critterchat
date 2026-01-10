@@ -1,7 +1,6 @@
 TODO Short Term
 ===============
 
- - Notification indicator on back button in chat and info on mobile.
  - Notification indicator by changing favicon to a notifications version.
  - Start on profile view to look at a person's profile.
  - Rework attachments to properly identify mime type and preserve extensions.

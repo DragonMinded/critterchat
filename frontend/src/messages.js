@@ -126,6 +126,7 @@ class Messages {
         eventBus.on( 'resize', (newSize) => {
             this.size = newSize;
             this._updateSize();
+            this._sendPendingUpdates();
         });
 
         eventBus.on( 'updatevisibility', (newVisibility) => {
