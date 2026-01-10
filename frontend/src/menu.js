@@ -30,9 +30,13 @@ class Menu {
         this.lastSettings = {};
         this.roomsLoaded = false;
         this.lastSettingsLoaded = false;
-        this.selectedUnread = 0;
         this.preferences = {}
         this.preferencesLoaded = false;
+
+        // Handles figuring out if we need to put a title notification or badges up
+        // on the various panes when the user is on mobile.
+        this.selectedUnread = 0;
+        this.chatVisible = true;
 
         $( 'div.menu > div.rooms' ).on( 'click', () => {
             this.inputState.setState("empty");
@@ -81,17 +85,37 @@ class Menu {
 
         eventBus.on( 'updatevisibility', (newVisibility) => {
             this.visibility = newVisibility;
-            if (this.visibility == "visible") {
-                this.selectedUnread = 0;
-            }
-            this._updateVisibility();
+            this._recalculateVisibility();
         });
 
         this.screenState.registerStateChangeCallback(() => {
             this._updateSize();
+            this._recalculateVisibility();
         });
 
         this._updateSize();
+        this._recalculateVisibility();
+    }
+
+    /**
+     * Determines whether the current room's chat pane is actually visible to the user. This is false
+     * when the user is in a different tab (visibility is hidden) or when the user is on mobile and
+     * not currently on the chat pane.
+     */
+    _recalculateVisibility() {
+        if (this.visibility == "hidden") {
+            this.chatVisible = false;
+        } else if (this.size == "mobile" && this.screenState.current != "chat") {
+            this.chatVisible = false;
+        } else {
+            this.chatVisible = true;
+        }
+
+        if (this.chatVisible) {
+            this.selectedUnread = 0;
+        }
+
+        this._updateGlobalBadges();
     }
 
     /**
@@ -111,16 +135,6 @@ class Menu {
             $( 'div.top-info div.back' ).hide();
             $( 'div.container > div.menu' ).removeClass('hidden').removeClass('full');
         }
-    }
-
-    /**
-     * Called whenever the manager notifies us that we have been backgrounded or foregrounded. We
-     * use this to allow for the tab itself to show notifications for events that happen in the current
-     * room when the tab is in the background, and to clear that notification when appropriate after
-     * the user tabs back to us.
-     */
-    _updateVisibility() {
-        this._updateTitleBadge();
     }
 
     /**
@@ -234,7 +248,7 @@ class Menu {
         this.preferences = preferences;
         this.preferencesLoaded = true;
         this.editPreferences.setPreferences( preferences );
-        this._updateTitleBadge();
+        this._updateGlobalBadges();
         if (this.roomsLoaded) {
             this.setRooms(this.rooms, true);
         }
@@ -379,11 +393,11 @@ class Menu {
                 }
             }
         });
-        if (this.visibility == "hidden" && roomid == this.selected) {
+        if (!this.chatVisible && roomid == this.selected) {
             this.selectedUnread += notMeCount;
         }
         this._updateBadges( roomid, count );
-        this._updateTitleBadge();
+        this._updateGlobalBadges();
     }
 
     /**
@@ -448,7 +462,7 @@ class Menu {
                 }
             });
 
-            this._updateTitleBadge();
+            this._updateGlobalBadges();
         }
     }
 
@@ -469,7 +483,7 @@ class Menu {
             });
         }
 
-        this._updateTitleBadge();
+        this._updateGlobalBadges();
     }
 
     /**
@@ -478,9 +492,11 @@ class Menu {
      * uesr has configured title badge notification to be enabled, whether there are any
      * notifications for rooms not being viewed currently, and whether we have un read
      * notifications in the current channel (determined by checking whether we're a background
-     * tab or not when new actions come in from the server).
+     * tab or not when new actions come in from the server). If the title badge is displayed
+     * and we're in mobile, we also badge on the back buttons for various panes so a user who
+     * is sitting on a chat or in the info pane can see that there are unread actions.
      */
-    _updateTitleBadge() {
+    _updateGlobalBadges() {
         if (!this.roomsLoaded) {
             return;
         }
@@ -492,15 +508,19 @@ class Menu {
             }
         });
 
+        // This will be true if there is a pending action anywhere in any of the rooms that
+        // the user hasn't seen. This includes the current room if the tab is hidden or if
+        // the user is on mobile and is not on the chat pane.
         var notified = false;
         if (hasBadges) {
             notified = true;
         } else {
-            if (this.visibility == "hidden" && this.selectedUnread) {
+            if (!this.chatVisible && this.selectedUnread) {
                 notified = true;
             }
         }
 
+        // Only show a title notification if the user asked us to do so.
         if (this.preferencesLoaded && this.preferences.title_notifs && notified) {
             document.title = "[\u2605] " + this.title;
         } else {
