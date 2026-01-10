@@ -1,5 +1,9 @@
 import $ from "jquery";
 
+/**
+ * Handles the chat details popover which is summoned and managed by the info panel
+ * and allows the user to modify the room name, topic and custom icon.
+ */
 class ChatDetails {
     constructor( eventBus, inputState ) {
         this.eventBus = eventBus;
@@ -57,6 +61,11 @@ class ChatDetails {
         });
     }
 
+    /**
+     * Called when our parent component wants us to be displayed on the screen. Causes us to
+     * close any existing modal, open the chat details modal, and render the various details
+     * for the room onto the DOM by finding the correct elements to update.
+     */
     display( roomid ) {
         if (this.roomLoaded && this.room.id == roomid) {
             $.modal.close();
@@ -84,11 +93,22 @@ class ChatDetails {
         }
     }
 
+    /**
+     * Called when our parent informs us that the user has selected a new room, or when a new
+     * room has been selected for the user (such as selecting a room after joining it). In either
+     * case, all we care about is updating the room's information so we can display it for edit.
+     */
     setRoom( room ) {
         this.room = room;
         this.roomLoaded = true;
     }
 
+    /**
+     * Called whenever our parent informs us that we've left a room. This can happen when
+     * the user chooses to leave a room via the info panel. There is not currently a method
+     * for having the server kick a user from a room and update the client, but when that's
+     * added our parent will call this function as well.
+     */
     closeRoom( roomid ) {
         if (this.room.id == roomid) {
             this.room = {};

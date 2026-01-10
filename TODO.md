@@ -1,10 +1,6 @@
 TODO Short Term
 ===============
 
- - Source code documentation and comments, use JS feature for private methods and attributes.
-   - modals/chatdetails.js
-   - modals/editpreferences.js
-   - modals/editprofile.js
  - Notification indicator on back button in chat and info on mobile.
  - Notification indicator by changing favicon to a notifications version.
  - Start on profile view to look at a person's profile.

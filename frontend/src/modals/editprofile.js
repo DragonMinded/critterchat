@@ -1,5 +1,11 @@
 import $ from "jquery";
 
+/**
+ * Handles the user profile popover which is summoned and managed by the menu panel.
+ * This is where users edit their avatar as well as their nickname, and in the future
+ * any other publicly displayable information such as other socials, sites, a bio, and
+ * any sort of user customization we allow.
+ */
 class EditProfile {
     constructor( eventBus, inputState ) {
         this.eventBus = eventBus;
@@ -56,6 +62,11 @@ class EditProfile {
         });
     }
 
+    /**
+     * Called when our parent component wants us to be displayed on the screen. Causes us to
+     * close any existing modal, open the profile editor modal, and render the various bits of
+     * the user's profile onto the DOM by finding the correct elements to update.
+     */
     display() {
         if (this.profileLoaded) {
             $.modal.close();
@@ -71,6 +82,14 @@ class EditProfile {
         }
     }
 
+    /**
+     * Called every time our parent informs us that our profile was updated, as well as once every
+     * connection success or reconnect. We just use this to keep an updated copy of the profile so
+     * we can display the info for edit on popover without needing to fetch from the server first.
+     * Note that this doesn't handle any sort of live update, so if the user updates their profile
+     * in another client while editing their profile in this client, those updates will not be
+     * live updated here.
+     */
     setProfile( profile ) {
         // Server sets the nickname field to the username field for easier display,
         // but that means we need to not pretend that our nickname is set to our

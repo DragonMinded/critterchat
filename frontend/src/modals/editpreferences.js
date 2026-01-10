@@ -1,6 +1,10 @@
 import $ from "jquery";
 import { AUDIO_PREFS } from "../common.js";
 
+/**
+ * Handles the preferences popover which is summoned and managed by the menu panel. This
+ * allows the user to modify various preferences for appearance, notifications and the like.
+ */
 class EditPreferences {
     constructor( eventBus, inputState ) {
         this.eventBus = eventBus;
@@ -120,6 +124,11 @@ class EditPreferences {
         });
     }
 
+    /**
+     * Called when our parent component wants us to be displayed on the screen. Causes us to
+     * close any existing modal, open the preferences modal, and render the various preferences
+     * onto the DOM by finding the correct elements to update.
+     */
     display() {
         if (this.preferencesLoaded) {
             $.modal.close();
@@ -154,6 +163,13 @@ class EditPreferences {
         }
     }
 
+    /**
+     * Called every time our parent informs us that preferences were updated, as well as once every
+     * connection success or reconnect. We use this to keep our own cached copy of preferences up
+     * to date so they can be displayed on opening. Note that this does not handle any sort of live
+     * update of displayed preferences if they are changed in another client while the current client
+     * is viewing the preferences popover.
+     */
     setPreferences( preferences ) {
         this.preferences = preferences;
         this.newnotifications = {};
