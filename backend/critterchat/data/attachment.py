@@ -15,6 +15,7 @@ attachment = Table(
     Column("id", Integer, nullable=False, primary_key=True, autoincrement=True),
     Column("system", String(32), nullable=False),
     Column("content_type", String(128), nullable=False),
+    Column("original_filename", String(256), nullable=True),
     mysql_charset="utf8mb4",
 )
 
@@ -46,10 +47,11 @@ notification = Table(
 
 
 class Attachment:
-    def __init__(self, attachmentid: AttachmentID, system: str, content_type: str) -> None:
+    def __init__(self, attachmentid: AttachmentID, system: str, content_type: str, original_filename: Optional[str]) -> None:
         self.id = attachmentid
         self.system = system
         self.content_type = content_type
+        self.original_filename = original_filename
 
 
 class Emote:
@@ -61,7 +63,7 @@ class Emote:
 
 
 class AttachmentData(BaseData):
-    def insert_attachment(self, system: str, content_type: str) -> Optional[AttachmentID]:
+    def insert_attachment(self, system: str, content_type: str, original_filename: Optional[str]) -> Optional[AttachmentID]:
         """
         Given an attachment system and content type, insert a pointer to that attachment.
 
@@ -72,12 +74,12 @@ class AttachmentData(BaseData):
 
         sql = """
             INSERT INTO attachment
-                (`system`, `content_type`)
+                (`system`, `content_type`, `original_filename`)
             VALUES
-                (:system, :content_type)
+                (:system, :content_type, :filename)
         """
         cursor = self.execute(sql, {
-            "system": system, "content_type": content_type,
+            "system": system, "content_type": content_type, "filename": original_filename
         })
         if cursor.rowcount != 1:
             return None
@@ -105,14 +107,14 @@ class AttachmentData(BaseData):
             return None
 
         sql = """
-            SELECT `system`, `content_type` FROM attachment WHERE id = :id
+            SELECT `system`, `content_type`, `original_filename` FROM attachment WHERE id = :id
         """
         cursor = self.execute(sql, {"id": attachmentid})
         if cursor.rowcount != 1:
             return None
 
         result = cursor.mappings().fetchone()
-        return Attachment(attachmentid, str(result["system"] or ""), str(result["content_type"] or ""))
+        return Attachment(attachmentid, str(result["system"] or ""), str(result["content_type"] or ""), str(result["original_filename"] or "") or None)
 
     def get_attachments(self) -> List[Attachment]:
         """
@@ -120,7 +122,7 @@ class AttachmentData(BaseData):
         """
 
         sql = """
-            SELECT `id`, `system`, `content_type`
+            SELECT `id`, `system`, `content_type`, `original_filename`
             FROM attachment
         """
         cursor = self.execute(sql, {})
@@ -129,6 +131,7 @@ class AttachmentData(BaseData):
                 AttachmentID(result['id']),
                 str(result['system'] or ""),
                 str(result['content_type'] or ""),
+                str(result['original_filename'] or "") or None,
             ) for result in cursor.mappings()
         ]
 
@@ -204,7 +207,7 @@ class AttachmentData(BaseData):
 
         sql = """
             SELECT
-                attachment.id AS attachment_id, attachment.system AS `system`, attachment.content_type AS content_type,
+                attachment.id AS attachment_id, attachment.system AS `system`, attachment.content_type AS content_type, attachment.original_filename as filename,
                 notification.type AS type
             FROM notification
             JOIN attachment ON attachment.id = notification.attachment_id
@@ -216,6 +219,7 @@ class AttachmentData(BaseData):
                 AttachmentID(result['attachment_id']),
                 str(result['system'] or ""),
                 str(result['content_type'] or ""),
+                str(result['filename'] or "") or None,
             ) for result in cursor.mappings()
         }
 
@@ -228,7 +232,7 @@ class AttachmentData(BaseData):
 
         sql = """
             SELECT
-                attachment.id AS attachment_id, attachment.system AS `system`, attachment.content_type AS content_type,
+                attachment.id AS attachment_id, attachment.system AS `system`, attachment.content_type AS content_type, attachment.original_filename as filename,
                 notification.type AS type
             FROM notification
             JOIN attachment ON attachment.id = notification.attachment_id
@@ -243,6 +247,7 @@ class AttachmentData(BaseData):
             AttachmentID(result['attachment_id']),
             str(result['system'] or ""),
             str(result['content_type'] or ""),
+            str(result['filename'] or "") or None,
         )
 
     def set_notification(self, userid: UserID, notificationtype: str, attachmentid: AttachmentID) -> None:

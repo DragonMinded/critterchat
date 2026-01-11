@@ -211,7 +211,7 @@ class MessageService:
                 if not content_type:
                     raise MessageServiceException("Room icon image has no valid content type")
 
-                attachmentid = self.__attachments.create_attachment(content_type)
+                attachmentid = self.__attachments.create_attachment(content_type, None)
                 if attachmentid is None:
                     raise MessageServiceException("Could not insert new room icon!")
                 self.__attachments.put_attachment_data(attachmentid, icon)

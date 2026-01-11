@@ -130,7 +130,7 @@ class UserService:
                         with open(fp2.name, "rb") as bfp:
                             actual_data = bfp.read()
 
-                            attachmentid = self.__attachments.create_attachment("audio/mpeg")
+                            attachmentid = self.__attachments.create_attachment("audio/mpeg", None)
                             if attachmentid is None:
                                 raise UserServiceException("Could not insert new user notification sound!")
                             self.__attachments.put_attachment_data(attachmentid, actual_data)
@@ -219,7 +219,7 @@ class UserService:
                 if not content_type:
                     raise UserServiceException("User avatar image has no valid content type")
 
-                attachmentid = self.__attachments.create_attachment(content_type)
+                attachmentid = self.__attachments.create_attachment(content_type, None)
                 if attachmentid is None:
                     raise UserServiceException("Could not insert new user avatar!")
                 self.__attachments.put_attachment_data(attachmentid, icon)

@@ -51,7 +51,7 @@ class EmoteService:
             raise EmoteServiceException("Emote name already in use!")
 
         # Now, create a new attachment, upload the data to it, and then link the emote.
-        attachmentid = self.__data.attachment.insert_attachment(self.__config.attachments.system, content_type)
+        attachmentid = self.__data.attachment.insert_attachment(self.__config.attachments.system, content_type, None)
         if attachmentid is None:
             raise EmoteServiceException("Could not creat new emote!")
 
