@@ -229,7 +229,7 @@ def add_emote(config: Config, alias: Optional[str], filename_or_directory: str) 
         # Add all files in this directory.
         for filename in os.listdir(filename_or_directory):
             alias, ext = os.path.splitext(filename)
-            if ext.lower() not in {".png", ".gif", ".jpg", ".jpeg", ".webp"}:
+            if ext.lower() not in {".apng", ".png", ".gif", ".jpg", ".jpeg", ".webp"}:
                 print(f"Skipping {filename} because it is not a recognized image type!")
 
             full_file = os.path.join(filename_or_directory, filename)
@@ -247,7 +247,7 @@ def add_emote(config: Config, alias: Optional[str], filename_or_directory: str) 
         potential_alias, ext = os.path.splitext(os.path.basename(filename_or_directory))
         if not alias:
             alias = potential_alias
-        if ext.lower() not in {".png", ".gif", ".jpg", ".jpeg", ".webp"}:
+        if ext.lower() not in {".apng", ".png", ".gif", ".jpg", ".jpeg", ".webp"}:
             raise CommandException(f"Cannot add {filename_or_directory} because it is not a recognized image type!")
 
         content_type = attachmentservice.get_content_type(filename_or_directory)

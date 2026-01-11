@@ -46,20 +46,40 @@ class AttachmentService:
         except Exception:
             return "application/octet-stream"
 
-    def _get_hashed_attachment_name(self, aid: AttachmentID) -> str:
+    def _get_ext_from_content_type(self, content_type: str) -> str:
+        content_type = content_type.lower()
+        return {
+            "audio/mpeg": ".mp3",
+            "image/apng": ".apng",
+            "image/gif": ".gif",
+            "image/jpeg": ".jpg",
+            "image/png": ".png",
+            "image/webp": ".webp",
+        }.get(content_type, "")
+
+    def _get_hashed_attachment_name(self, aid: AttachmentID, content_type: str, original_filename: Optional[str]) -> str:
+        # Default attachments don't get extensions.
         if aid in {DefaultAvatarID, DefaultRoomID, FaviconID}:
             return Attachment.from_id(aid)
 
+        # Extensions match based on original filename if present, and then based on content type.
+        if original_filename and "." in original_filename:
+            _, ext = os.path.splitext(original_filename)
+            ext = ext.lower()
+        else:
+            ext = self._get_ext_from_content_type(content_type)
+
         hashkey = self.__config.attachments.attachment_key
         inval = f"{hashkey}-{Attachment.from_id(aid)}"
-        return hashlib.shake_256(inval.encode('utf-8')).hexdigest(20)
+        hashval = hashlib.shake_256(inval.encode('utf-8')).hexdigest(20)
+        return f"{hashval}{ext}"
 
-    def _get_local_attachment_path(self, aid: AttachmentID) -> str:
+    def _get_local_attachment_path(self, aid: AttachmentID, content_type: str, original_filename: Optional[str]) -> str:
         directory = self.__config.attachments.directory
         if not directory:
             raise AttachmentServiceException("Cannot find directory for local attachment storage!")
 
-        return os.path.join(directory, self._get_hashed_attachment_name(aid))
+        return os.path.join(directory, self._get_hashed_attachment_name(aid, content_type, original_filename))
 
     def create_default_attachments(self) -> None:
         for aid, default in [
@@ -69,7 +89,8 @@ class AttachmentService:
         ]:
             if self.__config.attachments.system == "local":
                 # Local storage, copy the system default into the attachment directory if needed.
-                path = self._get_local_attachment_path(aid)
+                content_type = self.get_content_type(default)
+                path = self._get_local_attachment_path(aid, content_type, None)
                 if not os.path.isfile(path):
                     with open(default, "rb") as bfp1:
                         data = bfp1.read()
@@ -81,19 +102,51 @@ class AttachmentService:
 
     def migrate_legacy_attachments(self) -> None:
         if self.__config.attachments.system == "local":
-            def _get_legacy_local_attachment_path(aid: AttachmentID) -> str:
+            def _get_prehashed_local_attachment_path(aid: AttachmentID) -> str:
                 directory = self.__config.attachments.directory
                 if not directory:
                     raise AttachmentServiceException("Cannot find directory for local attachment storage!")
 
                 return os.path.join(directory, Attachment.from_id(aid))
 
+            def _get_legacy_hashed_attachment_name(aid: AttachmentID) -> str:
+                if aid in {DefaultAvatarID, DefaultRoomID, FaviconID}:
+                    return Attachment.from_id(aid)
+
+                hashkey = self.__config.attachments.attachment_key
+                inval = f"{hashkey}-{Attachment.from_id(aid)}"
+                return hashlib.shake_256(inval.encode('utf-8')).hexdigest(20)
+
+            def _get_legacy_local_attachment_path(aid: AttachmentID) -> str:
+                directory = self.__config.attachments.directory
+                if not directory:
+                    raise AttachmentServiceException("Cannot find directory for local attachment storage!")
+
+                return os.path.join(directory, _get_legacy_hashed_attachment_name(aid))
+
             # First, we need to attempt to migrate from pre-hashed to hashed.
             attachments = self.__data.attachment.get_attachments()
             for attachment in attachments:
                 # Local storage, copy the system default into the attachment directory if needed.
+                oldpath = _get_prehashed_local_attachment_path(attachment.id)
+                path = _get_legacy_local_attachment_path(attachment.id)
+                if (not os.path.isfile(path)) and os.path.isfile(oldpath):
+                    with open(oldpath, "rb") as bfp1:
+                        data = bfp1.read()
+                    with open(path, "wb") as bfp2:
+                        bfp2.write(data)
+                    os.remove(oldpath)
+
+            # Next, we need to attempt to migrate from pre-extension to extension.
+            for attachment in attachments:
+                # Local storage, copy the system default into the attachment directory if needed.
                 oldpath = _get_legacy_local_attachment_path(attachment.id)
-                path = self._get_local_attachment_path(attachment.id)
+                path = self._get_local_attachment_path(attachment.id, attachment.content_type, attachment.original_filename)
+                if path == oldpath:
+                    # This can happen for files we don't have an original filename for and we don't
+                    # have a matching extension for the mimetype (like application/octet-stream).
+                    continue
+
                 if (not os.path.isfile(path)) and os.path.isfile(oldpath):
                     with open(oldpath, "rb") as bfp1:
                         data = bfp1.read()
@@ -119,7 +172,7 @@ class AttachmentService:
 
         attachments = self.__data.attachment.get_attachments()
         for attachment in attachments:
-            path = self._get_hashed_attachment_name(attachment.id)
+            path = self._get_hashed_attachment_name(attachment.id, attachment.content_type, attachment.original_filename)
             _hash_to_id_lut[path] = attachment.id
 
         return _hash_to_id_lut.get(path, None)
@@ -136,7 +189,7 @@ class AttachmentService:
         if attachmentid == DefaultAvatarID or attachmentid == DefaultRoomID or attachmentid == FaviconID:
             if self.__config.attachments.system == "local":
                 # Local storage, look up the storage directory and return that data.
-                path = self._get_local_attachment_path(attachmentid)
+                path = self._get_local_attachment_path(attachmentid, "application/octet-stream", None)
                 try:
                     with open(path, "rb") as bfp:
                         data = bfp.read()
@@ -154,7 +207,7 @@ class AttachmentService:
 
         if attachment.system == "local":
             # Local storage, look up the storage directory and return that data.
-            path = self._get_local_attachment_path(attachmentid)
+            path = self._get_local_attachment_path(attachment.id, attachment.content_type, attachment.original_filename)
             try:
                 with open(path, "rb") as bfp:
                     data = bfp.read()
@@ -170,7 +223,7 @@ class AttachmentService:
         if attachmentid == DefaultAvatarID or attachmentid == DefaultRoomID or attachmentid == FaviconID:
             if self.__config.attachments.system == "local":
                 # Local storage, look up the storage directory and return that data.
-                path = self._get_local_attachment_path(attachmentid)
+                path = self._get_local_attachment_path(attachmentid, "application/octet-stream", None)
                 with open(path, "wb") as bfp:
                     bfp.write(data)
             else:
@@ -185,7 +238,7 @@ class AttachmentService:
 
         if attachment.system == "local":
             # Local storage, look up the storage directory and write the data.
-            path = self._get_local_attachment_path(attachmentid)
+            path = self._get_local_attachment_path(attachment.id, attachment.content_type, attachment.original_filename)
             with open(path, "wb") as bfp:
                 bfp.write(data)
         else:
@@ -199,7 +252,7 @@ class AttachmentService:
 
         if attachment.system == "local":
             # Local storage, look up the storage directory and write the data.
-            path = self._get_local_attachment_path(attachmentid)
+            path = self._get_local_attachment_path(attachment.id, attachment.content_type, attachment.original_filename)
             try:
                 os.remove(path)
             except FileNotFoundError:
@@ -288,4 +341,13 @@ class AttachmentService:
         prefix = self.__config.attachments.prefix
         if prefix[-1] == "/":
             prefix = prefix[:-1]
-        return f"{prefix}/{self._get_hashed_attachment_name(attachmentid)}"
+
+        if attachmentid in {DefaultAvatarID, DefaultRoomID, FaviconID}:
+            return f"{prefix}/{self._get_hashed_attachment_name(attachmentid, 'application/octet-stream', None)}"
+
+        attachment = self.__data.attachment.lookup_attachment(attachmentid)
+        if not attachment:
+            # We can't find the attachment, so assume that it has no extension and try that.
+            return f"{prefix}/{self._get_hashed_attachment_name(attachmentid, 'application/octet-stream', None)}"
+
+        return f"{prefix}/{self._get_hashed_attachment_name(attachment.id, attachment.content_type, attachment.original_filename)}"
