@@ -30,6 +30,7 @@ class AttachmentServiceException(Exception):
 
 
 _hash_to_id_lut: Dict[str, AttachmentID] = {}
+_id_to_hash_lut: Dict[AttachmentID, str] = {}
 
 
 class AttachmentService:
@@ -174,6 +175,7 @@ class AttachmentService:
         for attachment in attachments:
             path = self._get_hashed_attachment_name(attachment.id, attachment.content_type, attachment.original_filename)
             _hash_to_id_lut[path] = attachment.id
+            _id_to_hash_lut[attachment.id] = path
 
         return _hash_to_id_lut.get(path, None)
 
@@ -337,17 +339,26 @@ class AttachmentService:
             room.deficon = self.get_attachment_url(room.deficonid)
         return room
 
+    def _get_attachment_name(self, attachmentid: AttachmentID) -> str:
+        if attachmentid in _id_to_hash_lut:
+            return _id_to_hash_lut[attachmentid]
+
+        if attachmentid in {DefaultAvatarID, DefaultRoomID, FaviconID}:
+            _id_to_hash_lut[attachmentid] = self._get_hashed_attachment_name(attachmentid, 'application/octet-stream', None)
+            return _id_to_hash_lut[attachmentid]
+
+        attachment = self.__data.attachment.lookup_attachment(attachmentid)
+        if not attachment:
+            # We can't find the attachment, so assume that it has no extension and try that.
+            _id_to_hash_lut[attachmentid] = self._get_hashed_attachment_name(attachmentid, 'application/octet-stream', None)
+            return _id_to_hash_lut[attachmentid]
+
+        _id_to_hash_lut[attachmentid] = self._get_hashed_attachment_name(attachment.id, attachment.content_type, attachment.original_filename)
+        return _id_to_hash_lut[attachmentid]
+
     def get_attachment_url(self, attachmentid: AttachmentID) -> str:
         prefix = self.__config.attachments.prefix
         if prefix[-1] == "/":
             prefix = prefix[:-1]
 
-        if attachmentid in {DefaultAvatarID, DefaultRoomID, FaviconID}:
-            return f"{prefix}/{self._get_hashed_attachment_name(attachmentid, 'application/octet-stream', None)}"
-
-        attachment = self.__data.attachment.lookup_attachment(attachmentid)
-        if not attachment:
-            # We can't find the attachment, so assume that it has no extension and try that.
-            return f"{prefix}/{self._get_hashed_attachment_name(attachmentid, 'application/octet-stream', None)}"
-
-        return f"{prefix}/{self._get_hashed_attachment_name(attachment.id, attachment.content_type, attachment.original_filename)}"
+        return f"{prefix}/{self._get_attachment_name(attachmentid)}"
