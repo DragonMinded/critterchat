@@ -1,7 +1,6 @@
 TODO Short Term
 ===============
 
- - Notification indicator by changing favicon to a notifications version.
  - Start on profile view to look at a person's profile.
 
 TODO Low Priority
