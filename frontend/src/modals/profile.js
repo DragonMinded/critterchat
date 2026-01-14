@@ -18,7 +18,6 @@ class Profile {
         });
 
         $('#profile-message').on('click', (event) => {
-            console.log("??");
             event.stopPropagation();
             event.stopImmediatePropagation();
 
