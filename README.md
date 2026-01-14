@@ -13,7 +13,10 @@ that can be enabled or disabled per-instance.
  - Public rooms with optional auto-join for new members.
  - Direct messages between users on the instance.
  - Direct messages and public rooms have an editable name and topic.
+ - User profile support with ability to view other chatters' profiles.
  - Custom emoji support controlled by the instance administrator.
+ - Preferences for most appearance settings.
+ - Collects absolutely no personal information, contains no tracking code.
 
 ## Wishlist
 
