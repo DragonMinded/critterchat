@@ -12,5 +12,9 @@ module.exports = {
         filename: 'chat.[fullhash].js',
         path: path.resolve(__dirname, '../backend/critterchat/http/static'),
     },
-    plugins: [assetsPluginInstance]
+    plugins: [assetsPluginInstance],
+    performance: {
+        maxEntrypointSize: 300000,
+        maxAssetSize: 300000
+    }
 };
