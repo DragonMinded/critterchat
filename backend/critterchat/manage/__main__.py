@@ -156,6 +156,30 @@ def change_user_password(config: Config, username: str, password: Optional[str])
     print(f"User with ID {User.from_id(existing_user.id)} updated with new password")
 
 
+def generate_password_recovery(config: Config, username: str) -> None:
+    """
+    Given an existing user that logs in with username, generate a password recovery URL
+    that can be given to that user on another platform so they can recover their password.
+    """
+
+    data = Data(config)
+
+    existing_user = data.user.from_username(username)
+    if not existing_user:
+        raise CommandException("User does not exist in the database!")
+
+    recovery = data.user.create_recovery(existing_user.id)
+    data.close()
+
+    url = f"{config.base_url}/recover/{recovery}"
+    while "//" in url:
+        url = url.replace("//", "/")
+    url = url.replace("http:/", "http://")
+    url = url.replace("https:/", "https://")
+
+    print(f"Generated recovery URL for user with ID {User.from_id(existing_user.id)}: {url}")
+
+
 def activate_user(config: Config, username: str) -> None:
     """
     Given an existing user that logs in with username, update their account to be in the active
@@ -519,6 +543,20 @@ def main() -> None:
     )
 
     # Only a few params for this one
+    generate_recovery_parser = user_commands.add_parser(
+        "generate_recovery",
+        help="generate recovery URL for a user to recover their password",
+        description="Generate recovery URL for a user to recover their password.",
+    )
+    generate_recovery_parser.add_argument(
+        "-u",
+        "--username",
+        required=True,
+        type=str,
+        help="username that the user uses to login with",
+    )
+
+    # Only a few params for this one
     activate_parser = user_commands.add_parser(
         "activate",
         help="activate a user, allowing them to log in",
@@ -728,6 +766,8 @@ def main() -> None:
                 create_user(config, args.username, args.password)
             elif args.user == "change_password":
                 change_user_password(config, args.username, args.password)
+            elif args.user == "generate_recovery":
+                generate_password_recovery(config, args.username)
             elif args.user == "activate":
                 activate_user(config, args.username)
             elif args.user == "deactivate":

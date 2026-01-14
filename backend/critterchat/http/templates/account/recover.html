@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block includes %}
+  <link href="{{ url_for('static', filename='home.css') }}?{{ cachebust }}" rel="stylesheet" />
+{% endblock %}
+{% block content %}
+    <div class="login">
+        <div class="login-wrapper">
+            <div class="section">
+                <h2>Recover Account Password</h2>
+                <form action="{{ url_for('account.recoverpost', recovery=recovery) }}" method="post">
+                    <dl>
+                        <dt>Existing Username</dt>
+                        <dd><input type="text" name="username" value="{{ username }}"/></dd>
+                        <dt>&nbsp;</dt>
+                        <dd>&nbsp;</dd>
+                        <dt>Desired Password</dt>
+                        <dd><input type="password" name="password1" /></dd>
+                        <dt>Retype Password</dt>
+                        <dd><input type="password" name="password2" /></dd>
+                        <dt>&nbsp;</dt>
+                        <dd><input type="submit" value="update password" /></dd>
+                    </dl>
+                </form>
+            </div>
+            <div class="section">
+                Don't have an account? <a href="{{ url_for('account.register') }}">Create one!</a>
+            </div>
+        </div>
+    </div>
+{% endblock %}

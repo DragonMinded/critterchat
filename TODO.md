@@ -1,7 +1,13 @@
 TODO Immediate
 ==============
 
- - Admin tool to generate a password reset link which a user can use to reset their password.
+TODO For Public Instance
+========================
+
+ - Image attachments for messages.
+ - Stickers support in some form.
+ - Emote/emoji reactions to messages.
+ - Channel permissions.
 
 TODO Low Priority
 =================
@@ -14,11 +20,3 @@ TODO Low Priority
  - Support editing your nickname and avatar per-chat (limit to public rooms).
  - Support creating an account flow with ability to disable instance-side and setting for auto-activate or moderator activate.
  - Make username mentions clickable in chat, and make them open the user's profile.
-
-TODO For Public Instance
-========================
-
- - Image attachments for messages.
- - Stickers support in some form.
- - Emote/emoji reactions to messages.
- - Channel permissions.

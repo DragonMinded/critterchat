@@ -79,6 +79,98 @@ def login() -> Response:
     ))
 
 
+@account.route("/recover/<recovery>", methods=["POST"])
+def recoverpost(recovery: str) -> Response:
+    attachmentservice = AttachmentService(g.config, g.data)
+    userservice = UserService(g.config, g.data)
+    username = request.form["username"]
+    password1 = request.form["password1"]
+    password2 = request.form["password2"]
+
+    if not username:
+        error("You need to specify your username!")
+        return Response(
+            render_template(
+                "account/recover.html",
+                title="Recover Account Password",
+                recovery=recovery,
+                favicon=attachmentservice.get_attachment_url(FaviconID),
+            )
+        )
+
+    if password1 != password2:
+        error("Your passwords do not match each other!")
+        return Response(
+            render_template(
+                "account/recover.html",
+                title="Recover Account Password",
+                username=username,
+                recovery=recovery,
+                favicon=attachmentservice.get_attachment_url(FaviconID),
+            )
+        )
+
+    if len(password1) < 6:
+        error("Your password is not long enough (six characters)!")
+        return Response(
+            render_template(
+                "account/recover.html",
+                title="Recover Account Password",
+                username=username,
+                recovery=recovery,
+                favicon=attachmentservice.get_attachment_url(FaviconID),
+            )
+        )
+
+    try:
+        user = userservice.recover_user_password(username, recovery, password1)
+        if UserPermission.ACTIVATED not in user.permissions:
+            info("Your account password has been updated but your account has not been activated yet!")
+            return Response(
+                render_template(
+                    "account/login.html",
+                    title="Log In",
+                    username=user.username,
+                    favicon=attachmentservice.get_attachment_url(FaviconID),
+                )
+            )
+        else:
+            info("Your account password was updated successfully, feel free to log in!")
+            return Response(
+                render_template(
+                    "account/login.html",
+                    title="Log In",
+                    username=user.username,
+                    favicon=attachmentservice.get_attachment_url(FaviconID),
+                )
+            )
+
+    except UserServiceException as e:
+        error(str(e))
+        return Response(
+            render_template(
+                "account/recover.html",
+                title="Recover Account Password",
+                username=username,
+                recovery=recovery,
+                favicon=attachmentservice.get_attachment_url(FaviconID),
+            )
+        )
+    return ""
+
+
+@account.route("/recover/<recovery>")
+def recover(recovery: str) -> Response:
+    attachmentservice = AttachmentService(g.config, g.data)
+
+    return Response(render_template(
+        "account/recover.html",
+        title="Recover Account Password",
+        recovery=recovery,
+        favicon=attachmentservice.get_attachment_url(FaviconID),
+    ))
+
+
 @account.route("/logout")
 @loginrequired
 def logout() -> Response:

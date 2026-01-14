@@ -243,6 +243,21 @@ class UserService:
         # every one that changed.
         self.__notify_user_changed(userid, old_occupancy)
 
+    def recover_user_password(self, username: str, recovery: str, password: str) -> User:
+        # First, try to look up the user by the recovery string given.
+        user = self.__data.user.from_recovery(recovery)
+        if not user:
+            raise UserServiceException("Unrecognized or expired recovery URL!")
+
+        if user.username.lower() != username.lower():
+            raise UserServiceException("Recovery URL is not for your account!")
+
+        # Now, update the password since the checks passed.
+        self.__data.user.update_password(user.id, password)
+
+        # Finally, return that user.
+        return user
+
     def __notify_user_changed(self, userid: UserID, old_occupancy: Optional[Dict[RoomID, Occupant]] = None) -> None:
         old_occupancy = old_occupancy or {}
         new_occupancy = self.__data.room.get_joined_room_occupants(userid)

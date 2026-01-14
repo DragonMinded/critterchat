@@ -115,9 +115,11 @@ lastseen = Table(
 
 class UserData(BaseData):
     SESSION_LENGTH: Final[int] = 32
+    RECOVERY_LENGTH: Final[int] = 12
     PASSWORD_SALT_LENGTH: Final[int] = 32
 
     SESSION_TYPE_LOGIN: Final[str] = "login"
+    SESSION_TYPE_RECOVERY: Final[str] = "recovery"
 
     def __verify_password(self, *, passhash: str, salt: str, password: str) -> bool:
         actual_password = f"{self.config.password_key}.{salt}.{password}"
@@ -175,6 +177,10 @@ class UserData(BaseData):
         sql = "UPDATE user SET password = :hash, salt = :salt WHERE id = :userid"
         self.execute(sql, {"hash": passhash, "salt": salt, "userid": userid})
 
+        # Also nuke any active recovery strings for the user.
+        sql = "DELETE FROM session WHERE id = :userid AND type = :optype"
+        self.execute(sql, {"userid": userid, "optype": self.SESSION_TYPE_RECOVERY})
+
     def from_username(self, username: str) -> Optional[User]:
         """
         Given a username, look up a user.
@@ -183,7 +189,7 @@ class UserData(BaseData):
             username - A string representing the user's username.
 
         Returns:
-            User ID as an integer if found, or None if not.
+            User as a class if found, or None if not.
         """
         sql = "SELECT id FROM user WHERE username = :username"
         cursor = self.execute(sql, {"username": username})
@@ -202,7 +208,7 @@ class UserData(BaseData):
             session - String identifying a session that was opened by create_session.
 
         Returns:
-            ID as an integer if found, or None if the session is expired or doesn't exist.
+            User as a class if found, or None if the session is expired or doesn't exist.
         """
         # Look up the user account, making sure to expire old sessions
         now = Time.now()
@@ -221,6 +227,70 @@ class UserData(BaseData):
 
         result = cursor.mappings().fetchone()
         return self.get_user(UserID(result["id"]))
+
+    def from_recovery(self, recovery: str) -> Optional[User]:
+        """
+        Given a recovery string, look up a user.
+
+        Parameters:
+            recovery - A string representing a user recovery key.
+
+        Returns:
+            User as a class if found, or None if not.
+        """
+        # Look up the user account, making sure to expire old sessions
+        now = Time.now()
+        sql = "SELECT id FROM session WHERE session = :recovery AND type = :type AND expiration > :timestamp"
+        cursor = self.execute(sql, {"recovery": recovery, "type": self.SESSION_TYPE_RECOVERY, "timestamp": now})
+        if cursor.rowcount != 1:
+            # Couldn't find a user with this recovery.
+            return None
+
+        result = cursor.mappings().fetchone()
+        return self.get_user(UserID(result["id"]))
+
+    def create_recovery(self, userid: UserID, expiration: int = (1 * 86400)) -> str:
+        """
+        Given an ID, create a recovery string.
+
+        Parameters:
+            userid - ID we wish to create a recovery string for.
+            expiration - Number of seconds before the recovery string is invalid.
+
+        Returns:
+            A string that can be used as a password recovery ID.
+        """
+        if userid is NewUserID:
+            raise Exception("Logic error, should not try to create recovery strings for a new user ID!")
+
+        # Create a new recovery string that is unique
+        while True:
+            recovery = "".join(
+                random.SystemRandom().choice(string.ascii_uppercase + string.ascii_lowercase + string.digits)
+                for _ in range(self.RECOVERY_LENGTH)
+            )
+            sql = "SELECT session FROM session WHERE session = :recovery"
+            cursor = self.execute(sql, {"recovery": recovery})
+            if cursor.rowcount == 0:
+                # Make sure recovery strings expire in a reasonable amount of time
+                expiration = Time.now() + expiration
+
+                # Use that recovery
+                sql = """
+                    INSERT INTO session (id, session, type, expiration)
+                    VALUES (:id, :session, :optype, :expiration)
+                """
+                cursor = self.execute(
+                    sql,
+                    {
+                        "id": userid,
+                        "session": recovery,
+                        "optype": self.SESSION_TYPE_RECOVERY,
+                        "expiration": expiration,
+                    },
+                )
+                if cursor.rowcount == 1:
+                    return recovery
 
     def create_session(self, userid: UserID, expiration: int = (30 * 86400)) -> str:
         """

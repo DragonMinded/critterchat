@@ -110,3 +110,7 @@ class Config(dict[str, Any]):
     @property
     def name(self) -> str:
         return str(self.get("name", "Critter Chat Instance"))
+
+    @property
+    def base_url(self) -> str:
+        return str(self.get("base_url", "http://localhost:5678/"))
