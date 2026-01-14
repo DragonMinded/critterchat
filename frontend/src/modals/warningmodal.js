@@ -17,7 +17,7 @@ export function displayWarning( warningText, confirmText, cancelText, confirmCal
     $('#warning-cancel').text(cancelText);
 
     // Now, set up the callbacks for actions.
-    $( '#warning-confirm').on( 'click', (event) => {
+    $('#warning-confirm').on( 'click', (event) => {
         event.preventDefault();
 
         $.modal.close();
@@ -27,7 +27,7 @@ export function displayWarning( warningText, confirmText, cancelText, confirmCal
         }
     });
 
-    $( '#warning-cancel').on( 'click', (event) => {
+    $('#warning-cancel').on( 'click', (event) => {
         event.preventDefault();
 
         $.modal.close();

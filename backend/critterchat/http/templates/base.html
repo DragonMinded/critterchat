@@ -26,7 +26,7 @@
                         {% for category, message in messages %}
                         <li class="{{ category }}" id="flash{{ loop.index0 }}">
                             <div class="flash-message">{{ message }}</div>
-                            <button pid="flash{{ loop.index0 }}" class="close {{ category }}">
+                            <button type="button" pid="flash{{ loop.index0 }}" class="close {{ category }}">
                                 <div class="maskable close-svg"></div>
                             </button>
                         </li>

@@ -769,17 +769,29 @@ div.profile div.icon img {
     margin: 0px;
 }
 
-div.profile div.nickname-wrapper {
+div.profile div.nickname-wrapper, div.profile div.actions-wrapper {
     display: flex;
     justify-content: center;
+}
+
+div.profile div.actions-wrapper {
+    margin-top: 10px;
+    margin-bottom: 15px;
 }
 
 div.profile div.nickname-wrapper div.nickname {
     font-weight: bold;
 }
 
+div.profile hr {
+    border: none;
+    height: 1px;
+    color: var(--application-subtle-text);
+    background-color: var(--application-subtle-text);
+}
+
 div.profile div.about {
-    margin-top: 15px;
+    margin-top: 10px;
     white-space: pre-wrap;
 }
 

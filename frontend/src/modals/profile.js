@@ -11,6 +11,22 @@ const linkifyOptions = { defaultProtocol: "http", target: "_blank", validate: { 
 class Profile {
     constructor( eventBus ) {
         this.eventBus = eventBus;
+        this.userid = undefined;
+
+        $('#profile-form').on('submit', (event) => {
+            event.stopPropagation();
+        });
+
+        $('#profile-message').on('click', (event) => {
+            console.log("??");
+            event.stopPropagation();
+            event.stopImmediatePropagation();
+
+            if (this.userid) {
+                $.modal.close();
+                this.eventBus.emit('joinroom', this.userid);
+            }
+        });
     }
 
     /**
@@ -32,6 +48,9 @@ class Profile {
         // Hide loading indicator, show profile.
         $('#profile-form div.loading').hide();
         $('#profile-form div.profile').show();
+
+        // Ensure we can send chat requests to the right place.
+        this.userid = profile.id;
     }
 
     /**
@@ -39,6 +58,9 @@ class Profile {
      */
     display() {
         $.modal.close();
+
+        // Ensure we don't accidentally retain stale user IDs.
+        this.userid = undefined;
 
         $('#profile-form div.loading').show();
         $('#profile-form div.profile').hide();
