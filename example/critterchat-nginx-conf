@@ -50,7 +50,7 @@ server {
         # This should match the directory you used in your config.yaml for the directory setting. 
         alias /path/to/your/attachments;
         autoindex off;
-        add_header Cache-Control "public, max-age=604800, no-transform";
+        add_header Cache-Control "public, max-age=31557600, no-transform, immutable";
     }
 
     location /static {
