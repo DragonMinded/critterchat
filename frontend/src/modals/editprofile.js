@@ -27,7 +27,7 @@ class EditProfile {
             if (this.profileLoaded) {
                 this.eventBus.emit('updateprofile', {
                     'name': $('#editprofile-name').val().substring(0, 255),
-                    'about': $('#editprofile-about').val().substring(0, 65530),
+                    'about': $('#editprofile-about').val().substring(0, window.maxabout),
                     'icon': this.icon,
                     'icon_delete': this.iconDelete,
                 });
@@ -51,7 +51,7 @@ class EditProfile {
         $( '#editprofile-iconpicker' ).on( 'change', (event) => {
             const file = event.target.files[0];
 
-            if (file && file.size < 128 * 1024) {
+            if (file && file.size < window.maxiconsize * 1024) {
                 var fr = new FileReader();
                 fr.onload = () => {
                     this.icon = fr.result;
@@ -76,6 +76,13 @@ class EditProfile {
             this.icon = "";
             this.iconDelete = false;
 
+            // Display any server configured limits.
+            $('#editprofile-max-icon-width').text(window.maxicondimensions[0]);
+            $('#editprofile-max-icon-height').text(window.maxicondimensions[1]);
+            $('#editprofile-max-icon-size').text(window.maxiconsize);
+            $('#editprofile-about').attr("maxlength", window.maxabout);
+
+            // Display actual profile details.
             $('#editprofile-form')[0].reset();
             $('#editprofile-name').val(this.profile.nickname);
             $('#editprofile-about').val(this.profile.about);

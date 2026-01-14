@@ -49,7 +49,7 @@ class ChatDetails {
         $( '#chatdetails-iconpicker' ).on( 'change', (event) => {
             const file = event.target.files[0];
 
-            if (file && file.size < 128 * 1024) {
+            if (file && file.size < window.maxiconsize * 1024) {
                 var fr = new FileReader();
                 fr.onload = () => {
                     this.icon = fr.result;
@@ -72,6 +72,11 @@ class ChatDetails {
 
             // Start with a fresh form (clear bad file inputs).
             $('#chatdetails-form')[0].reset()
+
+            // Display any server configured limits.
+            $('#chatdetails-max-icon-width').text(window.maxicondimensions[0]);
+            $('#chatdetails-max-icon-height').text(window.maxicondimensions[1]);
+            $('#chatdetails-max-icon-size').text(window.maxiconsize);
 
             // Make sure we don't accidentally set a previous icon.
             this.icon = "";

@@ -2,7 +2,6 @@ TODO Immediate
 ==============
 
  - Admin tool to generate a password reset link which a user can use to reset their password.
- - Configurable filesize for avatars, bump to 512x512.
 
 TODO Low Priority
 =================

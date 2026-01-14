@@ -11,7 +11,7 @@
                 <input type="button" id="editprofile-remove-icon" value="revert to default" />
             </div>
             <div class="details">
-                Avatar should be square, no more than 256x256 pixels, and less than 128kb in size.
+                Avatar should be square, no more than <span id="editprofile-max-icon-width"></span>x<span id="editprofile-max-icon-height"></span> pixels, and less than <span id="editprofile-max-icon-size"></span>kb in size.
             </div>
         </div>
         <dl class="name">
@@ -21,7 +21,7 @@
         <dl class="about">
             <dt id="editprofile-about-label">about</dt>
             <dd>
-                <textarea id="editprofile-about" placeholder="Type some things about yourself..." autocomplete="off" maxlength="65530">
+                <textarea id="editprofile-about" placeholder="Type some things about yourself..." autocomplete="off">
                 </textarea>
             </dd>
         </dl>

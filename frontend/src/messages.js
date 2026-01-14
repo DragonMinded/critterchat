@@ -65,7 +65,7 @@ class Messages {
             if (roomid) {
                 var message = $( 'input#message' ).val();
 
-                if (message && message.length > 64000) {
+                if (message && message.length > window.maxmessage) {
                     displayInfo(
                         'Your message is too long to be sent, please type fewer things!',
                         'okay!',
@@ -165,6 +165,9 @@ class Messages {
 
         // Set up the emoji search itself.
         $(".emoji-search").html(twemoji.parse(String.fromCodePoint(0x1F600), twemojiOptions));
+
+        // Ensure that the input box itself doesn't allow messages to be too long.
+        $('#message').attr("maxlength", window.maxmessage);
     }
 
     /**

@@ -506,7 +506,7 @@ def updateprofile(json: Dict[str, object]) -> None:
     if newname and len(newname) > 255:
         socketio.emit('error', {'error': 'Your nickname is too long!'}, room=request.sid)
         return
-    if len(newabout) > 65530:
+    if len(newabout) > config.limits.about_length:
         socketio.emit('error', {'error': 'Your about section is too long!'}, room=request.sid)
         return
 
@@ -518,9 +518,8 @@ def updateprofile(json: Dict[str, object]) -> None:
             socketio.emit('error', {'error': 'Chosen avatar is not a valid image!'}, room=request.sid)
             return
 
-        # TODO: Configurable, maybe?
         actual_length = (len(b64data) / 4) * 3
-        if actual_length > 128 * 1024:
+        if actual_length > config.limits.icon_size * 1024:
             socketio.emit('error', {'error': 'Chosen avatar file size is too large!'}, room=request.sid)
             return
 
@@ -592,9 +591,8 @@ def updatepreferences(json: Dict[str, object]) -> None:
                 socketio.emit('error', {'error': 'Chosen notification is not a valid audio file!'}, room=request.sid)
                 return
 
-            # TODO: Configurable, maybe?
             actual_length = (len(b64data) / 4) * 3
-            if actual_length > 128 * 1024:
+            if actual_length > config.limits.notification_size * 1024:
                 socketio.emit('error', {'error': 'Chosen notification file size is too large!'}, room=request.sid)
                 return
 
@@ -876,9 +874,8 @@ def updateroom(json: Dict[str, object]) -> None:
                 socketio.emit('error', {'error': 'Chosen icon is not a valid image!'}, room=request.sid)
                 return
 
-            # TODO: Configurable, maybe?
             actual_length = (len(b64data) / 4) * 3
-            if actual_length > 128 * 1024:
+            if actual_length > config.limits.icon_size * 1024:
                 socketio.emit('error', {'error': 'Chosen icon file size is too large!'}, room=request.sid)
                 return
 

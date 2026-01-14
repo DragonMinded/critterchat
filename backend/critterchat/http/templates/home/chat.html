@@ -15,6 +15,11 @@
     window.emotes = {{ emotes|tojson|safe }};
     window.userid = {{ userid|tojson|safe }};
     window.username = {{ username|tojson|safe }};
+    window.maxabout = {{ maxabout|tojson|safe }};
+    window.maxmessage = {{ maxmessage|tojson|safe }};
+    window.maxiconsize = {{ maxiconsize|tojson|safe }};
+    window.maxicondimensions = {{ maxicondimensions|tojson|safe }};
+    window.maxnotificationsize = {{ maxnotificationsize|tojson|safe }};
     window.defavi = {{ defavi|tojson|safe }};
     window.defroom = {{ defroom|tojson|safe }};
     window.silence = {{ url_for('static', filename='silence.mp3')|tojson|safe }};

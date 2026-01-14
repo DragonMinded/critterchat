@@ -63,7 +63,7 @@ class EditPreferences {
                 }
             });
 
-            if (key && file && file.size < 128 * 1024) {
+            if (key && file && file.size < window.maxnotificationsize * 1024) {
                 var fr = new FileReader();
                 fr.onload = () => {
                     this.newnotifications[key] = fr.result;
@@ -132,6 +132,9 @@ class EditPreferences {
     display() {
         if (this.preferencesLoaded) {
             $.modal.close();
+
+            // Display any server configured limits.
+            $('#editpreferences-max-notification-size').text(window.maxnotificationsize);
 
             // Make sure we don't have anything left over from last time.
             this.deletednotifications = {};

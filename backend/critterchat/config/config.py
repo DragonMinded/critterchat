@@ -55,12 +55,34 @@ class Attachments:
         return str(self.__config.get("attachments", {}).get("attachment_key", "youalsoreallyshouldhavechangedthistoo"))
 
 
+class Limits:
+    def __init__(self, parent_config: "Config") -> None:
+        self.__config = parent_config
+
+    @property
+    def about_length(self) -> int:
+        return int(self.__config.get("limits", {}).get("about_length", 64000))
+
+    @property
+    def message_length(self) -> int:
+        return int(self.__config.get("limits", {}).get("message_length", 64000))
+
+    @property
+    def icon_size(self) -> int:
+        return int(self.__config.get("limits", {}).get("icon_size", 128))
+
+    @property
+    def notification_size(self) -> int:
+        return int(self.__config.get("limits", {}).get("notification_size", 128))
+
+
 class Config(dict[str, Any]):
     def __init__(self, existing_contents: Dict[str, Any] = {}) -> None:
         super().__init__(existing_contents or {})
 
         self.database = Database(self)
         self.attachments = Attachments(self)
+        self.limits = Limits(self)
 
     def clone(self) -> "Config":
         # Somehow its not possible to clone this object if an instantiated Engine is present,

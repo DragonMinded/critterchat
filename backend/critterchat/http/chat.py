@@ -81,10 +81,50 @@ def home() -> Response:
         emotes=emotes,
         userid=userid,
         username=username,
+        maxabout=g.config.limits.about_length,
+        maxmessage=g.config.limits.message_length,
+        maxiconsize=g.config.limits.icon_size,
+        maxicondimensions=[attachmentservice.MAX_ICON_WIDTH, attachmentservice.MAX_ICON_HEIGHT],
+        maxnotificationsize=g.config.limits.notification_size,
         defavi=attachmentservice.get_attachment_url(DefaultAvatarID),
         defroom=attachmentservice.get_attachment_url(DefaultRoomID),
         favicon=attachmentservice.get_attachment_url(FaviconID),
     ))
+
+
+@chat.route("/chat/config.json")
+@loginrequired
+@uncacheable
+@jsonify
+def config() -> Dict[str, object]:
+    attachmentservice = AttachmentService(g.config, g.data)
+    emoteservice = EmoteService(g.config, g.data)
+
+    emojis = {
+        **get_emoji_unicode_dict('en'),
+        **get_aliases_unicode_dict(),
+    }
+    emojis = {key: emojis[key] for key in emojis if "__" not in key}
+    emotes = {f":{key}:": val for key, val in emoteservice.get_all_emotes().items()}
+
+    userid = None if (not g.user) else User.from_id(g.user.id)
+    username = None if (not g.user) else g.user.username
+
+    return {
+        "title": g.config.name,
+        "emojis": emojis,
+        "emotes": emotes,
+        "userid": userid,
+        "username": username,
+        "maxabout": g.config.limits.about_length,
+        "maxmessage": g.config.limits.message_length,
+        "maxiconsize": g.config.limits.icon_size,
+        "maxicondimensions": [attachmentservice.MAX_ICON_WIDTH, attachmentservice.MAX_ICON_HEIGHT],
+        "maxnotificationsize": g.config.limits.notification_size,
+        "defavi": attachmentservice.get_attachment_url(DefaultAvatarID),
+        "defroom": attachmentservice.get_attachment_url(DefaultRoomID),
+        "favicon": attachmentservice.get_attachment_url(FaviconID),
+    }
 
 
 @chat.route("/chat/version.json")
