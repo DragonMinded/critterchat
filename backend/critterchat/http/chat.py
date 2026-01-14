@@ -6,7 +6,7 @@ from typing import Dict
 
 from .app import app, static_location, templates_location, loginrequired, jsonify, g
 from ..common import get_emoji_unicode_dict, get_aliases_unicode_dict
-from ..data import DefaultAvatarID, DefaultRoomID, FaviconID
+from ..data import DefaultAvatarID, DefaultRoomID, FaviconID, User
 from ..service import AttachmentService, EmoteService
 
 
@@ -66,6 +66,7 @@ def home() -> Response:
     emojis = {key: emojis[key] for key in emojis if "__" not in key}
     emotes = {f":{key}:": val for key, val in emoteservice.get_all_emotes().items()}
 
+    userid = None if (not g.user) else User.from_id(g.user.id)
     username = None if (not g.user) else g.user.username
     jsname = _get_frontend_filename()
     cachebust = _get_frontend_version() + "-" + _get_fingerprint_hash()
@@ -78,6 +79,7 @@ def home() -> Response:
         version=cachebust,
         emojis=emojis,
         emotes=emotes,
+        userid=userid,
         username=username,
         defavi=attachmentservice.get_attachment_url(DefaultAvatarID),
         defroom=attachmentservice.get_attachment_url(DefaultRoomID),

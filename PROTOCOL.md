@@ -59,11 +59,11 @@ An object representing the number of unread notifications for a given room. Room
 
 ## Client-Initiated Packets
 
-The following packets are client-initiated. For each packet, the client request as well as the server response packet are documented together.
+The following packets are client-initiated. For each packet, the client request as well as the server response packet are documented together. For all packets that return a response packet with the same name as the request packet, the client can optionally add a `tag` attribute which should be a UUID. The server will ensure that the response packet has a `tag` attribute in the data containing the same UUID that was sent in the request. In this way, a client can match up responses to specific requests if need be.
 
 ### profile
 
-The `profile` packet is sent from the client to load or refresh a user's profile. Currently it expects an empty request JSON and looks up the profile of the logged in user. In the future this will also support requesting the profile of another user by that user's ID in the request JSON. The server will respond with a `profile` packet with the user's profile in the response JSON with the following attributes:
+The `profile` packet is sent from the client to load or refresh a user's profile. This can take an empty request JSON and looks up the profile of the logged in user. Additionally, it can take a JSON request that includes the `userid` attribute. The `userid` can be either a user ID or an occupant ID. In either case that object will be looked up and returned. Note that CritterChat supports custom icon and nickname per-room so if you want to pull up a user's custom profile for a given room you should provide an Occupant ID. If you only care about the user's generic profile you can instead specify a User ID. The server will respond with a `profile` packet with the user's profile in the response JSON with the following attributes:
 
  - `id` - A string identifier unique to the user that was returned. Can be used to uniquely and permanently refer to a user.
  - `username` - A string representing the user's username, as they would log in and as other users would mention them.

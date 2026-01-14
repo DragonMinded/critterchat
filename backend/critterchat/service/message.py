@@ -13,6 +13,7 @@ from ..data import (
     Room,
     RoomType,
     RoomSearchResult,
+    User,
     DefaultAvatarID,
     DefaultRoomID,
     FaviconID,
@@ -21,6 +22,7 @@ from ..data import (
     NewRoomID,
     NewUserID,
     ActionID,
+    OccupantID,
     RoomID,
     UserID,
 )
@@ -92,6 +94,22 @@ class MessageService:
         if action.id is not NewActionID:
             return self.__attachments.resolve_action_icon(action)
         return None
+
+    def lookup_occupant(self, occupantid: OccupantID) -> Optional[User]:
+        occupant = self.__data.room.get_room_occupant(occupantid)
+        if not occupant:
+            return None
+
+        # Grab generic info for user based on occupant.
+        user = self.__data.user.get_user(occupant.userid)
+        if not user:
+            return None
+
+        # Copy the data over so the client can display it.
+        user.iconid = occupant.iconid
+        user.nickname = occupant.nickname
+        self.__attachments.resolve_user_icon(user)
+        return user
 
     def __infer_room_info(self, userid: UserID, room: Room) -> None:
         if room.public:

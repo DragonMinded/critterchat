@@ -1,8 +1,3 @@
-TODO Short Term
-===============
-
- - Start on profile view to look at a person's profile.
-
 TODO Low Priority
 =================
 

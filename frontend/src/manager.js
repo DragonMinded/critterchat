@@ -7,6 +7,7 @@ import { Info } from "./info.js";
 import { InputState } from "./inputstate.js";
 import { ScreenState } from "./screenstate.js";
 import { AudioNotifications } from "./components/audionotifs.js";
+import { Profile } from "./modals/profile.js";
 
 import { escapeHtml, flash, flashHook, containsStandaloneText } from "./utils.js";
 import { displayInfo } from "./modals/infomodal.js";
@@ -68,6 +69,10 @@ export function manager(socket) {
 
     // Handles audio notification playback.
     var notifInst = new AudioNotifications(eventBus, size, visibility);
+
+    // Handles the profile view popover, not owned by any one panel since it can be summoned
+    // by multiple of them.
+    var profileInst = new Profile(eventBus);
 
     // Ensure any server-generated messages are closeable.
     flashHook();
@@ -239,14 +244,16 @@ export function manager(socket) {
     });
 
     socket.on('profile', (msg) => {
-        // This should never change, but if we have info about it, let's update anyway.
-        window.username = msg.username;
+        if (msg.id == window.userid) {
+            // This should never change, but if we have info about it, let's update anyway.
+            window.username = msg.username;
 
-        // Notify various systems that our profile has been updated, so they can grab
-        // things such as the nickname and our avatar.
-        menuInst.setProfile(msg);
-        messagesInst.setProfile(msg);
-        infoInst.setProfile(msg);
+            // Notify various systems that our profile has been updated, so they can grab
+            // things such as the nickname and our avatar.
+            menuInst.setProfile(msg);
+            messagesInst.setProfile(msg);
+            infoInst.setProfile(msg);
+        }
     });
 
     socket.on('preferences', (msg) => {
@@ -355,6 +362,22 @@ export function manager(socket) {
         // Handles notifying various systems about any newly added or newly removed custom server emotes.
         messagesInst.addEmotes(msg.additions);
         messagesInst.deleteEmotes(msg.deletions);
+    });
+
+    eventBus.on('displayprofile', (occupantid) => {
+        // We were notified that the user wants to view a profile. Fire off a load request for the
+        // profile and display the modal.
+        profileInst.display();
+
+        socket.request('profile', {'userid': occupantid}, (evt, data) => {
+            if (evt != 'profile') {
+                // TODO: How do we surface this back to the server or somewhere meaningful?
+                console.log("Got unexpected event " + evt + " back from profile lookup request!");
+            } else {
+                // We got a profile response for a different user, display that on profile view.
+                profileInst.setProfile(data);
+            }
+        });
     });
 
     eventBus.on('selectroom', (roomid) => {

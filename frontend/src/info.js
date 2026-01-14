@@ -247,6 +247,17 @@ class Info {
             html    += '  <div class="name-wrapper"><div class="name">' + escapeHtml(occupant.nickname) + '</div></div>';
             html    += '</div>';
             occupantElement.append(html);
+
+            $('div.info > div.occupants div.item#' + occupant.id).on('click', (event) => {
+                event.stopPropagation();
+                event.stopImmediatePropagation();
+
+                this.inputState.setState("empty");
+
+                var id = $(event.currentTarget).attr('id')
+                this.eventBus.emit('displayprofile', id);
+            });
+
         });
 
         occupantElement.scrollTop(scrollPos);

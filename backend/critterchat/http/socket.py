@@ -13,6 +13,7 @@ from ..data import (
     User,
     UserPermission,
     UserSettings,
+    Occupant,
     NewActionID,
     ActionID,
     RoomID,
@@ -275,6 +276,13 @@ def recover_userid(data: Data, sid: Any) -> Optional[UserID]:
     return user.id
 
 
+def hydrate_tag(request: Dict[str, object], response: Dict[str, object]) -> Dict[str, object]:
+    if 'tag' not in request:
+        return response
+
+    return {**response, 'tag': request['tag']}
+
+
 @socketio.on('connect')  # type: ignore
 def connect() -> None:
     unregister_sid(request.sid)
@@ -374,10 +382,10 @@ def roomlist(json: Dict[str, object]) -> None:
 
             info.lastseen[room.id] = lastseen.get(room.id, 0)
 
-    socketio.emit('roomlist', {
+    socketio.emit('roomlist', hydrate_tag(json, {
         'rooms': [room.to_dict() for room in rooms],
         'counts': [{'roomid': Room.from_id(k), 'count': v} for k, v in lastseen.items()],
-    }, room=request.sid)
+    }), room=request.sid)
 
 
 @socketio.on('lastsettings')  # type: ignore
@@ -394,19 +402,36 @@ def lastsettings(json: Dict[str, object]) -> None:
         return
 
     # Look up last settings for this user.
-    socketio.emit('lastsettings', userservice.get_settings(sessionid, userid).to_dict(), room=request.sid)
+    socketio.emit('lastsettings', hydrate_tag(json, userservice.get_settings(sessionid, userid).to_dict()), room=request.sid)
 
 
 @socketio.on('profile')  # type: ignore
 def profile(json: Dict[str, object]) -> None:
     data = Data(config)
     userservice = UserService(config, data)
+    messageservice = MessageService(config, data)
 
     # Try to associate with a user if there is one.
     userid = recover_userid(data, request.sid)
     info = recover_info(request.sid)
     if userid is None or info is None:
         return
+
+    otheruserid = User.to_id(str(json.get('userid')))
+    if otheruserid:
+        # Generic profile lookup request.
+        userprofile = userservice.lookup_user(otheruserid)
+        if userprofile:
+            socketio.emit('profile', hydrate_tag(json, userprofile.to_dict()), room=request.sid)
+            return
+
+    occupantid = Occupant.to_id(str(json.get('userid')))
+    if occupantid:
+        # Per-room profile lookup request.
+        userprofile = messageservice.lookup_occupant(occupantid)
+        if userprofile:
+            socketio.emit('profile', hydrate_tag(json, userprofile.to_dict()), room=request.sid)
+            return
 
     # Locking our socket info so we can keep track of profiles sent to all sessions.
     # That way we can notify other sessions if the current one changes their profile.
@@ -416,7 +441,7 @@ def profile(json: Dict[str, object]) -> None:
         userprofile = userservice.lookup_user(userid)
         if userprofile:
             info.profilets = ts
-            socketio.emit('profile', userprofile.to_dict(), room=request.sid)
+            socketio.emit('profile', hydrate_tag(json, userprofile.to_dict()), room=request.sid)
 
 
 @socketio.on('preferences')  # type: ignore
@@ -438,7 +463,7 @@ def preferences(json: Dict[str, object]) -> None:
         userpreferences = userservice.get_preferences(userid)
         if userpreferences:
             info.prefsts = ts
-            socketio.emit('preferences', userpreferences.to_dict(), room=request.sid)
+            socketio.emit('preferences', hydrate_tag(json, userpreferences.to_dict()), room=request.sid)
 
 
 @socketio.on('updatesettings')  # type: ignore
@@ -502,7 +527,7 @@ def updateprofile(json: Dict[str, object]) -> None:
         userservice.update_user(userid, name=newname, icon=icon, icon_delete=icondelete)
         userprofile = userservice.lookup_user(userid)
         if userprofile:
-            socketio.emit('profile', userprofile.to_dict(), room=request.sid)
+            socketio.emit('profile', hydrate_tag(json, userprofile.to_dict()), room=request.sid)
     except UserServiceException as e:
         socketio.emit('error', {'error': str(e)}, room=request.sid)
 
@@ -623,10 +648,10 @@ def chatactions(json: Dict[str, object]) -> None:
                     fetchlimit = max(fetchlimit, action.id)
                 info.fetchlimit[roomid] = fetchlimit
 
-                socketio.emit('chatactions', {
+                socketio.emit('chatactions', hydrate_tag(json, {
                     'roomid': Room.from_id(roomid),
                     'actions': [action.to_dict() for action in actions],
-                }, room=request.sid)
+                }), room=request.sid)
 
 
 @socketio.on('chathistory')  # type: ignore
@@ -657,10 +682,10 @@ def chathistory(json: Dict[str, object]) -> None:
                 beforeid = Action.to_id(str(before))
                 actions = messageservice.get_room_history(roomid, before=beforeid)
 
-                socketio.emit('chathistory', {
+                socketio.emit('chathistory', hydrate_tag(json, {
                     'roomid': Room.from_id(roomid),
                     'history': [action.to_dict() for action in actions],
-                }, room=request.sid)
+                }), room=request.sid)
 
             else:
                 lastseen = userservice.get_last_seen_actions(userid)
@@ -676,12 +701,12 @@ def chathistory(json: Dict[str, object]) -> None:
                 # Also report the last seen message, so that a "new" indicator can be displayed.
                 lastaction = lastseen.get(roomid, None)
 
-                socketio.emit('chathistory', {
+                socketio.emit('chathistory', hydrate_tag(json, {
                     'roomid': Room.from_id(roomid),
                     'history': [action.to_dict() for action in actions],
                     'occupants': [occupant.to_dict() for occupant in occupants],
                     'lastseen': Action.from_id(lastaction) if lastaction else None,
-                }, room=request.sid)
+                }), room=request.sid)
 
 
 @socketio.on('message')  # type: ignore
@@ -744,9 +769,9 @@ def searchrooms(json: Dict[str, object]) -> None:
 
     # Grab all rooms that match this search result
     rooms = messageservice.get_matching_rooms(userid, name=str(json.get('name')))
-    socketio.emit('searchrooms', {
+    socketio.emit('searchrooms', hydrate_tag(json, {
         'rooms': [room.to_dict() for room in rooms],
-    }, room=request.sid)
+    }), room=request.sid)
 
 
 @socketio.on('joinroom')  # type: ignore

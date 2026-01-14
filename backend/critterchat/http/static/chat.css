@@ -273,12 +273,12 @@ div.rooms div.item, div.results div.item, div.occupants div.item {
     border: 1px solid transparent;
 }
 
-div.rooms div.item.selected, div.results div.item:hover {
+div.rooms div.item.selected, div.occupants div.item.selected, div.results div.item:hover {
     background: var(--sidebar-hover-background);
     border: 1px solid var(--sidebar-hover-background);
 }
 
-div.rooms div.item:hover {
+div.rooms div.item:hover, div.occupants div.item:hover {
     border: 1px solid var(--sidebar-hover-background);
 }
 
@@ -753,11 +753,35 @@ div.chatdetails div.icon img, div.editprofile div.icon img {
     margin: 0px;
 }
 
+div.profile > div.icon-wrapper {
+    border-radius: 5px;
+    padding: 10px;
+    gap: 10px;
+    display: flex;
+    flex-direction: column;
+}
+
+div.profile div.icon img {
+    display: block;
+    width: 72px;
+    height: 72px;
+    margin: 0px;
+}
+
+div.profile div.nickname-wrapper {
+    display: flex;
+    justify-content: center;
+}
+
+div.profile div.nickname-wrapper div.nickname {
+    font-weight: bold;
+}
+
 div.chatdetails div.details, div.editprofile div.details {
     text-align: center;
 }
 
-div.chatdetails div.icon, div.chatdetails div.picker, div.editprofile div.icon, div.editprofile div.picker {
+div.chatdetails div.icon, div.chatdetails div.picker, div.editprofile div.icon, div.profile div.icon, div.editprofile div.picker {
     display: flex;
     justify-content: center;
 }
