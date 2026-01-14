@@ -3,7 +3,8 @@ import string
 
 from sqlalchemy import Table, Column
 from sqlalchemy.schema import UniqueConstraint
-from sqlalchemy.types import Boolean, String, Integer, Text
+from sqlalchemy.types import Boolean, String, Integer
+from sqlalchemy.dialects.mysql import MEDIUMTEXT as MediumText
 from typing import Any, Final, List, Optional, Tuple
 from passlib.hash import pbkdf2_sha512  # type: ignore
 
@@ -60,7 +61,7 @@ profile = Table(
     metadata,
     Column("user_id", Integer, nullable=False, unique=True, index=True),
     Column("nickname", String(255)),
-    Column("about", Text),
+    Column("about", MediumText),
     Column("icon", Integer),
     Column("timestamp", Integer),
     mysql_charset="utf8mb4",

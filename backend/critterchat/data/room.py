@@ -3,7 +3,8 @@ from typing import Any, Dict, List, Optional
 
 from sqlalchemy import Table, Column
 from sqlalchemy.schema import UniqueConstraint
-from sqlalchemy.types import String, Integer, Boolean, Text
+from sqlalchemy.types import String, Integer, Boolean
+from sqlalchemy.dialects.mysql import MEDIUMTEXT as MediumText
 
 from ..common import Time
 from .base import BaseData, metadata
@@ -67,7 +68,7 @@ action = Table(
     Column("room_id", Integer, nullable=False, index=True),
     Column("occupant_id", Integer, nullable=False),
     Column("action", String(32)),
-    Column("details", Text),
+    Column("details", MediumText),
     mysql_charset="utf8mb4",
 )
 
