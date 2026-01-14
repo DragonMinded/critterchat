@@ -364,6 +364,7 @@ div.meta-wrapper span.name {
     overflow: hidden;
     overflow-wrap: break-word;
     word-break: break-word;
+    cursor: pointer;
 }
 
 div.results div.item div.action-wrapper {

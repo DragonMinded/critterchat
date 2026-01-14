@@ -8,6 +8,7 @@ TODO Low Priority
  - Mentioning typeahead should allow searching by display nick as well as username.
  - Support editing your nickname and avatar per-chat (limit to public rooms).
  - Support creating an account flow with ability to disable instance-side and setting for auto-activate or moderator activate.
+ - Make username mentions clickable in chat, and make them open the user's profile.
 
 TODO For Public Instance
 ========================

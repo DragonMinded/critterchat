@@ -822,6 +822,7 @@ class Messages {
                 $('div.chat > div.conversation-wrapper > div.conversation div.icon#' + message.occupant.id + ' img').attr('src', message.occupant.icon);
             }
 
+            // Place either before or after existing messages depending on if it's a backfill or a new message.
             if (html) {
                 if (loc == 'after') {
                     messages.append(html);
@@ -830,6 +831,17 @@ class Messages {
                     messages.prepend(html);
                 }
             }
+
+            // Allow clicking a username in a message to view the person's profile.
+            $('div.item#' + message.id + ' span.name#' + message.occupant.id).on('click', (event) => {
+                event.stopPropagation();
+                event.stopImmediatePropagation();
+
+                this.inputState.setState("empty");
+
+                var id = $(event.currentTarget).attr('id')
+                this.eventBus.emit('displayprofile', id);
+            });
         }
 
         this._updateLastAction(message);
