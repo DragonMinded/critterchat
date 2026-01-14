@@ -15,7 +15,7 @@ that can be enabled or disabled per-instance.
  - Direct messages and public rooms have an editable name and topic.
  - User profile support with ability to view other chatters' profiles.
  - Custom emoji support controlled by the instance administrator.
- - Preferences for most appearance settings.
+ - Preferences for most appearance settings and optional notification sounds.
  - Collects absolutely no personal information, contains no tracking code.
 
 ## Wishlist
@@ -51,7 +51,7 @@ get in touch so we can work out the direction you plan to take.
  - Containerization and simplifying deployment/updates.
  - UX design work and help with themes.
  - SVGs for graphics for default avatar/room pictures, iconography on the frontend.
- - Documentation clarification or correction, better documentation for websocket protocol.
+ - Documentation clarification or correction, both in code and related markdown files.
  - Support for more attachment backends.
  - Native clients for mobile or desktop operating systems.
  - Changes that make custom integrations easier.
