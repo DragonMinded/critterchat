@@ -1,12 +1,13 @@
 import $ from "jquery";
 
-import { EventEmitter } from "events";
+import { InputState } from "./inputstate.js";
+import { ScreenState } from "./screenstate.js";
+import { EventHandler } from "./components/event.js";
+import { AudioNotifications } from "./components/audionotifs.js";
+
 import { Menu } from "./menu.js";
 import { Messages } from "./messages.js";
 import { Info } from "./info.js";
-import { InputState } from "./inputstate.js";
-import { ScreenState } from "./screenstate.js";
-import { AudioNotifications } from "./components/audionotifs.js";
 import { Profile } from "./modals/profile.js";
 
 import { escapeHtml, flash, flashHook, containsStandaloneText } from "./utils.js";
@@ -38,7 +39,7 @@ import { displayInfo } from "./modals/infomodal.js";
  * each other depending on user request.
  */
 export function manager(socket) {
-    var eventBus = new EventEmitter();
+    var eventBus = new EventHandler();
     var inputState = new InputState();
     var screenState = new ScreenState();
 
