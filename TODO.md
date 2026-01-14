@@ -1,3 +1,8 @@
+TODO Immediate
+==============
+
+ - Admin tool to generate a password reset link which a user can use to reset their password.
+
 TODO Low Priority
 =================
 
