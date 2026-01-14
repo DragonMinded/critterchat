@@ -458,6 +458,7 @@ class UserData(BaseData):
             result['uname'],
             permissions,
             nickname,
+            result['about'] or '',
             result['icon'],
         )
 
@@ -469,7 +470,7 @@ class UserData(BaseData):
             return None
 
         sql = """
-            SELECT user.id AS id, user.username AS uname, user.permissions AS permissions, profile.nickname AS pname, profile.icon AS icon
+            SELECT user.id AS id, user.username AS uname, user.permissions AS permissions, profile.nickname AS pname, profile.about AS about, profile.icon AS icon
             FROM user
             LEFT JOIN profile ON profile.user_id = user.id
             WHERE user.id = :userid
@@ -515,13 +516,13 @@ class UserData(BaseData):
 
         sql = """
             INSERT INTO `profile`
-                (`user_id`, `nickname`, `icon`, `timestamp`)
+                (`user_id`, `nickname`, `about`, `icon`, `timestamp`)
             VALUES
-                (:userid, :name, :iconid, :ts)
+                (:userid, :name, :about, :iconid, :ts)
             ON DUPLICATE KEY UPDATE
-            `nickname` = :name, `icon` = :iconid, `timestamp` = :ts
+            `nickname` = :name, `about` = :about, `icon` = :iconid, `timestamp` = :ts
         """
-        self.execute(sql, {"userid": user.id, "name": nickname, "iconid": iconid, "ts": Time.now()})
+        self.execute(sql, {"userid": user.id, "name": nickname, "about": user.about, "iconid": iconid, "ts": Time.now()})
 
         permissions: int = 0
         for perm in user.permissions:
@@ -538,7 +539,7 @@ class UserData(BaseData):
         """
 
         sql = """
-            SELECT user.id AS id, user.username AS uname, user.permissions AS permissions, profile.nickname AS pname, profile.icon AS icon
+            SELECT user.id AS id, user.username AS uname, user.permissions AS permissions, profile.nickname AS pname, profile.about AS about, profile.icon AS icon
             FROM user
             LEFT JOIN profile ON profile.user_id = user.id
         """
@@ -564,7 +565,7 @@ class UserData(BaseData):
             return []
 
         sql = """
-            SELECT user.id AS id, user.username AS uname, user.permissions AS permissions, profile.nickname AS pname, profile.icon AS icon
+            SELECT user.id AS id, user.username AS uname, user.permissions AS permissions, profile.nickname AS pname, profile.about AS about, profile.icon AS icon
             FROM user
             LEFT JOIN profile ON profile.user_id = user.id
             WHERE user.id = :myid

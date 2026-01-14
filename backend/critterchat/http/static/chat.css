@@ -777,6 +777,15 @@ div.profile div.nickname-wrapper div.nickname {
     font-weight: bold;
 }
 
+div.profile div.about {
+    margin-top: 15px;
+    white-space: pre-wrap;
+}
+
+div.profile div.about.empty {
+    font-style: italic;
+}
+
 div.chatdetails div.details, div.editprofile div.details {
     text-align: center;
 }
@@ -794,13 +803,18 @@ div.chatdetails dt, div.editprofile dt, div.editpreferences dt {
     font-size: 14px;
 }
 
-div.chatdetails dl.name dd, div.chatdetails dl.topic dd, div.editprofile dl.name dd {
+div.chatdetails dl.name dd, div.chatdetails dl.topic dd, div.editprofile dl.name dd, div.editprofile dl.about dd {
     display: flex;
     margin-left: 0px;
 }
 
 div.chatdetails dl.name input, div.chatdetails dl.topic input, div.editprofile dl.name input {
     width: 100%;
+}
+
+div.editprofile dl.about textarea {
+    width: 100%;
+    height: 100px;
 }
 
 div.info > div.occupants {

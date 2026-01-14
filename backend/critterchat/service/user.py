@@ -189,6 +189,7 @@ class UserService:
         self,
         userid: UserID,
         name: Optional[str] = None,
+        about: Optional[str] = None,
         icon: Optional[bytes] = None,
         icon_delete: bool = False,
     ) -> None:
@@ -200,6 +201,9 @@ class UserService:
             changed = False
             if name is not None:
                 user.nickname = name
+                changed = True
+            if about is not None:
+                user.about = about
                 changed = True
             if icon is not None:
                 # Need to store this as a new attachment, and then get back the ID.

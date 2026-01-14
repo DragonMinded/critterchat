@@ -496,6 +496,7 @@ def updateprofile(json: Dict[str, object]) -> None:
     # Save last settings for this user.
     newname = str(json.get('name', '')).strip()
     newicon = str(json.get('icon', ''))
+    newabout = str(json.get('about', '')).strip()
     icondelete = bool(json.get('icon_delete', ''))
 
     # We allow spaces inside names, but not space-only names.
@@ -504,6 +505,9 @@ def updateprofile(json: Dict[str, object]) -> None:
 
     if newname and len(newname) > 255:
         socketio.emit('error', {'error': 'Your nickname is too long!'}, room=request.sid)
+        return
+    if len(newabout) > 65530:
+        socketio.emit('error', {'error': 'Your about section is too long!'}, room=request.sid)
         return
 
     icon: Optional[bytes] = None
@@ -524,7 +528,7 @@ def updateprofile(json: Dict[str, object]) -> None:
             icon = fp.read()
 
     try:
-        userservice.update_user(userid, name=newname, icon=icon, icon_delete=icondelete)
+        userservice.update_user(userid, name=newname, about=newabout, icon=icon, icon_delete=icondelete)
         userprofile = userservice.lookup_user(userid)
         if userprofile:
             socketio.emit('profile', hydrate_tag(json, userprofile.to_dict()), room=request.sid)

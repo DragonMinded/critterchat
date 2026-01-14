@@ -25,9 +25,18 @@ class UserPermission(IntEnum):
 
 
 class User:
-    def __init__(self, userid: UserID, username: str, permissions: Set[UserPermission], nickname: str, iconid: Optional[AttachmentID]) -> None:
+    def __init__(
+        self,
+        userid: UserID,
+        username: str,
+        permissions: Set[UserPermission],
+        nickname: str,
+        about: str,
+        iconid: Optional[AttachmentID],
+    ) -> None:
         self.id = userid
         self.username = username
+        self.about = about
         self.permissions = permissions
         self.nickname = nickname
         self.iconid = iconid
@@ -38,6 +47,7 @@ class User:
             "id": User.from_id(self.id),
             "username": self.username,
             "nickname": self.nickname,
+            "about": self.about,
             "icon": self.icon,
         }
 

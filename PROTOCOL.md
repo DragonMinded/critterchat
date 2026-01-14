@@ -68,6 +68,7 @@ The `profile` packet is sent from the client to load or refresh a user's profile
  - `id` - A string identifier unique to the user that was returned. Can be used to uniquely and permanently refer to a user.
  - `username` - A string representing the user's username, as they would log in and as other users would mention them.
  - `nickname` - A string representing the user's currently set nickname. If the user has not set this, it will be defaulted to the same value as the `username`.
+ - `about` - A string representing the user's about section. If the user has not set this, it will be defaulted to the empty string.
  - `icon` - A string URI pointing at the user's currently set icon. If the user has not set this, this will point at the instance default avatar.
 
 Currently, the JS client will request the profile for the logged-in user immediately after successfully connecting to the server.
@@ -146,6 +147,7 @@ The `searchrooms` packet is sent from the client to request a list of search res
 The `updateprofile` packet is sent from the client to request the user's profile be updated. This expects a request JSON that contains the following attributes:
 
  - `name` - A new nickname to set. This can be empty to unset a custom nickname and it can contain emoji. It must be 255 unicode code points or less in length. It cannot consist of solely unicode control characters or other non-printable characters. Note that the user's nickname will always be set, so clients should round-trip the existing custom name if the user does not edit it.
+ - `about` - A new about section to set. This can be empty to delete existin text, or non-empty to set a new text. It must be 65530 unicode code points or less in length. Note that the user's about section will always be set, so clients should round-trip the existing about section if the user does not edit it.
  - `icon` - A base 64 encoded image that should be set as the new profile, following the `data:` URL specification. If this is left empty, the user's icon will not be updated. The image must be square and currently cannot exceed 128kb in size.
  - `icon_delete` - An optional boolean specifying that the user wants to delete their custom icon. If the client leaves this out or sets this to an empty string or `False` then the server will not attempt to delete the user's custom icon. Setting this to `True` will cause the user's icon to revert to the instance's default icon.
 

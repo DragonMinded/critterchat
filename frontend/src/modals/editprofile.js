@@ -27,6 +27,7 @@ class EditProfile {
             if (this.profileLoaded) {
                 this.eventBus.emit('updateprofile', {
                     'name': $('#editprofile-name').val().substring(0, 255),
+                    'about': $('#editprofile-about').val().substring(0, 65530),
                     'icon': this.icon,
                     'icon_delete': this.iconDelete,
                 });
@@ -77,6 +78,7 @@ class EditProfile {
 
             $('#editprofile-form')[0].reset();
             $('#editprofile-name').val(this.profile.nickname);
+            $('#editprofile-about').val(this.profile.about);
             $('#editprofile-icon').attr('src', this.profile.icon);
             $('#editprofile-form').modal();
         }
