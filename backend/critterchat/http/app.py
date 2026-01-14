@@ -163,6 +163,16 @@ def cacheable(max_age: int) -> Callable[[Callable[..., Response]], Callable[...,
     return __cache
 
 
+def uncacheable(func: Callable[..., Response]) -> Callable[..., Response]:
+    @wraps(func)
+    def decoratedfunction(*args: Any, **kwargs: Any) -> Response:
+        response = func(*args, **kwargs)
+        response.cache_control.no_cache = True
+        return response
+
+    return decoratedfunction
+
+
 def error(msg: str) -> None:
     flash(msg, "error")
 
