@@ -47,6 +47,10 @@
     --emojisearch-selected: light-dark(#aaaaaa, #555555);
     --emojisearch-selected-category: light-dark(#000000, #ffffff);
 
+    --attachment-picker-border: light-dark(#bcbcbc, #6d6d6d);
+    --attachment-picker-hover: light-dark(#ff0000, #ff0000);
+    --attachment-picker-background: light-dark(#ffffff, #222222);
+
     --error-border: light-dark(#b3b3b3, #1c1c1c);
     --error-error: light-dark(#e4a7a7, #d77575);
     --error-warning: light-dark(#e4c9a7, #d0a46d);
@@ -236,6 +240,31 @@ div.logout-svg {
     height: 16px;
     margin-bottom: -3px;
     mask-image: url('logout.svg');
+}
+
+div.attachment-picker {
+    width: 16px;
+    height: 16px;
+    margin-top: 5px;
+    mask-image: url('attachment.svg');
+    position: absolute;
+    right: 26px;
+}
+
+div.attachment-picker:hover {
+    color: var(--attachment-picker-hover);
+}
+
+div.uploadpicker-container {
+    display: flex;
+    gap: 10px;
+    background: var(--attachment-picker-background);
+    border: 1px solid var(--attachment-picker-border);
+    padding: 10px;
+}
+
+div.uploadpicker-container img {
+    display: block;
 }
 
 div.container {
@@ -516,6 +545,14 @@ div.conversation-wrapper > div.conversation {
     gap: 10px;
 }
 
+div.chat > form.uploads {
+    display: none;
+}
+
+div.chat > form.uploads input {
+    display: none;
+}
+
 div.chat > form.actions {
     border: 10px solid var(--conversation-background);
     color: var(--conversation-text);
@@ -532,7 +569,7 @@ div.chat form.actions div.newmessage {
 
 div.newmessage input {
     width: 100%;
-    padding-right: 25px ! important;
+    padding-right: 45px ! important;
 }
 
 div.chat div.conversation div.item {
@@ -581,6 +618,21 @@ div.conversation div.item.combined div.meta-wrapper {
 div.conversation div.item.combined div.message {
     margin-left: 41px;
     margin-top: -7px;
+}
+
+div.conversation div.item.combined div.attachments {
+    margin-left: 41px;
+    margin-top: 2px;
+}
+
+div.conversation div.attachments {
+    display: flex;
+    gap: 5px;
+    flex-wrap: wrap;
+}
+
+div.conversation div.attachments img {
+    display: block;
 }
 
 div.message.highlighted {

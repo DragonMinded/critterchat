@@ -90,6 +90,7 @@
             <div class="newmessage">
                 <div class="new-messages-alert">new messages</div>
                 <input type="text" id="message" autocomplete="off" placeholder="Type a message..." />
+                <div class="maskable attachment-picker"></div>
                 <div class="emoji-search"></div>
             </div>
             <div class="send">
@@ -98,6 +99,9 @@
             <div class="info">
                 <button type="button" id="infotoggle">info</button>
             </div>
+        </form>
+        <form class="uploads" action="" method="POST" id="message-upload">
+            <input type="file" id="message-files" multiple />
         </form>
     </div>
     <div class="info hidden">

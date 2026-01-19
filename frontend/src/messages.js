@@ -12,6 +12,7 @@ import {
 } from "./utils.js";
 import { emojisearch } from "./components/emojisearch.js";
 import { autocomplete } from "./components/autocomplete.js";
+import { UploadPicker } from "./components/uploadpicker.js";
 import { displayInfo } from "./modals/infomodal.js";
 
 const linkifyOptions = { defaultProtocol: "http", target: "_blank", validate: { email: () => false } };
@@ -36,6 +37,7 @@ class Messages {
         this.eventBus = eventBus;
         this.inputState = inputState;
         this.screenState = screenState;
+        this.uploadPicker = new UploadPicker( eventBus, inputState, '#message' );
         this.size = initialSize;
         this.visibility = initialVisibility;
         this.messages = [];
@@ -71,10 +73,16 @@ class Messages {
                         'okay!',
                     );
                 } else {
-                    $( 'input#message' ).val( '' );
+                    // First, grab any attachments that should go with the message.
+                    const files = this.uploadPicker.files( roomid );
 
-                    if (message) {
-                        this.eventBus.emit('message', {'roomid': roomid, 'message': message});
+                    if (message.length > 0 || files.length > 0) {
+                        // Now, send the event.
+                        this.eventBus.emit('message', {'roomid': roomid, 'message': message, 'attachments': files});
+
+                        // Now reset the input.
+                        $( 'input#message' ).val( '' );
+                        this.uploadPicker.clearRoom( roomid );
                     }
                 }
             }
@@ -119,6 +127,12 @@ class Messages {
             // Let user press "ESC" on the main input box to close search box.
             if(this.inputState.current == "search") {
                 this.inputState.setState("empty");
+            }
+        });
+
+        $( 'div.attachment-picker' ).on( 'click', () => {
+            if (this.roomid && this.rooms.has(this.roomid)) {
+                this.uploadPicker.selectFiles(this.roomid, "image/*");
             }
         });
 
@@ -779,6 +793,16 @@ class Messages {
                 html += '      <span class="timestamp">' + formatDateTime(message.timestamp) + '</span>';
                 html += '    </div>';
                 html += '    <div class="message' + (highlighted ? " highlighted" : "") + '" dir="auto" id="' + message.id + '">' + content + '</div>';
+
+                if (message.attachments.length) {
+                    html += '    <div class="attachments">';
+                    message.attachments.forEach((attachment) => {
+                        html += '      <a target="_blank" href="' + attachment.uri + '">';
+                        html += '        <img src="' + attachment.uri + '" height=100 />';
+                        html += '      </a>';
+                    });
+                    html += '    </div>';
+                }
                 html += '  </div>';
                 html += '</div>';
             } else if (message.action == "join") {
