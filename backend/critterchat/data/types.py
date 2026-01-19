@@ -154,7 +154,9 @@ class Attachment:
 
     def to_dict(self) -> Dict[str, object]:
         return {
-            "id": Attachment.from_id(self.id),
+            # Intentionally don't include ID here because doing so along with the URI could allow
+            # an attacker to reverse the URI hash and enumerate attachments by ID. This could
+            # expose private attachments to URI guessing.
             "uri": self.uri,
             "mimetype": self.mimetype,
         }
@@ -185,6 +187,13 @@ class Attachment:
             return AttachmentID(int(idstr[1:]))
         except ValueError:
             return None
+
+
+class Upload:
+    def __init__(self, data: bytes, mimetype: str, filename: str) -> None:
+        self.data = data
+        self.mimetype = mimetype
+        self.filename = filename
 
 
 class RoomType(StrEnum):
@@ -360,12 +369,21 @@ class ActionType(StrEnum):
 
 
 class Action:
-    def __init__(self, actionid: ActionID, timestamp: int, occupant: Occupant, action: ActionType, details: str) -> None:
+    def __init__(
+        self,
+        actionid: ActionID,
+        timestamp: int,
+        occupant: Occupant,
+        action: ActionType,
+        details: str,
+        attachments: List[Attachment] = [],
+    ) -> None:
         self.id = actionid
         self.timestamp = timestamp
         self.occupant = occupant
         self.action = action
         self.details = details
+        self.attachments = attachments
 
     def to_dict(self) -> Dict[str, object]:
         return {
@@ -375,6 +393,7 @@ class Action:
             "occupant": self.occupant.to_dict(),
             "action": self.action,
             "details": self.details,
+            "attachments": [a.to_dict() for a in self.attachments],
         }
 
     @staticmethod

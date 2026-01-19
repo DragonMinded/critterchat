@@ -1,5 +1,6 @@
+import contextlib
 import json
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Iterator, List, Optional
 
 from sqlalchemy import Table, Column
 from sqlalchemy.schema import UniqueConstraint
@@ -694,6 +695,20 @@ class RoomData(BaseData):
             )
             for x in data
         ]
+
+    @contextlib.contextmanager
+    def lock_actions(self) -> Iterator[None]:
+        """
+        Locks the actions table for exclusive write, when needing to attach data to a new
+        attachment without other clients polling incomplete actions. Use in a with block.
+        """
+        sql = "LOCK TABLES room WRITE, action WRITE, occupant READ, profile READ, user READ"
+        self.execute(sql, {})
+        try:
+            yield
+        finally:
+            sql = "UNLOCK TABLES"
+            self.execute(sql, {})
 
     def insert_action(self, roomid: RoomID, action: Action) -> None:
         """

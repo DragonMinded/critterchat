@@ -75,6 +75,14 @@ class Limits:
     def notification_size(self) -> int:
         return int(self.__config.get("limits", {}).get("notification_size", 128))
 
+    @property
+    def attachment_size(self) -> int:
+        return int(self.__config.get("limits", {}).get("attachment_size", 2048))
+
+    @property
+    def attachment_max(self) -> int:
+        return int(self.__config.get("limits", {}).get("attachment_max", 4))
+
 
 class Config(dict[str, Any]):
     def __init__(self, existing_contents: Dict[str, Any] = {}) -> None:

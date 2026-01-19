@@ -47,3 +47,9 @@ limits:
 
   # The maximum size in KB of user notification sounds.
   notification_size: 128
+
+  # The maximum number of attachments that can be uploaded with one message.
+  attachment_max: 4
+
+  # The maximum size in KB of message attachments.
+  attachment_size: 2048

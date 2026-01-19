@@ -5,11 +5,19 @@ from typing import Any, Dict, Final, List, Optional, Set, cast
 
 from .app import socketio, config, request
 from ..common import AESCipher, Time, represents_real_text
-from ..service import EmoteService, UserService, MessageService, UserServiceException, MessageServiceException
+from ..service import (
+    AttachmentService,
+    EmoteService,
+    UserService,
+    MessageService,
+    UserServiceException,
+    MessageServiceException,
+)
 from ..data import (
     Data,
     Action,
     Room,
+    Upload,
     User,
     UserPermission,
     UserSettings,
@@ -715,6 +723,7 @@ def chathistory(json: Dict[str, object]) -> None:
 def message(json: Dict[str, object]) -> None:
     data = Data(config)
     messageservice = MessageService(config, data)
+    attachmentservice = AttachmentService(config, data)
 
     # Try to associate with a user if there is one.
     userid = recover_userid(data, request.sid)
@@ -722,6 +731,9 @@ def message(json: Dict[str, object]) -> None:
         return
 
     roomid = Room.to_id(str(json.get('roomid')))
+
+    # TODO: We need a success or failure response here to the client, so the client can either
+    # leave the message to be edited and re-sent, or wipe it because it was sent successfully.
 
     # While we allow funny formatting and spaces, we don't allow space-only messages.
     message = str(json.get('message')).strip()
@@ -732,8 +744,52 @@ def message(json: Dict[str, object]) -> None:
             # Trying to insert a chat for a room we're not in!
             return
 
+        # Add any attachments that came along with the data.
+        attachments: List[Upload] = []
+        atchlist = json.get('attachments', [])
+        if isinstance(atchlist, list):
+            for atch in atchlist:
+                if not isinstance(atch, dict):
+                    continue
+
+                filename = str(atch.get('filename', ''))
+                rawdata = str(atch.get('data', ''))
+                if not filename or not rawdata or "," not in rawdata:
+                    continue
+
+                if "\\" in filename:
+                    _, filename = filename.rsplit("\\", 1)
+                if "/" in filename:
+                    _, filename = filename.rsplit("/", 1)
+
+                # TODO: At some point we'll support arbitrary attachments, but for now limit
+                # to known image types.
+                mimetype = attachmentservice.get_content_type(filename)
+                if mimetype not in {"image/apng", "image/gif", "image/jpeg", "image/png", "image/webp"}:
+                    socketio.emit('error', {'error': 'Chosen attachment is not a supported image!'}, room=request.sid)
+                    return
+
+                header, b64data = rawdata.split(",", 1)
+                if not header.startswith("data:") or not header.endswith("base64"):
+                    socketio.emit('error', {'error': 'Chosen attachment is not valid!'}, room=request.sid)
+                    return
+
+                actual_length = (len(b64data) / 4) * 3
+                if actual_length > config.limits.attachment_size * 1024:
+                    socketio.emit('error', {'error': 'Chosen attachment file size is too large!'}, room=request.sid)
+                    return
+
+                with urllib.request.urlopen(rawdata) as fp:
+                    attachmentdata = fp.read()
+
+                attachments.append(Upload(attachmentdata, mimetype, filename))
+
+        if len(attachments) > config.limits.attachment_max:
+            socketio.emit('error', {'error': 'Too many attachments!'}, room=request.sid)
+            return
+
         try:
-            messageservice.add_message(roomid, userid, message)
+            messageservice.add_message(roomid, userid, message, attachments)
         except MessageServiceException as e:
             socketio.emit('error', {'error': str(e)}, room=request.sid)
 

@@ -9,10 +9,12 @@ from ..data import (
     Data,
     Action,
     ActionType,
+    Attachment,
     Occupant,
     Room,
     RoomType,
     RoomSearchResult,
+    Upload,
     User,
     DefaultAvatarID,
     DefaultRoomID,
@@ -22,6 +24,7 @@ from ..data import (
     NewRoomID,
     NewUserID,
     ActionID,
+    AttachmentID,
     OccupantID,
     RoomID,
     UserID,
@@ -46,15 +49,38 @@ class MessageService:
         # sweep those and ensure they're not messed up.
         pass
 
+    def _resolve_attachments(self, actions: List[Action]) -> List[Action]:
+        ids = {a.id for a in actions}
+        if not ids:
+            return actions
+
+        actionmap = self.__data.attachment.get_action_attachments(ids)
+        for action in actions:
+            actionattachments = actionmap[action.id]
+
+            attachments: List[Attachment] = []
+            for actionattachment in actionattachments:
+                attachments.append(
+                    Attachment(
+                        actionattachment.attachmentid,
+                        self.__attachments.get_attachment_url(actionattachment.attachmentid),
+                        actionattachment.content_type,
+                    )
+                )
+            action.attachments = attachments
+        return actions
+
     def get_last_action(self) -> Optional[ActionID]:
         return self.__data.room.get_last_action()
 
     def get_last_room_action(self, roomid: RoomID) -> Optional[Action]:
         history = self.__data.room.get_room_history(roomid, limit=1)
+        history = self._resolve_attachments(history)
         return self.__attachments.resolve_action_icon(history[0]) if history else None
 
     def get_room_history(self, roomid: RoomID, before: Optional[ActionID] = None) -> List[Action]:
         history = self.__data.room.get_room_history(roomid, before=before, limit=self.MAX_HISTORY)
+        history = self._resolve_attachments(history)
         history = [
             self.__attachments.resolve_action_icon(e)
             for e in history
@@ -64,6 +90,7 @@ class MessageService:
 
     def get_room_updates(self, roomid: RoomID, after: ActionID) -> List[Action]:
         history = self.__data.room.get_room_history(roomid, after=after)
+        history = self._resolve_attachments(history)
         history = [
             self.__attachments.resolve_action_icon(e)
             for e in history
@@ -71,7 +98,7 @@ class MessageService:
         ]
         return history
 
-    def add_message(self, roomid: RoomID, userid: UserID, message: str) -> Optional[Action]:
+    def add_message(self, roomid: RoomID, userid: UserID, message: str, attachments: List[Upload]) -> Optional[Action]:
         message = emoji.emojize(emoji.emojize(message, language="alias"), language="en")
         if len(message) > self.__config.limits.message_length:
             raise MessageServiceException("You're trying to send a message that is too long!")
@@ -89,7 +116,38 @@ class MessageService:
             details=message,
         )
 
-        self.__data.room.insert_action(roomid, action)
+        attachmentids: List[AttachmentID] = []
+        response_attachments: List[Attachment] = []
+        for attachment in attachments:
+            attachmentid = self.__attachments.create_attachment(attachment.mimetype, attachment.filename)
+            if attachmentid is None:
+                raise MessageServiceException("Could not insert message attachment!")
+            self.__attachments.put_attachment_data(attachmentid, attachment.data)
+
+            attachmentids.append(attachmentid)
+            response_attachments.append(
+                Attachment(
+                    attachmentid,
+                    self.__attachments.get_attachment_url(attachmentid),
+                    attachment.mimetype,
+                )
+            )
+
+        if len(attachmentids) != len(response_attachments):
+            raise Exception("Logic error, mismatched message attachment structures!")
+
+        # Locking a bunch of tables is expensive, so only do it when we really need to be atomic.
+        if attachmentids:
+            with self.__data.room.lock_actions():
+                self.__data.room.insert_action(roomid, action)
+
+                with self.__data.attachment.lock_action_attachments():
+                    for attachmentid in attachmentids:
+                        self.__data.attachment.link_action_attachment(action.id, attachmentid)
+        else:
+            self.__data.room.insert_action(roomid, action)
+
+        action.attachments = response_attachments
         if action.id is not NewActionID:
             return self.__attachments.resolve_action_icon(action)
         return None

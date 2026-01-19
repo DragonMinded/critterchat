@@ -1,10 +1,11 @@
+import contextlib
 from sqlalchemy import Table, Column
 from sqlalchemy.schema import UniqueConstraint
 from sqlalchemy.types import String, Integer
-from typing import Dict, List, Optional
+from typing import Dict, Iterable, Iterator, List, Optional, Union
 
 from .base import BaseData, metadata
-from .types import AttachmentID, NewAttachmentID, UserID, NewUserID
+from .types import ActionID, AttachmentID, NewActionID, NewAttachmentID, UserID, NewUserID
 
 """
 Table representing an attachment.
@@ -45,6 +46,19 @@ notification = Table(
     mysql_charset="utf8mb4",
 )
 
+"""
+Table representing an action's attachments, such as images or files.
+"""
+action_attachment = Table(
+    "action_attachment",
+    metadata,
+    Column("id", Integer, nullable=False, primary_key=True, autoincrement=True),
+    Column("action_id", Integer, nullable=False, index=True),
+    Column("attachment_id", Integer, nullable=False),
+    UniqueConstraint("action_id", "attachment_id", name="action_id_attachment_id"),
+    mysql_charset="utf8mb4",
+)
+
 
 class Attachment:
     def __init__(self, attachmentid: AttachmentID, system: str, content_type: str, original_filename: Optional[str]) -> None:
@@ -60,6 +74,14 @@ class Emote:
         self.attachmentid = attachmentid
         self.system = system
         self.content_type = content_type
+
+
+class ActionAttachment:
+    def __init__(self, actionid: ActionID, attachmentid: AttachmentID, content_type: str, original_filename: Optional[str]) -> None:
+        self.actionid = actionid
+        self.attachmentid = attachmentid
+        self.content_type = content_type
+        self.original_filename = original_filename
 
 
 class AttachmentData(BaseData):
@@ -193,6 +215,10 @@ class AttachmentData(BaseData):
         self.execute(sql, {"alias": alias, "attachmentid": attachmentid})
 
     def remove_emote(self, alias: str) -> None:
+        """
+        Given an alias for an existing emote, remove it from our tracking list.
+        """
+
         sql = """
             DELETE FROM emote WHERE `alias` = :alias LIMIT 1
         """
@@ -275,3 +301,91 @@ class AttachmentData(BaseData):
             DELETE FROM notification WHERE `user_id` = :userid AND `type` = :type LIMIT 1
         """
         self.execute(sql, {"userid": userid, "type": notificationtype})
+
+    @contextlib.contextmanager
+    def lock_action_attachments(self) -> Iterator[None]:
+        """
+        Locks the action attachments table for exclusive write, when needing to attach data to a new
+        attachment without other clients polling incomplete actions. Use in a with block.
+        """
+        sql = "LOCK TABLES attachment WRITE, action_attachment WRITE"
+        self.execute(sql, {})
+        try:
+            yield
+        finally:
+            sql = "UNLOCK TABLES"
+            self.execute(sql, {})
+
+    def get_action_attachments(self, actionid: Union[ActionID, Iterable[ActionID]]) -> Dict[ActionID, List[ActionAttachment]]:
+        """
+        Look up all action attachments for a given action or actions in the system.
+        """
+        if actionid is NewActionID:
+            return {}
+
+        ids: List[ActionID] = []
+        try:
+            ids = [x for x in actionid]  # type: ignore
+        except TypeError:
+            ids = [actionid]  # type: ignore
+
+        if not ids:
+            return {}
+
+        sql = """
+            SELECT
+                action_attachment.action_id AS action_id,
+                attachment.id AS attachment_id,
+                attachment.content_type AS content_type,
+                attachment.original_filename AS original_filename
+            FROM action_attachment
+            JOIN attachment ON attachment.id = action_attachment.attachment_id
+            WHERE action_attachment.action_id IN :ids
+        """
+        cursor = self.execute(sql, {"ids": ids})
+
+        retval: Dict[ActionID, List[ActionAttachment]] = {}
+        for aid in ids:
+            retval[aid] = []
+
+        for result in cursor.mappings():
+            attachment = ActionAttachment(
+                ActionID(result['action_id']),
+                AttachmentID(result['attachment_id']),
+                str(result['content_type'] or ""),
+                str(result['original_filename'] or "") or None,
+            )
+
+            retval[attachment.actionid].append(attachment)
+
+        return retval
+
+    def link_action_attachment(self, actionid: ActionID, attachmentid: AttachmentID) -> None:
+        """
+        Given an action ID and an attachment ID, create a link between the two for later retrieval.
+        """
+
+        if actionid is NewActionID:
+            raise Exception("Logic error, should not try to link an action and an attachment with a new action ID!")
+        if attachmentid is NewAttachmentID:
+            raise Exception("Logic error, should not try to link an action and an attachment with a new attachment ID!")
+
+        sql = """
+            INSERT INTO action_attachment (`action_id`, `attachment_id`) VALUES (:actionid, :attachmentid)
+        """
+        self.execute(sql, {"actionid": actionid, "attachmentid": attachmentid})
+
+    def unlink_action_attachment(self, actionid: ActionID, attachmentid: AttachmentID) -> None:
+        """
+        Given an action ID and an attachment ID, remove an existinga link between the two.
+        """
+
+        if actionid is NewActionID:
+            raise Exception("Logic error, should not try to unlink an action and an attachment with a new action ID!")
+        if attachmentid is NewAttachmentID:
+            raise Exception("Logic error, should not try to unlink an action and an attachment with a new attachment ID!")
+
+        sql = """
+            DELETE FROM action_attachment WHERE `action_id` = :actionid AND `attachment_id` = :attachmentid LIMIT 1
+        """
+        self.execute(sql, {"actionid": actionid, "attachmentid": attachmentid})

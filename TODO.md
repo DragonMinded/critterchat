@@ -1,6 +1,8 @@
 TODO Immediate
 ==============
 
+ - Fork modal and get rid of <a> tag causing firefox popover bug when clicking (x) to close.
+
 TODO For Public Instance
 ========================
 
