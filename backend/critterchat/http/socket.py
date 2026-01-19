@@ -737,7 +737,7 @@ def message(json: Dict[str, object]) -> None:
 
     # While we allow funny formatting and spaces, we don't allow space-only messages.
     message = str(json.get('message')).strip()
-    if roomid and represents_real_text(message):
+    if roomid:
         rooms = messageservice.get_joined_rooms(userid)
         joinedrooms = {room.id for room in rooms}
         if roomid not in joinedrooms:
@@ -788,10 +788,11 @@ def message(json: Dict[str, object]) -> None:
             socketio.emit('error', {'error': 'Too many attachments!'}, room=request.sid)
             return
 
-        try:
-            messageservice.add_message(roomid, userid, message, attachments)
-        except MessageServiceException as e:
-            socketio.emit('error', {'error': str(e)}, room=request.sid)
+        if represents_real_text(message) or attachments:
+            try:
+                messageservice.add_message(roomid, userid, message, attachments)
+            except MessageServiceException as e:
+                socketio.emit('error', {'error': str(e)}, room=request.sid)
 
 
 @socketio.on('leaveroom')  # type: ignore

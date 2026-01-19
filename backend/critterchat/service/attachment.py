@@ -168,14 +168,15 @@ class AttachmentService:
             return DefaultRoomID
         if path == Attachment.from_id(FaviconID):
             return FaviconID
+
         if path in _hash_to_id_lut:
             return _hash_to_id_lut[path]
 
         attachments = self.__data.attachment.get_attachments()
         for attachment in attachments:
-            path = self._get_hashed_attachment_name(attachment.id, attachment.content_type, attachment.original_filename)
-            _hash_to_id_lut[path] = attachment.id
-            _id_to_hash_lut[attachment.id] = path
+            calculated = self._get_hashed_attachment_name(attachment.id, attachment.content_type, attachment.original_filename)
+            _hash_to_id_lut[calculated] = attachment.id
+            _id_to_hash_lut[attachment.id] = calculated
 
         return _hash_to_id_lut.get(path, None)
 
@@ -196,7 +197,7 @@ class AttachmentService:
                     with open(path, "rb") as bfp:
                         data = bfp.read()
                         enc = self.get_content_type(path)
-                        return enc, data
+                    return enc, data
                 except FileNotFoundError:
                     return None
             else:
@@ -213,7 +214,7 @@ class AttachmentService:
             try:
                 with open(path, "rb") as bfp:
                     data = bfp.read()
-                    return attachment.content_type, data
+                return attachment.content_type, data
             except FileNotFoundError:
                 return None
         else:
