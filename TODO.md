@@ -10,6 +10,8 @@ TODO Immediate
  - Send response on success/failure so that frontend can clear pending message properly.
  - Reposition attachment popover on resize.
  - Display larger preview for images when only one attachment.
+ - Allow spoilering previews.
+ - Alt text for image attachments.
  - Fork modal and get rid of <a> tag causing firefox popover bug when clicking (x) to close.
 
 TODO For Public Instance
