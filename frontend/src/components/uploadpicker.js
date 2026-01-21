@@ -68,23 +68,21 @@ class UploadPicker {
     // Show the upload picker for a given room. Possibly shows an existing room's
     // picker, or a new one if the room has been changed.
     showRoom( roomid ) {
-        if (this.rooms.has(roomid)) {
-            $('div.uploadpicker#' + roomid).show();
-        } else {
+        // Ensure the component exists.
+        if (!this.rooms.has(roomid)) {
             $('<div class="uploadpicker"></div>')
                 .attr("style", "display:none;")
                 .attr("id", roomid)
                 .appendTo('body');
-            $('<div class="uploadpicker-container"></div>').appendTo('div.uploadpicker');
-            $('div.uploadpicker#' + roomid).show();
+            $('<div class="uploadpicker-container"></div>').appendTo('div.uploadpicker#' + roomid);
 
             this.rooms.set(roomid, {
                 'files': [],
             });
         }
 
-        // Position ourselves!
-        this._reposition(roomid);
+        // If there are files, display the picker.
+        this._drawRoom(roomid);
     }
 
     // Called whenever we reflow the textbox, so it always hovers above the message box.
@@ -114,19 +112,25 @@ class UploadPicker {
                 .appendTo('div.upload#upload' + idx);
         });
 
-        this._reposition(roomid);
+        if (room.files.length > 0) {
+            $('div.uploadpicker#' + roomid).show();
+            this._reposition(roomid);
+        } else {
+            $('div.uploadpicker#' + roomid).hide();
+        }
     }
 
-    // Hide the upload picker for any room.
-    _hide() {
-        this.rooms.keys().forEach((roomid) => {
-            $('div.uploadpicker#' + roomid).hide();
-        });
+    // Hide the display of the requested room.
+    hideRoom( roomid ) {
+        $('div.uploadpicker#' + roomid).hide();
     }
 
     // Clear (and hide) the upload picker for a given room.
     clearRoom( roomid ) {
-        $('div.uploadpicker#' + roomid).hide();
+        // First, hide the display if it's present.
+        this.hideRoom(roomid);
+
+        // Now, delete any files that were pending for the room.
         if (this.rooms.has(roomid)) {
             const room = this.rooms.get(roomid);
             room.files = [];

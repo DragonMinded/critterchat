@@ -1,13 +1,10 @@
 TODO Immediate
 ==============
 
- - Change file picker out when changing rooms.
- - Ensure that message gets changed to other room message when changing rooms.
  - Allow deleting an attachment from the pending attachments list before sending.
  - Image attachment carousel on click.
  - Ensure attachment flow works on mobile.
  - Ensure attachment popover close works properly on mobile.
- - Send response on success/failure so that frontend can clear pending message properly.
  - Reposition attachment popover on resize.
  - Display larger preview for images when only one attachment.
  - Allow spoilering previews.

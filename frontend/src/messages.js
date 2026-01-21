@@ -43,6 +43,7 @@ class Messages {
         this.messages = [];
         this.occupants = [];
         this.rooms = new Map();
+        this.pending = new Map();
         this.pendingroomid = "";
         this.roomid = "";
         this.roomType = "chat";
@@ -79,10 +80,6 @@ class Messages {
                     if (message.length > 0 || files.length > 0) {
                         // Now, send the event.
                         this.eventBus.emit('message', {'roomid': roomid, 'message': message, 'attachments': files});
-
-                        // Now reset the input.
-                        $( 'input#message' ).val( '' );
-                        this.uploadPicker.clearRoom( roomid );
                     }
                 }
             }
@@ -151,6 +148,18 @@ class Messages {
         // Ensure that showing/hiding info keeps us auto-scrolled.
         eventBus.on('updateinfo', (_info) => {
             this._ensureScrolled(false);
+        });
+
+        // Ensure we only clear user input on successful message acknowledgement.
+        eventBus.on('messageack', (info) => {
+            if (info.roomid == this.roomid) {
+                // Now reset the input.
+                $( 'input#message' ).val( '' );
+            }
+
+            // Always clear the attachment store for the room.
+            this.pending.set(info.roomid, "");
+            this.uploadPicker.clearRoom( info.roomid );
         });
 
         this.screenState.registerStateChangeCallback(() => {
@@ -303,6 +312,21 @@ class Messages {
         if (this.roomsLoaded) {
             this.pendingroomid = "";
             if (roomid != this.roomid) {
+                // First, save any old room message.
+                if (this.roomid) {
+                    this.pending.set(this.roomid, $( 'input#message' ).val());
+                    this.uploadPicker.hideRoom( this.roomid );
+                }
+
+                // Now, show new room's message.
+                if (this.pending.has(roomid)) {
+                    $( 'input#message' ).val(this.pending.get(roomid));
+                } else {
+                    $( 'input#message' ).val('');
+                }
+                this.uploadPicker.showRoom( roomid );
+
+                // Now, swap to that room.
                 if (this.rooms.has(roomid)) {
                     this.messages = [];
                     this.roomid = roomid;
@@ -330,6 +354,10 @@ class Messages {
      * added the manager will call this function as well.
      */
     closeRoom( roomid ) {
+        // Nuke pending message since we're closing the room.
+        this.pending.set(roomid, '');
+        this.uploadPicker.hideRoom( roomid );
+
         if (roomid == this.roomid) {
             this.message = [];
             this.roomid = "";

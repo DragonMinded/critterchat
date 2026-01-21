@@ -720,7 +720,7 @@ def chathistory(json: Dict[str, object]) -> None:
 
 
 @socketio.on('message')  # type: ignore
-def message(json: Dict[str, object]) -> None:
+def message(json: Dict[str, object]) -> Dict[str, object]:
     data = Data(config)
     messageservice = MessageService(config, data)
     attachmentservice = AttachmentService(config, data)
@@ -728,12 +728,9 @@ def message(json: Dict[str, object]) -> None:
     # Try to associate with a user if there is one.
     userid = recover_userid(data, request.sid)
     if userid is None:
-        return
+        return {'status': 'failed'}
 
     roomid = Room.to_id(str(json.get('roomid')))
-
-    # TODO: We need a success or failure response here to the client, so the client can either
-    # leave the message to be edited and re-sent, or wipe it because it was sent successfully.
 
     # While we allow funny formatting and spaces, we don't allow space-only messages.
     message = str(json.get('message')).strip()
@@ -742,7 +739,7 @@ def message(json: Dict[str, object]) -> None:
         joinedrooms = {room.id for room in rooms}
         if roomid not in joinedrooms:
             # Trying to insert a chat for a room we're not in!
-            return
+            return {'status': 'failed'}
 
         # Add any attachments that came along with the data.
         attachments: List[Upload] = []
@@ -767,17 +764,17 @@ def message(json: Dict[str, object]) -> None:
                 mimetype = attachmentservice.get_content_type(filename)
                 if mimetype not in {"image/apng", "image/gif", "image/jpeg", "image/png", "image/webp"}:
                     socketio.emit('error', {'error': 'Chosen attachment is not a supported image!'}, room=request.sid)
-                    return
+                    return {'status': 'failed'}
 
                 header, b64data = rawdata.split(",", 1)
                 if not header.startswith("data:") or not header.endswith("base64"):
                     socketio.emit('error', {'error': 'Chosen attachment is not valid!'}, room=request.sid)
-                    return
+                    return {'status': 'failed'}
 
                 actual_length = (len(b64data) / 4) * 3
                 if actual_length > config.limits.attachment_size * 1024:
                     socketio.emit('error', {'error': 'Chosen attachment file size is too large!'}, room=request.sid)
-                    return
+                    return {'status': 'failed'}
 
                 with urllib.request.urlopen(rawdata) as fp:
                     attachmentdata = fp.read()
@@ -786,13 +783,17 @@ def message(json: Dict[str, object]) -> None:
 
         if len(attachments) > config.limits.attachment_max:
             socketio.emit('error', {'error': 'Too many attachments!'}, room=request.sid)
-            return
+            return {'status': 'failed'}
 
         if represents_real_text(message) or attachments:
             try:
                 messageservice.add_message(roomid, userid, message, attachments)
+                return {'status': 'success'}
             except MessageServiceException as e:
                 socketio.emit('error', {'error': str(e)}, room=request.sid)
+
+    # Failed somehow, either got an exception or invalid room ID.
+    return {'status': 'failed'}
 
 
 @socketio.on('leaveroom')  # type: ignore

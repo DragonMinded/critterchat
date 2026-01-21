@@ -64,15 +64,24 @@ class Socket {
         }
     }
 
-    emit( evt, data ) {
-        this.socket.emit(evt, data);
+    emit( evt, data, ack ) {
+        if (ack) {
+            this.socket.emit(evt, data, ack);
+        } else {
+            this.socket.emit(evt, data);
+        }
     }
 
-    request( evt, data, callback ) {
+    request( evt, data, callback, ack ) {
         const tag = uuidv4();
 
         this.tags.set(tag, callback);
-        this.socket.emit(evt, {...data, tag: tag});
+
+        if (ack) {
+            this.socket.emit(evt, {...data, tag: tag}, ack);
+        } else {
+            this.socket.emit(evt, {...data, tag: tag});
+        }
     }
 }
 

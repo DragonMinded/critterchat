@@ -442,7 +442,11 @@ export function manager(socket) {
     });
 
     eventBus.on('message', (msg) => {
-        socket.emit('message', msg);
+        socket.emit('message', msg, (response) => {
+            if (response.status == "success") {
+                eventBus.emit('messageack', {'roomid': msg.roomid});
+            }
+        });
     });
 
     eventBus.on('searchrooms', (value) => {
