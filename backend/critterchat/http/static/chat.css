@@ -263,6 +263,7 @@ div.uploadpicker-container {
     background: var(--attachment-picker-background);
     border: 1px solid var(--attachment-picker-border);
     padding: 10px;
+    overflow-x: scroll;
 }
 
 div.uploadpicker-container div.upload {

@@ -1,7 +1,6 @@
 TODO Immediate
 ==============
 
- - Attachment overflow should scroll, not go off to the right.
  - Ensure attachment flow works on mobile.
  - Ensure attachment popover close works properly on mobile.
  - Reposition attachment popover on resize or info show/hide.
