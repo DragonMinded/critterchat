@@ -22,7 +22,7 @@ FINGERPRINT_INCLUDE_FILES = [
     "autocomplete.css",
     "chat.css",
     "emojisearch.css",
-    "jquery.modal.min.css",
+    "jquery.modal.css",
 ]
 
 

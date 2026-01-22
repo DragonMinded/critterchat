@@ -3,7 +3,6 @@ TODO Immediate
 
  - Use upload endpoint instead of WS for sending attachment data.
  - Actually check mime type of attachments for images.
- - Fork modal and get rid of <a> tag causing firefox popover bug when clicking (x) to close.
  - Highlight detection should work with punctuation.
  - pgup/pgdn/home/end in an empty message box should pass on to message container.
  - Image attachment carousel on click.

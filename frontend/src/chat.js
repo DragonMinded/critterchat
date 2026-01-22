@@ -1,7 +1,8 @@
 import $ from "jquery";
 
-// Importing this hooks it into jQuery.
-import { modal } from "jquery-modal"; // eslint-disable-line no-unused-vars
+// Run the jQuery modal hook to install jquery-modal
+import { modal } from "./jquery-modal/jquery.modal.js";
+modal();
 
 import { manager } from "./manager.js";
 import { hook } from "./config/extensions.js";
@@ -10,7 +11,7 @@ import { Socket } from "./components/socket.js";
 // Importing this enables linkify.
 import * as linkify from "linkifyjs"; // eslint-disable-line no-unused-vars
 
-// Hook jQuery extensions immediately.
+// Hook our custom jQuery extensions immediately.
 hook();
 
 $( document ).ready(function () {
