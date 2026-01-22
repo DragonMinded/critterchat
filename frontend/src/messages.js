@@ -37,7 +37,7 @@ class Messages {
         this.eventBus = eventBus;
         this.inputState = inputState;
         this.screenState = screenState;
-        this.uploadPicker = new UploadPicker( eventBus, inputState, '#message' );
+        this.uploadPicker = new UploadPicker( eventBus, screenState, '#message' );
         this.size = initialSize;
         this.visibility = initialVisibility;
         this.messages = [];

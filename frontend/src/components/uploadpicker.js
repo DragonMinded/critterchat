@@ -2,14 +2,50 @@ import $ from "jquery";
 import { flash } from "../utils.js";
 
 class UploadPicker {
-    constructor( eventBus, inputState, textBox ) {
+    constructor( eventBus, screenState, textBox ) {
         this.eventBus = eventBus;
-        this.inputState = inputState;
+        this.screenState = screenState;
         this.textBox = textBox;
+        this.room = undefined;
         this.rooms = new Map();
 
-        inputState.registerStateChangeCallback(function(_newState) {
-            // TODO: Need to possibly close ourselves here.
+        // Make sure on mobile we hide the picker when moving away from the chat screen.
+        screenState.registerStateChangeCallback((newState) => {
+            if (newState == "chat") {
+                if (this.room) {
+                    this.showRoom( this.room );
+                }
+            } else {
+                this._hideRooms();
+            }
+        });
+
+        // Make sure when transitioning from desktop to mobile or back that we show or
+        // hide the picker appropriately.
+        eventBus.on("resize", (size) => {
+            if (size == "desktop") {
+                if (this.room) {
+                    this.showRoom( this.room );
+                }
+            } else {
+                if (this.screenState.current == "chat") {
+                    if (this.room) {
+                        this.showRoom( this.room );
+                    }
+                } else {
+                    this._hideRooms();
+                }
+            }
+        });
+
+        // Handle sizing ourselves to the chat box when the window resizes.
+        $(window).resize(() => {
+            this._resizeRooms();
+        });
+
+        // Handle sizing ourselves to the chat box when the info panel resizes.
+        eventBus.on('updateinfo', (_info) => {
+            this._resizeRooms();
         });
 
         $( 'input#message-files' ).on( 'change', (event) => {
@@ -83,6 +119,9 @@ class UploadPicker {
 
         // If there are files, display the picker.
         this._drawRoom(roomid);
+
+        // Ensure we know what room we're displaying.
+        this.room = roomid;
     }
 
     // Called whenever we reflow the textbox, so it always hovers above the message box.
@@ -143,6 +182,22 @@ class UploadPicker {
     // Hide the display of the requested room.
     hideRoom( roomid ) {
         $('div.uploadpicker#' + roomid).hide();
+    }
+
+    // Hides all known rooms, called when we navigate away from the chat
+    // screen on mobile.
+    _hideRooms() {
+        this.rooms.forEach((_val, roomid) => {
+            this.hideRoom(roomid);
+        });
+    }
+
+    // Repositions all known rooms, called when the window is resized or when
+    // the info pane is toggled on desktop.
+    _resizeRooms() {
+        this.rooms.forEach((_val, roomid) => {
+            this._reposition(roomid);
+        });
     }
 
     // Clear (and hide) the upload picker for a given room.
