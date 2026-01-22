@@ -18,7 +18,7 @@ class UploadPicker {
             } else {
                 this._hideRooms();
             }
-        });
+        }, true);
 
         // Make sure when transitioning from desktop to mobile or back that we show or
         // hide the picker appropriately.
@@ -36,7 +36,7 @@ class UploadPicker {
                     this._hideRooms();
                 }
             }
-        });
+        }, true);
 
         // Handle sizing ourselves to the chat box when the window resizes.
         $(window).resize(() => {
@@ -46,7 +46,7 @@ class UploadPicker {
         // Handle sizing ourselves to the chat box when the info panel resizes.
         eventBus.on('updateinfo', (_info) => {
             this._resizeRooms();
-        });
+        }, true);
 
         $( 'input#message-files' ).on( 'change', (event) => {
             const jqe = $(event.target);

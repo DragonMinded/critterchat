@@ -6,6 +6,7 @@
 class EventHandler {
     constructor() {
         this.callbacks = new Map();
+        this.deferreds = new Map();
     }
 
     _call( evt, data ) {
@@ -21,13 +22,34 @@ class EventHandler {
                 }
             });
         }
+
+        if (this.deferreds.has(evt)) {
+            const handlers = this.deferreds.get(evt);
+            handlers.forEach((handler) => {
+                try {
+                    handler(data);
+                } catch(e) {
+                    // TODO: What should we do with this, send to server?
+                    console.log("Event handler raised exception during processing: " + e);
+                    console.log(e);
+                }
+            });
+        }
     }
 
-    on( evt, callback ) {
-        if (!this.callbacks.has(evt)) {
-            this.callbacks.set(evt, [callback]);
+    on( evt, callback, deferred ) {
+        if (deferred) {
+            if (!this.deferreds.has(evt)) {
+                this.deferreds.set(evt, [callback]);
+            } else {
+                this.deferreds.get(evt).push(callback);
+            }
         } else {
-            this.callbacks.get(evt).push(callback);
+            if (!this.callbacks.has(evt)) {
+                this.callbacks.set(evt, [callback]);
+            } else {
+                this.callbacks.get(evt).push(callback);
+            }
         }
     }
 

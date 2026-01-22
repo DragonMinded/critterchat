@@ -37,7 +37,6 @@ class Messages {
         this.eventBus = eventBus;
         this.inputState = inputState;
         this.screenState = screenState;
-        this.uploadPicker = new UploadPicker( eventBus, screenState, '#message' );
         this.size = initialSize;
         this.visibility = initialVisibility;
         this.messages = [];
@@ -169,6 +168,9 @@ class Messages {
         });
 
         this._updateSize();
+
+        // Set up the upload picker popover.
+        this.uploadPicker = new UploadPicker( eventBus, screenState, '#message' );
 
         // Set up custom emotes, as well as normal emoji typeahead.
         this.autocompleteOptions = [];

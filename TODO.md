@@ -1,9 +1,11 @@
 TODO Immediate
 ==============
 
- - Ensure attachment flow works on mobile.
- - Ensure attachment popover close works properly on mobile.
+ - Use upload endpoint instead of WS for sending attachment data.
+ - Actually check mime type of attachments for images.
  - Fork modal and get rid of <a> tag causing firefox popover bug when clicking (x) to close.
+ - Highlight detection should work with punctuation.
+ - pgup/pgdn/home/end in an empty message box should pass on to message container.
  - Image attachment carousel on click.
  - Display larger preview for images when only one attachment.
  - Allow spoilering previews.
