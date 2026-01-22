@@ -1,15 +1,15 @@
 TODO Immediate
 ==============
 
- - Allow deleting an attachment from the pending attachments list before sending.
- - Image attachment carousel on click.
+ - Attachment overflow should scroll, not go off to the right.
  - Ensure attachment flow works on mobile.
  - Ensure attachment popover close works properly on mobile.
- - Reposition attachment popover on resize.
+ - Reposition attachment popover on resize or info show/hide.
+ - Fork modal and get rid of <a> tag causing firefox popover bug when clicking (x) to close.
+ - Image attachment carousel on click.
  - Display larger preview for images when only one attachment.
  - Allow spoilering previews.
  - Alt text for image attachments.
- - Fork modal and get rid of <a> tag causing firefox popover bug when clicking (x) to close.
 
 TODO For Public Instance
 ========================

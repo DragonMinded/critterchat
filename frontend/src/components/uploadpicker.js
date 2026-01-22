@@ -70,11 +70,11 @@ class UploadPicker {
     showRoom( roomid ) {
         // Ensure the component exists.
         if (!this.rooms.has(roomid)) {
-            $('<div class="uploadpicker"></div>')
+            const picker = $('<div class="uploadpicker"></div>')
                 .attr("style", "display:none;")
                 .attr("id", roomid)
                 .appendTo('body');
-            $('<div class="uploadpicker-container"></div>').appendTo('div.uploadpicker#' + roomid);
+            $('<div class="uploadpicker-container"></div>').appendTo(picker);
 
             this.rooms.set(roomid, {
                 'files': [],
@@ -103,13 +103,33 @@ class UploadPicker {
 
         const room = this.rooms.get(roomid);
         room.files.forEach((upload, idx) => {
-            $('<div class="upload"></div>')
-                .attr('id', 'upload' + idx)
+            const item = $('<div class="upload"></div>')
+                .attr('id', roomid + '-upload-' + idx)
                 .appendTo(container);
             $('<img />')
                 .attr('height', 75)
                 .attr('src', upload.data)
-                .appendTo('div.upload#upload' + idx);
+                .appendTo(item);
+            const delcontainer = $('<div />')
+                .attr('class', 'delete-container')
+                .attr('id', roomid + '-upload-' + idx)
+                .appendTo(item);
+            $('<div />')
+                .attr('class', 'delete maskable')
+                .appendTo(delcontainer);
+        });
+
+        $('div.uploadpicker div.delete-container').on('click', (event) => {
+            const jqe = $(event.currentTarget);
+            const parts = jqe.attr('id').split('-');
+
+            if (this.rooms.has(parts[0])) {
+                const room = this.rooms.get(parts[0]);
+                const idx = parseInt(parts[2]);
+                room.files.splice(idx, 1);
+
+                this._drawRoom( parts[0] );
+            }
         });
 
         if (room.files.length > 0) {

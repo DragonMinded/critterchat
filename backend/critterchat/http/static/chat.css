@@ -50,6 +50,8 @@
     --attachment-picker-border: light-dark(#bcbcbc, #6d6d6d);
     --attachment-picker-hover: light-dark(#ff0000, #ff0000);
     --attachment-picker-background: light-dark(#ffffff, #222222);
+    --attachment-picker-delete-background: light-dark(#ffffff, #222222);
+    --attachment-picker-delete-foreground: light-dark(#000000, #ffffff);
 
     --error-border: light-dark(#b3b3b3, #1c1c1c);
     --error-error: light-dark(#e4a7a7, #d77575);
@@ -207,42 +209,42 @@ div.maskable {
     mask-size: contain;
 }
 
-div.close-svg {
+div.maskable.close-svg {
     width: 16px;
     height: 16px;
     margin-bottom: -3px;
     mask-image: url('close.svg');
 }
 
-div.search-svg {
+div.maskable.search-svg {
     width: 16px;
     height: 16px;
     margin-bottom: -3px;
     mask-image: url('search.svg');
 }
 
-div.edit-svg {
+div.maskable.edit-svg {
     width: 16px;
     height: 16px;
     margin-bottom: -3px;
     mask-image: url('edit.svg');
 }
 
-div.leave-svg {
+div.maskable.leave-svg {
     width: 16px;
     height: 16px;
     margin-bottom: -3px;
     mask-image: url('leave.svg');
 }
 
-div.logout-svg {
+div.maskable.logout-svg {
     width: 16px;
     height: 16px;
     margin-bottom: -3px;
     mask-image: url('logout.svg');
 }
 
-div.attachment-picker {
+div.maskable.attachment-picker {
     width: 16px;
     height: 16px;
     margin-top: 5px;
@@ -261,6 +263,24 @@ div.uploadpicker-container {
     background: var(--attachment-picker-background);
     border: 1px solid var(--attachment-picker-border);
     padding: 10px;
+}
+
+div.uploadpicker-container div.upload {
+    position: relative;
+}
+
+div.uploadpicker-container div.upload div.delete-container {
+    position: absolute;
+    cursor: pointer;
+    top: -8px;
+    right: -8px;
+    width: 14px;
+    height: 14px;
+    background: var(--attachment-picker-delete-background);
+    color: var(--attachment-picker-delete-foreground);
+    border: 2px solid var(--attachment-picker-delete-foreground);
+    border-radius: 9px;
+    display: flex;
 }
 
 div.uploadpicker-container img {
@@ -469,7 +489,7 @@ div.top-info div.back, div.info div.back {
     position: relative;
 }
 
-div.back-button-svg {
+div.maskable.back-button-svg {
     width: 36px;
     height: 36px;
     mask-image: url('left-arrow-circle.svg');
@@ -738,18 +758,25 @@ div.editpreferences > div.actions
     gap: 10px;
 }
 
-div.preview {
+div.maskable.preview {
     width: 16px;
     height: 16px;
     margin-bottom: -3px;
     mask-image: url('preview.svg');
 }
 
-div.cancel {
+div.maskable.cancel {
     width: 16px;
     height: 16px;
     margin-bottom: -3px;
     mask-image: url('cancel.svg');
+}
+
+div.maskable.delete {
+    width: 16px;
+    height: 16px;
+    margin-bottom: -3px;
+    mask-image: url('delete.svg');
 }
 
 div.preference input.notification {
