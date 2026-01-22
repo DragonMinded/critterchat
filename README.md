@@ -50,6 +50,7 @@ get in touch so we can work out the direction you plan to take.
 
  - Containerization and simplifying deployment/updates.
  - UX design work and help with themes.
+ - Testing and support for non-standard browsers such as Safari.
  - SVGs for graphics for default avatar/room pictures, iconography on the frontend.
  - Documentation clarification or correction, both in code and related markdown files.
  - Support for more attachment backends.
