@@ -56,6 +56,25 @@ class Uploader {
             }
         );
     }
+
+    uploadAttachments(data, callback) {
+        $.ajax(
+            window.uploadAttachments,
+            {
+                method: "POST",
+                contentType: "application/json",
+                data: JSON.stringify({attachments: data}),
+                processData: false,
+                error: (xhr) => {
+                    const resp = JSON.parse(xhr.responseText);
+                    flash('warning', resp.error);
+                },
+                success: (newData) => {
+                    callback(newData.attachments);
+                }
+            }
+        );
+    }
 }
 
 export { Uploader };

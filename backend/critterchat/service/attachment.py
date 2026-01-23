@@ -36,6 +36,7 @@ _id_to_hash_lut: Dict[AttachmentID, str] = {}
 class AttachmentService:
     MAX_ICON_WIDTH: Final[int] = 512
     MAX_ICON_HEIGHT: Final[int] = 512
+    SUPPORTED_IMAGE_TYPES = {"image/apng", "image/gif", "image/jpeg", "image/png", "image/webp"}
 
     def __init__(self, config: Config, data: Data) -> None:
         self.__config = config

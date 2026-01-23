@@ -16,6 +16,7 @@ that can be enabled or disabled per-instance.
  - User profile support with ability to view other chatters' profiles.
  - Custom emoji support controlled by the instance administrator.
  - Preferences for most appearance settings and optional notification sounds.
+ - Image attachment support so images can be sent with messages.
  - Collects absolutely no personal information, contains no tracking code.
 
 ## Wishlist
@@ -32,7 +33,6 @@ that can be enabled or disabled per-instance.
  - Moderation tools for individuals (block user, allow messages, allow in search, etc.).
  - Sign-up modes (admin approval, open sign-ups, invite only, etc.).
  - Emoji auto-categorization by prefix.
- - Photo attachments, both uploaded and pasted from clipboard.
  - Arbitrary file attachments.
  - Sitewide CSS themeing with CSS moved to themes directory.
  - Per-chat CSS themeing for direct messages and rooms.

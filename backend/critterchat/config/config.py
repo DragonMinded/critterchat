@@ -3,6 +3,9 @@ from sqlalchemy.engine import Engine
 from typing import Any, Dict, Optional
 
 
+SUPPORTED_IMAGE_TYPES = {"image/apng", "image/gif", "image/jpeg", "image/png", "image/webp"}
+
+
 class Database:
     def __init__(self, parent_config: "Config") -> None:
         self.__config = parent_config

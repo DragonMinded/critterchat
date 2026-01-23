@@ -12,7 +12,6 @@ from ..data import (
     Room,
     RoomType,
     RoomSearchResult,
-    Upload,
     User,
     DefaultAvatarID,
     DefaultRoomID,
@@ -96,7 +95,7 @@ class MessageService:
         ]
         return history
 
-    def add_message(self, roomid: RoomID, userid: UserID, message: str, attachments: List[Upload]) -> Optional[Action]:
+    def add_message(self, roomid: RoomID, userid: UserID, message: str, attachments: List[AttachmentID]) -> Optional[Action]:
         message = emoji.emojize(emoji.emojize(message, language="alias"), language="en")
         if len(message) > self.__config.limits.message_length:
             raise MessageServiceException("You're trying to send a message that is too long!")
@@ -117,17 +116,21 @@ class MessageService:
         attachmentids: List[AttachmentID] = []
         response_attachments: List[Attachment] = []
         for attachment in attachments:
-            attachmentid = self.__attachments.create_attachment(attachment.mimetype, attachment.filename)
-            if attachmentid is None:
-                raise MessageServiceException("Could not insert message attachment!")
-            self.__attachments.put_attachment_data(attachmentid, attachment.data)
+            adata = self.__data.attachment.lookup_attachment(attachment)
+            if adata is None:
+                # Skip adding this attachment.
+                continue
 
-            attachmentids.append(attachmentid)
+            if adata.content_type not in AttachmentService.SUPPORTED_IMAGE_TYPES:
+                # Trying to sneak a bad attachment in.
+                continue
+
+            attachmentids.append(adata.id)
             response_attachments.append(
                 Attachment(
-                    attachmentid,
-                    self.__attachments.get_attachment_url(attachmentid),
-                    attachment.mimetype,
+                    adata.id,
+                    self.__attachments.get_attachment_url(adata.id),
+                    adata.content_type,
                 )
             )
 

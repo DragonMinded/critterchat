@@ -5,7 +5,7 @@ from flask import Blueprint, request
 from PIL import Image
 from pydub import AudioSegment  # type: ignore
 from pydub.exceptions import CouldntDecodeError  # type: ignore
-from typing import Dict, Optional
+from typing import Dict, List, Optional
 
 from .app import UserException, app, static_location, templates_location, loginrequired, jsonify, g
 from ..data import Attachment, UserNotification
@@ -18,9 +18,6 @@ upload = Blueprint(
     template_folder=templates_location,
     static_folder=static_location,
 )
-
-
-SUPPORTED_IMAGE_TYPES = {"image/apng", "image/gif", "image/jpeg", "image/png", "image/webp"}
 
 
 @upload.route("/upload/icon", methods=["POST"])
@@ -74,7 +71,7 @@ def _icon_upload(uploadtype: str) -> Dict[str, object]:
     if not content_type:
         raise UserException(f"{uploadtype.capitalize()} image is an unrecognized format.")
     content_type = content_type.lower()
-    if content_type not in SUPPORTED_IMAGE_TYPES:
+    if content_type not in AttachmentService.SUPPORTED_IMAGE_TYPES:
         raise UserException(f"{uploadtype.capitalize()} image is an unrecognized format.")
 
     attachmentid = attachmentservice.create_attachment(content_type, None)
@@ -126,7 +123,7 @@ def notifications_upload() -> Dict[str, object]:
         try:
             UserNotification[alias]
         except KeyError:
-            raise Exception("Notification key unrecognized, cannot set notification")
+            raise Exception("Notification key unrecognized, cannot set notification.")
 
         try:
             with tempfile.NamedTemporaryFile(delete_on_close=False) as fp1:
@@ -155,6 +152,80 @@ def notifications_upload() -> Dict[str, object]:
 
     # Finally, return all the attachment IDs.
     return {"notif_sounds": response}
+
+
+@upload.route("/upload/attachments", methods=["POST"])
+@loginrequired
+@jsonify
+def attachments_upload() -> Dict[str, object]:
+    attachmentservice = AttachmentService(g.config, g.data)
+    body = request.json or {}
+
+    if not isinstance(body, dict):
+        raise Exception("Attachment data corrupt or not provided in upload.")
+
+    atchlist = body.get('attachments', [])
+    if not isinstance(atchlist, list):
+        raise Exception("Attachment data corrupt or not provided in upload.")
+
+    attachmentids: List[str] = []
+    for atch in atchlist:
+        if not isinstance(atch, dict):
+            raise Exception("Attachment data corrupt or not provided in upload.")
+
+        filename = str(atch.get('filename', ''))
+        rawdata = str(atch.get('data', ''))
+        if not filename or not rawdata or "," not in rawdata:
+            raise Exception("Attachment data corrupt or not provided in upload.")
+
+        if "\\" in filename:
+            _, filename = filename.rsplit("\\", 1)
+        if "/" in filename:
+            _, filename = filename.rsplit("/", 1)
+
+        # TODO: At some point we'll support arbitrary attachments, but for now limit
+        # to known image types.
+
+        # TODO: At some point we should convert some image files such as BMP and raw
+        # images that we support to PNG instead of rejecting.
+
+        mimetype = attachmentservice.get_content_type(filename.lower())
+        if mimetype not in AttachmentService.SUPPORTED_IMAGE_TYPES:
+            raise UserException(f'Chosen attachment {filename} is not a supported image.')
+
+        header, b64data = rawdata.split(",", 1)
+        if not header.startswith("data:") or not header.endswith("base64"):
+            raise UserException(f'Chosen attachment {filename} is not valid!')
+
+        actual_length = (len(b64data) / 4) * 3
+        if actual_length > g.config.limits.attachment_size * 1024:
+            raise UserException(f'Chosen attachment {filename} file size is too large. Attachments cannot be larger than {g.config.limits.attachment_size}kb.')
+
+        with urllib.request.urlopen(rawdata) as fp:
+            attachmentdata = fp.read()
+
+        # Now, verify the image is actually loadable and the right mimetype. Stop
+        # people from trying to abuse uploads to store executables or zip files.
+        try:
+            img = Image.open(io.BytesIO(attachmentdata))
+        except Exception:
+            raise UserException(f'Chosen attachment {filename} is not a supported image.')
+
+        content_type = img.get_format_mimetype()
+        if not content_type:
+            raise UserException(f'Chosen attachment {filename} is not a supported image.')
+        content_type = content_type.lower()
+        if content_type not in AttachmentService.SUPPORTED_IMAGE_TYPES:
+            raise UserException(f'Chosen attachment {filename} is not a supported image.')
+
+        # The image is validated at this point, so we can attach it and return the ID.
+        attachmentid = attachmentservice.create_attachment(content_type, filename)
+        if attachmentid is None:
+            raise Exception("Could not insert message attachment!")
+        attachmentservice.put_attachment_data(attachmentid, attachmentdata)
+        attachmentids.append(Attachment.from_id(attachmentid))
+
+    return {"attachments": attachmentids}
 
 
 app.register_blueprint(upload)

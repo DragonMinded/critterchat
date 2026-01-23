@@ -472,11 +472,26 @@ export function manager(socket) {
     });
 
     eventBus.on('message', (msg) => {
-        socket.emit('message', msg, (response) => {
-            if (response.status == "success") {
-                eventBus.emit('messageack', {'roomid': msg.roomid});
-            }
-        });
+        const roomid = msg.roomid;
+        const message = msg.message;
+        var attachments = msg.attachments;
+
+        if (attachments.length > 0) {
+            // Need to upload attachments first before sending message.
+            uploader.uploadAttachments(attachments, (aids) => {
+                socket.emit('message', {'roomid': roomid, 'message': message, 'attachments': aids}, (response) => {
+                    if (response.status == "success") {
+                        eventBus.emit('messageack', {'roomid': msg.roomid});
+                    }
+                });
+            });
+        } else {
+            socket.emit('message', {'roomid': roomid, 'message': message}, (response) => {
+                if (response.status == "success") {
+                    eventBus.emit('messageack', {'roomid': msg.roomid});
+                }
+            });
+        }
     });
 
     eventBus.on('searchrooms', (value) => {

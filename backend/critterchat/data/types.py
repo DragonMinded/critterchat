@@ -189,13 +189,6 @@ class Attachment:
             return None
 
 
-class Upload:
-    def __init__(self, data: bytes, mimetype: str, filename: str) -> None:
-        self.data = data
-        self.mimetype = mimetype
-        self.filename = filename
-
-
 class RoomType(StrEnum):
     UNKNOWN = 'unknown'
     CHAT = 'chat'

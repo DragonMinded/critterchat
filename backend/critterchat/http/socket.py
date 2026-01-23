@@ -1,12 +1,10 @@
 import traceback
-import urllib.request
 from threading import Lock
 from typing import Any, Dict, Final, List, Optional, Set, cast
 
 from .app import socketio, config, request
 from ..common import AESCipher, Time, represents_real_text
 from ..service import (
-    AttachmentService,
     EmoteService,
     UserService,
     MessageService,
@@ -18,7 +16,6 @@ from ..data import (
     Action,
     Attachment,
     Room,
-    Upload,
     User,
     UserPermission,
     UserSettings,
@@ -701,7 +698,6 @@ def chathistory(json: Dict[str, object]) -> None:
 def message(json: Dict[str, object]) -> Dict[str, object]:
     data = Data(config)
     messageservice = MessageService(config, data)
-    attachmentservice = AttachmentService(config, data)
 
     # Try to associate with a user if there is one.
     userid = recover_userid(data, request.sid)
@@ -720,44 +716,15 @@ def message(json: Dict[str, object]) -> Dict[str, object]:
             return {'status': 'failed'}
 
         # Add any attachments that came along with the data.
-        attachments: List[Upload] = []
+        attachments: List[AttachmentID] = []
         atchlist = json.get('attachments', [])
         if isinstance(atchlist, list):
             for atch in atchlist:
-                if not isinstance(atch, dict):
+                aid = Attachment.to_id(str(atch))
+                if not aid:
                     continue
 
-                filename = str(atch.get('filename', ''))
-                rawdata = str(atch.get('data', ''))
-                if not filename or not rawdata or "," not in rawdata:
-                    continue
-
-                if "\\" in filename:
-                    _, filename = filename.rsplit("\\", 1)
-                if "/" in filename:
-                    _, filename = filename.rsplit("/", 1)
-
-                # TODO: At some point we'll support arbitrary attachments, but for now limit
-                # to known image types.
-                mimetype = attachmentservice.get_content_type(filename)
-                if mimetype not in {"image/apng", "image/gif", "image/jpeg", "image/png", "image/webp"}:
-                    socketio.emit('error', {'error': 'Chosen attachment is not a supported image!'}, room=request.sid)
-                    return {'status': 'failed'}
-
-                header, b64data = rawdata.split(",", 1)
-                if not header.startswith("data:") or not header.endswith("base64"):
-                    socketio.emit('error', {'error': 'Chosen attachment is not valid!'}, room=request.sid)
-                    return {'status': 'failed'}
-
-                actual_length = (len(b64data) / 4) * 3
-                if actual_length > config.limits.attachment_size * 1024:
-                    socketio.emit('error', {'error': 'Chosen attachment file size is too large!'}, room=request.sid)
-                    return {'status': 'failed'}
-
-                with urllib.request.urlopen(rawdata) as fp:
-                    attachmentdata = fp.read()
-
-                attachments.append(Upload(attachmentdata, mimetype, filename))
+                attachments.append(aid)
 
         if len(attachments) > config.limits.attachment_max:
             socketio.emit('error', {'error': 'Too many attachments!'}, room=request.sid)
