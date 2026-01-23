@@ -44,7 +44,7 @@ class AttachmentService:
 
     def get_content_type(self, filename: str) -> str:
         try:
-            return mimetypes.types_map[os.path.splitext(filename)[1]]
+            return mimetypes.types_map[os.path.splitext(filename.lower())[1]]
         except Exception:
             return "application/octet-stream"
 

@@ -198,7 +198,7 @@ def attachments_upload() -> Dict[str, object]:
         # TODO: At some point we should convert some image files such as BMP and raw
         # images that we support to PNG instead of rejecting.
 
-        mimetype = attachmentservice.get_content_type(filename.lower())
+        mimetype = attachmentservice.get_content_type(filename)
         if mimetype not in AttachmentService.SUPPORTED_IMAGE_TYPES:
             raise UserException(f'Chosen attachment {filename} is not a supported image.')
 
