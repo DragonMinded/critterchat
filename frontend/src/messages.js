@@ -825,10 +825,15 @@ class Messages {
                 html += '    <div class="message' + (highlighted ? " highlighted" : "") + '" dir="auto" id="' + message.id + '">' + content + '</div>';
 
                 if (message.attachments.length) {
+                    var classText = ""
+                    if (message.attachments.length == 1) {
+                        classText = ' class="solo" ';
+                    }
+
                     html += '    <div class="attachments">';
                     message.attachments.forEach((attachment) => {
                         html += '      <a target="_blank" href="' + attachment.uri + '">';
-                        html += '        <img src="' + attachment.uri + '" height=100 />';
+                        html += '        <img src="' + attachment.uri + '"' + classText +'/>';
                         html += '      </a>';
                     });
                     html += '    </div>';

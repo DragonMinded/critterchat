@@ -652,8 +652,14 @@ div.conversation div.attachments {
     flex-wrap: wrap;
 }
 
+div.conversation div.attachments img.solo {
+    max-height: 300px;
+}
+
 div.conversation div.attachments img {
     display: block;
+    max-height: 100px;
+    max-width: 100%;
 }
 
 div.message.highlighted {
