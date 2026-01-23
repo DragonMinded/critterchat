@@ -1,4 +1,5 @@
 import $ from "jquery";
+import { flash } from "../utils.js";
 
 /**
  * Handles the chat details popover which is summoned and managed by the info panel
@@ -57,6 +58,11 @@ class ChatDetails {
                     $( '#chatdetails-icon' ).attr('src', this.icon);
                 };
                 fr.readAsDataURL(file);
+            } else {
+                flash(
+                    'warning',
+                    'Chosen room icon file size is too large. Room icons cannot be larger than ' + window.maxiconsize + 'kb.'
+                )
             }
         });
     }

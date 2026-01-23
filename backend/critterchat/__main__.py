@@ -14,6 +14,7 @@ from critterchat.service import AttachmentService, MessageService, UserService  
 import critterchat.http.welcome  # noqa
 import critterchat.http.chat  # noqa
 import critterchat.http.account  # noqa
+import critterchat.http.upload  # noqa
 import critterchat.http.socket  # noqa
 
 # This is only hooked when local storage is enabled.

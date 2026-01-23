@@ -16,6 +16,7 @@ from ..service import (
 from ..data import (
     Data,
     Action,
+    Attachment,
     Room,
     Upload,
     User,
@@ -24,6 +25,7 @@ from ..data import (
     Occupant,
     NewActionID,
     ActionID,
+    AttachmentID,
     RoomID,
     UserID,
 )
@@ -503,7 +505,7 @@ def updateprofile(json: Dict[str, object]) -> None:
 
     # Save last settings for this user.
     newname = str(json.get('name', '')).strip()
-    newicon = str(json.get('icon', ''))
+    newicon = str(json.get('icon', '')).strip()
     newabout = str(json.get('about', '')).strip()
     icondelete = bool(json.get('icon_delete', ''))
 
@@ -518,21 +520,9 @@ def updateprofile(json: Dict[str, object]) -> None:
         socketio.emit('error', {'error': 'Your about section is too long!'}, room=request.sid)
         return
 
-    icon: Optional[bytes] = None
+    icon: Optional[AttachmentID] = None
     if newicon:
-        # Verify that it's a reasonable icon.
-        header, b64data = newicon.split(",", 1)
-        if not header.startswith("data:") or not header.endswith("base64"):
-            socketio.emit('error', {'error': 'Chosen avatar is not a valid image!'}, room=request.sid)
-            return
-
-        actual_length = (len(b64data) / 4) * 3
-        if actual_length > config.limits.icon_size * 1024:
-            socketio.emit('error', {'error': 'Chosen avatar file size is too large!'}, room=request.sid)
-            return
-
-        with urllib.request.urlopen(newicon) as fp:
-            icon = fp.read()
+        icon = Attachment.to_id(newicon)
 
     try:
         userservice.update_user(userid, name=newname, about=newabout, icon=icon, icon_delete=icondelete)
@@ -910,7 +900,7 @@ def updateroom(json: Dict[str, object]) -> None:
         details = cast(Dict[str, object], json.get('details', {}))
         newname = str(details.get('name', '')).strip()
         newtopic = str(details.get('topic', '')).strip()
-        newicon = str(details.get('icon', ''))
+        newicon = str(details.get('icon', '')).strip()
         icondelete = bool(details.get('icon_delete', ''))
 
         if not represents_real_text(newname):
@@ -924,21 +914,9 @@ def updateroom(json: Dict[str, object]) -> None:
             # Trying to grab chat for a room we're not in!
             return
 
-        icon: Optional[bytes] = None
+        icon: Optional[AttachmentID] = None
         if newicon:
-            # Verify that it's a reasonable icon.
-            header, b64data = newicon.split(",", 1)
-            if not header.startswith("data:") or not header.endswith("base64"):
-                socketio.emit('error', {'error': 'Chosen icon is not a valid image!'}, room=request.sid)
-                return
-
-            actual_length = (len(b64data) / 4) * 3
-            if actual_length > config.limits.icon_size * 1024:
-                socketio.emit('error', {'error': 'Chosen icon file size is too large!'}, room=request.sid)
-                return
-
-            with urllib.request.urlopen(newicon) as fp:
-                icon = fp.read()
+            icon = Attachment.to_id(newicon)
 
         try:
             messageservice.update_room(roomid, userid, name=newname, topic=newtopic, icon=icon, icon_delete=icondelete)

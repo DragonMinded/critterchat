@@ -3,6 +3,7 @@ import $ from "jquery";
 import { InputState } from "./inputstate.js";
 import { ScreenState } from "./screenstate.js";
 import { EventHandler } from "./components/event.js";
+import { Uploader } from "./components/upload.js";
 import { AudioNotifications } from "./components/audionotifs.js";
 
 import { Menu } from "./menu.js";
@@ -42,6 +43,7 @@ export function manager(socket) {
     var eventBus = new EventHandler();
     var inputState = new InputState();
     var screenState = new ScreenState();
+    var uploader = new Uploader();
 
     // Tracks all known rooms that we are in and the last known action in each room. Used to
     // request missing actions that were sent while we were disconnected upon reconnect.
@@ -415,7 +417,16 @@ export function manager(socket) {
     });
 
     eventBus.on('updateprofile', (profile) => {
-        socket.emit('updateprofile', profile);
+        if (profile.icon) {
+            // Need to upload the new icon and get the attachment ID back.
+            uploader.uploadAvatar(profile.icon, (iconid) => {
+                profile.icon = iconid;
+                socket.emit('updateprofile', profile);
+            });
+        } else {
+            // No need to upload anything, no icon changes.
+            socket.emit('updateprofile', profile);
+        }
     });
 
     eventBus.on('updatepreferences', (preferences) => {
@@ -438,7 +449,19 @@ export function manager(socket) {
     });
 
     eventBus.on('updateroom', (msg) => {
-        socket.emit('updateroom', {'roomid': msg.roomid, 'details': msg.details});
+        const roomid = msg.roomid;
+        var details = msg.details;
+
+        if (details.icon) {
+            // Need to upload the new icon and get the attachment ID back.
+            uploader.uploadIcon(details.icon, (iconid) => {
+                details.icon = iconid;
+                socket.emit('updateroom', {'roomid': roomid, 'details': details});
+            });
+        } else {
+            // No need to upload anything, no icon changes.
+            socket.emit('updateroom', {'roomid': roomid, 'details': details});
+        }
     });
 
     eventBus.on('message', (msg) => {

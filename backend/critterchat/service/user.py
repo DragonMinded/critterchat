@@ -1,7 +1,5 @@
-import io
 import json
 import tempfile
-from PIL import Image
 from pydub import AudioSegment  # type: ignore
 from pydub.exceptions import CouldntDecodeError  # type: ignore
 from typing import Dict, Optional, Set
@@ -22,6 +20,7 @@ from ..data import (
     FaviconID,
     NewActionID,
     ActionID,
+    AttachmentID,
     Occupant,
     RoomID,
     UserID,
@@ -190,51 +189,40 @@ class UserService:
         userid: UserID,
         name: Optional[str] = None,
         about: Optional[str] = None,
-        icon: Optional[bytes] = None,
+        icon: Optional[AttachmentID] = None,
         icon_delete: bool = False,
     ) -> None:
+        # Sanitize inputs.
+        if icon == DefaultAvatarID or icon == DefaultRoomID or icon == FaviconID:
+            icon = None
+
         # Grab rooms the user is in so we can figure out which ones need updating.
         old_occupancy = self.__data.room.get_joined_room_occupants(userid)
 
         user = self.__data.user.get_user(userid)
         if user:
             changed = False
+            old_icon = user.iconid
+
+            # Always update name/about if it's set.
             if name is not None:
                 user.nickname = name
                 changed = True
             if about is not None:
                 user.about = about
                 changed = True
+
+            # Allow updating icon, or deleting icon.
             if icon is not None:
-                # Need to store this as a new attachment, and then get back the ID.
-                try:
-                    img = Image.open(io.BytesIO(icon))
-                except Exception:
-                    raise UserServiceException("Unsupported image provided for user avatar")
-
-                width, height = img.size
-
-                if width > AttachmentService.MAX_ICON_WIDTH or height > AttachmentService.MAX_ICON_HEIGHT:
-                    raise UserServiceException("Invalid image size for user avatar")
-                if width != height:
-                    raise UserServiceException("User avatar image is not square")
-
-                content_type = img.get_format_mimetype()
-                if not content_type:
-                    raise UserServiceException("User avatar image has no valid content type")
-
-                attachmentid = self.__attachments.create_attachment(content_type, None)
-                if attachmentid is None:
-                    raise UserServiceException("Could not insert new user avatar!")
-                self.__attachments.put_attachment_data(attachmentid, icon)
-
-                changed = True
-                user.iconid = attachmentid
+                user.iconid = icon
             elif icon_delete:
                 user.iconid = None
 
+            # Ensure we don't store links to default icons.
             if user.iconid == DefaultAvatarID or user.iconid == DefaultRoomID or user.iconid == FaviconID:
                 user.iconid = None
+            if user.iconid != old_icon:
+                changed = True
 
             if changed:
                 self.__data.user.update_user(user)

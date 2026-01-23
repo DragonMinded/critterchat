@@ -9,6 +9,7 @@ from flask import (
     jsonify as flask_jsonify,
     redirect,
     request as base_request,
+    make_response,
     url_for,
     flash,
     g,
@@ -40,6 +41,10 @@ __all__ = [
     "jsonify",
     "cacheable",
 ]
+
+
+class UserException(Exception):
+    code: int = 400
 
 
 class CritterChatFlask(Flask):
@@ -139,13 +144,17 @@ def jsonify(func: Callable[..., Dict[str, Any]]) -> Callable[..., Response]:
         try:
             return flask_jsonify(func(*args, **kwargs))
         except Exception as e:
-            print(traceback.format_exc())
-            return flask_jsonify(
+            if isinstance(e, UserException):
+                code = e.code
+            else:
+                code = 500
+                print(traceback.format_exc())
+
+            return make_response(flask_jsonify(
                 {
-                    "error": True,
-                    "message": str(e),
+                    "error": str(e),
                 }
-            )
+            ), code)
 
     return decoratedfunction
 

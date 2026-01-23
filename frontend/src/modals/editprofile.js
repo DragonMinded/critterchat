@@ -1,4 +1,5 @@
 import $ from "jquery";
+import { flash } from "../utils.js";
 
 /**
  * Handles the user profile popover which is summoned and managed by the menu panel.
@@ -59,6 +60,11 @@ class EditProfile {
                     $( '#editprofile-icon' ).attr('src', this.icon);
                 };
                 fr.readAsDataURL(file);
+            } else {
+                flash(
+                    'warning',
+                    'Chosen avatar file size is too large. Avatars cannot be larger than ' + window.maxiconsize + 'kb.'
+                )
             }
         });
     }

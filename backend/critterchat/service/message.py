@@ -1,6 +1,4 @@
 import emoji
-import io
-from PIL import Image
 from typing import Final, List, Optional, Set
 
 from ..config import Config
@@ -256,54 +254,37 @@ class MessageService:
         userid: UserID,
         name: Optional[str] = None,
         topic: Optional[str] = None,
-        icon: Optional[bytes] = None,
+        icon: Optional[AttachmentID] = None,
         icon_delete: bool = False,
     ) -> None:
+        # Sanitize inputs.
+        if icon == DefaultAvatarID or icon == DefaultRoomID or icon == FaviconID:
+            icon = None
+
         room = self.__data.room.get_room(roomid)
         if room:
             changed = False
+            old_icon = room.iconid
+
+            # Update only if we changed name/topic.
             if name is not None:
                 changed = changed or (room.name != name)
                 room.name = name
             if topic is not None:
                 changed = changed or (room.topic != topic)
                 room.topic = topic
+
+            # Allow updating icon or deleting icon.
             if icon is not None:
-                # Need to store this as a new attachment, and then get back the ID.
-                try:
-                    img = Image.open(io.BytesIO(icon))
-                except Exception:
-                    raise MessageServiceException("Unsupported image provided for room icon")
-
-                width, height = img.size
-
-                if width > AttachmentService.MAX_ICON_WIDTH or height > AttachmentService.MAX_ICON_HEIGHT:
-                    raise MessageServiceException("Invalid image size for room icon")
-                if width != height:
-                    raise MessageServiceException("Room icon image is not square")
-
-                content_type = img.get_format_mimetype()
-                if not content_type:
-                    raise MessageServiceException("Room icon image has no valid content type")
-
-                attachmentid = self.__attachments.create_attachment(content_type, None)
-                if attachmentid is None:
-                    raise MessageServiceException("Could not insert new room icon!")
-                self.__attachments.put_attachment_data(attachmentid, icon)
-
-                changed = True
-                room.iconid = attachmentid
+                room.iconid = icon
             elif icon_delete:
-                changed = (
-                    room.iconid is not None and
-                    room.iconid != DefaultAvatarID and
-                    room.iconid != DefaultRoomID and
-                    room.iconid != FaviconID
-                )
                 room.iconid = None
 
+            # Calculate whether we changed the icon.
             if room.iconid == DefaultAvatarID or room.iconid == DefaultRoomID or room.iconid == FaviconID:
                 room.iconid = None
+            if room.iconid != old_icon:
+                changed = True
 
             if changed:
                 self.__data.room.update_room(room, userid)
