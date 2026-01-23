@@ -35,6 +35,9 @@ def avatar_upload() -> Dict[str, object]:
 
 
 def _icon_upload(uploadtype: str) -> Dict[str, object]:
+    # Ensure that we only allow certain size uploads.
+    request.max_content_length = (((g.config.limits.icon_size * 1024) * 4) / 3) + 1024
+
     attachmentservice = AttachmentService(g.config, g.data)
     body = request.get_data(as_text=True)
     icon: Optional[bytes] = None
@@ -86,6 +89,9 @@ def _icon_upload(uploadtype: str) -> Dict[str, object]:
 @loginrequired
 @jsonify
 def notifications_upload() -> Dict[str, object]:
+    # Ensure that we only allow certain size uploads.
+    request.max_content_length = ((((g.config.limits.notification_size * 1024) * 4) / 3) + 1024) * len(UserNotification)
+
     attachmentservice = AttachmentService(g.config, g.data)
     body = request.json or {}
 
@@ -158,6 +164,9 @@ def notifications_upload() -> Dict[str, object]:
 @loginrequired
 @jsonify
 def attachments_upload() -> Dict[str, object]:
+    # Ensure that we only allow certain size uploads.
+    request.max_content_length = ((((g.config.limits.attachment_size * 1024) * 4) / 3) + 2048) * g.config.limits.attachment_max
+
     attachmentservice = AttachmentService(g.config, g.data)
     body = request.json or {}
 

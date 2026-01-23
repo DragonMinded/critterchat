@@ -26,6 +26,10 @@ server {
 
         # This port should match the port you gave to the "LISTEN_PORT" section in your systemd service.
         proxy_pass http://127.0.0.1:12345/;
+
+        # This is enforced per-upload in flask, but we still have to tell nginx to raise past the default
+        # of 1M, so we set it to an arbitrarily large size.
+        client_max_body_size 64M;
     }
 
     location /socket.io {
