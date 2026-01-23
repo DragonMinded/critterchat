@@ -1,5 +1,7 @@
 import $ from "jquery";
+import { flash } from "../utils.js";
 import { AUDIO_PREFS } from "../common.js";
+
 
 /**
  * Handles the preferences popover which is summoned and managed by the menu panel. This
@@ -78,6 +80,12 @@ class EditPreferences {
                     $('#editpreferences-audio-notification-' + key.toLowerCase() + '-cancel').show();
                 };
                 fr.readAsDataURL(file);
+            } else {
+                flash(
+                    'warning',
+                    'Chosen notification file size is too large. Notifications cannot be larger than '
+                    + window.maxnotificationsize + 'kb.'
+                );
             }
         });
 

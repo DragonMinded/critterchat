@@ -576,28 +576,16 @@ def updatepreferences(json: Dict[str, object]) -> None:
         else:
             notif_delete = None
 
-    new_notif_sounds: Dict[str, bytes] = {}
+    new_notif_sounds: Dict[str, AttachmentID] = {}
     notif_dict = json.get('notif_sounds', {}) or {}
     if isinstance(notif_dict, dict):
         for name, data in notif_dict.items():
             if not isinstance(name, str) or not isinstance(data, str):
                 continue
 
-            # Verify that it's a reasonable sound.
-            header, b64data = data.split(",", 1)
-            if not header.startswith("data:") or not header.endswith("base64"):
-                socketio.emit('error', {'error': 'Chosen notification is not a valid audio file!'}, room=request.sid)
-                return
-
-            actual_length = (len(b64data) / 4) * 3
-            if actual_length > config.limits.notification_size * 1024:
-                socketio.emit('error', {'error': 'Chosen notification file size is too large!'}, room=request.sid)
-                return
-
-            with urllib.request.urlopen(data) as fp:
-                notif_data = fp.read()
-
-            new_notif_sounds[name] = notif_data
+            aid = Attachment.to_id(data)
+            if aid:
+                new_notif_sounds[name] = aid
 
     try:
         userservice.update_preferences(

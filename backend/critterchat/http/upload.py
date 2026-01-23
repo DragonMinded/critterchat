@@ -1,11 +1,14 @@
 import io
+import tempfile
 import urllib.request
 from flask import Blueprint, request
 from PIL import Image
+from pydub import AudioSegment  # type: ignore
+from pydub.exceptions import CouldntDecodeError  # type: ignore
 from typing import Dict, Optional
 
 from .app import UserException, app, static_location, templates_location, loginrequired, jsonify, g
-from ..data import Attachment
+from ..data import Attachment, UserNotification
 from ..service import AttachmentService
 
 
@@ -53,7 +56,7 @@ def _icon_upload(uploadtype: str) -> Dict[str, object]:
             icon = fp.read()
 
     if not icon:
-        raise UserException(f'{uploadtype.capitalize()} data corrupt or not provided in upload.')
+        raise Exception(f'{uploadtype.capitalize()} data corrupt or not provided in upload.')
 
     try:
         img = Image.open(io.BytesIO(icon))
@@ -80,6 +83,78 @@ def _icon_upload(uploadtype: str) -> Dict[str, object]:
     attachmentservice.put_attachment_data(attachmentid, icon)
 
     return {'attachmentid': Attachment.from_id(attachmentid)}
+
+
+@upload.route("/upload/notifications", methods=["POST"])
+@loginrequired
+@jsonify
+def notifications_upload() -> Dict[str, object]:
+    attachmentservice = AttachmentService(g.config, g.data)
+    body = request.json or {}
+
+    if not isinstance(body, dict):
+        raise Exception("Notification data corrupt or not provided in upload.")
+
+    new_notif_sounds: Dict[str, bytes] = {}
+    notif_dict = body.get('notif_sounds', {}) or {}
+
+    # First, load the data and attempt to validate it.
+    if isinstance(notif_dict, dict):
+        for name, data in notif_dict.items():
+            if not isinstance(name, str) or not isinstance(data, str):
+                raise Exception("Notification data corrupt or not provided in upload.")
+            if "," not in data:
+                raise Exception("Notification data corrupt or not provided in upload.")
+
+            # Verify that it's a reasonable sound.
+            header, b64data = data.split(",", 1)
+            if not header.startswith("data:") or not header.endswith("base64"):
+                raise UserException('Chosen notification is not a valid audio file.')
+
+            actual_length = (len(b64data) / 4) * 3
+            if actual_length > g.config.limits.notification_size * 1024:
+                raise UserException(f'Chosen notification file size is too large. Notifications cannot be larger than {g.config.limits.notification_size}kb.')
+
+            with urllib.request.urlopen(data) as fp:
+                notif_data = fp.read()
+
+            new_notif_sounds[name] = notif_data
+
+    # Now, convert to mp3 and attach as attachments.
+    response: Dict[str, str] = {}
+    for alias, data in new_notif_sounds.items():
+        try:
+            UserNotification[alias]
+        except KeyError:
+            raise Exception("Notification key unrecognized, cannot set notification")
+
+        try:
+            with tempfile.NamedTemporaryFile(delete_on_close=False) as fp1:
+                fp1.write(data)
+                fp1.close()
+
+                segment = AudioSegment.from_file(fp1.name)
+
+                with tempfile.NamedTemporaryFile(delete_on_close=False) as fp2:
+                    fp2.close()
+
+                    segment.export(fp2.name, format="mp3")
+
+                    with open(fp2.name, "rb") as bfp:
+                        actual_data = bfp.read()
+
+                        attachmentid = attachmentservice.create_attachment("audio/mpeg", None)
+                        if attachmentid is None:
+                            raise Exception("Could not insert new user notification sound!")
+                        attachmentservice.put_attachment_data(attachmentid, actual_data)
+
+                        response[alias] = Attachment.from_id(attachmentid)
+
+        except CouldntDecodeError:
+            raise UserException("Unsupported audio provided for user notification.")
+
+    # Finally, return all the attachment IDs.
+    return {"notif_sounds": response}
 
 
 app.register_blueprint(upload)

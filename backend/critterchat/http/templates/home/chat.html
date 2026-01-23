@@ -11,6 +11,7 @@
     window.versionCheck = "{{ url_for('chat.version') }}";
     window.uploadIcon = "{{ url_for('upload.icon_upload') }}";
     window.uploadAvatar = "{{ url_for('upload.avatar_upload') }}";
+    window.uploadNotifications = "{{ url_for('upload.notifications_upload') }}";
     window.appname = {{ title|tojson|safe }};
     window.version = {{ version|tojson|safe }};
     window.emojis = {{ emojis|tojson|safe }};

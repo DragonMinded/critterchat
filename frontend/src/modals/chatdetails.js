@@ -62,7 +62,7 @@ class ChatDetails {
                 flash(
                     'warning',
                     'Chosen room icon file size is too large. Room icons cannot be larger than ' + window.maxiconsize + 'kb.'
-                )
+                );
             }
         });
     }

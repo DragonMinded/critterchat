@@ -22,7 +22,6 @@ TODO Low Priority
 =================
 
  - Generate a unique URI for all chats and rooms, allow editing for public rooms.
- - Better feedback when choosing a sound that won't be accepted.
  - URL for public chats to link directly as an invite.
  - Chat info name and topic should support emoji autocomplete and emoji search.
  - Mentioning typeahead should allow searching by display nick as well as username.

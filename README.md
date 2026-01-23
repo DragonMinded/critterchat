@@ -57,6 +57,15 @@ get in touch so we can work out the direction you plan to take.
  - Native clients for mobile or desktop operating systems.
  - Changes that make custom integrations easier.
 
+## Prerequisites
+
+At minimum, you will need a MySQL database or compatible (MariaDB that is recent)
+that is at least 5.7 due to using the JSON column type. You will also need a modern
+version of Python. Recommended version is 3.12 or higher due to being tested only
+on this version. Finally, you will need ffmpeg installed for notification conversion.
+It is heavily recommended to use a production-ready webserver for SSL termination
+and static resources. Something such as nginx should be sufficient.
+
 ## Developing
 
 CritterChat is split into two top-level components: the frontend and the backend.

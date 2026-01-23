@@ -37,6 +37,25 @@ class Uploader {
     uploadAvatar(data, callback) {
         this._uploadSingle(window.uploadAvatar, data, callback);
     }
+
+    uploadNotificationSounds(data, callback) {
+        $.ajax(
+            window.uploadNotifications,
+            {
+                method: "POST",
+                contentType: "application/json",
+                data: JSON.stringify({notif_sounds: data}),
+                processData: false,
+                error: (xhr) => {
+                    const resp = JSON.parse(xhr.responseText);
+                    flash('warning', resp.error);
+                },
+                success: (newData) => {
+                    callback(newData.notif_sounds);
+                }
+            }
+        );
+    }
 }
 
 export { Uploader };

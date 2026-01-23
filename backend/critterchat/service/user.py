@@ -1,7 +1,4 @@
 import json
-import tempfile
-from pydub import AudioSegment  # type: ignore
-from pydub.exceptions import CouldntDecodeError  # type: ignore
 from typing import Dict, Optional, Set
 
 from ..common import Time, represents_real_text
@@ -83,7 +80,7 @@ class UserService:
         title_notifs: Optional[bool] = None,
         mobile_audio_notifs: Optional[bool] = None,
         audio_notifs: Optional[Set[str]] = None,
-        notif_sounds: Optional[Dict[str, bytes]] = None,
+        notif_sounds: Optional[Dict[str, AttachmentID]] = None,
         notif_sounds_delete: Optional[Set[str]] = None,
     ) -> None:
         prefs = self.__data.user.get_preferences(userid)
@@ -108,34 +105,13 @@ class UserService:
                 pass
 
         # Now, handle uploading any new notification sounds.
-        for alias, data in (notif_sounds or {}).items():
+        for alias, attachmentid in (notif_sounds or {}).items():
             try:
                 actual = UserNotification[alias]
             except KeyError:
                 continue
 
-            try:
-                with tempfile.NamedTemporaryFile(delete_on_close=False) as fp1:
-                    fp1.write(data)
-                    fp1.close()
-
-                    segment = AudioSegment.from_file(fp1.name)
-
-                    with tempfile.NamedTemporaryFile(delete_on_close=False) as fp2:
-                        fp2.close()
-
-                        segment.export(fp2.name, format="mp3")
-
-                        with open(fp2.name, "rb") as bfp:
-                            actual_data = bfp.read()
-
-                            attachmentid = self.__attachments.create_attachment("audio/mpeg", None)
-                            if attachmentid is None:
-                                raise UserServiceException("Could not insert new user notification sound!")
-                            self.__attachments.put_attachment_data(attachmentid, actual_data)
-                            self.__data.attachment.set_notification(userid, str(actual.name), attachmentid)
-            except CouldntDecodeError:
-                raise UserServiceException("Unsupported audio provided for user notification")
+            self.__data.attachment.set_notification(userid, str(actual.name), attachmentid)
 
         # Now, handle deleting any deleted notification sounds.
         for alias in notif_sounds_delete or {}:
@@ -206,11 +182,11 @@ class UserService:
 
             # Always update name/about if it's set.
             if name is not None:
+                changed = changed or (user.nickname != name)
                 user.nickname = name
-                changed = True
             if about is not None:
+                changed = changed or (user.about != about)
                 user.about = about
-                changed = True
 
             # Allow updating icon, or deleting icon.
             if icon is not None:

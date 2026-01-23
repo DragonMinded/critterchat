@@ -430,7 +430,14 @@ export function manager(socket) {
     });
 
     eventBus.on('updatepreferences', (preferences) => {
-        socket.emit('updatepreferences', preferences);
+        if ($.isEmptyObject(preferences.notif_sounds)) {
+            socket.emit('updatepreferences', preferences);
+        } else {
+            uploader.uploadNotificationSounds(preferences.notif_sounds, (sounds) => {
+                preferences.notif_sounds = sounds;
+                socket.emit('updatepreferences', preferences);
+            });
+        }
     });
 
     eventBus.on('leaveroom', (roomid) => {

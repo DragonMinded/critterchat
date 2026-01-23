@@ -64,7 +64,7 @@ class EditProfile {
                 flash(
                     'warning',
                     'Chosen avatar file size is too large. Avatars cannot be larger than ' + window.maxiconsize + 'kb.'
-                )
+                );
             }
         });
     }
