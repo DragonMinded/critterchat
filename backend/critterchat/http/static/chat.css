@@ -643,13 +643,13 @@ div.conversation div.item.combined div.message {
 
 div.conversation div.item.combined div.attachments {
     margin-left: 41px;
-    margin-top: 2px;
 }
 
 div.conversation div.attachments {
     display: flex;
     gap: 5px;
     flex-wrap: wrap;
+    margin-top: 2px;
 }
 
 div.conversation div.attachments img {
