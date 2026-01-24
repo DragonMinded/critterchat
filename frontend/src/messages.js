@@ -66,7 +66,9 @@ class Messages {
             var roomid = $( '#message-actions' ).attr('roomid');
 
             if (roomid) {
+                // Grab message, focus on the message box if we clicked send.
                 var message = $( 'input#message' ).val();
+                $( 'input#message' ).focus();
 
                 if (message && message.length > window.maxmessage) {
                     displayInfo(
