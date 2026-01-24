@@ -3,7 +3,6 @@ TODO Immediate
 
  - Validate mime type of notifications and icons when attaching in services.
  - Highlight detection should work with punctuation.
- - pgup/pgdn/home/end in an empty message box should pass on to message container.
  - Update PROTOCOL.md with changed upload style.
  - Image attachment carousel on click.
  - Allow spoilering previews.

@@ -7,7 +7,6 @@ import {
     scrollTop,
     scrollTopMax,
     isInViewport,
-    getSelectionText,
     containsStandaloneText,
 } from "./utils.js";
 import { emojisearch } from "./components/emojisearch.js";
@@ -88,10 +87,6 @@ class Messages {
 
         $( 'div.chat > div.conversation-wrapper' ).on( 'click', () => {
             this.inputState.setState("empty");
-
-            if (!getSelectionText() && this.size != "mobile") {
-                $('input#message').focus();
-            }
         });
 
         $( 'div.chat > div.conversation-wrapper' ).scroll(() => {
@@ -100,6 +95,19 @@ class Messages {
             if (this.autoscroll) {
                 $( 'div.new-messages-alert' ).css( 'display', 'none' );
             }
+        });
+
+        $( document ).on( 'keydown', (evt) => {
+            // Figure out if the user started typing, so we can redirect to the input control.
+            const key = evt.key;
+            const control = (key.length != 1 || key == " ");
+            const isBody = $(evt.target).is("body");
+            if (control | !isBody) {
+                return;
+            }
+
+            // It is, and it's to the general body since no control is focused.
+            $( 'input#message' ).focus();
         });
 
         $(window).resize(() => {

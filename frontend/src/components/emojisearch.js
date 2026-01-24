@@ -298,7 +298,7 @@ export function emojisearch(state, button, textbox, items) {
 
     $("#emojisearch-text").on('keydown', function(event) {
         // Are we closing the search?
-        if(event.keyCode == 27) {
+        if(event.key == "Escape") {
             hide();
             $(textbox).focus();
         }
