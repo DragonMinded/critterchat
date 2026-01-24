@@ -153,10 +153,11 @@ class UserPreferences:
 
 
 class Attachment:
-    def __init__(self, attachmentid: AttachmentID, uri: str, mimetype: str) -> None:
+    def __init__(self, attachmentid: AttachmentID, uri: str, mimetype: str, metadata: Dict[str, object]) -> None:
         self.id = attachmentid
         self.uri = uri
         self.mimetype = mimetype
+        self.metadata = metadata
 
     def to_dict(self) -> Dict[str, object]:
         return {
@@ -165,6 +166,7 @@ class Attachment:
             # expose private attachments to URI guessing.
             "uri": self.uri,
             "mimetype": self.mimetype,
+            "metadata": self.metadata,
         }
 
     @staticmethod

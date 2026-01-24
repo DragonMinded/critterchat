@@ -804,6 +804,21 @@ class Messages {
     }
 
     /**
+     * Returns image dimensions, capped to a given maximum height, respecting aspect ratios.
+     */
+    _getDims( attachment, desiredHeight ) {
+        var width = attachment.metadata.width;
+        var height = attachment.metadata.height;
+
+        if (height > desiredHeight) {
+            width = Math.round((width * desiredHeight) / height);
+            height = desiredHeight;
+        }
+
+        return ' width="' + width + '" height="' + height + '" ';
+    }
+
+    /**
      * The actual function that handles DOM manipulation for rendering a new or updated action.
      * Note that right now while the server CAN send us old actions that have been edited in some
      * manner, it currently does not. However, this function handles that and will continue to be
@@ -845,15 +860,12 @@ class Messages {
                 html += '    <div class="message' + (highlighted ? " highlighted" : "") + '" dir="auto" id="' + message.id + '">' + content + '</div>';
 
                 if (message.attachments.length) {
-                    var classText = ""
-                    if (message.attachments.length == 1) {
-                        classText = ' class="solo" ';
-                    }
+                    const desiredHeight = message.attachments.length == 1 ? 300 : 100;
 
                     html += '    <div class="attachments">';
                     message.attachments.forEach((attachment) => {
                         html += '      <a target="_blank" href="' + attachment.uri + '">';
-                        html += '        <img src="' + attachment.uri + '"' + classText +'/>';
+                        html += '        <img src="' + attachment.uri + '"' + this._getDims(attachment, desiredHeight) + '/>';
                         html += '      </a>';
                     });
                     html += '    </div>';

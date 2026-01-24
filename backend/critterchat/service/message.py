@@ -66,6 +66,7 @@ class MessageService:
                         actionattachment.attachmentid,
                         self.__attachments.get_attachment_url(actionattachment.attachmentid),
                         actionattachment.content_type,
+                        actionattachment.metadata,
                     )
                 )
             action.attachments = attachments
@@ -135,6 +136,7 @@ class MessageService:
                     adata.id,
                     self.__attachments.get_attachment_url(adata.id),
                     adata.content_type,
+                    adata.metadata,
                 )
             )
 

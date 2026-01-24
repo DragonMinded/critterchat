@@ -5,7 +5,6 @@ TODO Immediate
  - Highlight detection should work with punctuation.
  - pgup/pgdn/home/end in an empty message box should pass on to message container.
  - Update PROTOCOL.md with changed upload style.
- - Need dimensions of attachments to fix scroll issues.
  - Image attachment carousel on click.
  - Allow spoilering previews.
  - Alt text for image attachments.
