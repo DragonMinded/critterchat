@@ -16,6 +16,7 @@ TODO For Public Instance
  - Stickers support in some form.
  - Emote/emoji reactions to messages.
  - Channel permissions.
+ - Better size of controls, currently everything is too small.
 
 TODO Low Priority
 =================
