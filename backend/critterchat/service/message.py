@@ -43,7 +43,11 @@ class MessageService:
 
     def migrate_legacy_names(self) -> None:
         # TODO: Once the implementation for per-room nicknames is done, this will need to
-        # sweep those and ensure they're not messed up.
+        # sweep those and ensure they're not messed up. This mostly handles checking for
+        # old exploits and deleting nicknames that are no longer allowed which reverts the
+        # user back to their globally-set nickname or username if unset.
+
+        # Don't check for whether this migration ran, we want it to run every restart.
         pass
 
     def _resolve_attachments(self, actions: List[Action]) -> List[Action]:

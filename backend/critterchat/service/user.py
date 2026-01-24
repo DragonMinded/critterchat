@@ -36,6 +36,13 @@ class UserService:
         self.__attachments = AttachmentService(self.__config, self.__data)
 
     def migrate_legacy_names(self) -> None:
+        """
+        Check for any nicknames that somebody was able to set which do not follow our
+        rules for nicknames, and remove the nickname, defaulting that user back to
+        their username. This mostly entails exploits for blank names with unicode tricks.
+        """
+
+        # Don't check for whether this migration ran, we want it to run every restart.
         users = self.__data.user.get_users()
         for user in users:
             if user.nickname and not represents_real_text(user.nickname):

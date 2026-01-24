@@ -19,6 +19,11 @@ DefaultRoomID = AttachmentID(-200)
 FaviconID = AttachmentID(-300)
 
 
+class Migration(StrEnum):
+    HASHED_ATTACHMENTS = "hashed_attachments"
+    ATTACHMENT_EXTENSIONS = "attachment_extensions"
+
+
 class UserPermission(IntEnum):
     ACTIVATED = 0x1
     WELCOMED = 0x2

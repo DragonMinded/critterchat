@@ -10,6 +10,7 @@ from ..data import (
     Attachment,
     Action,
     ActionType,
+    Migration,
     User,
     Occupant,
     Room,
@@ -126,35 +127,55 @@ class AttachmentService:
 
                 return os.path.join(directory, _get_legacy_hashed_attachment_name(aid))
 
-            # First, we need to attempt to migrate from pre-hashed to hashed.
+            # Look up which of these we've done since they're expensive, skipping the work if not needed.
+            finished_migrations = self.__data.migration.get_migrations()
+
+            if (
+                Migration.HASHED_ATTACHMENTS in finished_migrations and
+                Migration.ATTACHMENT_EXTENSIONS in finished_migrations
+            ):
+                # We've done all the migrations, so don't bother looking up attachments.
+                return
+
+            # We need all known attachments in the system for both migrations below.
             attachments = self.__data.attachment.get_attachments()
-            for attachment in attachments:
-                # Local storage, copy the system default into the attachment directory if needed.
-                oldpath = _get_prehashed_local_attachment_path(attachment.id)
-                path = _get_legacy_local_attachment_path(attachment.id)
-                if (not os.path.isfile(path)) and os.path.isfile(oldpath):
-                    with open(oldpath, "rb") as bfp1:
-                        data = bfp1.read()
-                    with open(path, "wb") as bfp2:
-                        bfp2.write(data)
-                    os.remove(oldpath)
 
-            # Next, we need to attempt to migrate from pre-extension to extension.
-            for attachment in attachments:
-                # Local storage, copy the system default into the attachment directory if needed.
-                oldpath = _get_legacy_local_attachment_path(attachment.id)
-                path = self._get_local_attachment_path(attachment.id, attachment.content_type, attachment.original_filename)
-                if path == oldpath:
-                    # This can happen for files we don't have an original filename for and we don't
-                    # have a matching extension for the mimetype (like application/octet-stream).
-                    continue
+            if Migration.HASHED_ATTACHMENTS not in finished_migrations:
+                # First, we need to attempt to migrate from pre-hashed to hashed.
+                for attachment in attachments:
+                    # Local storage, copy the system default into the attachment directory if needed.
+                    oldpath = _get_prehashed_local_attachment_path(attachment.id)
+                    path = _get_legacy_local_attachment_path(attachment.id)
+                    if (not os.path.isfile(path)) and os.path.isfile(oldpath):
+                        with open(oldpath, "rb") as bfp1:
+                            data = bfp1.read()
+                        with open(path, "wb") as bfp2:
+                            bfp2.write(data)
+                        os.remove(oldpath)
 
-                if (not os.path.isfile(path)) and os.path.isfile(oldpath):
-                    with open(oldpath, "rb") as bfp1:
-                        data = bfp1.read()
-                    with open(path, "wb") as bfp2:
-                        bfp2.write(data)
-                    os.remove(oldpath)
+                # Mark that we did this migration so we never run it again.
+                self.__data.migration.flag_migrated(Migration.HASHED_ATTACHMENTS)
+
+            if Migration.ATTACHMENT_EXTENSIONS not in finished_migrations:
+                # Next, we need to attempt to migrate from pre-extension to extension.
+                for attachment in attachments:
+                    # Local storage, copy the system default into the attachment directory if needed.
+                    oldpath = _get_legacy_local_attachment_path(attachment.id)
+                    path = self._get_local_attachment_path(attachment.id, attachment.content_type, attachment.original_filename)
+                    if path == oldpath:
+                        # This can happen for files we don't have an original filename for and we don't
+                        # have a matching extension for the mimetype (like application/octet-stream).
+                        continue
+
+                    if (not os.path.isfile(path)) and os.path.isfile(oldpath):
+                        with open(oldpath, "rb") as bfp1:
+                            data = bfp1.read()
+                        with open(path, "wb") as bfp2:
+                            bfp2.write(data)
+                        os.remove(oldpath)
+
+                # Mark that we did this migration so we never run it again.
+                self.__data.migration.flag_migrated(Migration.ATTACHMENT_EXTENSIONS)
 
         else:
             # Unknown backend, throw since we have no known migrations.
