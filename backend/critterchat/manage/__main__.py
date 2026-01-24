@@ -244,7 +244,6 @@ def add_emote(config: Config, alias: Optional[str], filename_or_directory: str) 
 
     data = Data(config)
     emoteservice = EmoteService(config, data)
-    attachmentservice = AttachmentService(config, data)
 
     if os.path.isdir(filename_or_directory):
         if alias:
@@ -257,12 +256,11 @@ def add_emote(config: Config, alias: Optional[str], filename_or_directory: str) 
                 print(f"Skipping {filename} because it is not a recognized image type!")
 
             full_file = os.path.join(filename_or_directory, filename)
-            content_type = attachmentservice.get_content_type(full_file)
             with open(full_file, "rb") as bfp:
                 emotedata = bfp.read()
 
             try:
-                emoteservice.add_emote(alias, content_type, emotedata)
+                emoteservice.add_emote(alias, emotedata)
                 print(f"Emote added to system with alias '{alias}'")
             except EmoteServiceException:
                 print(f"Emote with alias '{alias}' not added to system")
@@ -274,12 +272,11 @@ def add_emote(config: Config, alias: Optional[str], filename_or_directory: str) 
         if ext.lower() not in {".apng", ".png", ".gif", ".jpg", ".jpeg", ".webp"}:
             raise CommandException(f"Cannot add {filename_or_directory} because it is not a recognized image type!")
 
-        content_type = attachmentservice.get_content_type(filename_or_directory)
         with open(filename_or_directory, "rb") as bfp:
             emotedata = bfp.read()
 
         try:
-            emoteservice.add_emote(alias, content_type, emotedata)
+            emoteservice.add_emote(alias, emotedata)
             print(f"Emote added to system with alias '{alias}'")
         except EmoteServiceException as e:
             raise CommandException(str(e))

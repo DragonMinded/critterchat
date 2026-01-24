@@ -1,7 +1,8 @@
 import contextlib
+import json
 from sqlalchemy import Table, Column
 from sqlalchemy.schema import UniqueConstraint
-from sqlalchemy.types import String, Integer
+from sqlalchemy.types import String, Integer, JSON
 from typing import Dict, Iterable, Iterator, List, Optional, Union
 
 from .base import BaseData, metadata
@@ -17,6 +18,7 @@ attachment = Table(
     Column("system", String(32), nullable=False),
     Column("content_type", String(128), nullable=False),
     Column("original_filename", String(256), nullable=True),
+    Column("metadata", JSON),
     mysql_charset="utf8mb4",
 )
 
@@ -61,47 +63,81 @@ action_attachment = Table(
 
 
 class Attachment:
-    def __init__(self, attachmentid: AttachmentID, system: str, content_type: str, original_filename: Optional[str]) -> None:
+    def __init__(
+        self,
+        attachmentid: AttachmentID,
+        system: str,
+        content_type: str,
+        original_filename: Optional[str],
+        metadata: Dict[str, object],
+    ) -> None:
         self.id = attachmentid
         self.system = system
         self.content_type = content_type
         self.original_filename = original_filename
+        self.metadata = metadata
 
 
 class Emote:
-    def __init__(self, alias: str, attachmentid: AttachmentID, system: str, content_type: str) -> None:
+    def __init__(
+        self, alias: str,
+        attachmentid: AttachmentID,
+        system: str,
+        content_type: str,
+        metadata: Dict[str, object],
+    ) -> None:
         self.alias = alias
         self.attachmentid = attachmentid
         self.system = system
         self.content_type = content_type
+        self.metadata = metadata
 
 
 class ActionAttachment:
-    def __init__(self, actionid: ActionID, attachmentid: AttachmentID, content_type: str, original_filename: Optional[str]) -> None:
+    def __init__(
+        self,
+        actionid: ActionID,
+        attachmentid: AttachmentID,
+        content_type: str,
+        original_filename: Optional[str],
+        metadata: Dict[str, object],
+    ) -> None:
         self.actionid = actionid
         self.attachmentid = attachmentid
         self.content_type = content_type
         self.original_filename = original_filename
+        self.metadata = metadata
 
 
 class AttachmentData(BaseData):
-    def insert_attachment(self, system: str, content_type: str, original_filename: Optional[str]) -> Optional[AttachmentID]:
+    def insert_attachment(
+        self,
+        system: str,
+        content_type: str,
+        original_filename: Optional[str],
+        metadata: Dict[str, object],
+    ) -> Optional[AttachmentID]:
         """
         Given an attachment system and content type, insert a pointer to that attachment.
 
         Parameters:
             system - The attachment system used for this attachment.
             content_type - The content type of this attachment.
+            original_filename - The original filename of the attachment, if applicable.
+            metadata - Any metadata about the attachment, such as dimensions.
         """
 
         sql = """
             INSERT INTO attachment
-                (`system`, `content_type`, `original_filename`)
+                (`system`, `content_type`, `original_filename`, `metadata`)
             VALUES
-                (:system, :content_type, :filename)
+                (:system, :content_type, :filename, :metadata)
         """
         cursor = self.execute(sql, {
-            "system": system, "content_type": content_type, "filename": original_filename
+            "system": system,
+            "content_type": content_type,
+            "filename": original_filename,
+            "metadata": json.dumps(metadata),
         })
         if cursor.rowcount != 1:
             return None
@@ -129,14 +165,20 @@ class AttachmentData(BaseData):
             return None
 
         sql = """
-            SELECT `system`, `content_type`, `original_filename` FROM attachment WHERE id = :id
+            SELECT `system`, `content_type`, `original_filename`, `metadata` FROM attachment WHERE id = :id
         """
         cursor = self.execute(sql, {"id": attachmentid})
         if cursor.rowcount != 1:
             return None
 
         result = cursor.mappings().fetchone()
-        return Attachment(attachmentid, str(result["system"] or ""), str(result["content_type"] or ""), str(result["original_filename"] or "") or None)
+        return Attachment(
+            attachmentid,
+            str(result["system"] or ""),
+            str(result["content_type"] or ""),
+            str(result["original_filename"] or "") or None,
+            json.loads(str(result["metadata"] or "{}")),
+        )
 
     def get_attachments(self) -> List[Attachment]:
         """
@@ -144,7 +186,7 @@ class AttachmentData(BaseData):
         """
 
         sql = """
-            SELECT `id`, `system`, `content_type`, `original_filename`
+            SELECT `id`, `system`, `content_type`, `original_filename`, `metadata`
             FROM attachment
         """
         cursor = self.execute(sql, {})
@@ -154,6 +196,7 @@ class AttachmentData(BaseData):
                 str(result['system'] or ""),
                 str(result['content_type'] or ""),
                 str(result['original_filename'] or "") or None,
+                json.loads(str(result["metadata"] or "{}")),
             ) for result in cursor.mappings()
         ]
 
@@ -164,7 +207,10 @@ class AttachmentData(BaseData):
 
         sql = """
             SELECT
-                attachment.id AS attachment_id, attachment.system AS `system`, attachment.content_type AS content_type,
+                attachment.id AS attachment_id,
+                attachment.system AS `system`,
+                attachment.content_type AS content_type,
+                attachment.metadata AS metadata,
                 emote.alias AS alias
             FROM emote
             JOIN attachment ON attachment.id = emote.attachment_id
@@ -176,6 +222,7 @@ class AttachmentData(BaseData):
                 AttachmentID(result['attachment_id']),
                 str(result['system'] or ""),
                 str(result['content_type'] or ""),
+                json.loads(str(result["metadata"] or "{}")),
             ) for result in cursor.mappings()
         ]
 
@@ -186,7 +233,10 @@ class AttachmentData(BaseData):
 
         sql = """
             SELECT
-                attachment.id AS attachment_id, attachment.system AS `system`, attachment.content_type AS content_type,
+                attachment.id AS attachment_id,
+                attachment.system AS `system`,
+                attachment.content_type AS content_type,
+                attachment.metadata AS metadata,
                 emote.alias AS alias
             FROM emote
             JOIN attachment ON attachment.id = emote.attachment_id
@@ -202,6 +252,7 @@ class AttachmentData(BaseData):
             AttachmentID(result['attachment_id']),
             str(result['system'] or ""),
             str(result['content_type'] or ""),
+            json.loads(str(result["metadata"] or "{}")),
         )
 
     def add_emote(self, alias: str, attachmentid: AttachmentID) -> None:
@@ -233,7 +284,11 @@ class AttachmentData(BaseData):
 
         sql = """
             SELECT
-                attachment.id AS attachment_id, attachment.system AS `system`, attachment.content_type AS content_type, attachment.original_filename as filename,
+                attachment.id AS attachment_id,
+                attachment.system AS `system`,
+                attachment.content_type AS content_type,
+                attachment.original_filename as filename,
+                attachment.metadata AS metadata,
                 notification.type AS type
             FROM notification
             JOIN attachment ON attachment.id = notification.attachment_id
@@ -246,6 +301,7 @@ class AttachmentData(BaseData):
                 str(result['system'] or ""),
                 str(result['content_type'] or ""),
                 str(result['filename'] or "") or None,
+                json.loads(str(result["metadata"] or "{}")),
             ) for result in cursor.mappings()
         }
 
@@ -258,7 +314,11 @@ class AttachmentData(BaseData):
 
         sql = """
             SELECT
-                attachment.id AS attachment_id, attachment.system AS `system`, attachment.content_type AS content_type, attachment.original_filename as filename,
+                attachment.id AS attachment_id,
+                attachment.system AS `system`,
+                attachment.content_type AS content_type,
+                attachment.original_filename as filename,
+                attachment.metadata AS metadata,
                 notification.type AS type
             FROM notification
             JOIN attachment ON attachment.id = notification.attachment_id
@@ -274,6 +334,7 @@ class AttachmentData(BaseData):
             str(result['system'] or ""),
             str(result['content_type'] or ""),
             str(result['filename'] or "") or None,
+            json.loads(str(result["metadata"] or "{}")),
         )
 
     def set_notification(self, userid: UserID, notificationtype: str, attachmentid: AttachmentID) -> None:
@@ -337,7 +398,8 @@ class AttachmentData(BaseData):
                 action_attachment.action_id AS action_id,
                 attachment.id AS attachment_id,
                 attachment.content_type AS content_type,
-                attachment.original_filename AS original_filename
+                attachment.original_filename AS original_filename,
+                attachment.metadata AS metadata
             FROM action_attachment
             JOIN attachment ON attachment.id = action_attachment.attachment_id
             WHERE action_attachment.action_id IN :ids
@@ -354,6 +416,7 @@ class AttachmentData(BaseData):
                 AttachmentID(result['attachment_id']),
                 str(result['content_type'] or ""),
                 str(result['original_filename'] or "") or None,
+                json.loads(str(result["metadata"] or "{}")),
             )
 
             retval[attachment.actionid].append(attachment)

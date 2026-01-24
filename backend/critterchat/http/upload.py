@@ -77,7 +77,7 @@ def _icon_upload(uploadtype: str) -> Dict[str, object]:
     if content_type not in AttachmentService.SUPPORTED_IMAGE_TYPES:
         raise UserException(f"{uploadtype.capitalize()} image is an unrecognized format.")
 
-    attachmentid = attachmentservice.create_attachment(content_type, None)
+    attachmentid = attachmentservice.create_attachment(content_type, None, {'width': width, 'height': height})
     if attachmentid is None:
         raise Exception(f"Could not insert new {uploadtype}.")
     attachmentservice.put_attachment_data(attachmentid, icon)
@@ -146,7 +146,7 @@ def notifications_upload() -> Dict[str, object]:
                     with open(fp2.name, "rb") as bfp:
                         actual_data = bfp.read()
 
-                        attachmentid = attachmentservice.create_attachment("audio/mpeg", None)
+                        attachmentid = attachmentservice.create_attachment("audio/mpeg", None, {})
                         if attachmentid is None:
                             raise Exception("Could not insert new user notification sound!")
                         attachmentservice.put_attachment_data(attachmentid, actual_data)
@@ -220,6 +220,8 @@ def attachments_upload() -> Dict[str, object]:
         except Exception:
             raise UserException(f'Chosen attachment {filename} is not a supported image.')
 
+        width, height = img.size
+
         content_type = img.get_format_mimetype()
         if not content_type:
             raise UserException(f'Chosen attachment {filename} is not a supported image.')
@@ -228,7 +230,7 @@ def attachments_upload() -> Dict[str, object]:
             raise UserException(f'Chosen attachment {filename} is not a supported image.')
 
         # The image is validated at this point, so we can attach it and return the ID.
-        attachmentid = attachmentservice.create_attachment(content_type, filename)
+        attachmentid = attachmentservice.create_attachment(content_type, filename, {'width': width, 'height': height})
         if attachmentid is None:
             raise Exception("Could not insert message attachment!")
         attachmentservice.put_attachment_data(attachmentid, attachmentdata)

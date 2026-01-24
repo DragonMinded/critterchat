@@ -1,3 +1,5 @@
+import io
+from PIL import Image
 from typing import Dict
 
 from ..config import Config
@@ -38,7 +40,7 @@ class EmoteService:
         attachment = self.__attachments.get_attachment_data(emote.attachmentid)
         return attachment is not None
 
-    def add_emote(self, alias: str, content_type: str, data: bytes) -> None:
+    def add_emote(self, alias: str, data: bytes) -> None:
         # First, sanitize the name of the emote.
         alias = alias.lower()
         for c in alias:
@@ -50,10 +52,31 @@ class EmoteService:
         if emote:
             raise EmoteServiceException("Emote name already in use!")
 
+        try:
+            img = Image.open(io.BytesIO(data))
+        except Exception:
+            raise EmoteServiceException("Unsupported image provided for emote!")
+
+        width, height = img.size
+        content_type = img.get_format_mimetype()
+        if not content_type:
+            raise EmoteServiceException("Unsupported image provided for emote!")
+        content_type = content_type.lower()
+        if content_type not in AttachmentService.SUPPORTED_IMAGE_TYPES:
+            raise EmoteServiceException("Unsupported image provided for emote!")
+
         # Now, create a new attachment, upload the data to it, and then link the emote.
-        attachmentid = self.__data.attachment.insert_attachment(self.__config.attachments.system, content_type, None)
+        attachmentid = self.__data.attachment.insert_attachment(
+            self.__config.attachments.system,
+            content_type,
+            None,
+            {
+                'width': width,
+                'height': height,
+            },
+        )
         if attachmentid is None:
-            raise EmoteServiceException("Could not creat new emote!")
+            raise EmoteServiceException("Could not create new emote!")
 
         self.__attachments.put_attachment_data(attachmentid, data)
 
