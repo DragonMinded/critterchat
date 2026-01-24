@@ -21,9 +21,11 @@ const searchOptions = {
     attributes: function( _icon, _variant ) {
         return {
             loading: "lazy",
-        }
-    }
-}
+            width: "72",
+            height: "72",
+        };
+    },
+};
 
 /**
  * The class responsible for the chat pane in the center of the screen. This currently
