@@ -27,8 +27,14 @@ const escapeHtml = function( str ) {
         str = str.replaceAll(emoji, emojis[emoji]);
     });
     str = twemoji.parse(str, twemojiOptions);
-    Object.keys(emotes).forEach(function(emote) {
-        str = str.replaceAll(emote, "<img src='" + emotes[emote] + "' class='emote' alt='" + emote + "' />");
+    Object.keys(window.emotes).forEach(function(emote) {
+        const src = "src=\"" + window.emotes[emote].uri + "\"";
+        const dims = "width=\"" + window.emotes[emote].dimensions[0] + "\" height=\"" + window.emotes[emote].dimensions[1] + "\"";
+
+        str = str.replaceAll(
+            emote,
+            "<img " + src + " " + dims + " class=\"emote\" alt=\"" + emote + "\" title=\"" + emote + "\" />"
+        );
     });
     return str;
 }

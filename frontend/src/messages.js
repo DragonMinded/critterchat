@@ -175,13 +175,24 @@ class Messages {
         // Set up custom emotes, as well as normal emoji typeahead.
         this.autocompleteOptions = [];
         this.emojiSearchOptions = [];
-        for (const [key, value] of Object.entries(emojis)) {
-          this.autocompleteOptions.push({text: key, type: "emoji", preview: twemoji.parse(value, twemojiOptions)});
-          this.emojiSearchOptions.push({text: key, type: "emoji", preview: twemoji.parse(value, {...twemojiOptions, ...searchOptions})});
+        for (const [key, value] of Object.entries(window.emojis)) {
+            this.autocompleteOptions.push(
+                {text: key, type: "emoji", preview: twemoji.parse(value, twemojiOptions)}
+            );
+            this.emojiSearchOptions.push(
+                {text: key, type: "emoji", preview: twemoji.parse(value, {...twemojiOptions, ...searchOptions})}
+            );
         }
-        for (const [key, value] of Object.entries(emotes)) {
-          this.autocompleteOptions.push({text: key, type: "emote", preview: "<img class=\"emoji-preview\" src=\"" + value + "\" />"});
-          this.emojiSearchOptions.push({text: key, type: "emote", preview: "<img class=\"emoji-preview\" src=\"" + value + "\" loading=\"lazy\" />"});
+        for (const [key, value] of Object.entries(window.emotes)) {
+            const src = "src=\"" + value.uri + "\"";
+            const dims = "width=\"" + value.dimensions[0] + "\" height=\"" + value.dimensions[1] + "\"";
+
+            this.autocompleteOptions.push(
+                {text: key, type: "emote", preview: "<img class=\"emoji-preview\" " + src + " " + dims + " />"}
+            );
+            this.emojiSearchOptions.push(
+                {text: key, type: "emote", preview: "<img class=\"emoji-preview\" " + src + " " + dims + " loading=\"lazy\" />"}
+            );
         }
         this.emojisearchUpdate = emojisearch(this.inputState, '.emoji-search', '#message', this.emojiSearchOptions);
 
@@ -739,10 +750,17 @@ class Messages {
      * an emote is live-added, update the autocomplete typeahead and emoji search popover for that emote.
      */
     addEmotes( mapping ) {
-        for (const [alias, uri] of Object.entries(mapping)) {
-            emotes[alias] = uri;
-            this.autocompleteOptions.push({text: alias, type: "emote", preview: "<img class=\"emoji-preview\" src=\"" + uri + "\" />"});
-            this.emojiSearchOptions.push({text: alias, type: "emote", preview: "<img class=\"emoji-preview\" src=\"" + uri + "\" loading=\"lazy\" />"});
+        for (const [alias, details] of Object.entries(mapping)) {
+            window.emotes[alias] = details;
+            const src = "src=\"" + details.uri + "\"";
+            const dims = "width=\"" + details.dimensions[0] + "\" height=\"" + details.dimensions[1] + "\"";
+
+            this.autocompleteOptions.push(
+                {text: alias, type: "emote", preview: "<img class=\"emoji-preview\" " + src + " " + dims + " />"}
+            );
+            this.emojiSearchOptions.push(
+                {text: alias, type: "emote", preview: "<img class=\"emoji-preview\" " + src + " " + dims + " loading=\"lazy\" />"}
+            );
         }
 
         this.emojisearchUpdate(this.emojiSearchOptions);

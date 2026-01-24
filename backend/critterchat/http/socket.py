@@ -107,7 +107,7 @@ def background_thread_proc_impl() -> None:
                 if deletions:
                     print("Detected the following removed emotes: " + ", ".join(deletions))
                 socketio.emit('emotechanges', {
-                    'additions': {f":{alias}:": newemotes[alias] for alias in additions},
+                    'additions': {f":{alias}:": newemotes[alias].to_dict() for alias in additions},
                     'deletions': [f":{d}:" for d in deletions],
                 })
                 emotes = {k for k in newemotes}

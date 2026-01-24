@@ -64,7 +64,7 @@ def home() -> Response:
         **get_aliases_unicode_dict(),
     }
     emojis = {key: emojis[key] for key in emojis if "__" not in key}
-    emotes = {f":{key}:": val for key, val in emoteservice.get_all_emotes().items()}
+    emotes = {f":{key}:": val.to_dict() for key, val in emoteservice.get_all_emotes().items()}
 
     userid = None if (not g.user) else User.from_id(g.user.id)
     username = None if (not g.user) else g.user.username
@@ -107,7 +107,7 @@ def config() -> Dict[str, object]:
         **get_aliases_unicode_dict(),
     }
     emojis = {key: emojis[key] for key in emojis if "__" not in key}
-    emotes = {f":{key}:": val for key, val in emoteservice.get_all_emotes().items()}
+    emotes = {f":{key}:": val.to_dict() for key, val in emoteservice.get_all_emotes().items()}
 
     userid = None if (not g.user) else User.from_id(g.user.id)
     username = None if (not g.user) else g.user.username

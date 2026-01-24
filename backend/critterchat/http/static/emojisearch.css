@@ -62,5 +62,6 @@
 
 .emoji-preview {
     max-width: 48px;
-    max-height: 16px;
+    height: 16px;
+    width: auto;
 }

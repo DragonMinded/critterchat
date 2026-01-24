@@ -1,5 +1,5 @@
 from enum import IntEnum, StrEnum
-from typing import Dict, List, NewType, Optional, Set
+from typing import Dict, List, NewType, Optional, Set, Tuple
 
 
 UserID = NewType("UserID", int)
@@ -408,3 +408,15 @@ class Action:
             return ActionID(int(idstr[1:]))
         except ValueError:
             return None
+
+
+class Emote:
+    def __init__(self, uri: str, dimensions: Tuple[int, int]) -> None:
+        self.uri = uri
+        self.dimensions = dimensions
+
+    def to_dict(self) -> Dict[str, object]:
+        return {
+            "uri": self.uri,
+            "dimensions": list(self.dimensions),
+        }

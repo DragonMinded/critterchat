@@ -1,9 +1,9 @@
 import io
 from PIL import Image
-from typing import Dict
+from typing import Dict, cast
 
 from ..config import Config
-from ..data import Data
+from ..data import Data, Emote
 from .attachment import AttachmentService
 
 
@@ -17,13 +17,13 @@ class EmoteService:
         self.__data = data
         self.__attachments = AttachmentService(self.__config, self.__data)
 
-    def get_all_emotes(self) -> Dict[str, str]:
+    def get_all_emotes(self) -> Dict[str, Emote]:
         emotes = self.__data.attachment.get_emotes()
-        results: Dict[str, str] = {}
+        results: Dict[str, Emote] = {}
 
         for emote in emotes:
             url = self.__attachments.get_attachment_url(emote.attachmentid)
-            results[emote.alias] = url
+            results[emote.alias] = Emote(url, (cast(int, emote.metadata["width"]), cast(int, emote.metadata["height"])))
         return results
 
     def validate_emote(self, alias: str) -> bool:
