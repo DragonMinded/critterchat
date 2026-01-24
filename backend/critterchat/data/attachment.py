@@ -144,6 +144,20 @@ class AttachmentData(BaseData):
 
         return AttachmentID(cursor.lastrowid)
 
+    def update_attachment_metadata(self, attachmentid: AttachmentID, metadata: Dict[str, object]) -> None:
+        """
+        Given an existing attachment, update it's metadata. Normally never called, but
+        can be necessary during migrations to backfill missing metadata.
+        """
+
+        sql = """
+            UPDATE attachment
+            SET metadata = :metadata
+            WHERE id = :id
+            LIMIT 1
+        """
+        self.execute(sql, {"id": attachmentid, "metadata": json.dumps(metadata)})
+
     def remove_attachment(self, attachmentid: AttachmentID) -> None:
         """
         Given an attachment ID, remove the reference to it in the DB.

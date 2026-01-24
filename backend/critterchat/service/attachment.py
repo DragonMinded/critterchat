@@ -1,7 +1,9 @@
+import io
 import hashlib
 import json
 import mimetypes
 import os
+from PIL import Image
 from typing import Dict, Final, Optional, Tuple
 
 from ..config import Config
@@ -132,7 +134,8 @@ class AttachmentService:
 
             if (
                 Migration.HASHED_ATTACHMENTS in finished_migrations and
-                Migration.ATTACHMENT_EXTENSIONS in finished_migrations
+                Migration.ATTACHMENT_EXTENSIONS in finished_migrations and
+                Migration.IMAGE_DIMENSIONS in finished_migrations
             ):
                 # We've done all the migrations, so don't bother looking up attachments.
                 return
@@ -176,6 +179,33 @@ class AttachmentService:
 
                 # Mark that we did this migration so we never run it again.
                 self.__data.migration.flag_migrated(Migration.ATTACHMENT_EXTENSIONS)
+
+            if Migration.IMAGE_DIMENSIONS not in finished_migrations:
+                # Now, we need to load all attachments that don't have dimensions and
+                # cache the dimensions for those attachments.
+                for attachment in attachments:
+                    if attachment.content_type not in AttachmentService.SUPPORTED_IMAGE_TYPES:
+                        # We're not concerned with this.
+                        continue
+
+                    if 'width' in attachment.metadata and 'height' in attachment.metadata:
+                        # We already have dimensions on this.
+                        continue
+
+                    content_type_and_data = self.get_attachment_data(attachment.id)
+                    if content_type_and_data:
+                        _, data = content_type_and_data
+
+                        try:
+                            img = Image.open(io.BytesIO(data))
+                        except Exception:
+                            raise AttachmentServiceException(f"Unsupported image provided for {attachment.id}.")
+
+                        width, height = img.size
+                        self.__data.attachment.update_attachment_metadata(attachment.id, {'width': width, 'height': height})
+
+                # Mark that we did this migration so we never run it again.
+                self.__data.migration.flag_migrated(Migration.IMAGE_DIMENSIONS)
 
         else:
             # Unknown backend, throw since we have no known migrations.
