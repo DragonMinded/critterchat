@@ -4,7 +4,7 @@ import io
 import os
 import string
 import sys
-from PIL import Image
+from PIL import Image, ImageOps
 from typing import Optional
 
 from critterchat.data import (
@@ -331,7 +331,8 @@ def update_attachment(config: Config, attachment: str, file: str) -> None:
     except Exception:
         raise CommandException(f"Unsupported image provided for {attachment} image.")
 
-    width, height = img.size
+    transposed = ImageOps.exif_transpose(img)
+    width, height = transposed.size
     if width > AttachmentService.MAX_ICON_WIDTH or height > AttachmentService.MAX_ICON_HEIGHT:
         raise CommandException(f"Invalid image size for {attachment} image.")
     if width != height:

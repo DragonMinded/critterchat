@@ -2,7 +2,7 @@ import io
 import tempfile
 import urllib.request
 from flask import Blueprint, request
-from PIL import Image
+from PIL import Image, ImageOps
 from pydub import AudioSegment  # type: ignore
 from pydub.exceptions import CouldntDecodeError  # type: ignore
 from typing import Dict, List, Optional
@@ -63,19 +63,20 @@ def _icon_upload(uploadtype: str) -> Dict[str, object]:
     except Exception:
         raise UserException(f"Unsupported image provided for {uploadtype}.")
 
-    width, height = img.size
-
-    if width > AttachmentService.MAX_ICON_WIDTH or height > AttachmentService.MAX_ICON_HEIGHT:
-        raise UserException(f"Invalid image size for {uploadtype}. {uploadtype.capitalize()}s must be a maximum of {AttachmentService.MAX_ICON_WIDTH}x{AttachmentService.MAX_ICON_HEIGHT}")
-    if width != height:
-        raise UserException(f"{uploadtype.capitalize()} image is not square.")
-
     content_type = img.get_format_mimetype()
     if not content_type:
         raise UserException(f"{uploadtype.capitalize()} image is an unrecognized format.")
     content_type = content_type.lower()
     if content_type not in AttachmentService.SUPPORTED_IMAGE_TYPES:
         raise UserException(f"{uploadtype.capitalize()} image is an unrecognized format.")
+
+    transposed = ImageOps.exif_transpose(img)
+    width, height = transposed.size
+
+    if width > AttachmentService.MAX_ICON_WIDTH or height > AttachmentService.MAX_ICON_HEIGHT:
+        raise UserException(f"Invalid image size for {uploadtype}. {uploadtype.capitalize()}s must be a maximum of {AttachmentService.MAX_ICON_WIDTH}x{AttachmentService.MAX_ICON_HEIGHT}")
+    if width != height:
+        raise UserException(f"{uploadtype.capitalize()} image is not square.")
 
     attachmentid = attachmentservice.create_attachment(content_type, None, {'width': width, 'height': height})
     if attachmentid is None:
@@ -220,14 +221,15 @@ def attachments_upload() -> Dict[str, object]:
         except Exception:
             raise UserException(f'Chosen attachment {filename} is not a supported image.')
 
-        width, height = img.size
-
         content_type = img.get_format_mimetype()
         if not content_type:
             raise UserException(f'Chosen attachment {filename} is not a supported image.')
         content_type = content_type.lower()
         if content_type not in AttachmentService.SUPPORTED_IMAGE_TYPES:
             raise UserException(f'Chosen attachment {filename} is not a supported image.')
+
+        transposed = ImageOps.exif_transpose(img)
+        width, height = transposed.size
 
         # The image is validated at this point, so we can attach it and return the ID.
         attachmentid = attachmentservice.create_attachment(content_type, filename, {'width': width, 'height': height})

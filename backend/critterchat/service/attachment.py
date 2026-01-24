@@ -3,7 +3,7 @@ import hashlib
 import json
 import mimetypes
 import os
-from PIL import Image
+from PIL import Image, ImageOps
 from typing import Dict, Final, Optional, Tuple
 
 from ..config import Config
@@ -201,7 +201,8 @@ class AttachmentService:
                         except Exception:
                             raise AttachmentServiceException(f"Unsupported image provided for {attachment.id}.")
 
-                        width, height = img.size
+                        transposed = ImageOps.exif_transpose(img)
+                        width, height = transposed.size
                         self.__data.attachment.update_attachment_metadata(attachment.id, {'width': width, 'height': height})
 
                 # Mark that we did this migration so we never run it again.

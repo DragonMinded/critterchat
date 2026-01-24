@@ -1,5 +1,5 @@
 import io
-from PIL import Image
+from PIL import Image, ImageOps
 from typing import Dict, cast
 
 from ..config import Config
@@ -57,13 +57,15 @@ class EmoteService:
         except Exception:
             raise EmoteServiceException("Unsupported image provided for emote!")
 
-        width, height = img.size
         content_type = img.get_format_mimetype()
         if not content_type:
             raise EmoteServiceException("Unsupported image provided for emote!")
         content_type = content_type.lower()
         if content_type not in AttachmentService.SUPPORTED_IMAGE_TYPES:
             raise EmoteServiceException("Unsupported image provided for emote!")
+
+        transposed = ImageOps.exif_transpose(img)
+        width, height = transposed.size
 
         # Now, create a new attachment, upload the data to it, and then link the emote.
         attachmentid = self.__data.attachment.insert_attachment(
