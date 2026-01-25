@@ -103,9 +103,23 @@ class Messages {
         $( document ).on( 'keydown', (evt) => {
             // Figure out if the user started typing, so we can redirect to the input control.
             const key = evt.key;
-            const control = (key.length != 1 || key == " ");
+            const control = (key.length != 1) || (key == " ") || evt.ctrlKey || evt.metaKey || evt.altKey;
             const isBody = $(evt.target).is("body");
-            if (control | !isBody) {
+            const isPaste = (
+                // Windows/linux paste.
+                ((key == "v" || key == "V") && evt.ctrlKey) ||
+                // Old style shift-insert paste.
+                (key == "Insert" && evt.shiftKey) ||
+                // OSX paste.
+                ((key == "v" || key == "V") && evt.metaKey)
+            );
+
+            // Ignore events not to the global body.
+            if (!isBody) {
+                return;
+            }
+            // Ignore non-paste control and non-printable keys.
+            if (control && !isPaste) {
                 return;
             }
 
