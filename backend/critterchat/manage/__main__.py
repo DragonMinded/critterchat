@@ -13,7 +13,6 @@ from critterchat.data import (
     UserPermission,
     User,
     Room,
-    NewRoomID,
     NewUserID,
     DefaultAvatarID,
     DefaultRoomID,
@@ -26,6 +25,7 @@ from critterchat.service import (
     EmoteService,
     EmoteServiceException,
     MessageService,
+    MessageServiceException,
     UserService,
     UserServiceException,
 )
@@ -376,17 +376,21 @@ def list_public_rooms(config: Config) -> None:
     """
 
     data = Data(config)
-    messageservice = MessageService(config, data)
-    rooms = messageservice.get_public_rooms()
-    autojoin_ids = {room.id for room in messageservice.get_autojoin_rooms(NewUserID)}
-    data.close()
+    try:
+        messageservice = MessageService(config, data)
+        rooms = messageservice.get_public_rooms(NewUserID)
+        autojoin_ids = {room.id for room in messageservice.get_autojoin_rooms(NewUserID)}
 
-    for room in rooms:
-        print(f"ID: {Room.from_id(room.id)}")
-        print(f"Name: {room.name}")
-        print(f"Topic: {room.topic}")
-        print(f"Autojoin: {'on' if room.id in autojoin_ids else 'off'}")
-        print("")
+        for room in rooms:
+            print(f"ID: {Room.from_id(room.id)}")
+            print(f"Name: {room.name}")
+            print(f"Topic: {room.topic}")
+            print(f"Autojoin: {'on' if room.id in autojoin_ids else 'off'}")
+            print("")
+    except MessageServiceException as e:
+        raise CommandException(str(e))
+    finally:
+        data.close()
 
 
 def create_public_room(config: Config, name: Optional[str], topic: Optional[str], autojoin: str) -> None:
@@ -396,26 +400,19 @@ def create_public_room(config: Config, name: Optional[str], topic: Optional[str]
     """
 
     data = Data(config)
-    messageservice = MessageService(config, data)
-    room = Room(NewRoomID, name or "", topic or "", True, None, None)
-    data.room.create_room(room)
+    try:
+        messageservice = MessageService(config, data)
+        room = messageservice.create_public_room(name or "", topic or "", autojoin == "on")
 
-    if autojoin == "on":
-        data.room.set_room_autojoin(room.id, True)
+        if autojoin == "on":
+            print(f"Room created with ID {Room.from_id(room.id)} and all activated users joined to the room.")
+        else:
+            print(f"Room created with ID {Room.from_id(room.id)}.")
 
-        for user in data.user.get_users():
-            if UserPermission.ACTIVATED not in user.permissions:
-                continue
-
-            messageservice.join_room(room.id, user.id)
-
-        print(f"Room created with ID {Room.from_id(room.id)} and all activated users joined to the room.")
-    else:
-        data.room.set_room_autojoin(room.id, False)
-
-        print(f"Room created with ID {Room.from_id(room.id)}.")
-
-    data.close()
+    except MessageServiceException as e:
+        raise CommandException(str(e))
+    finally:
+        data.close()
 
 
 def modify_public_room_autojoin(config: Config, roomid: str, autojoin: str) -> None:
@@ -425,20 +422,22 @@ def modify_public_room_autojoin(config: Config, roomid: str, autojoin: str) -> N
     """
 
     data = Data(config)
-    actual_id = Room.to_id(roomid)
-    if actual_id is None:
-        raise CommandException("Room ID is not valid!")
+    try:
+        actual_id = Room.to_id(roomid)
+        if actual_id is None:
+            raise CommandException("Room ID is not valid!")
+        messageservice = MessageService(config, data)
+        messageservice.update_public_room_autojoin(actual_id, autojoin == "on")
 
-    if autojoin == "on":
-        data.room.set_room_autojoin(actual_id, True)
+        if autojoin == "on":
+            print(f"Room with ID {Room.from_id(actual_id)} set to auto join new users.")
+        else:
+            print(f"Room with ID {Room.from_id(actual_id)} set to not auto join new users.")
 
-        print(f"Room with ID {Room.from_id(actual_id)} set to auto join new users.")
-    else:
-        data.room.set_room_autojoin(actual_id, False)
-
-        print(f"Room with ID {Room.from_id(actual_id)} set to not auto join new users.")
-
-    data.close()
+    except MessageServiceException as e:
+        raise CommandException(str(e))
+    finally:
+        data.close()
 
 
 def main() -> None:

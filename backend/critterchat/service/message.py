@@ -13,6 +13,7 @@ from ..data import (
     RoomType,
     RoomSearchResult,
     User,
+    UserPermission,
     DefaultAvatarID,
     DefaultRoomID,
     FaviconID,
@@ -220,7 +221,46 @@ class MessageService:
         if room_type == RoomType.ROOM:
             self.__attachments.resolve_room_icon(room)
 
-    def create_room(self, userid: UserID, otherid: UserID) -> Room:
+    def create_public_room(self, name: str, topic: str, autojoin: bool = False) -> Room:
+        # Create a new public room, possibly with auto-join enabled, and return it. If auto-join is
+        # enabled then join all existing users to the room after creating.
+        room = Room(NewRoomID, name, topic, True, None, None)
+        self.__data.room.create_room(room)
+
+        if autojoin:
+            self.__data.room.set_room_autojoin(room.id, True)
+
+            for user in self.__data.user.get_users():
+                if UserPermission.ACTIVATED not in user.permissions:
+                    continue
+
+                self.join_room(room.id, user.id)
+        else:
+            self.__data.room.set_room_autojoin(room.id, False)
+
+        # Finally, return the room.
+        return room
+
+    def lookup_room(self, roomid: RoomID, userid: UserID) -> Optional[Room]:
+        room = self.__data.room.get_room(roomid)
+        if room:
+            self.__infer_room_info(userid, room)
+        return room
+
+    def update_public_room_autojoin(self, roomid: RoomID, autojoin: bool) -> Room:
+        # First, look up the room, making sure it exists.
+        room = self.__data.room.get_room(roomid)
+        if not room:
+            raise MessageServiceException("Room does not exist!")
+
+        # Grab info, update the autojoin property.
+        self.__infer_room_info(NewUserID, room)
+        self.__data.room.set_room_autojoin(room.id, autojoin)
+
+        # Finally, return the room.
+        return room
+
+    def create_chat(self, userid: UserID, otherid: UserID) -> Room:
         # First, find all rooms that the first user is in or was ever in.
         rooms = self.__data.room.get_joined_rooms(userid, include_left=True)
 
@@ -334,10 +374,10 @@ class MessageService:
         for room in rooms:
             self.__data.room.join_room(room.id, userid)
 
-    def get_public_rooms(self) -> List[Room]:
+    def get_public_rooms(self, userid: UserID) -> List[Room]:
         rooms = self.__data.room.get_public_rooms()
         for room in rooms:
-            self.__infer_room_info(NewUserID, room)
+            self.__infer_room_info(userid, room)
         return rooms
 
     def get_matching_rooms(self, userid: UserID, *, name: Optional[str] = None) -> List[RoomSearchResult]:

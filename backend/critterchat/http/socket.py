@@ -800,7 +800,7 @@ def joinroom(json: Dict[str, object]) -> None:
 
         otherid = User.to_id(str(json.get('roomid')))
         if otherid:
-            room = messageservice.create_room(userid, otherid)
+            room = messageservice.create_chat(userid, otherid)
             if room:
                 actual_id = room.id
 
