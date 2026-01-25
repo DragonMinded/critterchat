@@ -1,7 +1,6 @@
 TODO Immediate
 ==============
 
- - Highlight detection should work with punctuation.
  - Update PROTOCOL.md with changed upload style.
  - Image attachment carousel on click.
  - Allow spoilering previews.

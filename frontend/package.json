@@ -6,7 +6,7 @@
   "scripts": {
     "build": "webpack --mode production",
     "debug": "webpack --mode development",
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "jest",
     "lint": "npx eslint src/",
     "clean": "cd $INIT_CWD/../backend/critterchat/http/static && rm -f chat.*.js && rm -f chat.*.txt"
   },
@@ -16,7 +16,10 @@
   "devDependencies": {
     "@eslint/js": "^9.30.1",
     "assets-webpack-plugin": "^7.1.1",
+    "babel-jest": "^30.2.0",
     "eslint": "^9.30.1",
+    "jest": "^30.2.0",
+    "ts-jest": "^29.4.6",
     "webpack": "^5.99.9",
     "webpack-cli": "^6.0.1"
   },

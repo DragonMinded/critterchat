@@ -8,6 +8,7 @@ import {
     scrollTopMax,
     isInViewport,
     containsStandaloneText,
+    highlightStandaloneText,
 } from "./utils.js";
 import { emojisearch } from "./components/emojisearch.js";
 import { autocomplete } from "./components/autocomplete.js";
@@ -1060,45 +1061,10 @@ class Messages {
      */
     _highlight( msg ) {
         var actualuser = escapeHtml('@' + window.username).toLowerCase();
-
-        if( msg.length < actualuser.length ) {
-            return msg;
-        }
-
         var before = '<span class="name-highlight" dir="auto">';
         var after = '</span>';
-        var pos = 0;
-        while (pos <= (msg.length - actualuser.length)) {
-            if (pos > 0) {
-                if (msg.substring(pos - 1, pos) != " ") {
-                    pos ++;
-                    continue;
-                }
-            }
-            if (pos < (msg.length - actualuser.length)) {
-                if (msg.substring(pos + actualuser.length, pos + actualuser.length + 1) != " ") {
-                    pos ++;
-                    continue;
-                }
-            }
 
-            if (msg.substring(pos, pos + actualuser.length).toLowerCase() != actualuser) {
-                pos++;
-                continue;
-            }
-
-            msg = (
-                msg.substring(0, pos) +
-                before +
-                msg.substring(pos, pos + actualuser.length) +
-                after +
-                msg.substring(pos + actualuser.length, msg.length)
-            );
-
-            pos += actualuser.length + before.length + after.length;
-        }
-
-        return msg;
+        return highlightStandaloneText( msg, actualuser, before, after );
     }
 }
 

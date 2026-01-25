@@ -182,13 +182,35 @@ const containsStandaloneText = function( haystack, needle ) {
     var pos = 0;
     while (pos <= (haystack.length - needle.length)) {
         if (pos > 0) {
-            if (haystack.substring(pos - 1, pos) != " ") {
+            const beforeChar = haystack.substring(pos - 1, pos);
+            if (
+                beforeChar != " " &&
+                beforeChar != "\t" &&
+                beforeChar != "(" &&
+                beforeChar != "[" &&
+                beforeChar != "{" &&
+                beforeChar != ">"
+            ) {
                 pos ++;
                 continue;
             }
         }
         if (pos < (haystack.length - needle.length)) {
-            if (haystack.substring(pos + needle.length, pos + needle.length + 1) != " ") {
+            const afterChar = haystack.substring(pos + needle.length, pos + needle.length + 1);
+            if (
+                afterChar != " " &&
+                afterChar != "\t" &&
+                afterChar != ")" &&
+                afterChar != "]" &&
+                afterChar != "}" &&
+                afterChar != "<" &&
+                afterChar != "!" &&
+                afterChar != "?" &&
+                afterChar != ";" &&
+                afterChar != ":" &&
+                afterChar != "," &&
+                afterChar != "."
+            ) {
                 pos ++;
                 continue;
             }
@@ -205,6 +227,73 @@ const containsStandaloneText = function( haystack, needle ) {
     return false;
 }
 
+/**
+ * Given a haystack to search through, a needle to search, and a before and after to surround any found
+ * text with, does that surrounding. Note that this has the same rules as the standalone text contains
+ * function above, where both sides need to be surrounded by whitespace or the start/end of message.
+ */
+const highlightStandaloneText = function( haystack, needle, before, after ) {
+    if( haystack.length < needle.length ) {
+        return haystack;
+    }
+
+    var pos = 0;
+    while (pos <= (haystack.length - needle.length)) {
+        if (pos > 0) {
+            const beforeChar = haystack.substring(pos - 1, pos);
+            if (
+                beforeChar != " " &&
+                beforeChar != "\t" &&
+                beforeChar != "(" &&
+                beforeChar != "[" &&
+                beforeChar != "{" &&
+                beforeChar != ">"
+            ) {
+                pos ++;
+                continue;
+            }
+        }
+        if (pos < (haystack.length - needle.length)) {
+            const afterChar = haystack.substring(pos + needle.length, pos + needle.length + 1);
+            if (
+                afterChar != " " &&
+                afterChar != "\t" &&
+                afterChar != ")" &&
+                afterChar != "]" &&
+                afterChar != "}" &&
+                afterChar != "<" &&
+                afterChar != "!" &&
+                afterChar != "?" &&
+                afterChar != ";" &&
+                afterChar != ":" &&
+                afterChar != "," &&
+                afterChar != "."
+            ) {
+                pos ++;
+                continue;
+            }
+        }
+
+        if (haystack.substring(pos, pos + needle.length).toLowerCase() != needle) {
+            pos++;
+            continue;
+        }
+
+        haystack = (
+            haystack.substring(0, pos) +
+            before +
+            haystack.substring(pos, pos + needle.length) +
+            after +
+            haystack.substring(pos + needle.length, haystack.length)
+        );
+
+        pos += needle.length + before.length + after.length;
+    }
+
+    return haystack;
+}
+
+
 export {
     escapeHtml,
     formatTime,
@@ -217,4 +306,5 @@ export {
     flashHook,
     getSelectionText,
     containsStandaloneText,
+    highlightStandaloneText,
 };
