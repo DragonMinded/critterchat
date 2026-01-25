@@ -321,7 +321,7 @@ export function manager(socket) {
                         eventBus.emit("notification", {"action": "messageSend", "type": roomType})
                     } else {
                         const escaped = escapeHtml(message.details);
-                        const actualuser = escapeHtml('@' + window.username);
+                        const actualuser = '@' + window.username;
                         if (containsStandaloneText(escaped, actualuser)) {
                             eventBus.emit("notification", {"action": "mention", "type": roomType});
                         } else {

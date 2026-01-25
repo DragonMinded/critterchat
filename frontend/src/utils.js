@@ -236,6 +236,10 @@ const highlightStandaloneText = function( haystack, needle, before, after ) {
     if( haystack.length < needle.length ) {
         return haystack;
     }
+    needle = needle.toLowerCase();
+    if (!haystack.toLowerCase().includes(needle)) {
+        return haystack;
+    }
 
     var pos = 0;
     while (pos <= (haystack.length - needle.length)) {

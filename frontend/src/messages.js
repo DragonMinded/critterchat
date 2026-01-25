@@ -930,7 +930,7 @@ class Messages {
             });
 
             // Allow clicking on a username in the message itself.
-            $('span.name-link').on('click', (event) => {
+            $('div.item#' + message.id + ' span.name-link').on('click', (event) => {
                 event.stopPropagation();
                 event.stopImmediatePropagation();
 
@@ -1021,7 +1021,11 @@ class Messages {
      * converts and links found in the message to clickable DOM elements.
      */
     _formatMessage( message ) {
-        return linkifyHtml(this._embiggen(this._clickulate(this._highlight(escapeHtml(message)))), linkifyOptions);
+        if (message.includes("@")) {
+            return linkifyHtml(this._embiggen(this._clickulate(this._highlight(escapeHtml(message)))), linkifyOptions);
+        } else {
+            return linkifyHtml(this._embiggen(escapeHtml(message)), linkifyOptions);
+        }
     }
 
     /**
@@ -1031,7 +1035,7 @@ class Messages {
      * wrote the message.
      */
     _highlight( msg ) {
-        var actualuser = escapeHtml('@' + window.username).toLowerCase();
+        var actualuser = '@' + window.username;
         var before = '<span class="name-highlight">';
         var after = '</span>';
 
@@ -1049,7 +1053,7 @@ class Messages {
         }
 
         this.occupants.forEach((occupant) => {
-            var user = escapeHtml('@' + occupant.username).toLowerCase();
+            var user = '@' + occupant.username;
             var before = '<span class="name-link" id="' + occupant.id + '">';
             var after = '</span>';
 
@@ -1065,7 +1069,7 @@ class Messages {
      */
     _wasHighlighted( message ) {
         const escaped = escapeHtml(message);
-        const actualuser = escapeHtml('@' + window.username);
+        const actualuser = '@' + window.username;
         return containsStandaloneText(escaped, actualuser);
     }
 
