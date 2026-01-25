@@ -796,25 +796,6 @@ class Messages {
     }
 
     /**
-     * Given a user-generated message, makes sure any HTML characters are escaped, highlights the user
-     * if they were mentioned, formats the message as larger graphics if it contains only emoji, and
-     * converts and links found in the message to clickable DOM elements.
-     */
-    _formatMessage( message ) {
-        return linkifyHtml(this._embiggen(this._highlight(escapeHtml(message))), linkifyOptions);
-    }
-
-    /**
-     * Return true if the raw text of a message sent by a user contains the current user's username
-     * with a @ prefix (a mention) or false otherwise.
-     */
-    _wasHighlighted( message ) {
-        const escaped = escapeHtml(message);
-        const actualuser = escapeHtml('@' + window.username);
-        return containsStandaloneText(escaped, actualuser);
-    }
-
-    /**
      * Returns image dimensions, capped to a given maximum height, respecting aspect ratios.
      */
     _getDims( attachment, desiredHeight ) {
@@ -947,6 +928,15 @@ class Messages {
                 var id = $(event.currentTarget).attr('id')
                 this.eventBus.emit('displayprofile', id);
             });
+
+            // Allow clicking on a username in the message itself.
+            $('span.name-link').on('click', (event) => {
+                event.stopPropagation();
+                event.stopImmediatePropagation();
+
+                var id = $(event.currentTarget).attr('id')
+                this.eventBus.emit('displayprofile', id);
+            });
         }
 
         this._updateLastAction(message);
@@ -1026,6 +1016,60 @@ class Messages {
     }
 
     /**
+     * Given a user-generated message, makes sure any HTML characters are escaped, highlights the user
+     * if they were mentioned, formats the message as larger graphics if it contains only emoji, and
+     * converts and links found in the message to clickable DOM elements.
+     */
+    _formatMessage( message ) {
+        return linkifyHtml(this._embiggen(this._clickulate(this._highlight(escapeHtml(message)))), linkifyOptions);
+    }
+
+    /**
+     * Walks an already HTML-stripped and emojified message to see if any part of it is a reference
+     * to the current user. If so, wraps that chunk of text in a highlight div, but does not change
+     * capitalization. This allows your own name to be highlighted without rewriting how somebody
+     * wrote the message.
+     */
+    _highlight( msg ) {
+        var actualuser = escapeHtml('@' + window.username).toLowerCase();
+        var before = '<span class="name-highlight">';
+        var after = '</span>';
+
+        return highlightStandaloneText( msg, actualuser, before, after );
+    }
+
+    /**
+     * Walks an already HTML-stripped and emojified message to make all usernames found in that message
+     * clickable to go to the user's profile. Note that this works alongside the highlight above for
+     * self-highlighting messages.
+     */
+    _clickulate( msg ) {
+        if (!this.occupantsLoaded) {
+            return msg;
+        }
+
+        this.occupants.forEach((occupant) => {
+            var user = escapeHtml('@' + occupant.username).toLowerCase();
+            var before = '<span class="name-link" id="' + occupant.id + '">';
+            var after = '</span>';
+
+            msg = highlightStandaloneText( msg, user, before, after );
+        });
+
+        return msg;
+    }
+
+    /**
+     * Return true if the raw text of a message sent by a user contains the current user's username
+     * with a @ prefix (a mention) or false otherwise.
+     */
+    _wasHighlighted( message ) {
+        const escaped = escapeHtml(message);
+        const actualuser = escapeHtml('@' + window.username);
+        return containsStandaloneText(escaped, actualuser);
+    }
+
+    /**
      * Takes an already HTML-stripped and emojified message and figures out if it contains only
      * emoji/emotes. If so, it makes them bigger because bigger emoji is more fun.
      */
@@ -1051,20 +1095,6 @@ class Messages {
         }
 
         return msg;
-    }
-
-    /**
-     * Walks an already HTML-stripped and emojified message to see if any part of it is a reference
-     * to the current user. If so, wraps that chunk of text in a highlight div, but does not change
-     * capitalization. This allows your own name to be highlighted without rewriting how somebody
-     * wrote the message.
-     */
-    _highlight( msg ) {
-        var actualuser = escapeHtml('@' + window.username).toLowerCase();
-        var before = '<span class="name-highlight" dir="auto">';
-        var after = '</span>';
-
-        return highlightStandaloneText( msg, actualuser, before, after );
     }
 }
 

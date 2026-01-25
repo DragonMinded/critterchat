@@ -966,6 +966,10 @@ div.emoji-search:hover, div.emoji-search.opened {
     font-weight: bold;
 }
 
+.name-link {
+    cursor: pointer;
+}
+
 div.newseparator > div.content-wrapper {
     display: flex;
     flex-direction: row;
