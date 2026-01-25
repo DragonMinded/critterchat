@@ -2,7 +2,6 @@ TODO Immediate
 ==============
 
  - Update PROTOCOL.md with changed upload style.
- - Image attachment carousel on click.
  - Allow spoilering previews.
  - Alt text for image attachments.
  - Support bitmaps in upload by converting to png files.
@@ -27,3 +26,4 @@ TODO Low Priority
  - Support creating an account flow with ability to disable instance-side and setting for auto-activate or moderator activate.
  - Allow config-based image attachment disable.
  - Support arbitrary info fields in profile for links to other services, etc.
+ - Image attachment carousel instead of opening images in new browser tab.
