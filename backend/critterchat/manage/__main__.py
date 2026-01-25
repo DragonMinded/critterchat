@@ -1,10 +1,8 @@
 import argparse
 import getpass
-import io
 import os
 import string
 import sys
-from PIL import Image, ImageOps
 from typing import Optional
 
 from critterchat.data import (
@@ -346,21 +344,17 @@ def update_attachment(config: Config, attachment: str, file: str) -> None:
     with open(file, "rb") as bfp:
         attachmentdata = bfp.read()
 
-    try:
-        img = Image.open(io.BytesIO(attachmentdata))
-    except Exception:
-        raise CommandException(f"Unsupported image provided for {attachment} image.")
-
-    transposed = ImageOps.exif_transpose(img)
-    width, height = transposed.size
-    if width > AttachmentService.MAX_ICON_WIDTH or height > AttachmentService.MAX_ICON_HEIGHT:
-        raise CommandException(f"Invalid image size for {attachment} image.")
-    if width != height:
-        raise CommandException(f"Image for {attachment} is not square.")
-
     data = Data(config)
     try:
         attachmentservice = AttachmentService(config, data)
+        attachmentdata, width, height, content_type = attachmentservice.prepare_attachment_image(
+            attachmentdata,
+            AttachmentService.MAX_ICON_WIDTH,
+            AttachmentService.MAX_ICON_HEIGHT,
+        )
+        if width != height:
+            raise CommandException(f"Image for {attachment} is not square.")
+
         attachmentservice.put_attachment_data(actual, attachmentdata)
 
         print(f"Updated {attachment} image with new data from {file}.")

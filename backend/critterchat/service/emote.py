@@ -1,10 +1,8 @@
-import io
-from PIL import Image, ImageOps
 from typing import Dict, cast
 
 from ..config import Config
 from ..data import Data, Emote
-from .attachment import AttachmentService
+from .attachment import AttachmentService, AttachmentServiceUnsupportedImageException, AttachmentServiceException
 
 
 class EmoteServiceException(Exception):
@@ -53,19 +51,11 @@ class EmoteService:
             raise EmoteServiceException("Emote name already in use!")
 
         try:
-            img = Image.open(io.BytesIO(data))
-        except Exception:
+            data, width, height, content_type = self.__attachments.prepare_attachment_image(data)
+        except AttachmentServiceUnsupportedImageException:
             raise EmoteServiceException("Unsupported image provided for emote!")
-
-        content_type = img.get_format_mimetype()
-        if not content_type:
-            raise EmoteServiceException("Unsupported image provided for emote!")
-        content_type = content_type.lower()
-        if content_type not in AttachmentService.SUPPORTED_IMAGE_TYPES:
-            raise EmoteServiceException("Unsupported image provided for emote!")
-
-        transposed = ImageOps.exif_transpose(img)
-        width, height = transposed.size
+        except AttachmentServiceException as e:
+            raise EmoteServiceException(str(e))
 
         # Now, create a new attachment, upload the data to it, and then link the emote.
         attachmentid = self.__data.attachment.insert_attachment(

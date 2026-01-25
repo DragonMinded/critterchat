@@ -1,15 +1,13 @@
-import io
 import tempfile
 import urllib.request
 from flask import Blueprint, request
-from PIL import Image, ImageOps
 from pydub import AudioSegment  # type: ignore
 from pydub.exceptions import CouldntDecodeError  # type: ignore
 from typing import Dict, List, Optional
 
 from .app import UserException, app, static_location, templates_location, loginrequired, jsonify, g
 from ..data import Attachment, UserNotification
-from ..service import AttachmentService
+from ..service import AttachmentService, AttachmentServiceUnsupportedImageException, AttachmentServiceInvalidSizeException
 
 
 upload = Blueprint(
@@ -59,22 +57,16 @@ def _icon_upload(uploadtype: str) -> Dict[str, object]:
         raise Exception(f'{uploadtype.capitalize()} data corrupt or not provided in upload.')
 
     try:
-        img = Image.open(io.BytesIO(icon))
-    except Exception:
-        raise UserException(f"Unsupported image provided for {uploadtype}.")
-
-    content_type = img.get_format_mimetype()
-    if not content_type:
+        icon, width, height, content_type = attachmentservice.prepare_attachment_image(
+            icon,
+            AttachmentService.MAX_ICON_WIDTH,
+            AttachmentService.MAX_ICON_HEIGHT,
+        )
+    except AttachmentServiceUnsupportedImageException:
         raise UserException(f"{uploadtype.capitalize()} image is an unrecognized format.")
-    content_type = content_type.lower()
-    if content_type not in AttachmentService.SUPPORTED_IMAGE_TYPES:
-        raise UserException(f"{uploadtype.capitalize()} image is an unrecognized format.")
-
-    transposed = ImageOps.exif_transpose(img)
-    width, height = transposed.size
-
-    if width > AttachmentService.MAX_ICON_WIDTH or height > AttachmentService.MAX_ICON_HEIGHT:
+    except AttachmentServiceInvalidSizeException:
         raise UserException(f"Invalid image size for {uploadtype}. {uploadtype.capitalize()}s must be a maximum of {AttachmentService.MAX_ICON_WIDTH}x{AttachmentService.MAX_ICON_HEIGHT}")
+
     if width != height:
         raise UserException(f"{uploadtype.capitalize()} image is not square.")
 
@@ -196,13 +188,6 @@ def attachments_upload() -> Dict[str, object]:
         # TODO: At some point we'll support arbitrary attachments, but for now limit
         # to known image types.
 
-        # TODO: At some point we should convert some image files such as BMP and raw
-        # images that we support to PNG instead of rejecting.
-
-        mimetype = attachmentservice.get_content_type(filename)
-        if mimetype not in AttachmentService.SUPPORTED_IMAGE_TYPES:
-            raise UserException(f'Chosen attachment {filename} is not a supported image.')
-
         header, b64data = rawdata.split(",", 1)
         if not header.startswith("data:") or not header.endswith("base64"):
             raise UserException(f'Chosen attachment {filename} is not valid!')
@@ -217,19 +202,9 @@ def attachments_upload() -> Dict[str, object]:
         # Now, verify the image is actually loadable and the right mimetype. Stop
         # people from trying to abuse uploads to store executables or zip files.
         try:
-            img = Image.open(io.BytesIO(attachmentdata))
-        except Exception:
+            attachmentdata, width, height, content_type = attachmentservice.prepare_attachment_image(attachmentdata)
+        except AttachmentServiceUnsupportedImageException:
             raise UserException(f'Chosen attachment {filename} is not a supported image.')
-
-        content_type = img.get_format_mimetype()
-        if not content_type:
-            raise UserException(f'Chosen attachment {filename} is not a supported image.')
-        content_type = content_type.lower()
-        if content_type not in AttachmentService.SUPPORTED_IMAGE_TYPES:
-            raise UserException(f'Chosen attachment {filename} is not a supported image.')
-
-        transposed = ImageOps.exif_transpose(img)
-        width, height = transposed.size
 
         # The image is validated at this point, so we can attach it and return the ID.
         attachmentid = attachmentservice.create_attachment(content_type, filename, {'width': width, 'height': height})

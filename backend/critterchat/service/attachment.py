@@ -32,6 +32,14 @@ class AttachmentServiceException(Exception):
     pass
 
 
+class AttachmentServiceUnsupportedImageException(AttachmentServiceException):
+    pass
+
+
+class AttachmentServiceInvalidSizeException(AttachmentServiceException):
+    pass
+
+
 _hash_to_id_lut: Dict[str, AttachmentID] = {}
 _id_to_hash_lut: Dict[AttachmentID, str] = {}
 
@@ -199,7 +207,7 @@ class AttachmentService:
                         try:
                             img = Image.open(io.BytesIO(data))
                         except Exception:
-                            raise AttachmentServiceException(f"Unsupported image provided for {attachment.id}.")
+                            raise AttachmentServiceUnsupportedImageException(f"Unsupported image provided for {attachment.id}.")
 
                         transposed = ImageOps.exif_transpose(img)
                         width, height = transposed.size
@@ -326,6 +334,28 @@ class AttachmentService:
         else:
             # Unknown backend, throw.
             raise AttachmentServiceException("Unrecognized backend system!")
+
+    def prepare_attachment_image(self, data: bytes, max_width: Optional[int] = None, max_height: Optional[int] = None) -> Tuple[bytes, int, int, str]:
+        try:
+            img = Image.open(io.BytesIO(data))
+        except Exception:
+            raise AttachmentServiceUnsupportedImageException("Unsupported image provided for attachment.")
+
+        transposed = ImageOps.exif_transpose(img)
+        width, height = transposed.size
+        if max_width is not None and width > max_width:
+            raise AttachmentServiceInvalidSizeException("Invalid image size for attachment.")
+        if max_height is not None and height > max_height:
+            raise AttachmentServiceInvalidSizeException("Invalid image size for attachment.")
+
+        content_type = img.get_format_mimetype()
+        if not content_type:
+            raise AttachmentServiceUnsupportedImageException("Attachment image is an unrecognized format.")
+        content_type = content_type.lower()
+        if content_type not in self.SUPPORTED_IMAGE_TYPES:
+            raise AttachmentServiceUnsupportedImageException("Attachment image is an unrecognized format.")
+
+        return data, width, height, content_type
 
     def resolve_user_icon(self, user: User) -> User:
         if user.iconid is None:
