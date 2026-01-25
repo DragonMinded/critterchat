@@ -269,6 +269,15 @@ class MessageService:
         # Sanitize inputs.
         if icon == DefaultAvatarID or icon == DefaultRoomID or icon == FaviconID:
             icon = None
+        if icon is not None:
+            icondata = self.__data.attachment.lookup_attachment(icon)
+            if icondata is None:
+                # Skip adding this icon, it's not valid.
+                raise MessageServiceException("Updated room icon is not valid!")
+
+            if icondata.content_type not in AttachmentService.SUPPORTED_IMAGE_TYPES:
+                # Trying to sneak a bad attachment in.
+                raise MessageServiceException("Updated room icon is not valid!")
 
         room = self.__data.room.get_room(roomid)
         if room:

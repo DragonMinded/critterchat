@@ -118,6 +118,16 @@ class UserService:
             except KeyError:
                 continue
 
+            # Ensure that the sound is actually valid and not something random.
+            notificationdata = self.__data.attachment.lookup_attachment(attachmentid)
+            if notificationdata is None:
+                # Skip adding this notification, it's not valid.
+                raise UserServiceException("Notification is not valid!")
+
+            if notificationdata.content_type not in {"audio/mpeg"}:
+                # Trying to sneak a bad attachment in.
+                raise UserServiceException("Notification is not valid!")
+
             self.__data.attachment.set_notification(userid, str(actual.name), attachmentid)
 
         # Now, handle deleting any deleted notification sounds.
@@ -178,6 +188,15 @@ class UserService:
         # Sanitize inputs.
         if icon == DefaultAvatarID or icon == DefaultRoomID or icon == FaviconID:
             icon = None
+        if icon is not None:
+            icondata = self.__data.attachment.lookup_attachment(icon)
+            if icondata is None:
+                # Skip adding this icon, it's not valid.
+                raise UserServiceException("Updated avatar not valid!")
+
+            if icondata.content_type not in AttachmentService.SUPPORTED_IMAGE_TYPES:
+                # Trying to sneak a bad attachment in.
+                raise UserServiceException("Updated avatar is not valid!")
 
         # Grab rooms the user is in so we can figure out which ones need updating.
         old_occupancy = self.__data.room.get_joined_room_occupants(userid)

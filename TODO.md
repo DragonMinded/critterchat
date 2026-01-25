@@ -1,7 +1,6 @@
 TODO Immediate
 ==============
 
- - Validate mime type of notifications and icons when attaching in services.
  - Highlight detection should work with punctuation.
  - Update PROTOCOL.md with changed upload style.
  - Image attachment carousel on click.
