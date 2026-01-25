@@ -554,6 +554,24 @@ def updatepreferences(json: Dict[str, object]) -> None:
             "light": "light",
             "dark": "dark",
         }.get(str(new_color_scheme))
+    new_desktop_size = json.get('desktop_size', None)
+    if new_desktop_size is not None:
+        new_desktop_size = {
+            "smallest": "smallest",
+            "smaller": "smaller",
+            "normal": "normal",
+            "larger": "larger",
+            "largest": "largest",
+        }.get(str(new_desktop_size))
+    new_mobile_size = json.get('mobile_size', None)
+    if new_mobile_size is not None:
+        new_mobile_size = {
+            "smallest": "smallest",
+            "smaller": "smaller",
+            "normal": "normal",
+            "larger": "larger",
+            "largest": "largest",
+        }.get(str(new_mobile_size))
     new_title_notifs = json.get('title_notifs', None)
     if new_title_notifs is not None:
         new_title_notifs = bool(new_title_notifs)
@@ -590,6 +608,8 @@ def updatepreferences(json: Dict[str, object]) -> None:
             rooms_on_top=new_rooms_on_top,
             combined_messages=new_combined_messages,
             color_scheme=new_color_scheme,
+            desktop_size=new_desktop_size,
+            mobile_size=new_mobile_size,
             title_notifs=new_title_notifs,
             mobile_audio_notifs=new_mobile_audio_notifs,
             audio_notifs=new_audio_notifs,

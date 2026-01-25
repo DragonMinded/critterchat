@@ -115,6 +115,8 @@ class UserPreferences:
         rooms_on_top: bool,
         combined_messages: bool,
         color_scheme: str,
+        desktop_size: str,
+        mobile_size: str,
         title_notifs: bool,
         mobile_audio_notifs: bool,
         audio_notifs: Set[UserNotification],
@@ -123,6 +125,8 @@ class UserPreferences:
         self.rooms_on_top = rooms_on_top
         self.combined_messages = combined_messages
         self.color_scheme = color_scheme
+        self.desktop_size = desktop_size
+        self.mobile_size = mobile_size
         self.title_notifs = title_notifs
         self.mobile_audio_notifs = mobile_audio_notifs
         self.audio_notifs = audio_notifs
@@ -133,6 +137,8 @@ class UserPreferences:
             "rooms_on_top": self.rooms_on_top,
             "combined_messages": self.combined_messages,
             "color_scheme": self.color_scheme,
+            "desktop_size": self.desktop_size,
+            "mobile_size": self.mobile_size,
             "title_notifs": self.title_notifs,
             "mobile_audio_notifs": self.mobile_audio_notifs,
             "audio_notifs": [str(an.name) for an in self.audio_notifs],
@@ -146,6 +152,8 @@ class UserPreferences:
             rooms_on_top=False,
             combined_messages=False,
             color_scheme="system",
+            desktop_size="normal",
+            mobile_size="normal",
             title_notifs=True,
             mobile_audio_notifs=False,
             audio_notifs=set(),

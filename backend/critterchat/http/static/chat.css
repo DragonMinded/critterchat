@@ -922,6 +922,11 @@ div.chatdetails dt, div.editprofile dt, div.editpreferences dt {
     font-size: 14px;
 }
 
+div.editpreferences h4 {
+    margin-top: 0px;
+    margin-bottom: 0px;
+}
+
 div.chatdetails dl.name dd, div.chatdetails dl.topic dd, div.editprofile dl.name dd, div.editprofile dl.about dd {
     display: flex;
     margin-left: 0px;

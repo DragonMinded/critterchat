@@ -56,6 +56,8 @@ export function manager(socket) {
     // in desktop mode (vertical panels available) or mobile mode (one screen at a time and using
     // the screen state to coordinate moving between screens).
     var size = $( window ).width() <= 700 ? "mobile" : "desktop";
+    var desktopSize = "normal";
+    var mobileSize = "normal";
 
     // Tracks whether we are currently the active, visible tab or a background tab.
     var visibility = document.visibilityState;
@@ -149,6 +151,13 @@ export function manager(socket) {
         const newSize = width <= 700 ? "mobile" : "desktop";
 
         if (newSize != size) {
+            $( "body" ).removeClass("smallest").removeClass("smaller").removeClass("normal").removeClass("larger").removeClass("largest");
+            if (newSize == "mobile") {
+                $( "body" ).addClass(mobileSize);
+            } else {
+                $( "body" ).addClass(desktopSize);
+            }
+
             size = newSize;
             eventBus.emit('resize', size);
         }
@@ -269,6 +278,16 @@ export function manager(socket) {
             $( "body" ).removeClass("light").addClass("dark");
         } else {
             $( "body" ).removeClass("light").removeClass("dark");
+        }
+
+        desktopSize = msg.desktop_size;
+        mobileSize = msg.mobile_size;
+
+        $( "body" ).removeClass("smallest").removeClass("smaller").removeClass("normal").removeClass("larger").removeClass("largest");
+        if (size == "mobile") {
+            $( "body" ).addClass(mobileSize);
+        } else {
+            $( "body" ).addClass(desktopSize);
         }
 
         // Notify various systems that preferences were updated and allow them to redraw
