@@ -180,6 +180,10 @@ def attachments_upload() -> Dict[str, object]:
         if not filename or not rawdata or "," not in rawdata:
             raise Exception("Attachment data corrupt or not provided in upload.")
 
+        # Remember the old content type, because if we detect that it's wrong, or we convert the image
+        # we will want to update the filename with the new correct extension.
+        presumed_content_type = attachmentservice.get_content_type(filename)
+
         if "\\" in filename:
             _, filename = filename.rsplit("\\", 1)
         if "/" in filename:
@@ -205,6 +209,10 @@ def attachments_upload() -> Dict[str, object]:
             attachmentdata, width, height, content_type = attachmentservice.prepare_attachment_image(attachmentdata)
         except AttachmentServiceUnsupportedImageException:
             raise UserException(f'Chosen attachment {filename} is not a supported image.')
+
+        if content_type != presumed_content_type:
+            # Gotta add a new extension to the file.
+            filename = filename + attachmentservice.get_extension(content_type)
 
         # The image is validated at this point, so we can attach it and return the ID.
         attachmentid = attachmentservice.create_attachment(content_type, filename, {'width': width, 'height': height})

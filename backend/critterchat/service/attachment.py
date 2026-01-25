@@ -48,6 +48,7 @@ class AttachmentService:
     MAX_ICON_WIDTH: Final[int] = 512
     MAX_ICON_HEIGHT: Final[int] = 512
     SUPPORTED_IMAGE_TYPES = {"image/apng", "image/gif", "image/jpeg", "image/png", "image/webp"}
+    CONVERTIBLE_IMAGE_TYPES = {"image/bmp"}
 
     def __init__(self, config: Config, data: Data) -> None:
         self.__config = config
@@ -59,7 +60,7 @@ class AttachmentService:
         except Exception:
             return "application/octet-stream"
 
-    def _get_ext_from_content_type(self, content_type: str) -> str:
+    def get_extension(self, content_type: str) -> str:
         content_type = content_type.lower()
         return {
             "audio/mpeg": ".mp3",
@@ -80,7 +81,7 @@ class AttachmentService:
             _, ext = os.path.splitext(original_filename)
             ext = ext.lower()
         else:
-            ext = self._get_ext_from_content_type(content_type)
+            ext = self.get_extension(content_type)
 
         hashkey = self.__config.attachments.attachment_key
         inval = f"{hashkey}-{Attachment.from_id(aid)}"
@@ -352,6 +353,17 @@ class AttachmentService:
         if not content_type:
             raise AttachmentServiceUnsupportedImageException("Attachment image is an unrecognized format.")
         content_type = content_type.lower()
+
+        if content_type in self.CONVERTIBLE_IMAGE_TYPES:
+            # We want to convert this to a PNG file so that we can support uploading it.
+            converted = transposed.convert("RGB")
+            converted_array = io.BytesIO()
+            converted.save(converted_array, format='PNG')
+            data = converted_array.getvalue()
+
+            # We've updated the content type to a PNG now, so reflect that.
+            content_type = "image/png"
+
         if content_type not in self.SUPPORTED_IMAGE_TYPES:
             raise AttachmentServiceUnsupportedImageException("Attachment image is an unrecognized format.")
 
