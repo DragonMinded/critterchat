@@ -22,6 +22,7 @@ from critterchat.data import (
 from critterchat.config import Config, load_config
 from critterchat.service import (
     AttachmentService,
+    AttachmentServiceException,
     EmoteService,
     EmoteServiceException,
     MessageService,
@@ -125,12 +126,12 @@ def create_user(config: Config, username: str, password: Optional[str]) -> None:
         userservice = UserService(config, data)
         new_user = userservice.create_user(username, password)
         userservice.add_permission(new_user.id, UserPermission.ACTIVATED)
+
+        print(f"User created with username {new_user.username}")
     except UserServiceException as e:
         raise CommandException(str(e))
     finally:
         data.close()
-
-    print(f"User created with username {new_user.username}")
 
 
 def change_user_password(config: Config, username: str, password: Optional[str]) -> None:
@@ -154,12 +155,12 @@ def change_user_password(config: Config, username: str, password: Optional[str])
         if not existing_user:
             raise CommandException("User does not exist in the database!")
         userservice.change_user_password(existing_user.id, password)
+
+        print(f"User with username {username} updated with new password")
     except UserServiceException as e:
         raise CommandException(str(e))
     finally:
         data.close()
-
-    print(f"User with username {username} updated with new password")
 
 
 def generate_password_recovery(config: Config, username: str) -> None:
@@ -176,12 +177,12 @@ def generate_password_recovery(config: Config, username: str) -> None:
         if not existing_user:
             raise CommandException("User does not exist in the database!")
         url = userservice.create_user_recovery(existing_user.id)
+
+        print(f"Generated recovery URL for user with username {username}: {url}")
     except UserServiceException as e:
         raise CommandException(str(e))
     finally:
         data.close()
-
-    print(f"Generated recovery URL for user with username {username}: {url}")
 
 
 def activate_user(config: Config, username: str) -> None:
@@ -198,12 +199,12 @@ def activate_user(config: Config, username: str) -> None:
         if not existing_user:
             raise CommandException("User does not exist in the database!")
         userservice.add_permission(existing_user.id, UserPermission.ACTIVATED)
+
+        print(f"User with username {username} activated")
     except UserServiceException as e:
         raise CommandException(str(e))
     finally:
         data.close()
-
-    print(f"User with username {username} activated")
 
 
 def deactivate_user(config: Config, username: str) -> None:
@@ -220,12 +221,12 @@ def deactivate_user(config: Config, username: str) -> None:
         if not existing_user:
             raise CommandException("User does not exist in the database!")
         userservice.remove_permission(existing_user.id, UserPermission.ACTIVATED)
+
+        print(f"User with username {username} deactivated")
     except UserServiceException as e:
         raise CommandException(str(e))
     finally:
         data.close()
-
-    print(f"User with username {username} deactivated")
 
 
 def list_emotes(config: Config, only_broken: bool) -> None:
@@ -234,9 +235,13 @@ def list_emotes(config: Config, only_broken: bool) -> None:
     """
 
     data = Data(config)
-    emoteservice = EmoteService(config, data)
-    emotes = emoteservice.get_all_emotes()
-    data.close()
+    try:
+        emoteservice = EmoteService(config, data)
+        emotes = emoteservice.get_all_emotes()
+    except EmoteServiceException as e:
+        raise CommandException(str(e))
+    finally:
+        data.close()
 
     names = sorted([e for e in emotes])
     for name in names:
@@ -253,45 +258,49 @@ def add_emote(config: Config, alias: Optional[str], filename_or_directory: str) 
     """
 
     data = Data(config)
-    emoteservice = EmoteService(config, data)
+    try:
+        emoteservice = EmoteService(config, data)
 
-    if os.path.isdir(filename_or_directory):
-        if alias:
-            raise CommandException("Cannot provide an alias when importing an entire directory!")
+        if os.path.isdir(filename_or_directory):
+            if alias:
+                raise CommandException("Cannot provide an alias when importing an entire directory!")
 
-        # Add all files in this directory.
-        for filename in os.listdir(filename_or_directory):
-            alias, ext = os.path.splitext(filename)
+            # Add all files in this directory.
+            for filename in os.listdir(filename_or_directory):
+                alias, ext = os.path.splitext(filename)
+                if ext.lower() not in {".apng", ".png", ".gif", ".jpg", ".jpeg", ".webp"}:
+                    print(f"Skipping {filename} because it is not a recognized image type!")
+
+                full_file = os.path.join(filename_or_directory, filename)
+                with open(full_file, "rb") as bfp:
+                    emotedata = bfp.read()
+
+                try:
+                    emoteservice.add_emote(alias, emotedata)
+                    print(f"Emote added to system with alias '{alias}'")
+                except EmoteServiceException:
+                    print(f"Emote with alias '{alias}' not added to system")
+
+        else:
+            potential_alias, ext = os.path.splitext(os.path.basename(filename_or_directory))
+            if not alias:
+                alias = potential_alias
             if ext.lower() not in {".apng", ".png", ".gif", ".jpg", ".jpeg", ".webp"}:
-                print(f"Skipping {filename} because it is not a recognized image type!")
+                raise CommandException(f"Cannot add {filename_or_directory} because it is not a recognized image type!")
 
-            full_file = os.path.join(filename_or_directory, filename)
-            with open(full_file, "rb") as bfp:
+            with open(filename_or_directory, "rb") as bfp:
                 emotedata = bfp.read()
 
             try:
                 emoteservice.add_emote(alias, emotedata)
                 print(f"Emote added to system with alias '{alias}'")
-            except EmoteServiceException:
-                print(f"Emote with alias '{alias}' not added to system")
+            except EmoteServiceException as e:
+                raise CommandException(str(e))
 
-    else:
-        potential_alias, ext = os.path.splitext(os.path.basename(filename_or_directory))
-        if not alias:
-            alias = potential_alias
-        if ext.lower() not in {".apng", ".png", ".gif", ".jpg", ".jpeg", ".webp"}:
-            raise CommandException(f"Cannot add {filename_or_directory} because it is not a recognized image type!")
-
-        with open(filename_or_directory, "rb") as bfp:
-            emotedata = bfp.read()
-
-        try:
-            emoteservice.add_emote(alias, emotedata)
-            print(f"Emote added to system with alias '{alias}'")
-        except EmoteServiceException as e:
-            raise CommandException(str(e))
-
-    data.close()
+    except EmoteServiceException as e:
+        raise CommandException(str(e))
+    finally:
+        data.close()
 
 
 def drop_emote(config: Config, alias: str) -> None:
@@ -303,11 +312,12 @@ def drop_emote(config: Config, alias: str) -> None:
     emoteservice = EmoteService(config, data)
     try:
         emoteservice.drop_emote(alias)
+
         print(f"Emote with alias '{alias}' removed from system")
     except EmoteServiceException as e:
         raise CommandException(str(e))
-
-    data.close()
+    finally:
+        data.close()
 
 
 def update_attachment(config: Config, attachment: str, file: str) -> None:
@@ -349,11 +359,15 @@ def update_attachment(config: Config, attachment: str, file: str) -> None:
         raise CommandException(f"Image for {attachment} is not square.")
 
     data = Data(config)
-    attachmentservice = AttachmentService(config, data)
-    attachmentservice.put_attachment_data(actual, attachmentdata)
-    data.close()
+    try:
+        attachmentservice = AttachmentService(config, data)
+        attachmentservice.put_attachment_data(actual, attachmentdata)
 
-    print(f"Updated {attachment} image with new data from {file}.")
+        print(f"Updated {attachment} image with new data from {file}.")
+    except AttachmentServiceException as e:
+        raise CommandException(str(e))
+    finally:
+        data.close()
 
 
 def list_public_rooms(config: Config) -> None:
