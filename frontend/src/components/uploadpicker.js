@@ -53,37 +53,20 @@ class UploadPicker {
             const files = [...event.target.files];
             const roomid = jqe.attr('roomid');
 
-            // First, display the picker window, so we can ensure we have the
-            // tracking variable.
-            this.showRoom( roomid );
+            this._upload(roomid, files);
+        });
 
-            // Allow tracking files with JS's callback hell.
-            const room = this.rooms.get(roomid);
-            var existing = room.files.length;
+        $( this.textBox ).on( 'paste', (event) => {
+            const files = [...event.originalEvent.clipboardData.files];
+            const roomid = this.room;
 
-            files.forEach((file) => {
-                if (file.size < window.maxattachmentsize * 1024) {
-                    if (existing < window.maxattachments) {
-                        existing = existing + 1;
+            if (roomid && files.length > 0) {
+                event.stopPropagation();
+                event.stopImmediatePropagation();
+                event.preventDefault();
 
-                        var fr = new FileReader();
-                        fr.onload = () => {
-                            room.files.push({
-                                filename: file.name,
-                                data: fr.result,
-                            });
-
-                            this._drawRoom( roomid );
-                        };
-
-                        fr.readAsDataURL(file);
-                    } else {
-                        flash('warning', 'Too many attachments for upload!');
-                    }
-                } else {
-                    flash('warning', 'File is too large for attachment upload!');
-                }
-            });
+                this._upload(roomid, files);
+            }
         });
     }
 
@@ -122,6 +105,40 @@ class UploadPicker {
 
         // Ensure we know what room we're displaying.
         this.room = roomid;
+    }
+
+    _upload( roomid, files ) {
+        // First, display the picker window, so we can ensure we have the
+        // tracking variable.
+        this.showRoom( roomid );
+
+        // Allow tracking files with JS's callback hell.
+        const room = this.rooms.get(roomid);
+        var existing = room.files.length;
+
+        files.forEach((file) => {
+            if (file.size < window.maxattachmentsize * 1024) {
+                if (existing < window.maxattachments) {
+                    existing = existing + 1;
+
+                    var fr = new FileReader();
+                    fr.onload = () => {
+                        room.files.push({
+                            filename: file.name,
+                            data: fr.result,
+                        });
+
+                        this._drawRoom( roomid );
+                    };
+
+                    fr.readAsDataURL(file);
+                } else {
+                    flash('warning', 'Too many attachments for upload!');
+                }
+            } else {
+                flash('warning', 'File is too large for attachment upload!');
+            }
+        });
     }
 
     // Called whenever we reflow the textbox, so it always hovers above the message box.

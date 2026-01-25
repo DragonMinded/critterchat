@@ -4,7 +4,6 @@ TODO Immediate
  - Update PROTOCOL.md with changed upload style.
  - Allow spoilering previews.
  - Alt text for image attachments.
- - Support pasting images directly into textbox for attachments.
 
 TODO For Public Instance
 ========================
