@@ -20,7 +20,14 @@ from critterchat.data import (
     FaviconID,
 )
 from critterchat.config import Config, load_config
-from critterchat.service import AttachmentService, EmoteService, EmoteServiceException, MessageService, UserService
+from critterchat.service import (
+    AttachmentService,
+    EmoteService,
+    EmoteServiceException,
+    MessageService,
+    UserService,
+    UserServiceException,
+)
 from critterchat.http.static import default_avatar, default_room, default_icon
 
 
@@ -114,20 +121,16 @@ def create_user(config: Config, username: str, password: Optional[str]) -> None:
         password = password1
 
     data = Data(config)
+    try:
+        userservice = UserService(config, data)
+        new_user = userservice.create_user(username, password)
+        userservice.add_permission(new_user.id, UserPermission.ACTIVATED)
+    except UserServiceException as e:
+        raise CommandException(str(e))
+    finally:
+        data.close()
 
-    existing_user = data.user.from_username(username)
-    if existing_user:
-        raise CommandException("User already exists in the database!")
-
-    new_user = data.user.create_account(username, password)
-    if not new_user:
-        raise CommandException("User could not be created!")
-
-    userservice = UserService(config, data)
-    userservice.add_permission(new_user.id, UserPermission.ACTIVATED)
-    data.close()
-
-    print(f"User created with user ID {User.from_id(new_user.id)}")
+    print(f"User created with username {new_user.username}")
 
 
 def change_user_password(config: Config, username: str, password: Optional[str]) -> None:
@@ -145,15 +148,18 @@ def change_user_password(config: Config, username: str, password: Optional[str])
         password = password1
 
     data = Data(config)
+    try:
+        userservice = UserService(config, data)
+        existing_user = userservice.find_user(username)
+        if not existing_user:
+            raise CommandException("User does not exist in the database!")
+        userservice.change_user_password(existing_user.id, password)
+    except UserServiceException as e:
+        raise CommandException(str(e))
+    finally:
+        data.close()
 
-    existing_user = data.user.from_username(username)
-    if not existing_user:
-        raise CommandException("User does not exist in the database!")
-
-    data.user.update_password(existing_user.id, password)
-    data.close()
-
-    print(f"User with ID {User.from_id(existing_user.id)} updated with new password")
+    print(f"User with username {username} updated with new password")
 
 
 def generate_password_recovery(config: Config, username: str) -> None:
@@ -164,20 +170,18 @@ def generate_password_recovery(config: Config, username: str) -> None:
 
     data = Data(config)
 
-    existing_user = data.user.from_username(username)
-    if not existing_user:
-        raise CommandException("User does not exist in the database!")
+    try:
+        userservice = UserService(config, data)
+        existing_user = userservice.find_user(username)
+        if not existing_user:
+            raise CommandException("User does not exist in the database!")
+        url = userservice.create_user_recovery(existing_user.id)
+    except UserServiceException as e:
+        raise CommandException(str(e))
+    finally:
+        data.close()
 
-    recovery = data.user.create_recovery(existing_user.id)
-    data.close()
-
-    url = f"{config.base_url}/recover/{recovery}"
-    while "//" in url:
-        url = url.replace("//", "/")
-    url = url.replace("http:/", "http://")
-    url = url.replace("https:/", "https://")
-
-    print(f"Generated recovery URL for user with ID {User.from_id(existing_user.id)}: {url}")
+    print(f"Generated recovery URL for user with username {username}: {url}")
 
 
 def activate_user(config: Config, username: str) -> None:
@@ -188,15 +192,18 @@ def activate_user(config: Config, username: str) -> None:
 
     data = Data(config)
 
-    existing_user = data.user.from_username(username)
-    if not existing_user:
-        raise CommandException("User does not exist in the database!")
+    try:
+        userservice = UserService(config, data)
+        existing_user = userservice.find_user(username)
+        if not existing_user:
+            raise CommandException("User does not exist in the database!")
+        userservice.add_permission(existing_user.id, UserPermission.ACTIVATED)
+    except UserServiceException as e:
+        raise CommandException(str(e))
+    finally:
+        data.close()
 
-    userservice = UserService(config, data)
-    userservice.add_permission(existing_user.id, UserPermission.ACTIVATED)
-    data.close()
-
-    print(f"User with ID {User.from_id(existing_user.id)} activated")
+    print(f"User with username {username} activated")
 
 
 def deactivate_user(config: Config, username: str) -> None:
@@ -207,15 +214,18 @@ def deactivate_user(config: Config, username: str) -> None:
 
     data = Data(config)
 
-    existing_user = data.user.from_username(username)
-    if not existing_user:
-        raise CommandException("User does not exist in the database!")
+    try:
+        userservice = UserService(config, data)
+        existing_user = userservice.find_user(username)
+        if not existing_user:
+            raise CommandException("User does not exist in the database!")
+        userservice.remove_permission(existing_user.id, UserPermission.ACTIVATED)
+    except UserServiceException as e:
+        raise CommandException(str(e))
+    finally:
+        data.close()
 
-    userservice = UserService(config, data)
-    userservice.remove_permission(existing_user.id, UserPermission.ACTIVATED)
-    data.close()
-
-    print(f"User with ID {User.from_id(existing_user.id)} deactivated")
+    print(f"User with username {username} deactivated")
 
 
 def list_emotes(config: Config, only_broken: bool) -> None:

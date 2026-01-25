@@ -160,12 +160,6 @@ class UserService:
     def has_updated_preferences(self, userid: UserID, last_checked: int) -> bool:
         return self.__data.user.has_updated_preferences(userid, last_checked)
 
-    def lookup_user(self, userid: UserID) -> Optional[User]:
-        user = self.__data.user.get_user(userid)
-        if user:
-            self.__attachments.resolve_user_icon(user)
-        return user
-
     def create_user(self, username: str, password: str) -> User:
         # First, try to create the actual account.
         user = self.__data.user.create_account(username, password)
@@ -175,6 +169,19 @@ class UserService:
         # TODO: Check network settings and auto-activate user if the setting for this is enabled.
 
         # Finally, return the user that was just created.
+        return user
+
+    def lookup_user(self, userid: UserID) -> Optional[User]:
+        user = self.__data.user.get_user(userid)
+        if user:
+            self.__attachments.resolve_user_icon(user)
+        return user
+
+    def find_user(self, username: str) -> Optional[User]:
+        # Just try to find the user by username, returning that.
+        user = self.__data.user.from_username(username)
+        if user:
+            self.__attachments.resolve_user_icon(user)
         return user
 
     def update_user(
@@ -232,6 +239,30 @@ class UserService:
         # Now, grab the occupants for the same user and write an action event for
         # every one that changed.
         self.__notify_user_changed(userid, old_occupancy)
+
+    def change_user_password(self, userid: UserID, password: str) -> None:
+        # Just ensure the user exists and then update the password.
+        user = self.__data.user.get_user(userid)
+        if not user:
+            raise UserServiceException("User does not exist in the database!")
+
+        # Now, update the password for the user.
+        self.__data.user.update_password(user.id, password)
+
+    def create_user_recovery(self, userid: UserID) -> str:
+        # First, ensure the user existis so we can get the ID of the user.
+        user = self.__data.user.get_user(userid)
+        if not user:
+            raise UserServiceException("User does not exist in the database!")
+
+        # Now, generate and return a recovery string for the user.
+        recovery = self.__data.user.create_recovery(user.id)
+        url = f"{self.__config.base_url}/recover/{recovery}"
+        while "//" in url:
+            url = url.replace("//", "/")
+        url = url.replace("http:/", "http://")
+        url = url.replace("https:/", "https://")
+        return url
 
     def recover_user_password(self, username: str, recovery: str, password: str) -> User:
         # First, try to look up the user by the recovery string given.
