@@ -90,6 +90,10 @@ body:not(.smallest):not(.smaller):not(.larger):not(.largest) {
     --application-text-size-14: 14px;
     --application-text-size-12: 12px;
     --application-item-padding: 5px;
+    --application-pane-padding: 10px;
+
+    --modal-fixed-height: 300px;
+    --modal-item-padding: 10px;
 
     --input-border-radius: 3px;
     --input-h-padding: 7px;
@@ -104,10 +108,9 @@ body:not(.smallest):not(.smaller):not(.larger):not(.largest) {
     --error-flash-padding: 2px;
     --error-button-text-size: 10px;
 
-    --pane-padding: 10px;
+    --pane-action-button-height: 40px;
     --menu-pane-width: 250px;
     --info-pane-width: 250px;
-    --topic-max-height: 28px;
 
     --icon-width: 36px;
     --icon-height: 36px;
@@ -115,7 +118,7 @@ body:not(.smallest):not(.smaller):not(.larger):not(.largest) {
     --big-icon-height: 72px;
     --room-icon-border-radius: 10px;
 
-    --badge-top: 0px;
+    --badge-top: -1px;
     --badge-left: 22px;
     --badge-width: 16px;
     --badge-height: 16px;
@@ -124,7 +127,7 @@ body:not(.smallest):not(.smaller):not(.larger):not(.largest) {
     --badge-text-left: 5px;
 
     --room-indicator-top: 22px;
-    --room-indocator-left: 22px;
+    --room-indocator-left: 21px;
     --room-indicator-width: 16px;
     --room-indicator-height: 16px;
     --room-indocator-border-radius: 5px;
@@ -139,8 +142,20 @@ body:not(.smallest):not(.smaller):not(.larger):not(.largest) {
     --back-nav-width: 36px;
     --back-nav-height: 36px;
 
-    --attachment-padding: 5px;
-    --combined-left-margin: 41px;
+    --conversation-topic-max-height: 28px;
+    --conversation-newmessage-icon-padding: 47px;
+    --conversation-newmessage-indicator-top: -35px;
+    --conversation-newmessage-indicator-width: 125px;
+    --conversation-newmessage-indicator-border-radius: 10px;
+
+    --message-load-more-height: 15px;
+    --message-timestamp-padding: 4px;
+    --message-attachment-padding: 5px;
+    --message-combined-left-margin: 41px;
+    --message-combined-text-top-margin: -7px;
+    --message-combined-attachment-top-margin: 2px;
+    --message-highlighted-h-padding: 5px;
+    --message-highlighted-v-padding: 2px;
 }
 
 body.larger {
@@ -286,6 +301,7 @@ div.maskable {
     display: inline-block;
     background-color: currentColor;
     mask-size: contain;
+    mask-repeat: no-repeat;
 }
 
 div.maskable.close-svg {
@@ -396,12 +412,12 @@ div.uploadpicker-container img {
 
 div.container > div.menu {
     width: var(--menu-pane-width);
-    border: 8px solid var(--sidebar-background);
+    border: var(--application-pane-padding) solid var(--sidebar-background);
     background: var(--sidebar-background);
     color: var(--sidebar-text);
     overflow: hidden;
     display: flex;
-    gap: var(--pane-padding);
+    gap: var(--application-pane-padding);
     flex-direction: column;
 }
 
@@ -411,7 +427,7 @@ div.menu > div.rooms {
     display: flex;
     gap: var(--application-item-padding);
     overflow-y: scroll;
-    padding-right: var(--pane-padding);
+    padding-right: var(--application-pane-padding);
 }
 
 div.rooms div.item, div.results div.item, div.occupants div.item {
@@ -535,11 +551,11 @@ div.results div.item div.action {
 
 div.menu > div.actions, div.info > div.actions {
     display: flex;
-    gap: var(--pane-padding);
+    gap: var(--application-pane-padding);
 }
 
 div.actions div.item {
-    height: 40px;
+    height: var(--pane-action-button-height);
     overflow: hidden;
     flex-grow: 1;
 }
@@ -574,14 +590,14 @@ div.container > div.chat {
 
 div.chat > div.top-info {
     background: var(--sidebar-background);
-    border-top: var(--pane-padding) solid var(--sidebar-background);
+    border-top: var(--application-pane-padding) solid var(--sidebar-background);
     border-bottom: var(--application-item-padding) solid var(--sidebar-background);
     color: var(--sidebar-text);
     display: flex;
     flex-direction: row;
-    gap: var(--pane-padding);
-    padding-left: var(--pane-padding);
-    padding-right: var(--pane-padding);
+    gap: var(--application-pane-padding);
+    padding-left: var(--application-pane-padding);
+    padding-right: var(--application-pane-padding);
 }
 
 div.top-info div.back, div.info div.back {
@@ -619,7 +635,7 @@ div.top-info div.title {
 
 div.top-info div.topic {
     font-size: var(--application-text-size-12);
-    max-height: var(--topic-max-height);
+    max-height: var(--conversation-topic-max-height);
     margin-top: -0.125em;
     color: var(--conversation-topic);
     align-content: end;
@@ -644,7 +660,7 @@ div.conversation div.scrolled-top {
     display: flex;
     justify-content: center;
     width: 100%;
-    height: 15px;
+    height: var(--message-load-more-height);
 }
 
 div.conversation > div.loading-wrapper {
@@ -654,13 +670,13 @@ div.conversation > div.loading-wrapper {
 }
 
 div.conversation-wrapper > div.conversation {
-    border-top: var(--pane-padding) solid var(--conversation-background);
-    border-left: var(--pane-padding) solid var(--conversation-background);
-    border-right: var(--pane-padding) solid var(--conversation-background);
+    border-top: var(--application-pane-padding) solid var(--conversation-background);
+    border-left: var(--application-pane-padding) solid var(--conversation-background);
+    border-right: var(--application-pane-padding) solid var(--conversation-background);
     color: var(--conversation-text);
     display: flex;
     flex-direction: column;
-    gap: var(--pane-padding);
+    gap: var(--application-pane-padding);
 }
 
 div.chat > form.uploads {
@@ -672,7 +688,7 @@ div.chat > form.uploads input {
 }
 
 div.chat > form.actions {
-    border: var(--pane-padding) solid var(--conversation-background);
+    border: var(--application-pane-padding) solid var(--conversation-background);
     color: var(--conversation-text);
     display: flex;
     flex-direction: row;
@@ -687,7 +703,7 @@ div.chat form.actions div.newmessage {
 
 div.newmessage input {
     width: 100%;
-    padding-right: 45px ! important;
+    padding-right: var(--conversation-newmessage-icon-padding) ! important;
 }
 
 div.chat div.conversation div.item {
@@ -716,7 +732,7 @@ div.conversation div.item span.name {
 div.conversation div.item span.timestamp {
     color: var(--conversation-timestamp);
     font-size: var(--application-text-size-12);
-    padding-top: 4px;
+    padding-top: var(--message-timestamp-padding);
 }
 
 div.conversation div.item div.message {
@@ -734,19 +750,19 @@ div.conversation div.item.combined div.meta-wrapper {
 }
 
 div.conversation div.item.combined div.message {
-    margin-left: var(--combined-left-margin);
-    margin-top: -7px;
+    margin-left: var(--message-combined-left-margin);
+    margin-top: var(--message-combined-text-top-margin)
 }
 
 div.conversation div.item.combined div.attachments {
-    margin-left: var(--combined-left-margin);
+    margin-left: var(--message-combined-left-margin);
 }
 
 div.conversation div.attachments {
     display: flex;
-    gap: var(--attachment-padding);
+    gap: var(--message-attachment-padding);
     flex-wrap: wrap;
-    margin-top: 2px;
+    margin-top: var(--message-combined-attachment-top-margin);
 }
 
 div.conversation div.attachments img {
@@ -757,9 +773,9 @@ div.conversation div.attachments img {
 
 div.message.highlighted {
     background: var(--conversation-highlighted-background);
-    padding-top: 2px;
-    padding-bottom: 2px;
-    padding-left: 5px;
+    padding-top: var(--message-highlighted-v-padding);
+    padding-bottom: var(--message-highlighted-v-padding);
+    padding-left: var(--message-highlighted-h-padding);
     border-left: 2px solid orange;
 }
 
@@ -780,28 +796,28 @@ div.icon.room img {
 }
 
 div.new-messages-alert {
-  display: none;
-  position: absolute;
-  top: -35px;
-  width: 125px;
-  margin-left: auto;
-  margin-right: auto;
-  left: 0;
-  right: 0;
-  text-align: center;
-  background: var(--new-messages-background);
-  color: var(--new-messages-text);
-  border-radius: 10px;
+    display: none;
+    position: absolute;
+    top: var(--conversation-newmessage-indicator-top);
+    width: var(--conversation-newmessage-indicator-width);
+    border-radius: var(--conversation-newmessage-indicator-border-radius);
+    margin-left: auto;
+    margin-right: auto;
+    left: 0;
+    right: 0;
+    text-align: center;
+    background: var(--new-messages-background);
+    color: var(--new-messages-text);
 }
 
 div.container > div.info {
     width: var(--info-pane-width);
-    border: var(--pane-padding) solid var(--sidebar-background);
+    border: var(--application-pane-padding) solid var(--sidebar-background);
     background: var(--sidebar-background);
     color: var(--sidebar-text);
     overflow: hidden;
     display: flex;
-    gap: 10px;
+    gap: var(--application-pane-padding);
     flex-direction: column;
 }
 
@@ -817,7 +833,7 @@ div.info > div.header {
     display: flex;
     flex-direction: row;
     align-items: center;
-    gap: 10px;
+    gap: var(--application-pane-padding);
 }
 
 div.info > div.occupants {
@@ -826,7 +842,7 @@ div.info > div.occupants {
     display: flex;
     gap: var(--application-item-padding);
     overflow-y: scroll;
-    padding-right: 10px;
+    padding-right: var(--application-pane-padding);
 }
 
 div.occupants div.item {
@@ -839,10 +855,10 @@ div.occupants div.item {
 }
 
 div.search, div.warning, div.information {
-    height: 300px;
+    height: var(--modal-fixed-height);
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: var(--modal-item-padding);
 }
 
 div.search > div.actions,
@@ -855,11 +871,11 @@ div.editpreferences > div.actions
     display: flex;
     flex-direction: row;
     width: 100%;
-    gap: 10px;
+    gap: var(--modal-item-padding);
 }
 
 div.preference input.notification {
-    padding-bottom: 10px;
+    padding-bottom: var(--modal-item-padding);
 }
 
 div.preference div.explain {
@@ -885,21 +901,21 @@ div.search > div.results {
     width: 100%;
     flex-grow: 1;
     overflow-y: scroll;
-    padding-right: 10px;
+    padding-right: var(--modal-item-padding);
 }
 
 div.chatdetails, div.editprofile, div.editpreferences {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: var(--modal-item-padding);
 }
 
 div.chatdetails > div.icon-wrapper, div.editprofile > div.icon-wrapper {
     background: var(--edit-icon-background);
     color: var(--edit-icon-text);
     border-radius: var(--button-border-radius);
-    padding: 10px;
-    gap: 10px;
+    padding: var(--modal-item-padding);
+    gap: var(--modal-item-padding);
     display: flex;
     flex-direction: column;
 }
@@ -914,8 +930,8 @@ div.chatdetails div.icon img, div.editprofile div.icon img {
 
 div.profile > div.icon-wrapper {
     border-radius: var(--button-border-radius);
-    padding: 10px;
-    gap: 10px;
+    padding: var(--modal-item-padding);
+    gap: var(--modal-item-padding);
     display: flex;
     flex-direction: column;
 }
@@ -933,8 +949,8 @@ div.profile div.nickname-wrapper, div.profile div.actions-wrapper {
 }
 
 div.profile div.actions-wrapper {
-    margin-top: 10px;
-    margin-bottom: 15px;
+    margin-top: var(--modal-item-padding);
+    margin-bottom: var(--modal-item-padding);
 }
 
 div.profile div.nickname-wrapper div.nickname {
@@ -949,7 +965,7 @@ div.profile hr {
 }
 
 div.profile div.about {
-    margin-top: 10px;
+    margin-top: var(--modal-item-padding);
     white-space: pre-wrap;
 }
 
@@ -998,7 +1014,7 @@ div.info > div.occupants {
     flex-direction: column;
     flex-grow: 1;
     overflow-y: scroll;
-    padding-right: var(--pane-padding);
+    padding-right: var(--application-pane-padding);
 }
 
 div.info > div.title-wrapper {
