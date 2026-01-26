@@ -225,7 +225,7 @@ body.larger {
     --back-nav-top-margin: 2px;
     --back-nav-bottom-margin: -2px;
 
-    --conversation-topic-max-height: 32px;
+    --conversation-topic-max-height: 34px;
     --conversation-newmessage-icon-padding: 52px;
     --conversation-newmessage-indicator-top: -35px;
     --conversation-newmessage-indicator-width: 135px;
@@ -234,7 +234,7 @@ body.larger {
     --message-load-more-height: 15px;
     --message-timestamp-padding: 4px;
     --message-attachment-padding: 5px;
-    --message-combined-left-margin: 41px;
+    --message-combined-left-margin: 45px;
     --message-combined-text-top-margin: -7px;
     --message-combined-attachment-top-margin: 2px;
     --message-highlighted-h-padding: 5px;
@@ -242,7 +242,80 @@ body.larger {
 }
 
 body.largest {
-    /* TODO */
+    --application-text-size-16: 20px;
+    --application-text-size-14: 18px;
+    --application-text-size-12: 16px;
+    --application-item-padding: 5px;
+    --application-pane-padding: 10px;
+
+    --modal-fixed-height: 350px;
+    --modal-item-padding: 10px;
+
+    --input-border-radius: 3px;
+    --input-h-padding: 7px;
+    --input-v-padding: 4px;
+
+    --button-border-radius: 5px;
+    --button-h-padding: 10px;
+    --button-v-padding: 4px;
+
+    --error-border-radius: 5px;
+    --error-padding: 10px;
+    --error-flash-padding: 2px;
+    --error-button-text-size: 10px;
+
+    --pane-action-button-height: 54px;
+    --menu-pane-width: 300px;
+    --info-pane-width: 300px;
+
+    --icon-width: 44px;
+    --icon-height: 44px;
+    --big-icon-width: 88px;
+    --big-icon-height: 88px;
+    --room-icon-border-radius: 12px;
+
+    --badge-top: -1px;
+    --badge-left: 28px;
+    --badge-width: 18px;
+    --badge-height: 18px;
+    --badge-text-size: 10px;
+    --badge-text-top: 3px;
+    --badge-text-left: 6px;
+
+    --room-indicator-top: 28px;
+    --room-indocator-left: 27px;
+    --room-indicator-width: 18px;
+    --room-indicator-height: 18px;
+    --room-indocator-border-radius: 5px;
+
+    --emoji-search-picker-top: 5.25px;
+    --emoji-search-container: 250px;
+    --emoji-search-container-margin: 5px;
+    --emoji-search-contents: 191px;
+    --emoji-search-padding: 2px;
+
+    --attachment-picker-top: 3.5px;
+    --attachment-picker-padding: 10px;
+
+    --back-nav-width: 44px;
+    --back-nav-height: 44px;
+    --back-nav-top-margin: 2px;
+    --back-nav-bottom-margin: -2px;
+
+    --conversation-topic-max-height: 40px;
+    --conversation-newmessage-icon-padding: 57px;
+    --conversation-newmessage-indicator-top: -35px;
+    --conversation-newmessage-indicator-width: 135px;
+    --conversation-newmessage-indicator-border-radius: 10px;
+
+    --message-load-more-height: 15px;
+    --message-timestamp-padding: 4px;
+    --message-attachment-padding: 5px;
+    --message-combined-left-margin: 49px;
+    --message-combined-text-top-margin: -7px;
+    --message-combined-attachment-top-margin: 2px;
+    --message-highlighted-h-padding: 5px;
+    --message-highlighted-v-padding: 2px;
 }
 
 
