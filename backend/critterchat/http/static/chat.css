@@ -141,6 +141,8 @@ body:not(.smallest):not(.smaller):not(.larger):not(.largest) {
 
     --back-nav-width: 36px;
     --back-nav-height: 36px;
+    --back-nav-top-margin: 2px;
+    --back-nav-bottom-margin: -2px;
 
     --conversation-topic-max-height: 28px;
     --conversation-newmessage-icon-padding: 47px;
@@ -363,7 +365,7 @@ div.maskable.delete {
 div.maskable.attachment-picker {
     width: 1.2em;
     height: 1.2em;
-    margin-top: 0.175em;
+    margin-top: 0.185em;
     mask-image: url('attachment.svg');
     position: absolute;
     right: 1.5em;
@@ -604,6 +606,8 @@ div.top-info div.back, div.info div.back {
     cursor: default;
     display: none;
     position: relative;
+    margin-top: var(--back-nav-top-margin);
+    margin-bottom: var(--back-nav-bottom-margin);
 }
 
 div.top-info div.icon {
@@ -1052,7 +1056,7 @@ div.emoji-search {
     font-size: var(--application-text-size-14);
     position: absolute;
     right: 0.3em;
-    padding-top: 0.3em;
+    padding-top: 0.35em;
     filter: grayscale(100%);
 }
 

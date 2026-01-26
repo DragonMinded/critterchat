@@ -22,6 +22,7 @@
 }
 
 .emojisearch-categories {
+    padding-top: var(--emoji-search-padding);
     padding-bottom: var(--emoji-search-padding);
 }
 
