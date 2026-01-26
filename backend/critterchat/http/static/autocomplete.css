@@ -28,13 +28,9 @@
     background: var(--autocomplete-selected);
 }
 
-.emoji-preview {
-    max-width: 48px;
-    max-height: 16px;
-}
-
 .icon-preview {
-    max-width: 48px;
-    max-height: 16px;
+    max-width: var(--emoji-max-width);
+    height: var(--emoji-height);
+    width: auto;
     border-radius: 50%;
 }

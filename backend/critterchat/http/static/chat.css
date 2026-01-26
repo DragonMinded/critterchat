@@ -72,11 +72,83 @@
     --action-background: #d372fd;
     --action-text: #000000;
 
-    /* Theme styling attributes. */
-    --button-border-radius: 5px;
-    --error-border-radius: 5px;
-    --input-border-radius: 3px;
+    /* Metrics for things that don't change on a per-scale basis */
+    --emoji-height: 1.15em;
+    --emoji-max-width: 3.45em;
+    --big-emoji-height: 2.3em;
+    --big-emoji-max-width: 6.9em;
 }
+
+body.smallest {
+}
+
+body.smaller {
+}
+
+body:not(.smallest):not(.smaller):not(.larger):not(.largest) {
+    --application-text-size-16: 16px;
+    --application-text-size-14: 14px;
+    --application-text-size-12: 12px;
+    --application-item-padding: 5px;
+
+    --input-border-radius: 3px;
+    --input-h-padding: 7px;
+    --input-v-padding: 4px;
+
+    --button-border-radius: 5px;
+    --button-h-padding: 10px;
+    --button-v-padding: 4px;
+
+    --error-border-radius: 5px;
+    --error-padding: 10px;
+    --error-flash-padding: 2px;
+    --error-button-text-size: 10px;
+
+    --pane-padding: 10px;
+    --menu-pane-width: 250px;
+    --info-pane-width: 250px;
+    --topic-max-height: 28px;
+
+    --icon-width: 36px;
+    --icon-height: 36px;
+    --big-icon-width: 72px;
+    --big-icon-height: 72px;
+    --room-icon-border-radius: 10px;
+
+    --badge-top: 0px;
+    --badge-left: 22px;
+    --badge-width: 16px;
+    --badge-height: 16px;
+    --badge-text-size: 10px;
+    --badge-text-top: 2px;
+    --badge-text-left: 5px;
+
+    --room-indicator-top: 22px;
+    --room-indocator-left: 22px;
+    --room-indicator-width: 16px;
+    --room-indicator-height: 16px;
+    --room-indocator-border-radius: 5px;
+
+    --emoji-search-container: 250px;
+    --emoji-search-container-margin: 5px;
+    --emoji-search-contents: 191px;
+    --emoji-search-padding: 2px;
+
+    --upload-picker-padding: 10px;
+
+    --back-nav-width: 36px;
+    --back-nav-height: 36px;
+
+    --attachment-padding: 5px;
+    --combined-left-margin: 41px;
+}
+
+body.larger {
+}
+
+body.largest {
+}
+
 
 html, body {
     font-family: "Atkinson Hyperlegible", Arial, Helvetica, sans-serif;
@@ -86,6 +158,7 @@ html, body {
     height: 100dvh;
     background: var(--application-background);
     color: var(--application-text);
+    font-size: var(--application-text-size-16);
     overflow: hidden;
 }
 
@@ -101,28 +174,10 @@ body.dark {
     color-scheme: dark ! important;
 }
 
-body.smallest {
-    zoom: 80%;
-    width: 125dvw;
-    height: 125dvh;
-}
-
-body.smaller {
-    zoom: 90%;
-    width: 111.11111111dvw;
-    height: 111.11111111dvh;
-}
-
-body.larger {
-    zoom: 110%;
-    width: 90.90909090dvw;
-    height: 90.90909090dvh;
-}
-
-body.largest {
-    zoom: 120%;
-    width: 83.33333333dvw;
-    height: 83.33333333dvh;
+div.container {
+    display: flex;
+    width: 100%;
+    height: 100%;
 }
 
 input:not([type=file]):not([type=button]) {
@@ -130,10 +185,10 @@ input:not([type=file]):not([type=button]) {
     background: var(--input-background);
     border: 1px solid var(--input-border);
     border-radius: var(--input-border-radius);
-    padding-top: 4px;
-    padding-bottom: 4px;
-    padding-left: 7px;
-    padding-right: 7px;
+    padding-top: var(--input-v-padding);
+    padding-bottom: var(--input-v-padding);
+    padding-left: var(--input-h-padding);
+    padding-right: var(--input-h-padding);
 }
 
 button, input[type=button], input::file-selector-button {
@@ -141,13 +196,13 @@ button, input[type=button], input::file-selector-button {
     background: var(--input-button-background);
     border: 1px solid var(--input-button-border);
     border-radius: var(--input-border-radius);
-    padding-top: 4px;
-    padding-bottom: 4px;
+    padding-top: var(--button-v-padding);
+    padding-bottom: var(--button-v-padding);
 }
 
 form button, form input[type=button], form input::file-selector-button {
-    padding-left: 10px;
-    padding-right: 10px;
+    padding-left: var(--button-h-padding);
+    padding-right: var(--button-h-padding);
 }
 
 button:hover, button:focus-visible, input[type=button]:hover, input::file-selector-button:hover {
@@ -173,25 +228,25 @@ div.errors {
 ul.errors {
     list-style: none;
     margin: 0px;
-    padding: 10px;
+    padding: var(--error-padding);
 }
 
 ul.errors li {
     border-radius: var(--error-border-radius);
     border: 1px solid var(--error-border);
-    padding: 10px;
+    padding: var(--error-padding);
     margin: 0px;
     display: flex;
 }
 
 ul.errors li:not(:last-child) {
-   margin-bottom: 10px;
+   margin-bottom: var(--error-padding);
 }
 
 ul.errors li div.flash-message {
     flex-grow: 1;
     margin: 0px;
-    padding-top: 2px;
+    padding-top: var(--error-flash-padding);
 }
 
 ul.errors li button {
@@ -208,7 +263,7 @@ ul.errors li button:hover {
 }
 
 ul.errors li button.close {
-    font-size: 10px;
+    font-size: var(--error-button-text-size);
 }
 
 li.error {
@@ -234,47 +289,74 @@ div.maskable {
 }
 
 div.maskable.close-svg {
-    width: 16px;
-    height: 16px;
-    margin-bottom: -3px;
+    width: 1.3em;
+    height: 1.3em;
+    margin-bottom: -0.25em;
     mask-image: url('close.svg');
 }
 
 div.maskable.search-svg {
-    width: 16px;
-    height: 16px;
-    margin-bottom: -3px;
+    width: 1.3em;
+    height: 1.3em;
+    margin-bottom: -0.25em;
     mask-image: url('search.svg');
 }
 
 div.maskable.edit-svg {
-    width: 16px;
-    height: 16px;
-    margin-bottom: -3px;
+    width: 1.3em;
+    height: 1.3em;
+    margin-bottom: -0.25em;
     mask-image: url('edit.svg');
 }
 
 div.maskable.leave-svg {
-    width: 16px;
-    height: 16px;
-    margin-bottom: -3px;
+    width: 1.3em;
+    height: 1.3em;
+    margin-bottom: -0.25em;
     mask-image: url('leave.svg');
 }
 
 div.maskable.logout-svg {
-    width: 16px;
-    height: 16px;
-    margin-bottom: -3px;
+    width: 1.3em;
+    height: 1.3em;
+    margin-bottom: -0.25em;
     mask-image: url('logout.svg');
 }
 
+div.maskable.preview {
+    width: 1.3em;
+    height: 1.3em;
+    margin-bottom: -0.25em;
+    mask-image: url('preview.svg');
+}
+
+div.maskable.cancel {
+    width: 1.3em;
+    height: 1.3em;
+    margin-bottom: -0.25em;
+    mask-image: url('cancel.svg');
+}
+
+div.maskable.delete {
+    width: 1.3em;
+    height: 1.3em;
+    margin-bottom: -0.25em;
+    mask-image: url('delete.svg');
+}
+
 div.maskable.attachment-picker {
-    width: 16px;
-    height: 16px;
-    margin-top: 5px;
+    width: 1.2em;
+    height: 1.2em;
+    margin-top: 0.175em;
     mask-image: url('attachment.svg');
     position: absolute;
-    right: 26px;
+    right: 1.5em;
+}
+
+div.maskable.back-button-svg {
+    width: var(--back-nav-width);
+    height: var(--back-nav-height);
+    mask-image: url('left-arrow-circle.svg');
 }
 
 div.attachment-picker:hover {
@@ -283,10 +365,10 @@ div.attachment-picker:hover {
 
 div.uploadpicker-container {
     display: flex;
-    gap: 10px;
+    gap: var(--upload-picker-padding);
     background: var(--attachment-picker-background);
     border: 1px solid var(--attachment-picker-border);
-    padding: 10px;
+    padding: var(--upload-picker-padding);
     overflow-x: scroll;
 }
 
@@ -297,14 +379,14 @@ div.uploadpicker-container div.upload {
 div.uploadpicker-container div.upload div.delete-container {
     position: absolute;
     cursor: pointer;
-    top: -8px;
-    right: -8px;
-    width: 14px;
-    height: 14px;
+    top: -0.5em;
+    right: -0.5em;
+    width: 1em;
+    height: 1em;
     background: var(--attachment-picker-delete-background);
     color: var(--attachment-picker-delete-foreground);
     border: 2px solid var(--attachment-picker-delete-foreground);
-    border-radius: 9px;
+    border-radius: 50%;
     display: flex;
 }
 
@@ -312,20 +394,14 @@ div.uploadpicker-container img {
     display: block;
 }
 
-div.container {
-    display: flex;
-    width: 100%;
-    height: 100%;
-}
-
 div.container > div.menu {
-    width: 250px;
+    width: var(--menu-pane-width);
     border: 8px solid var(--sidebar-background);
     background: var(--sidebar-background);
     color: var(--sidebar-text);
     overflow: hidden;
     display: flex;
-    gap: 10px;
+    gap: var(--pane-padding);
     flex-direction: column;
 }
 
@@ -333,15 +409,15 @@ div.menu > div.rooms {
     flex-grow: 1;
     flex-direction: column;
     display: flex;
-    gap: 5px;
+    gap: var(--application-item-padding);
     overflow-y: scroll;
-    padding-right: 10px;
+    padding-right: var(--pane-padding);
 }
 
 div.rooms div.item, div.results div.item, div.occupants div.item {
     flex-direction: row;
     display: flex;
-    padding: 5px;
+    padding: var(--application-item-padding);
     border-radius: var(--button-border-radius);
     cursor: default;
     border: 1px solid transparent;
@@ -357,18 +433,18 @@ div.rooms div.item:hover, div.occupants div.item:hover {
 }
 
 div.actions div.item img {
-    margin-bottom: -3px;
+    margin-bottom: -0.25em;
     display: inline;
 }
 
 div.icon div.room-indicator {
     position: absolute;
-    font-size: 14px;
-    top: 22px;
-    left: 22px;
-    width: 16px;
-    height: 16px;
-    border-radius: 5px;
+    font-size: var(--application-text-size-14);
+    top: var(--room-indicator-top);
+    left: var(--room-indocator-left);
+    width: var(--room-indicator-width);
+    height: var(--room-indicator-height);
+    border-radius: var(--room-indocator-border-radius);
     color: var(--roomindicator-text);
     background: var(--roomindicator-background);
     padding: 0px;
@@ -388,10 +464,10 @@ div.rooms div.item div.icon, div.results div.item div.icon, div.occupants div.it
 
 div.icon div.badge, div.back div.badge {
     position: absolute;
-    top: 0px;
-    left: 22px;
-    width: 16px;
-    height: 16px;
+    top: var(--badge-top);
+    left: var(--badge-left);
+    width: var(--badge-width);
+    height: var(--badge-height);
     border-radius: 50%;
     color: var(--badge-text);
     background: var(--badge-background);
@@ -403,32 +479,32 @@ div.icon div.badge, div.back div.badge {
 }
 
 div.badge > div.count {
-    font-size: 10px;
+    font-size: var(--badge-text-size);
     position: absolute;
-    top: 2px;
-    left: 5px;
+    top: var(--badge-text-top);
+    left: var(--badge-text-left);
 }
 
 div.rooms div.item div.icon img, div.results div.item div.icon img, div.occupants div.item div.icon img {
     background: var(--application-icon-background);
     display: block;
-    width: 36px;
-    height: 36px;
+    width: var(--icon-width);
+    height: var(--icon-height);
     margin: 0px;
 }
 
 div.rooms div.item div.name-wrapper, div.results div.item div.name-wrapper, div.occupants div.item div.name-wrapper {
     width: 100%;
     height: 100%;
-    padding-left: 5px;
+    padding-left: var(--application-item-padding);
     display: flex;
-    font-size: 14px;
-    height: 36px;
+    font-size: var(--application-text-size-14);
+    height: var(--icon-height);
     align-items: center;
 }
 
 div.name-wrapper div.name {
-    max-height: 36px;
+    max-height: var(--icon-height);
     overflow: hidden;
     overflow-wrap: break-word;
     word-break: break-word;
@@ -444,7 +520,7 @@ div.meta-wrapper span.name {
 div.results div.item div.action-wrapper {
     height: 100%;
     display: flex;
-    height: 36px;
+    height: var(--icon-height);
     align-items: center;
 }
 
@@ -452,14 +528,14 @@ div.results div.item div.action {
     border-radius: var(--button-border-radius);
     background: var(--action-background);
     color: var(--action-text);
-    max-height: 36px;
-    padding: 5px;
-    font-size: 12px;
+    max-height: var(--icon-height);
+    padding: var(--application-item-padding);
+    font-size: var(--application-text-size-12);
 }
 
 div.menu > div.actions, div.info > div.actions {
     display: flex;
-    gap: 10px;
+    gap: var(--pane-padding);
 }
 
 div.actions div.item {
@@ -475,7 +551,7 @@ div.actions div.item button {
     border-radius: var(--button-border-radius);
     width: 100%;
     height: 100%;
-    font-size: 12px;
+    font-size: var(--application-text-size-12);
 }
 
 div.actions div.item button:hover, div.actions div.item button:focus-visible {
@@ -498,26 +574,20 @@ div.container > div.chat {
 
 div.chat > div.top-info {
     background: var(--sidebar-background);
-    border-top: 10px solid var(--sidebar-background);
-    border-bottom: 5px solid var(--sidebar-background);
+    border-top: var(--pane-padding) solid var(--sidebar-background);
+    border-bottom: var(--application-item-padding) solid var(--sidebar-background);
     color: var(--sidebar-text);
     display: flex;
     flex-direction: row;
-    gap: 10px;
-    padding-left: 10px;
-    padding-right: 10px;
+    gap: var(--pane-padding);
+    padding-left: var(--pane-padding);
+    padding-right: var(--pane-padding);
 }
 
 div.top-info div.back, div.info div.back {
     cursor: default;
     display: none;
     position: relative;
-}
-
-div.maskable.back-button-svg {
-    width: 36px;
-    height: 36px;
-    mask-image: url('left-arrow-circle.svg');
 }
 
 div.top-info div.icon {
@@ -527,28 +597,30 @@ div.top-info div.icon {
 div.top-info div.icon img {
     background: var(--application-icon-background);
     display: block;
-    width: 36px;
-    height: 36px;
+    width: var(--icon-width);
+    height: var(--icon-height);
     margin: 0px;
 }
 
 div.top-info div.info-wrapper {
-    height: 36px;
+    height: var(--icon-height);
     align-items: center;
     display: flex;
 }
 
 div.top-info div.title {
-    font-size: 16px;
-    max-height: 36px;
+    font-size: var(--application-text-size-16);
+    max-height: var(--icon-height);
+    margin-top: -0.125em;
     overflow: hidden;
     overflow-wrap: break-word;
     word-break: break-word;
 }
 
 div.top-info div.topic {
-    font-size: 12px;
-    max-height: 28px;
+    font-size: var(--application-text-size-12);
+    max-height: var(--topic-max-height);
+    margin-top: -0.125em;
     color: var(--conversation-topic);
     align-content: end;
     overflow: hidden;
@@ -556,8 +628,9 @@ div.top-info div.topic {
     word-break: break-word;
 }
 
-div.top-info div.topic img.emote, div.top-info div.topic img.emoji {
-    height: 12px ! important;
+div.top-info img.emote, div.top-info img.emoji {
+    height: 1em ! important;
+    margin-bottom: -0.2em ! important;
 }
 
 div.chat > div.conversation-wrapper {
@@ -581,13 +654,13 @@ div.conversation > div.loading-wrapper {
 }
 
 div.conversation-wrapper > div.conversation {
-    border-top: 10px solid var(--conversation-background);
-    border-left: 10px solid var(--conversation-background);
-    border-right: 10px solid var(--conversation-background);
+    border-top: var(--pane-padding) solid var(--conversation-background);
+    border-left: var(--pane-padding) solid var(--conversation-background);
+    border-right: var(--pane-padding) solid var(--conversation-background);
     color: var(--conversation-text);
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: var(--pane-padding);
 }
 
 div.chat > form.uploads {
@@ -599,11 +672,11 @@ div.chat > form.uploads input {
 }
 
 div.chat > form.actions {
-    border: 10px solid var(--conversation-background);
+    border: var(--pane-padding) solid var(--conversation-background);
     color: var(--conversation-text);
     display: flex;
     flex-direction: row;
-    gap: 5px;
+    gap: var(--application-item-padding);
 }
 
 div.chat form.actions div.newmessage {
@@ -620,7 +693,7 @@ div.newmessage input {
 div.chat div.conversation div.item {
     display: flex;
     flex-direction: row;
-    gap: 5px;
+    gap: var(--application-item-padding);
 }
 
 div.conversation div.item div.content-wrapper {
@@ -632,22 +705,22 @@ div.conversation div.item div.content-wrapper {
 div.conversation div.item div.meta-wrapper {
     display: flex;
     flex-direction: row;
-    gap: 5px;
+    gap: var(--application-item-padding);
 }
 
 div.conversation div.item span.name {
-    font-size: 16px;
+    font-size: var(--application-text-size-16);
     font-weight: bold;
 }
 
 div.conversation div.item span.timestamp {
     color: var(--conversation-timestamp);
-    font-size: 12px;
+    font-size: var(--application-text-size-12);
     padding-top: 4px;
 }
 
 div.conversation div.item div.message {
-    font-size: 14px;
+    font-size: var(--application-text-size-14);
     overflow-wrap: break-word;
     word-break: break-word;
 }
@@ -661,17 +734,17 @@ div.conversation div.item.combined div.meta-wrapper {
 }
 
 div.conversation div.item.combined div.message {
-    margin-left: 41px;
+    margin-left: var(--combined-left-margin);
     margin-top: -7px;
 }
 
 div.conversation div.item.combined div.attachments {
-    margin-left: 41px;
+    margin-left: var(--combined-left-margin);
 }
 
 div.conversation div.attachments {
     display: flex;
-    gap: 5px;
+    gap: var(--attachment-padding);
     flex-wrap: wrap;
     margin-top: 2px;
 }
@@ -693,8 +766,8 @@ div.message.highlighted {
 div.chat div.item div.icon img {
     background: var(--application-icon-background);
     display: block;
-    width: 36px;
-    height: 36px;
+    width: var(--icon-width);
+    height: var(--icon-height);
     margin: 0px;
 }
 
@@ -703,7 +776,7 @@ div.icon.avatar img {
 }
 
 div.icon.room img {
-    border-radius: 10px;
+    border-radius: var(--room-icon-border-radius);
 }
 
 div.new-messages-alert {
@@ -722,8 +795,8 @@ div.new-messages-alert {
 }
 
 div.container > div.info {
-    width: 250px;
-    border: 10px solid var(--sidebar-background);
+    width: var(--info-pane-width);
+    border: var(--pane-padding) solid var(--sidebar-background);
     background: var(--sidebar-background);
     color: var(--sidebar-text);
     overflow: hidden;
@@ -751,7 +824,7 @@ div.info > div.occupants {
     flex-grow: 1;
     flex-direction: column;
     display: flex;
-    gap: 5px;
+    gap: var(--application-item-padding);
     overflow-y: scroll;
     padding-right: 10px;
 }
@@ -759,7 +832,7 @@ div.info > div.occupants {
 div.occupants div.item {
     flex-direction: row;
     display: flex;
-    padding: 5px;
+    padding: var(--application-item-padding);
     border-radius: var(--button-border-radius);
     cursor: default;
     border: 1px solid transparent;
@@ -785,34 +858,13 @@ div.editpreferences > div.actions
     gap: 10px;
 }
 
-div.maskable.preview {
-    width: 16px;
-    height: 16px;
-    margin-bottom: -3px;
-    mask-image: url('preview.svg');
-}
-
-div.maskable.cancel {
-    width: 16px;
-    height: 16px;
-    margin-bottom: -3px;
-    mask-image: url('cancel.svg');
-}
-
-div.maskable.delete {
-    width: 16px;
-    height: 16px;
-    margin-bottom: -3px;
-    mask-image: url('delete.svg');
-}
-
 div.preference input.notification {
     padding-bottom: 10px;
 }
 
 div.preference div.explain {
     color: var(--application-subtle-text);
-    padding-bottom: 5px;
+    padding-bottom: var(--application-item-padding);
 }
 
 div.warning > div.warning-text, div.information > div.information-text {
@@ -845,7 +897,7 @@ div.chatdetails, div.editprofile, div.editpreferences {
 div.chatdetails > div.icon-wrapper, div.editprofile > div.icon-wrapper {
     background: var(--edit-icon-background);
     color: var(--edit-icon-text);
-    border-radius: 5px;
+    border-radius: var(--button-border-radius);
     padding: 10px;
     gap: 10px;
     display: flex;
@@ -855,13 +907,13 @@ div.chatdetails > div.icon-wrapper, div.editprofile > div.icon-wrapper {
 div.chatdetails div.icon img, div.editprofile div.icon img {
     background: var(--application-icon-background);
     display: block;
-    width: 72px;
-    height: 72px;
+    width: var(--big-icon-width);
+    height: var(--big-icon-height);
     margin: 0px;
 }
 
 div.profile > div.icon-wrapper {
-    border-radius: 5px;
+    border-radius: var(--button-border-radius);
     padding: 10px;
     gap: 10px;
     display: flex;
@@ -870,8 +922,8 @@ div.profile > div.icon-wrapper {
 
 div.profile div.icon img {
     display: block;
-    width: 72px;
-    height: 72px;
+    width: var(--big-icon-width);
+    height: var(--big-icon-height);
     margin: 0px;
 }
 
@@ -919,7 +971,7 @@ div.chatdetails dl, div.editprofile dl, div.editpreferences dl {
 }
 
 div.chatdetails dt, div.editprofile dt, div.editpreferences dt {
-    font-size: 14px;
+    font-size: var(--application-text-size-14);
 }
 
 div.editpreferences h4 {
@@ -938,7 +990,7 @@ div.chatdetails dl.name input, div.chatdetails dl.topic input, div.editprofile d
 
 div.editprofile dl.about textarea {
     width: 100%;
-    height: 100px;
+    height: 8em;
 }
 
 div.info > div.occupants {
@@ -946,12 +998,12 @@ div.info > div.occupants {
     flex-direction: column;
     flex-grow: 1;
     overflow-y: scroll;
-    padding-right: 10px;
+    padding-right: var(--pane-padding);
 }
 
 div.info > div.title-wrapper {
-    font-size: 14px;
-    gap: 5px;
+    font-size: var(--application-text-size-14);
+    gap: var(--application-item-padding);
 }
 
 div.title-wrapper span.title {
@@ -964,26 +1016,27 @@ div.title-wrapper span.desc {
 
 img.emote, img.emoji {
     display: inline-block;
-    max-width: 48px;
-    height: 16px;
+    max-width: var(--emoji-max-width);
+    height: var(--emoji-height);
     width: auto;
 }
 
 div.item img.emote, div.item img.emoji {
-    margin-bottom: -3px;
+    margin-bottom: -0.25em;
 }
 
 img.emote-big, img.emoji-big {
     display: inline-block;
-    max-width: 96px;
-    height: 32px;
+    max-width: var(--big-emoji-max-width);
+    height: var(--big-emoji-height);
     width: auto;
 }
 
 div.emoji-search {
+    font-size: var(--application-text-size-14);
     position: absolute;
-    right: 5px;
-    padding-top: 5px;
+    right: 0.3em;
+    padding-top: 0.3em;
     filter: grayscale(100%);
 }
 
@@ -1007,10 +1060,10 @@ div.newseparator > div.content-wrapper {
 div.newseparator div.newline {
     border-top: 1px solid var(--conversation-text);
     flex-grow: 1;
-    margin-top: 12px;
-    margin-bottom: -24px;
+    margin-top: 0.75em;
+    margin-bottom: -1.5em;
 }
 
 div.newseparator div.newmessage {
-    padding: 5px;
+    padding: var(--application-item-padding);
 }
