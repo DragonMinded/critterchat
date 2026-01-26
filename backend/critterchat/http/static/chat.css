@@ -80,9 +80,11 @@
 }
 
 body.smallest {
+    /* TODO */
 }
 
 body.smaller {
+    /* TODO */
 }
 
 body:not(.smallest):not(.smaller):not(.larger):not(.largest) {
@@ -132,12 +134,14 @@ body:not(.smallest):not(.smaller):not(.larger):not(.largest) {
     --room-indicator-height: 16px;
     --room-indocator-border-radius: 5px;
 
+    --emoji-search-picker-top: 5px;
     --emoji-search-container: 250px;
     --emoji-search-container-margin: 5px;
     --emoji-search-contents: 191px;
     --emoji-search-padding: 2px;
 
-    --upload-picker-padding: 10px;
+    --attachment-picker-top: 3.5px;
+    --attachment-picker-padding: 10px;
 
     --back-nav-width: 36px;
     --back-nav-height: 36px;
@@ -161,9 +165,84 @@ body:not(.smallest):not(.smaller):not(.larger):not(.largest) {
 }
 
 body.larger {
+    --application-text-size-16: 18px;
+    --application-text-size-14: 16px;
+    --application-text-size-12: 14px;
+    --application-item-padding: 5px;
+    --application-pane-padding: 10px;
+
+    --modal-fixed-height: 325px;
+    --modal-item-padding: 10px;
+
+    --input-border-radius: 3px;
+    --input-h-padding: 7px;
+    --input-v-padding: 4px;
+
+    --button-border-radius: 5px;
+    --button-h-padding: 10px;
+    --button-v-padding: 4px;
+
+    --error-border-radius: 5px;
+    --error-padding: 10px;
+    --error-flash-padding: 2px;
+    --error-button-text-size: 10px;
+
+    --pane-action-button-height: 46px;
+    --menu-pane-width: 275px;
+    --info-pane-width: 275px;
+
+    --icon-width: 40px;
+    --icon-height: 40px;
+    --big-icon-width: 80px;
+    --big-icon-height: 80px;
+    --room-icon-border-radius: 12px;
+
+    --badge-top: -1px;
+    --badge-left: 25px;
+    --badge-width: 18px;
+    --badge-height: 18px;
+    --badge-text-size: 10px;
+    --badge-text-top: 3px;
+    --badge-text-left: 6px;
+
+    --room-indicator-top: 25px;
+    --room-indocator-left: 24px;
+    --room-indicator-width: 18px;
+    --room-indicator-height: 18px;
+    --room-indocator-border-radius: 5px;
+
+    --emoji-search-picker-top: 5.25px;
+    --emoji-search-container: 250px;
+    --emoji-search-container-margin: 5px;
+    --emoji-search-contents: 191px;
+    --emoji-search-padding: 2px;
+
+    --attachment-picker-top: 3.5px;
+    --attachment-picker-padding: 10px;
+
+    --back-nav-width: 40px;
+    --back-nav-height: 40px;
+    --back-nav-top-margin: 2px;
+    --back-nav-bottom-margin: -2px;
+
+    --conversation-topic-max-height: 32px;
+    --conversation-newmessage-icon-padding: 52px;
+    --conversation-newmessage-indicator-top: -35px;
+    --conversation-newmessage-indicator-width: 135px;
+    --conversation-newmessage-indicator-border-radius: 10px;
+
+    --message-load-more-height: 15px;
+    --message-timestamp-padding: 4px;
+    --message-attachment-padding: 5px;
+    --message-combined-left-margin: 41px;
+    --message-combined-text-top-margin: -7px;
+    --message-combined-attachment-top-margin: 2px;
+    --message-highlighted-h-padding: 5px;
+    --message-highlighted-v-padding: 2px;
 }
 
 body.largest {
+    /* TODO */
 }
 
 
@@ -199,6 +278,7 @@ div.container {
 
 input:not([type=file]):not([type=button]) {
     color: var(--input-text);
+    font-size: var(--application-text-size-14);
     background: var(--input-background);
     border: 1px solid var(--input-border);
     border-radius: var(--input-border-radius);
@@ -210,6 +290,7 @@ input:not([type=file]):not([type=button]) {
 
 button, input[type=button], input::file-selector-button {
     color: var(--input-button-text);
+    font-size: var(--application-text-size-16);
     background: var(--input-button-background);
     border: 1px solid var(--input-button-border);
     border-radius: var(--input-border-radius);
@@ -218,8 +299,14 @@ button, input[type=button], input::file-selector-button {
 }
 
 form button, form input[type=button], form input::file-selector-button {
+    font-size: var(--application-text-size-14);
     padding-left: var(--button-h-padding);
     padding-right: var(--button-h-padding);
+}
+
+textarea {
+    font-family: "Atkinson Hyperlegible", Arial, Helvetica, sans-serif;
+    font-size: var(--application-text-size-14);
 }
 
 button:hover, button:focus-visible, input[type=button]:hover, input::file-selector-button:hover {
@@ -365,7 +452,7 @@ div.maskable.delete {
 div.maskable.attachment-picker {
     width: 1.2em;
     height: 1.2em;
-    margin-top: 0.185em;
+    margin-top: var(--attachment-picker-top);
     mask-image: url('attachment.svg');
     position: absolute;
     right: 1.5em;
@@ -383,10 +470,10 @@ div.attachment-picker:hover {
 
 div.uploadpicker-container {
     display: flex;
-    gap: var(--upload-picker-padding);
+    gap: var(--attachment-picker-padding);
     background: var(--attachment-picker-background);
     border: 1px solid var(--attachment-picker-border);
-    padding: var(--upload-picker-padding);
+    padding: var(--attachment-picker-padding);
     overflow-x: scroll;
 }
 
@@ -1056,7 +1143,7 @@ div.emoji-search {
     font-size: var(--application-text-size-14);
     position: absolute;
     right: 0.3em;
-    padding-top: 0.35em;
+    padding-top: var(--emoji-search-picker-top);
     filter: grayscale(100%);
 }
 
