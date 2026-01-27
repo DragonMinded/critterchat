@@ -25,3 +25,4 @@ TODO Low Priority
  - Allow config-based image attachment disable.
  - Support arbitrary info fields in profile for links to other services, etc.
  - Image attachment carousel instead of opening images in new browser tab.
+ - Better styling of left/right lists without forcing the scrollbar to be visible.
