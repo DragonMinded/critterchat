@@ -80,18 +80,14 @@
 }
 
 body.smallest {
-    /* TODO */
-}
-
-body.smaller {
-    --application-text-size-16: 15px;
-    --application-text-size-14: 13px;
-    --application-text-size-12: 11px;
-    --application-item-padding: 5px;
-    --application-pane-padding: 10px;
+    --application-text-size-16: 14px;
+    --application-text-size-14: 12px;
+    --application-text-size-12: 10px;
+    --application-item-padding: 4px;
+    --application-pane-padding: 8px;
 
     --modal-fixed-height: 300px;
-    --modal-item-padding: 10px;
+    --modal-item-padding: 8px;
 
     --input-border-radius: 3px;
     --input-h-padding: 7px;
@@ -102,7 +98,86 @@ body.smaller {
     --button-v-padding: 4px;
 
     --error-border-radius: 5px;
-    --error-padding: 10px;
+    --error-padding: 8px;
+    --error-flash-padding: 2px;
+    --error-button-text-size: 10px;
+
+    --menu-pane-width: 225px;
+    --info-pane-width: 225px;
+    --pane-action-button-height: 36px;
+    --pane-item-name-height: 28px;
+
+    --icon-width: 28px;
+    --icon-height: 28px;
+    --big-icon-width: 56px;
+    --big-icon-height: 56px;
+    --room-icon-border-radius: 8px;
+
+    --badge-top: -1px;
+    --badge-left: 16px;
+    --badge-width: 15px;
+    --badge-height: 15px;
+    --badge-text-size: 9px;
+    --badge-text-top: 2px;
+    --badge-text-left: 5px;
+
+    --room-indicator-top: 16px;
+    --room-indocator-left: 15px;
+    --room-indicator-width: 15px;
+    --room-indicator-height: 14px;
+    --room-indocator-border-radius: 5px;
+
+    --emoji-search-picker-top: 5px;
+    --emoji-search-container: 250px;
+    --emoji-search-container-margin: 5px;
+    --emoji-search-contents: 188px;
+    --emoji-search-padding: 2px;
+
+    --attachment-picker-top: 3.5px;
+    --attachment-picker-padding: 8px;
+
+    --back-nav-width: 32px;
+    --back-nav-height: 32px;
+    --back-nav-top-margin: 2px;
+    --back-nav-bottom-margin: -2px;
+
+    --conversation-panel-height: 36px;
+    --conversation-topic-max-height: 26px;
+    --conversation-newmessage-icon-padding: 39px;
+    --conversation-newmessage-indicator-top: -35px;
+    --conversation-newmessage-indicator-width: 110px;
+    --conversation-newmessage-indicator-border-radius: 10px;
+
+    --message-load-more-height: 15px;
+    --message-timestamp-padding: 4px;
+    --message-attachment-padding: 5px;
+    --message-combined-left-margin: 33px;
+    --message-combined-text-top-margin: -7px;
+    --message-combined-attachment-top-margin: 2px;
+    --message-highlighted-h-padding: 5px;
+    --message-highlighted-v-padding: 2px;
+}
+
+body.smaller {
+    --application-text-size-16: 15px;
+    --application-text-size-14: 13px;
+    --application-text-size-12: 11px;
+    --application-item-padding: 5px;
+    --application-pane-padding: 9px;
+
+    --modal-fixed-height: 300px;
+    --modal-item-padding: 9px;
+
+    --input-border-radius: 3px;
+    --input-h-padding: 7px;
+    --input-v-padding: 4px;
+
+    --button-border-radius: 5px;
+    --button-h-padding: 10px;
+    --button-v-padding: 4px;
+
+    --error-border-radius: 5px;
+    --error-padding: 9px;
     --error-flash-padding: 2px;
     --error-button-text-size: 10px;
 
@@ -115,7 +190,7 @@ body.smaller {
     --icon-height: 32px;
     --big-icon-width: 64px;
     --big-icon-height: 64px;
-    --room-icon-border-radius: 10px;
+    --room-icon-border-radius: 9px;
 
     --badge-top: -1px;
     --badge-left: 20px;
@@ -138,7 +213,7 @@ body.smaller {
     --emoji-search-padding: 2px;
 
     --attachment-picker-top: 3.5px;
-    --attachment-picker-padding: 10px;
+    --attachment-picker-padding: 9px;
 
     --back-nav-width: 32px;
     --back-nav-height: 32px;
@@ -149,13 +224,13 @@ body.smaller {
     --conversation-topic-max-height: 26px;
     --conversation-newmessage-icon-padding: 44px;
     --conversation-newmessage-indicator-top: -35px;
-    --conversation-newmessage-indicator-width: 125px;
+    --conversation-newmessage-indicator-width: 117px;
     --conversation-newmessage-indicator-border-radius: 10px;
 
     --message-load-more-height: 15px;
     --message-timestamp-padding: 4px;
     --message-attachment-padding: 5px;
-    --message-combined-left-margin: 39px;
+    --message-combined-left-margin: 37px;
     --message-combined-text-top-margin: -7px;
     --message-combined-attachment-top-margin: 2px;
     --message-highlighted-h-padding: 5px;
@@ -386,7 +461,7 @@ body.largest {
     --conversation-topic-max-height: 40px;
     --conversation-newmessage-icon-padding: 57px;
     --conversation-newmessage-indicator-top: -35px;
-    --conversation-newmessage-indicator-width: 135px;
+    --conversation-newmessage-indicator-width: 150px;
     --conversation-newmessage-indicator-border-radius: 10px;
 
     --message-load-more-height: 15px;
