@@ -106,9 +106,10 @@ body.smaller {
     --error-flash-padding: 2px;
     --error-button-text-size: 10px;
 
-    --pane-action-button-height: 38px;
     --menu-pane-width: 237px;
     --info-pane-width: 237px;
+    --pane-action-button-height: 38px;
+    --pane-item-name-height: 30px;
 
     --icon-width: 32px;
     --icon-height: 32px;
@@ -144,8 +145,8 @@ body.smaller {
     --back-nav-top-margin: 2px;
     --back-nav-bottom-margin: -2px;
 
-    --conversation-topic-max-height: 26px;
     --conversation-panel-height: 36px;
+    --conversation-topic-max-height: 26px;
     --conversation-newmessage-icon-padding: 44px;
     --conversation-newmessage-indicator-top: -35px;
     --conversation-newmessage-indicator-width: 125px;
@@ -184,9 +185,10 @@ body:not(.smallest):not(.smaller):not(.larger):not(.largest) {
     --error-flash-padding: 2px;
     --error-button-text-size: 10px;
 
-    --pane-action-button-height: 40px;
     --menu-pane-width: 250px;
     --info-pane-width: 250px;
+    --pane-action-button-height: 40px;
+    --pane-item-name-height: 36px;
 
     --icon-width: 36px;
     --icon-height: 36px;
@@ -222,8 +224,8 @@ body:not(.smallest):not(.smaller):not(.larger):not(.largest) {
     --back-nav-top-margin: 2px;
     --back-nav-bottom-margin: -2px;
 
-    --conversation-topic-max-height: 28px;
     --conversation-panel-height: 38px;
+    --conversation-topic-max-height: 28px;
     --conversation-newmessage-icon-padding: 47px;
     --conversation-newmessage-indicator-top: -35px;
     --conversation-newmessage-indicator-width: 125px;
@@ -262,9 +264,10 @@ body.larger {
     --error-flash-padding: 2px;
     --error-button-text-size: 10px;
 
-    --pane-action-button-height: 46px;
     --menu-pane-width: 275px;
     --info-pane-width: 275px;
+    --pane-action-button-height: 46px;
+    --pane-item-name-height: 40px;
 
     --icon-width: 40px;
     --icon-height: 40px;
@@ -300,8 +303,8 @@ body.larger {
     --back-nav-top-margin: 2px;
     --back-nav-bottom-margin: -2px;
 
-    --conversation-topic-max-height: 34px;
     --conversation-panel-height: 42px;
+    --conversation-topic-max-height: 34px;
     --conversation-newmessage-icon-padding: 52px;
     --conversation-newmessage-indicator-top: -35px;
     --conversation-newmessage-indicator-width: 135px;
@@ -340,9 +343,10 @@ body.largest {
     --error-flash-padding: 2px;
     --error-button-text-size: 10px;
 
-    --pane-action-button-height: 54px;
     --menu-pane-width: 300px;
     --info-pane-width: 300px;
+    --pane-action-button-height: 54px;
+    --pane-item-name-height: 44px;
 
     --icon-width: 44px;
     --icon-height: 44px;
@@ -378,8 +382,8 @@ body.largest {
     --back-nav-top-margin: 2px;
     --back-nav-bottom-margin: -2px;
 
-    --conversation-topic-max-height: 40px;
     --conversation-panel-height: 46px;
+    --conversation-topic-max-height: 40px;
     --conversation-newmessage-icon-padding: 57px;
     --conversation-newmessage-indicator-top: -35px;
     --conversation-newmessage-indicator-width: 135px;
@@ -676,6 +680,7 @@ div.rooms div.item, div.results div.item, div.occupants div.item {
     border-radius: var(--button-border-radius);
     cursor: default;
     border: 1px solid transparent;
+    align-items: center;
 }
 
 div.rooms div.item.selected, div.occupants div.item.selected, div.results div.item:hover {
@@ -754,12 +759,12 @@ div.rooms div.item div.name-wrapper, div.results div.item div.name-wrapper, div.
     padding-left: var(--application-item-padding);
     display: flex;
     font-size: var(--application-text-size-14);
-    height: var(--icon-height);
+    height: var(--pane-item-name-height);
     align-items: center;
 }
 
 div.name-wrapper div.name {
-    max-height: var(--icon-height);
+    max-height: var(--pane-item-name-height);
     overflow: hidden;
     overflow-wrap: break-word;
     word-break: break-word;
