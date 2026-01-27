@@ -1040,7 +1040,6 @@ div.conversation div.item div.meta-wrapper {
     overflow: hidden;
     overflow-wrap: break-word;
     word-break: break-word;
-    gap: var(--application-item-padding);
 }
 
 div.conversation div.item span.name {
@@ -1052,7 +1051,6 @@ div.conversation div.item span.timestamp {
     color: var(--conversation-timestamp);
     font-size: var(--application-text-size-12);
     padding-top: var(--message-timestamp-padding);
-    padding-left: 0.25em;
 }
 
 div.conversation div.item div.message {
