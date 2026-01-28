@@ -1,12 +1,32 @@
 # Protocol Documentation
 
-This is an attempt to document the websocket protocol provided by CritterChat's backend and used by CritterChat's frontend. This serves two purposes. First, it allows a high-level overview that hopefully sidesteps some new developer ramp-up time. Second, it hopefully aids in alternative clients being developed without them having to reverse-engineer everything from as-built code.
+This is an attempt to document the HTTP and websocket protocol provided by CritterChat's backend and used by CritterChat's frontend. This serves two purposes. First, it allows a high-level overview that hopefully sidesteps some new developer ramp-up time. Second, it hopefully aids in alternative clients being developed without them having to reverse-engineer everything from as-built code.
 
-At the high level, communcation between the existing web-based JS client and the backend server is done via [Socket.IO](https://socket.io/) which uses websockets under the hood. Socket.IO presents an event-driven interface which we view as named JSON packets. The various packets, whether they are server or client-originated, what they do, and when you should expect to send or receive them is all documented below.
+At the high level, communcation between the existing web-based JS client and the backend server is done via [Socket.IO](https://socket.io/) which uses websockets under the hood. Socket.IO presents an event-driven interface which we view as named JSON packets. The various packets, whether they are server or client-originated, what they do, and when you should expect to send or receive them is all documented below. Bulk data transfers such as attachment uploads or downloads are handled using HTTP. This is partially to allow for a CDN or other simple system to handle attachments, and partially due to size limitations of websocket packets.
 
 ## Authentication
 
-Authentication is not handled by websockets in CritterChat. Instead, there is a POST method accepting browser form data which sets a `SessionID` cookie. In the future, I'd like this endpoint to be versatile enough to accept both form data in the post body for browser-based login and JSON in the post body for alternative clients. For now, the important part of this interaction is the `SessionID` cookie that is sent back to the client which should be present on the websocket connection itself. All websocket requests use this cookie to link the websocket session to a logged-in user. If a session is invalidated for any reason, the server will respond to any request with a `reload` packet instructing the client to reload and redo authentication to get a new `SessionID` cookie.
+Authentication is not handled by websockets in CritterChat. Instead, there is a POST method that lives at `/login` accepting browser form data which sets a `SessionID` cookie. In the future, I'd like this endpoint to be versatile enough to accept both form data in the post body for browser-based login and JSON in the post body for alternative clients. For now, the important part of this interaction is the `SessionID` cookie that is sent back to the client which should be present on the websocket connection itself. All websocket requests use this cookie to link the websocket session to a logged-in user. If a session is invalidated for any reason, the server will respond to any request with a `reload` packet instructing the client to reload and redo authentication to get a new `SessionID` cookie.
+
+## Upload Endpoints
+
+Data uploads are handled by a series of upload endpoints which take their data as POST bodies. Note that client requests to these endpoints should include the authentication cooke as this allows us to prevent non-authenticated users from uploading arbitrary attachments. Attachments themselves are uploaded using base64 data URLs due to the need for web-based clients to load and display previews of the attachments before uploading. Depending on their purpose they have different ways of handling attachment data and returning an attachmend ID that the client can then use to refer to an attachment when sending a websocket request. Note that all endpoints return JSON representing the results of the request.
+
+### Icon Upload
+
+This endpoint lives at `/upload/icon` and expects a text/plain POST body containing a data URL that represents the icon being uploaded. The icon must be of a supported type (png, jpg, gif, apng, webp, bmp), must be at most 512x512 in size, and must be square (width and height match). If all of those properties hold, the icon will be stored in a new attachment ID and returned as the `attachmentid` property of the response JSON. If any of these is violated, this will instead return JSON with the `error` property containing a text description of the error. Note that icons are only used for customizing the icon of a room or 1:1 chat.
+
+### Avatar Upload
+
+This endpoint lives at `/upload/avatar`. Note that it has identical expectations and responses as the icon upload. The only difference is that this is used for user avatar customization.
+
+### Notification Sound Upload
+
+This endpoint lives at `/upload/notifications` and expects an application/json POST body containing a `notif_sounds` attribute. That `notif_sounds` attribute should point at a JSON object whose keys are the notification being updated and the values are string data URLs that represent the notification sound being uploaded. The sound must be of a supported audio type that FFMPEG can convert and will be converted to an mp3 for broad browser support. Upon successful conversion and storage in the attachment system, a JSON response will be returned containing the same `notif_sounds` attribute. Note that in the response case, any data URL will be swapped out for the attachment ID that was generated when storing the attachment. The keys to the `notif_sounds` JSON object will be identical to the keys in the request. Just like icon and avatar uploads, a failure will cause a JSON response with the `error` string attribute.
+
+### Message Attachment Upload
+
+This endpoint lives at `/upload/attachments` and expects an application/json POST body containing an `attachments` attribute. This attribut should point at a list of JSON objects each containing the `filename` and `data` attributes. As you would expect, the `filename` attribute should be the filename of the file being uploaded. Note that the client can send the full path or just the filename with no directory information. In either case, CritterChat strips the directory info off as it does not need it. The `data` attribute should be a string data URL representing the attachment being uploaded. Note that as of right now, only image attachments are supported for upload. The image must be of a supported type (png, jpg, gif, apng, webp, bmp) and must not exceed the network file size for attachments. Upon successful processing of the attachments, a JSON response will be returned containing an `attachments` attribute which is a list of attachment IDs. Note that the order of attachments in the upload request will match the attachment IDs in the response. This might matter if the user has picked a particular image order and described those images in an attached message. Just like the above endpoints, a failure will cause a JSON response with the `error` string attribute.
 
 ## Common Data Types
 
@@ -39,6 +59,14 @@ An occupant who is or was joined to a room. In CritterChat, all rooms have zero 
  - `icon` - A string URI pointing at the user's currently set icon for this room. If the user has not customized an icon for this room, this defaults to the user's configured icon for the instance. If that is not set, the default user avatar will be returned here instead.
  - `inactive` - A boolean representing whether this occupant has left the room (true) or if they are still in the room (false). This is useful because clients need to render names for users who have left when showing their actions in chat history, but need to show only active users in a room's user list.
 
+### attachment
+
+An attachment, such as an image or a downloadable file. Actions can have zero or more attachments associated with them. Attachments have the following attributes:
+
+ - `uri` - A string URI where a browser or HTTP client can download the attachment from.
+ - `mimetype` - The mime type or content type of the attachment itself. Useful for clients that wish to display different types of attachments differently.
+ - `metadata` - A JSON object containing metadata about the attachment. For images, this includes the `width` and `height` attributes which represent the image's width and height after accounting for image orientation.
+
 ### action
 
 An object representing an action in a particular room. In CritterChat, actions are performed on behalf of a room occupant and stored in the room. Actions have the following attributes:
@@ -49,6 +77,7 @@ An object representing an action in a particular room. In CritterChat, actions a
  - `occupant` - An occupant object detailing the occupant which performed the action.
  - `action` - A string representing the action type which occurred. Valid values are currently "message" for messages, "join" for occupants joining the chat, "leave" for occupants leaving the chat, "change_info" when an occupant changes room information such as the topic or name, and "change_profile" when an occupant changes their own personal information.
  - `details` - A string that contains different details about the action depending on the action string. For "message" actions, this is the string message that was sent. For "join" and "leave" actions, this is an empty string since the `occupant` object contains all relevant details. For "change_info" and "change_profile" messages, this is a JSON string containing details of the change. Currently the JS client does not make use of this info and in the future this might be changed to return nested JSON directly instead of a string containing JSON.
+ - `attachments` - A list of attachment objects representing any attachments that are associated with this action. Note that right now, only `message` actions can have attachments. This is usually an empty list as most messages do not contain any attachments.
 
 ### room count
 
@@ -83,7 +112,7 @@ The `preferences` packet is sent from the client to load or refresh the current 
  - `title_notifs` - A boolean representing whether the user wants notifications to show up in the tab title (true) or not (false).
  - `mobile_audio_notifs` - A boolean representing whether the user wants audio notifications on mobile (true) or whether mobile clients should be silent (false).
  - `audio_notifs` - A list of strings representing which audio notifications are enabled.
- - `notif_sounds` - A dictionary keyed by audio notification type strings whose values are string URIs pointing at an audio file to play for that given notification. Note that the keys will match the list of strings in the `audio_notifs` list and a user may have notification sounds configured for notifications that they have disabled.
+ - `notif_sounds` - A JSON object keyed by audio notification type strings whose values are string URIs pointing at an audio file to play for that given notification. Note that the keys will match the list of strings in the `audio_notifs` list and a user may have notification sounds configured for notifications that they have disabled.
 
 ### lastsettings
 
@@ -148,7 +177,7 @@ The `updateprofile` packet is sent from the client to request the user's profile
 
  - `name` - A new nickname to set. This can be empty to unset a custom nickname and it can contain emoji. It must be 255 unicode code points or less in length. It cannot consist of solely unicode control characters or other non-printable characters. Note that the user's nickname will always be set, so clients should round-trip the existing custom name if the user does not edit it.
  - `about` - A new about section to set. This can be empty to delete existin text, or non-empty to set a new text. It must be 65530 unicode code points or less in length. Note that the user's about section will always be set, so clients should round-trip the existing about section if the user does not edit it.
- - `icon` - A base 64 encoded image that should be set as the new profile, following the `data:` URL specification. If this is left empty, the user's icon will not be updated. The image must be square and currently cannot exceed 128kb in size.
+ - `icon` - A string attachment ID that should be used to set the new icon, obtained from the avatar upload endpoint. If this is left empty, the user's icon will not be updated. The image must be square and currently cannot exceed 128kb in size.
  - `icon_delete` - An optional boolean specifying that the user wants to delete their custom icon. If the client leaves this out or sets this to an empty string or `False` then the server will not attempt to delete the user's custom icon. Setting this to `True` will cause the user's icon to revert to the instance's default icon.
 
 Upon successful update, the server will send a `profile` response packet which is identical to the response to a `profile` request. It will also send an unsolicited `profile` response packet to all other connected devices belonging to the user.
@@ -163,7 +192,7 @@ The `updatepreferences` packet is sent from the client to request the user's pre
  - `title_notifs` - A boolean representing whether the user wants notifications to show up in the tab title (true) or not (false). If not present, the preference will not be updated. If present, the preference will be updated to the specified value.
  - `mobile_audio_notifs` - A boolean representing whether the user wants audio notifications on mobile (true) or whether mobile clients should be silent (false). If not present, the preference will not be updated. If present, the preference will be updated to the specified value.
  - `audio_notifs` - A list of strings representing which audio notifications are enabled. If not present, individual audio notification enabled settings will be left as-is. If present, the user's audio notification enabled list is updated to match the specified list of notifications.
- - `notif_sounds` - A dictionary keyed by audio notification type strings whose values are base 64 encoded audio files, following the `data:` URL specification. All audio notifications listed in this dictionary will be updated, overwriting any existing notification and adding new audio for notifications that did not have audio before. If not present, no audio notification sounds will be updated. Audio notifications not present in this dictionary will also be left as-is.
+ - `notif_sounds` - A JSON object keyed by audio notification type strings whose values are string attachment IDs. Note that this JSON object can be obtained from the notification upload endpoint. All audio notifications listed in this JSON object will be updated, overwriting any existing notification and adding new audio for notifications that did not have audio before. If not present, no audio notification sounds will be updated. Audio notifications not present in this JSON object will also be left as-is.
  - `notif_sounds_delete` - A list of strings representing which audio notification files to delete. If not present, nothing will be deleted. If present, all notifications listed will be deleted. Note that the entries in this list are the same as the keys in `notif_sounds` and the values in the `audio_notifs` list.
 
 Upon successful update, the server will send a `preferences` response packet which is identical to the response to a `preferences` request. It will also send an unsolicited `preferences` response packet to all other connected devices belonging to the user.
@@ -183,16 +212,18 @@ In the case that the user successfully joined the requested room (or a new 1:1 c
 
 ### updateroom
 
-The `updateroom` packet is sent when the client requests to update the details of a particular room. This expects a request JSON that contains a `roomid` attribute representing the room being updated, as well as a `details` attribute which is a dictionary containing the attributes defined below. The server will check the user's permissions as well as verify that the user is in the room requested before performing the update. Upon successful update with at least one room detail updated, a "change_info" action will be generated for the room. The server will not respond with any specific response to this packet, but all existing clients in the room will end up receiving an unsolicited `chatactions` packet containing the "change_info" action that was generated based on this request.
+The `updateroom` packet is sent when the client requests to update the details of a particular room. This expects a request JSON that contains a `roomid` attribute representing the room being updated, as well as a `details` attribute which is a JSON object containing the attributes defined below. The server will check the user's permissions as well as verify that the user is in the room requested before performing the update. Upon successful update with at least one room detail updated, a "change_info" action will be generated for the room. The server will not respond with any specific response to this packet, but all existing clients in the room will end up receiving an unsolicited `chatactions` packet containing the "change_info" action that was generated based on this request.
 
  - `name` - A new custom room name to set. This can be empty to unset a custom room name and it can contain emoji. It must be 255 unicode code points or less in length. It cannot consist of solely unicode control characters or other non-printable characters. Note that the room name will always be set so clients should round-trip the existing custom room name if the user does not edit it.
  - `topic` - A new custom topic to set. Much like the above `name`, this can be empty to unset the topic, and it can contain emoji. It must also be 255 unicode code points or less and it cannot be only non-printable unicode characters. The topic will always be updated so clients should round-trip the existing topic if the user does not edit it.
- - `icon` - A base 64 encoded image that should be set as the new custom room icon, following the `data:` URL specification. If this is left empty, the room's icon will not be updated. The image must be square and currently cannot exceed 128kb in size.
+ - `icon` - A string attachment ID that should be used to set the new custom room icon, obtained from the icon upload endpoint. If this is left empty, the room's icon will not be updated. The image must be square and currently cannot exceed 128kb in size.
  - `icon_delete` - An optional boolean specifying that the user wants to delete the custom room icon. If the client leaves this out or sets this to an empty string or `False` then the server will not attempt to delete the custom room icon. Setting this to `True` will cause the room's icon to revert to the instance's default icon.
 
 ### message
 
 The `message` packet is sent when the client wishes to send a message to a room. This expects a request JSON that contains a `roomid` attribute representing the room being updated and a `message` attribute representing a string message that should be sent to the room. The server will check the user's permissions as well as verify that the user is in the room requested before adding the message to the room's action history. Note that while the message can contain any valid unicode characters, it cannot be blank and it cannot consist solely of un-printable unicode characters. Upon successful insertion of the message into the room's action history, a "message" action will be generated for the room. The server will not respond with any specific response to this packet, but all existing clients that are in the room will end up receiving an unsolicited `chatactions` packet containing the "message" action that was generated based on this request.
+
+Optionally, the `message` packet can also include an `attachments` attribute representing any attachments that should be associated with the message. This `attachments` attribute should be a list of attachment IDs. That list can be obtained directly from the attachment upload endpoint. Note that if you do not wish to associate attachments with a given image this can be left out entirely, or it can be sent as an empty list. Both will act the same way on the server. Note that while the attachments themselves are checked in the upload, attempting to provide an attachment ID for something other than a message attachment will result in the request being rejected.
 
 Note that while the server does not respond with a specific response, it does send a socket.io acknowledgement back in the case of either failure or success. A client can use this acknowledgement to clear user input only when successfully acknowledged by the server. The acknowledgement is a JSON object that contains a `status` attribute which is set to `success` on successful receipt and storage of the message, or `failed` under all other circumstances. Clients should not attempt to clear the user's input until a successful acknowledgement has been received in order to ensure that the user doesn't have to retype a message on error.
 
@@ -212,7 +243,7 @@ The following packets are server initiated. The server will send them to correct
 
 The `emotechanges` response packet will be sent to the client unsolicited whenever an administrator adds or removes custom emotes on the instance. This is sent to every connected client at the point of change so that clients do not need to refresh in order to use newly-added cusom emotes. The response JSON contains the following attributes:
 
- - `additions` - A dictionary keyed by string emote name, such as `:wiggle:`, with the value of each entry being the custom emote's URI as a string. Note that there is currently no way for a non-web client to retrieve the full list of custom emotes as they are embedded in the HTML template for the existing JS client. At some point when it becomes necessary this will change, but for now it is what it is.
+ - `additions` - A JSON object keyed by string emote name, such as `:wiggle:`, with the value of each entry being the custom emote's URI as a string. Note that there is currently no way for a non-web client to retrieve the full list of custom emotes as they are embedded in the HTML template for the existing JS client. At some point when it becomes necessary this will change, but for now it is what it is.
  - `deletions` - A list of strings represnting emote names that were deleted, such as `:wiggle:`. Clients should remove any emotes listed here from any typeahead or emote search functionality and should stop attempting to replace emote text with the known URI for the emotes that were deleted.
 
 ### error

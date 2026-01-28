@@ -1,7 +1,6 @@
 TODO Immediate
 ==============
 
- - Update PROTOCOL.md with changed upload style.
  - Migration for attachment body to JSON type.
  - Allow spoilering previews.
  - Alt text for image attachments.
