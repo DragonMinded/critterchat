@@ -1,10 +1,11 @@
 TODO Immediate
 ==============
 
- - Migration for attachment body to JSON type.
  - Update PROTOCOL.md with changed upload style.
+ - Migration for attachment body to JSON type.
  - Allow spoilering previews.
  - Alt text for image attachments.
+ - Prevent double-posting by displaying in-progress when uploading.
 
 TODO For Public Instance
 ========================
