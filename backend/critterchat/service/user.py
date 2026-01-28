@@ -1,4 +1,3 @@
-import json
 from typing import Dict, Optional, Set
 
 from ..common import Time, represents_real_text
@@ -308,7 +307,7 @@ class UserService:
                 timestamp=Time.now(),
                 occupant=occupant,
                 action=ActionType.CHANGE_PROFILE,
-                details=json.dumps({"nickname": occupant.nickname, "iconid": occupant.iconid})
+                details={"nickname": occupant.nickname, "iconid": occupant.iconid}
             )
             self.__data.room.insert_action(roomid, action)
 

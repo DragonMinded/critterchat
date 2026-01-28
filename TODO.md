@@ -1,7 +1,6 @@
 TODO Immediate
 ==============
 
- - Migration for attachment body to JSON type.
  - Allow spoilering previews.
  - Alt text for image attachments.
  - Prevent double-posting by displaying in-progress when uploading.

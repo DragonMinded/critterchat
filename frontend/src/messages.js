@@ -837,8 +837,8 @@ class Messages {
         var drawnMessage = messages.find('div.message#' + message.id);
         if (drawnMessage.length > 0) {
             if (message.action == "message") {
-                let content = this._formatMessage(message.details);
-                let highlighted = this._wasHighlighted(message.details);
+                let content = this._formatMessage(message.details.message);
+                let highlighted = this._wasHighlighted(message.details.message);
                 drawnMessage.html(content);
 
                 if (highlighted) {
@@ -851,8 +851,8 @@ class Messages {
             // Now, draw it fresh since it's not an update.
             var html = "";
             if (message.action == "message") {
-                let content = this._formatMessage(message.details);
-                let highlighted = this._wasHighlighted(message.details);
+                let content = this._formatMessage(message.details.message);
+                let highlighted = this._wasHighlighted(message.details.message);
 
                 html  = '<div class="item" id="' + message.id + '">';
                 html += '  <div class="icon avatar" id="' + message.occupant.id + '">';

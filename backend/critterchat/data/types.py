@@ -384,7 +384,7 @@ class Action:
         timestamp: int,
         occupant: Occupant,
         action: ActionType,
-        details: str,
+        details: Dict[str, object],
         attachments: List[Attachment] = [],
     ) -> None:
         self.id = actionid

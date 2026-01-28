@@ -116,7 +116,7 @@ class MessageService:
             timestamp=Time.now(),
             occupant=occupant,
             action=ActionType.MESSAGE,
-            details=message,
+            details={"message": message},
         )
 
         attachmentids: List[AttachmentID] = []

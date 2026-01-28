@@ -1,10 +1,9 @@
 import io
 import hashlib
-import json
 import mimetypes
 import os
 from PIL import Image, ImageOps
-from typing import Dict, Final, Optional, Tuple
+from typing import Dict, Final, Optional, Tuple, cast
 
 from ..config import Config
 from ..data import (
@@ -387,39 +386,33 @@ class AttachmentService:
         self.resolve_occupant_icon(action.occupant)
 
         if action.action == ActionType.CHANGE_INFO:
-            try:
-                details = json.loads(action.details)
-                if details.get("iconid"):
-                    iconid = AttachmentID(int(details["iconid"]))
-                    del details["iconid"]
-                else:
-                    iconid = None
+            details = action.details
+            if details.get("iconid") is not None:
+                iconid = AttachmentID(cast(int, details["iconid"]))
+                del details["iconid"]
+            else:
+                iconid = None
 
-                if iconid is None:
-                    details["icon"] = self.get_attachment_url(DefaultRoomID)
-                else:
-                    details["icon"] = self.get_attachment_url(iconid)
+            if iconid is None:
+                details["icon"] = self.get_attachment_url(DefaultRoomID)
+            else:
+                details["icon"] = self.get_attachment_url(iconid)
 
-                action.details = json.dumps(details)
-            except json.decoder.JSONDecodeError:
-                action.details = json.dumps({})
+            action.details = details
         elif action.action == ActionType.CHANGE_PROFILE:
-            try:
-                details = json.loads(action.details)
-                if details.get("iconid"):
-                    iconid = AttachmentID(int(details["iconid"]))
-                    del details["iconid"]
-                else:
-                    iconid = None
+            details = action.details
+            if details.get("iconid") is not None:
+                iconid = AttachmentID(cast(int, details["iconid"]))
+                del details["iconid"]
+            else:
+                iconid = None
 
-                if iconid is None:
-                    details["icon"] = self.get_attachment_url(DefaultAvatarID)
-                else:
-                    details["icon"] = self.get_attachment_url(iconid)
+            if iconid is None:
+                details["icon"] = self.get_attachment_url(DefaultAvatarID)
+            else:
+                details["icon"] = self.get_attachment_url(iconid)
 
-                action.details = json.dumps(details)
-            except json.decoder.JSONDecodeError:
-                action.details = json.dumps({})
+            action.details = details
 
         return action
 

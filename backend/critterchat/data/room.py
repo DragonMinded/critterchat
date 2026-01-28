@@ -4,8 +4,7 @@ from typing import Any, Dict, Iterator, List, Optional
 
 from sqlalchemy import Table, Column
 from sqlalchemy.schema import UniqueConstraint
-from sqlalchemy.types import String, Integer, Boolean
-from sqlalchemy.dialects.mysql import MEDIUMTEXT as MediumText
+from sqlalchemy.types import String, Integer, Boolean, JSON
 
 from ..common import Time
 from .base import BaseData, metadata
@@ -69,7 +68,7 @@ action = Table(
     Column("room_id", Integer, nullable=False, index=True),
     Column("occupant_id", Integer, nullable=False),
     Column("action", String(32)),
-    Column("details", MediumText),
+    Column("details", JSON),
     mysql_charset="utf8mb4",
 )
 
@@ -446,7 +445,7 @@ class RoomData(BaseData):
                     timestamp=Time.now(),
                     occupant=occupant,
                     action=ActionType.JOIN,
-                    details="",
+                    details={},
                 )
                 self.insert_action(roomid, action)
 
@@ -471,7 +470,7 @@ class RoomData(BaseData):
             timestamp=Time.now(),
             occupant=occupant,
             action=ActionType.LEAVE,
-            details="",
+            details={},
         )
         self.insert_action(roomid, action)
 
@@ -509,7 +508,7 @@ class RoomData(BaseData):
             timestamp=Time.now(),
             occupant=occupant,
             action=ActionType.CHANGE_INFO,
-            details=json.dumps({"name": room.name, "topic": room.topic, "iconid": iconid}),
+            details={"name": room.name, "topic": room.topic, "iconid": iconid},
         )
         self.insert_action(room.id, action)
 
@@ -691,7 +690,7 @@ class RoomData(BaseData):
                 timestamp=x['timestamp'],
                 occupant=mapping[OccupantID(x['occupant_id'])],
                 action=x['action'],
-                details=x['details'],
+                details=json.loads(str(x['details'] or "{}")),
             )
             for x in data
         ]
@@ -747,7 +746,7 @@ class RoomData(BaseData):
                 (:roomid, :ts, :oid, :action, :details)
         """
         cursor = self.execute(sql, {
-            "roomid": roomid, "ts": action.timestamp, "oid": occupant, "action": action.action, "details": action.details
+            "roomid": roomid, "ts": action.timestamp, "oid": occupant, "action": action.action, "details": json.dumps(action.details)
         })
         if cursor.rowcount != 1:
             return
