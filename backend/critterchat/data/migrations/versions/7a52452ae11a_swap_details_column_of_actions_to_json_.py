@@ -22,11 +22,13 @@ def upgrade() -> None:
     # First, need to ensure that everything actually is JSON.
     conn = op.get_bind()
 
-    # First, do the easy thing, update everything that's empty to just empty JSON.
-    sql = "UPDATE action SET details = '{}' WHERE details IS NULL"
+    # First, do the easy thing, update everything that's empty to just empty JSON. Don't
+    # do this to message actions since it's allowed to have an empty message as long as
+    # you're attaching some attachments.
+    sql = "UPDATE action SET details = '{}' WHERE details IS NULL AND action != 'message'"
     conn.execute(text(sql), {})  # type: ignore
 
-    sql = "UPDATE action SET details = '{}' WHERE details = ''"
+    sql = "UPDATE action SET details = '{}' WHERE details = '' AND action != 'message'"
     conn.execute(text(sql), {})  # type: ignore
 
     # Second, gotta grab all messages and convert them.
