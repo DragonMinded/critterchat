@@ -1042,6 +1042,10 @@ div.conversation div.item div.meta-wrapper {
     word-break: break-word;
 }
 
+div.conversation div.item div.action-wrapper {
+    display: inline;
+}
+
 div.conversation div.item span.name {
     font-size: var(--application-text-size-16);
     font-weight: bold;
