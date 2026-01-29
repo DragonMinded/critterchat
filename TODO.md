@@ -3,7 +3,6 @@ TODO Immediate
 
  - Allow spoilering previews.
  - Alt text for image attachments.
- - Prevent double-posting by displaying in-progress when uploading.
 
 TODO For Public Instance
 ========================

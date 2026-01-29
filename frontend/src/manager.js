@@ -500,14 +500,18 @@ export function manager(socket) {
             uploader.uploadAttachments(attachments, (aids) => {
                 socket.emit('message', {'roomid': roomid, 'message': message, 'attachments': aids}, (response) => {
                     if (response.status == "success") {
-                        eventBus.emit('messageack', {'roomid': msg.roomid});
+                        eventBus.emit('messageack', {'roomid': msg.roomid, 'status': 'success'});
+                    } else {
+                        eventBus.emit('messageack', {'roomid': msg.roomid, 'status': 'failure'});
                     }
                 });
             });
         } else {
             socket.emit('message', {'roomid': roomid, 'message': message}, (response) => {
                 if (response.status == "success") {
-                    eventBus.emit('messageack', {'roomid': msg.roomid});
+                    eventBus.emit('messageack', {'roomid': msg.roomid, 'status': 'success'});
+                } else {
+                    eventBus.emit('messageack', {'roomid': msg.roomid, 'status': 'failure'});
                 }
             });
         }

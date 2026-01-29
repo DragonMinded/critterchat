@@ -35,6 +35,7 @@
     --input-button-hover-background: light-dark(#bcbcbc, #6d6d6d);
     --input-button-hover-text: light-dark(#000000, #ffffff);
     --input-button-hover-border: light-dark(#bcbcbc, #6d6d6d);
+    --input-button-disabled-text: light-dark(#808080, #808080);
 
     --autocomplete-border: light-dark(#bcbcbc, #6d6d6d);
     --autocomplete-text: light-dark(#000000, #ffffff);
@@ -538,10 +539,15 @@ textarea {
     font-size: var(--application-text-size-14);
 }
 
-button:hover, button:focus-visible, input[type=button]:hover, input::file-selector-button:hover {
+button:enabled:hover, button:enabled:focus-visible, input[type=button]:enabled:hover, input::file-selector-button:hover {
     color: var(--input-button-hover-text);
     background: var(--input-button-hover-background);
     border: 1px solid var(--input-button-hover-border);
+}
+
+button:disabled, input[type=button]:disabled {
+    text-decoration: line-through;
+    color: var(--input-button-disabled-text);
 }
 
 input[type=text]:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-visible {

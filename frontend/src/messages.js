@@ -55,6 +55,12 @@ class Messages {
         this.roomsLoaded = false;
         this.occupantsLoaded = false;
 
+        // Handles making sure you can't mess with or double-post a message when one is sending.
+        // We really should track this per-room, and also use it to block searching for emoji or
+        // changing attachments, but this is better than nothing and prevents double-sending when
+        // it appears that otherwise nothing is happening.
+        this.pendingMessage = false;
+
         // Handles only updating the server with the last action if we're really viewing
         // the message.
         this.lastActionUpdate = {};
@@ -81,6 +87,14 @@ class Messages {
                     const files = this.uploadPicker.files( roomid );
 
                     if (message.length > 0 || files.length > 0) {
+                        if (files.length > 0) {
+                            // Prevent double-sending, especially with large attachments. We could do this for message
+                            // only events, but that makes the send button annoyingly flash disabled for a split second.
+                            // It's much more likely to double-send with attachments since they take awhile to upload.
+                            this.pendingMessage = true;
+                            $( 'button#sendmessage' ).prop('disabled', true);
+                        }
+
                         // Now, send the event.
                         this.eventBus.emit('message', {'roomid': roomid, 'message': message, 'attachments': files});
                     }
@@ -178,14 +192,34 @@ class Messages {
 
         // Ensure we only clear user input on successful message acknowledgement.
         eventBus.on('messageack', (info) => {
-            if (info.roomid == this.roomid) {
-                // Now reset the input.
-                $( 'input#message' ).val( '' );
-            }
+            if (info.status == "success") {
+                if (info.roomid == this.roomid) {
+                    // Now reset the input.
+                    $( 'input#message' ).val( '' );
 
-            // Always clear the attachment store for the room.
-            this.pending.set(info.roomid, "");
-            this.uploadPicker.clearRoom( info.roomid );
+                    // And allow input to take place.
+                    this.pendingMessage = false;
+                    $( 'button#sendmessage' ).prop('disabled', false);
+                }
+
+                // Always clear the attachment store for the room.
+                this.pending.set(info.roomid, "");
+                this.uploadPicker.clearRoom( info.roomid );
+            } else {
+                // Just unblock the control to try again.
+                this.pendingMessage = false;
+                $( 'button#sendmessage' ).prop('disabled', false);
+            }
+        });
+
+        // Ensure that we don't let any messages get sent during downtime.
+        eventBus.on('connected', () => {
+            if (!self.pendingMessage) {
+                $( 'button#sendmessage' ).prop('disabled', false);
+            }
+        });
+        eventBus.on('disconnected', () => {
+            $( 'button#sendmessage' ).prop('disabled', true);
         });
 
         this.screenState.registerStateChangeCallback(() => {
@@ -365,6 +399,10 @@ class Messages {
                     $( 'input#message' ).val('');
                 }
                 this.uploadPicker.showRoom( roomid );
+
+                // Now, unblock any pending message block.
+                this.pendingMessage = false;
+                $( 'button#sendmessage' ).prop('disabled', false);
 
                 // Now, swap to that room.
                 if (this.rooms.has(roomid)) {
