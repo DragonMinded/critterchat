@@ -160,8 +160,19 @@ class UserPreferences:
         )
 
 
+class MetadataType(StrEnum):
+    WIDTH = 'width'
+    HEIGHT = 'height'
+    ALT_TEXT = 'alt_text'
+
+
 class Attachment:
-    def __init__(self, attachmentid: AttachmentID, uri: str, mimetype: str, metadata: Dict[str, object]) -> None:
+    def __init__(
+        self, attachmentid: AttachmentID,
+        uri: str,
+        mimetype: str,
+        metadata: Dict[MetadataType, object],
+    ) -> None:
         self.id = attachmentid
         self.uri = uri
         self.mimetype = mimetype

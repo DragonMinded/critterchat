@@ -6,7 +6,7 @@ from pydub.exceptions import CouldntDecodeError  # type: ignore
 from typing import Dict, List, Optional
 
 from .app import UserException, app, static_location, templates_location, loginrequired, jsonify, g
-from ..data import Attachment, UserNotification
+from ..data import Attachment, UserNotification, MetadataType
 from ..service import AttachmentService, AttachmentServiceUnsupportedImageException, AttachmentServiceInvalidSizeException
 
 
@@ -70,7 +70,7 @@ def _icon_upload(uploadtype: str) -> Dict[str, object]:
     if width != height:
         raise UserException(f"{uploadtype.capitalize()} image is not square.")
 
-    attachmentid = attachmentservice.create_attachment(content_type, None, {'width': width, 'height': height})
+    attachmentid = attachmentservice.create_attachment(content_type, None, {MetadataType.WIDTH: width, MetadataType.HEIGHT: height})
     if attachmentid is None:
         raise Exception(f"Could not insert new {uploadtype}.")
     attachmentservice.put_attachment_data(attachmentid, icon)
@@ -177,6 +177,7 @@ def attachments_upload() -> Dict[str, object]:
 
         filename = str(atch.get('filename', ''))
         rawdata = str(atch.get('data', ''))
+        alt_text = str(atch.get('alt_text', ''))
         if not filename or not rawdata or "," not in rawdata:
             raise Exception("Attachment data corrupt or not provided in upload.")
 
@@ -215,7 +216,11 @@ def attachments_upload() -> Dict[str, object]:
             filename = filename + attachmentservice.get_extension(content_type)
 
         # The image is validated at this point, so we can attach it and return the ID.
-        attachmentid = attachmentservice.create_attachment(content_type, filename, {'width': width, 'height': height})
+        attachmentid = attachmentservice.create_attachment(
+            content_type,
+            filename,
+            {MetadataType.WIDTH: width, MetadataType.HEIGHT: height, MetadataType.ALT_TEXT: alt_text},
+        )
         if attachmentid is None:
             raise Exception("Could not insert message attachment!")
         attachmentservice.put_attachment_data(attachmentid, attachmentdata)

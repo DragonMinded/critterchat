@@ -11,6 +11,7 @@ from ..data import (
     Attachment,
     Action,
     ActionType,
+    MetadataType,
     Migration,
     User,
     Occupant,
@@ -211,7 +212,10 @@ class AttachmentService:
 
                         transposed = ImageOps.exif_transpose(img)
                         width, height = transposed.size
-                        self.__data.attachment.update_attachment_metadata(attachment.id, {'width': width, 'height': height})
+                        self.__data.attachment.update_attachment_metadata(
+                            attachment.id,
+                            {MetadataType.WIDTH: width, MetadataType.HEIGHT: height},
+                        )
 
                 # Mark that we did this migration so we never run it again.
                 self.__data.migration.flag_migrated(Migration.IMAGE_DIMENSIONS)
@@ -245,7 +249,7 @@ class AttachmentService:
         self,
         content_type: str,
         original_filename: Optional[str],
-        metadata: Dict[str, object],
+        metadata: Dict[MetadataType, object],
     ) -> Optional[AttachmentID]:
         return self.__data.attachment.insert_attachment(
             self.__config.attachments.system,

@@ -1,7 +1,7 @@
 from typing import Dict, cast
 
 from ..config import Config
-from ..data import Data, Emote
+from ..data import Data, Emote, MetadataType
 from .attachment import AttachmentService, AttachmentServiceUnsupportedImageException, AttachmentServiceException
 
 
@@ -21,7 +21,10 @@ class EmoteService:
 
         for emote in emotes:
             url = self.__attachments.get_attachment_url(emote.attachmentid)
-            results[emote.alias] = Emote(url, (cast(int, emote.metadata["width"]), cast(int, emote.metadata["height"])))
+            results[emote.alias] = Emote(
+                url,
+                (cast(int, emote.metadata[MetadataType.WIDTH]), cast(int, emote.metadata[MetadataType.HEIGHT])),
+            )
         return results
 
     def validate_emote(self, alias: str) -> bool:
@@ -63,8 +66,8 @@ class EmoteService:
             content_type,
             None,
             {
-                'width': width,
-                'height': height,
+                MetadataType.WIDTH: width,
+                MetadataType.HEIGHT: height,
             },
         )
         if attachmentid is None:

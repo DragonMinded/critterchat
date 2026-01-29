@@ -6,7 +6,7 @@ from sqlalchemy.types import String, Integer, JSON
 from typing import Dict, Iterable, Iterator, List, Optional, Union
 
 from .base import BaseData, metadata
-from .types import ActionID, AttachmentID, NewActionID, NewAttachmentID, UserID, NewUserID
+from .types import MetadataType, ActionID, AttachmentID, NewActionID, NewAttachmentID, UserID, NewUserID
 
 """
 Table representing an attachment.
@@ -69,7 +69,7 @@ class Attachment:
         system: str,
         content_type: str,
         original_filename: Optional[str],
-        metadata: Dict[str, object],
+        metadata: Dict[MetadataType, object],
     ) -> None:
         self.id = attachmentid
         self.system = system
@@ -84,7 +84,7 @@ class Emote:
         attachmentid: AttachmentID,
         system: str,
         content_type: str,
-        metadata: Dict[str, object],
+        metadata: Dict[MetadataType, object],
     ) -> None:
         self.alias = alias
         self.attachmentid = attachmentid
@@ -100,7 +100,7 @@ class ActionAttachment:
         attachmentid: AttachmentID,
         content_type: str,
         original_filename: Optional[str],
-        metadata: Dict[str, object],
+        metadata: Dict[MetadataType, object],
     ) -> None:
         self.actionid = actionid
         self.attachmentid = attachmentid
@@ -115,7 +115,7 @@ class AttachmentData(BaseData):
         system: str,
         content_type: str,
         original_filename: Optional[str],
-        metadata: Dict[str, object],
+        metadata: Dict[MetadataType, object],
     ) -> Optional[AttachmentID]:
         """
         Given an attachment system and content type, insert a pointer to that attachment.
@@ -144,10 +144,11 @@ class AttachmentData(BaseData):
 
         return AttachmentID(cursor.lastrowid)
 
-    def update_attachment_metadata(self, attachmentid: AttachmentID, metadata: Dict[str, object]) -> None:
+    def overwrite_attachment_metadata(self, attachmentid: AttachmentID, metadata: Dict[MetadataType, object]) -> None:
         """
-        Given an existing attachment, update it's metadata. Normally never called, but
-        can be necessary during migrations to backfill missing metadata.
+        Given an existing attachment, completely overwrite it's metadata. Normally
+        never called, but can be necessary during migrations to backfill missing metadata.
+        Note that this completely overwrites the metadata with new metadata.
         """
 
         sql = """
@@ -157,6 +158,32 @@ class AttachmentData(BaseData):
             LIMIT 1
         """
         self.execute(sql, {"id": attachmentid, "metadata": json.dumps(metadata)})
+
+    def update_attachment_metadata(self, attachmentid: AttachmentID, metadata: Dict[MetadataType, object]) -> None:
+        """
+        Given an existing attachment, update it's metadata. Normally never called, but
+        can be necessary during migrations to backfill missing metadata. Note that this
+        does not update any metadata not explicitly specified in the incoming metadata
+        dictionary, so it's safe to only update the values you want to change.
+        """
+
+        with self.transaction():
+            sql = "SELECT metadata FROM attachment WHERE id = :id"
+            cursor = self.execute(sql, {"id": attachmentid})
+            if cursor.rowcount != 1:
+                existing = {}
+            else:
+                result = cursor.mappings().fetchone()
+                existing = json.loads(str(result["metadata"] or "{}"))
+
+            existing = {**existing, **metadata}
+            sql = """
+                UPDATE attachment
+                SET metadata = :metadata
+                WHERE id = :id
+                LIMIT 1
+            """
+            self.execute(sql, {"id": attachmentid, "metadata": json.dumps(existing)})
 
     def remove_attachment(self, attachmentid: AttachmentID) -> None:
         """
@@ -426,11 +453,11 @@ class AttachmentData(BaseData):
 
         for result in cursor.mappings():
             attachment = ActionAttachment(
-                ActionID(result['action_id']),
-                AttachmentID(result['attachment_id']),
-                str(result['content_type'] or ""),
-                str(result['original_filename'] or "") or None,
-                json.loads(str(result["metadata"] or "{}")),
+                actionid=ActionID(result['action_id']),
+                attachmentid=AttachmentID(result['attachment_id']),
+                content_type=str(result['content_type'] or ""),
+                original_filename=str(result['original_filename'] or "") or None,
+                metadata=json.loads(str(result["metadata"] or "{}")),
             )
 
             retval[attachment.actionid].append(attachment)
