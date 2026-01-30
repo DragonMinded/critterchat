@@ -183,6 +183,8 @@ class Messages {
 
         $( 'div.message-visibility' ).on( 'click', () => {
             event.preventDefault();
+            event.stopPropagation();
+            event.stopImmediatePropagation();
 
             if ($( 'div.message-visibility' ).hasClass('message-sensitive')) {
                 $( 'div.message-visibility' ).addClass('message-visible').removeClass('message-sensitive');
@@ -946,6 +948,10 @@ class Messages {
                             '<img src="' + attachment.uri + '"' + this._getDims(attachment, desiredHeight) + '/>'
                         ).attr('alt', attachment.metadata.alt_text || "message attachment");
 
+                        if (attachment.metadata.sensitive) {
+                            attachImg = attachImg.addClass('blurred');
+                        }
+
                         if (attachment.metadata.alt_text) {
                             attachImg = attachImg.attr('title', attachment.metadata.alt_text);
                         }
@@ -1034,11 +1040,21 @@ class Messages {
 
             // Allow un-spoilering sensitive messages.
             $('div.message.sensitive').on('click', (event) => {
+                event.preventDefault();
                 event.stopPropagation();
                 event.stopImmediatePropagation();
 
                 const elem = $(event.currentTarget);
                 elem.removeClass('sensitive');
+                elem.off();
+            });
+            $('div.attachments img.blurred').on('click', (event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                event.stopImmediatePropagation();
+
+                const elem = $(event.currentTarget);
+                elem.removeClass('blurred');
                 elem.off();
             });
         }

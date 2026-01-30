@@ -142,9 +142,12 @@ body.smallest {
 
     --attachment-picker-top: 3.5px;
     --attachment-picker-padding: 8px;
-    --attachment-picker-alt-text-left: 5px;
-    --attachment-picker-alt-text-bottom: 5px;
+    --attachment-picker-alt-text-left: 4px;
+    --attachment-picker-alt-text-bottom: 4px;
     --attachment-picker-alt-text-image-size: 300px;
+    --attachment-picker-visible-left: 35px;
+    --attachment-picker-visible-bottom: 4px;
+    --attachment-picker-visible-top: -2.5px;
 
     --message-visible-top: 3.5px;
     --message-sensitive-top: 3.5px;
@@ -227,9 +230,12 @@ body.smaller {
 
     --attachment-picker-top: 3.5px;
     --attachment-picker-padding: 9px;
-    --attachment-picker-alt-text-left: 5px;
-    --attachment-picker-alt-text-bottom: 5px;
+    --attachment-picker-alt-text-left: 4px;
+    --attachment-picker-alt-text-bottom: 4px;
     --attachment-picker-alt-text-image-size: 325px;
+    --attachment-picker-visible-left: 38px;
+    --attachment-picker-visible-bottom: 4px;
+    --attachment-picker-visible-top: -2.5px;
 
     --message-visible-top: 3.5px;
     --message-sensitive-top: 3.5px;
@@ -312,9 +318,12 @@ body:not(.smallest):not(.smaller):not(.larger):not(.largest) {
 
     --attachment-picker-top: 3.5px;
     --attachment-picker-padding: 10px;
-    --attachment-picker-alt-text-left: 5px;
-    --attachment-picker-alt-text-bottom: 5px;
+    --attachment-picker-alt-text-left: 4px;
+    --attachment-picker-alt-text-bottom: 4px;
     --attachment-picker-alt-text-image-size: 350px;
+    --attachment-picker-visible-left: 40px;
+    --attachment-picker-visible-bottom: 4px;
+    --attachment-picker-visible-top: -2.5px;
 
     --message-visible-top: 3.5px;
     --message-sensitive-top: 3.5px;
@@ -397,9 +406,12 @@ body.larger {
 
     --attachment-picker-top: 3.5px;
     --attachment-picker-padding: 10px;
-    --attachment-picker-alt-text-left: 5px;
-    --attachment-picker-alt-text-bottom: 5px;
+    --attachment-picker-alt-text-left: 4px;
+    --attachment-picker-alt-text-bottom: 4px;
     --attachment-picker-alt-text-image-size: 375px;
+    --attachment-picker-visible-left: 44px;
+    --attachment-picker-visible-bottom: 4px;
+    --attachment-picker-visible-top: -2.5px;
 
     --message-visible-top: 3.5px;
     --message-sensitive-top: 3.5px;
@@ -482,9 +494,12 @@ body.largest {
 
     --attachment-picker-top: 3.5px;
     --attachment-picker-padding: 10px;
-    --attachment-picker-alt-text-left: 5px;
-    --attachment-picker-alt-text-bottom: 5px;
+    --attachment-picker-alt-text-left: 4px;
+    --attachment-picker-alt-text-bottom: 4px;
     --attachment-picker-alt-text-image-size: 400px;
+    --attachment-picker-visible-left: 48px;
+    --attachment-picker-visible-bottom: 4px;
+    --attachment-picker-visible-top: -2.5px;
 
     --message-visible-top: 3.5px;
     --message-sensitive-top: 3.5px;
@@ -757,6 +772,20 @@ div.maskable.message-sensitive {
     right: 2.6em;
 }
 
+div.maskable.attachment-visible {
+    width: 1.2em;
+    height: 1.2em;
+    margin-bottom: -0.25em;
+    mask-image: url('visible.svg');
+}
+
+div.maskable.attachment-sensitive {
+    width: 1.2em;
+    height: 1.2em;
+    margin-bottom: -0.25em;
+    mask-image: url('sensitive.svg');
+}
+
 div.attachment-picker:hover {
     color: var(--attachment-picker-hover);
 }
@@ -795,7 +824,7 @@ div.uploadpicker-container div.upload div.delete-container {
 div.uploadpicker-container div.upload div.alt-text-container {
     position: absolute;
     cursor: pointer;
-    width: 2.5em;
+    width: 2.3em;
     height: 1.5em;
     left: var(--attachment-picker-alt-text-left);
     bottom: var(--attachment-picker-alt-text-bottom);
@@ -808,6 +837,28 @@ div.uploadpicker-container div.upload div.alt-text-container {
     align-items: center;
     text-transform: uppercase;
     font-size: var(--application-text-size-12);
+}
+
+div.uploadpicker-container div.upload div.sensitive-container {
+    position: absolute;
+    cursor: pointer;
+    width: 2.3em;
+    height: 1.5em;
+    left: var(--attachment-picker-visible-left);
+    bottom: var(--attachment-picker-visible-bottom);
+    border-radius: var(--button-border-radius);
+    background: var(--attachment-picker-alt-text-background);
+    color: var(--attachment-picker-alt-text-missing-foreground);
+    border: 2px solid var(--attachment-picker-alt-text-foreground);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: var(--application-text-size-12);
+}
+
+div.sensitive-container div.attachment-visibility {
+    font-size: var(--application-text-size-14);
+    margin-top: var(--attachment-picker-visible-top);
 }
 
 div.uploadpicker-container div.upload div.alt-text-container.present {
@@ -1162,6 +1213,14 @@ div.conversation div.item div.message.sensitive {
 
 div.conversation div.item div.message.sensitive img {
     opacity: 0%;
+}
+
+div.conversation div.item div.attachments a {
+    overflow: hidden;
+}
+
+div.conversation div.item div.attachments img.blurred {
+    filter: blur(50px);
 }
 
 div.conversation div.item.combined div.icon {

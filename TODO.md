@@ -1,8 +1,6 @@
 TODO Immediate
 ==============
 
- - Allow spoilering previews.
-
 TODO For Public Instance
 ========================
 

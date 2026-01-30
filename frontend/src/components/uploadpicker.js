@@ -128,6 +128,7 @@ class UploadPicker {
                             filename: file.name,
                             data: fr.result,
                             alt_text: '',
+                            sensitive: false,
                         });
 
                         this._drawRoom( roomid );
@@ -172,7 +173,17 @@ class UploadPicker {
                 .attr('class', 'alt-text-container' + (upload.alt_text ? " present" : ""))
                 .attr('id', roomid + '-alt-' + idx)
                 .appendTo(item);
-            $('<div />').text('alt').appendTo(altcontainer);
+            $('<div />')
+                .text('alt')
+                .appendTo(altcontainer);
+            const sensitivecontainer = $('<div />')
+                .attr('class', 'sensitive-container')
+                .attr('id', roomid + '-sensitive-' + idx)
+                .appendTo(item);
+            const visibilityClass = upload.sensitive ? 'attachment-sensitive' : 'attachment-visible';
+            $('<div />')
+                .attr('class', 'maskable attachment-visibility ' + visibilityClass)
+                .appendTo(sensitivecontainer);
             const delcontainer = $('<div />')
                 .attr('class', 'delete-container')
                 .attr('id', roomid + '-upload-' + idx)
@@ -212,6 +223,24 @@ class UploadPicker {
                         jqe.removeClass('present');
                     }
                 });
+            }
+        });
+
+        $('div.uploadpicker div.sensitive-container').on('click', (event) => {
+            const jqe = $(event.currentTarget);
+            const parts = jqe.attr('id').split('-');
+
+            if (this.rooms.has(parts[0])) {
+                const room = this.rooms.get(parts[0]);
+                const idx = parseInt(parts[2]);
+
+                room.files[idx].sensitive = !room.files[idx].sensitive;
+
+                if (room.files[idx].sensitive) {
+                    jqe.find('div.attachment-visibility').addClass('attachment-sensitive').removeClass('attachment-visible');
+                } else {
+                    jqe.find('div.attachment-visibility').addClass('attachment-visible').removeClass('attachment-sensitive');
+                }
             }
         });
 
