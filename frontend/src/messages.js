@@ -958,6 +958,11 @@ class Messages {
 
                         html += '      <a target="_blank" href="' + attachment.uri + '">';
                         html += '        ' + attachImg.prop('outerHTML');
+
+                        if (attachment.metadata.sensitive) {
+                            html += '        <div class="blurred"><div class="maskable attachment-sensitive"></div></div>';
+                        }
+
                         html += '      </a>';
                     });
                     html += '    </div>';
@@ -1048,14 +1053,14 @@ class Messages {
                 elem.removeClass('sensitive');
                 elem.off();
             });
-            $('div.attachments img.blurred').on('click', (event) => {
+            $('div.attachments div.blurred').on('click', (event) => {
                 event.preventDefault();
                 event.stopPropagation();
                 event.stopImmediatePropagation();
 
                 const elem = $(event.currentTarget);
-                elem.removeClass('blurred');
-                elem.off();
+                elem.parent().find('img.blurred').removeClass('blurred');
+                elem.remove();
             });
         }
 

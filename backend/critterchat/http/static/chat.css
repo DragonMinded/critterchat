@@ -1226,6 +1226,22 @@ div.conversation div.item div.message.sensitive img {
 
 div.conversation div.item div.attachments a {
     overflow: hidden;
+    position: relative;
+}
+
+div.conversation div.item div.attachments a div.blurred {
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    display: grid;
+    left: 0px;
+    top: 0px;
+    align-items: center;
+    justify-items: center;
+}
+
+div.attachments div.blurred div {
+    color: var(--conversation-text);
 }
 
 div.conversation div.item div.attachments img.blurred {

@@ -1,8 +1,6 @@
 TODO Immediate
 ==============
 
- - Display action icon on top of blurred images.
-
 TODO For Public Instance
 ========================
 
