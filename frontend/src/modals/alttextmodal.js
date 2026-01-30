@@ -11,7 +11,8 @@ export function displayAltTextEditor( image, existing, applyCallback ) {
 
     // Now, set the text up for the modal itself.
     $('#alt-text-image').attr('src', image);
-    $('#alt-text-text').val(existing || "");
+    $('#alt-text-text').attr("maxlength", window.maxalttext);
+    $('#alt-text-text').val((existing || "").substring(0, window.maxalttext));
 
     // Now, set up the callbacks for actions.
     $('#alt-text-confirm').on( 'click', (event) => {
@@ -20,7 +21,7 @@ export function displayAltTextEditor( image, existing, applyCallback ) {
         $.modal.close();
 
         if (applyCallback) {
-            applyCallback(event, $('#alt-text-text').val());
+            applyCallback(event, $('#alt-text-text').val().substring(0, window.maxalttext));
         }
     });
 

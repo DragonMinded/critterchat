@@ -42,6 +42,9 @@ limits:
   # The maximum number of unicode characters in a user's message as sent to a room.
   message_length: 64000
 
+  # The maximum number of unicode characters in an attachment's alt text as sent to a room.
+  alt_text_length: 64000
+
   # The maximum size in KB of user avatars or room custom icons.
   icon_size: 128
 

@@ -1,7 +1,6 @@
 TODO Immediate
 ==============
 
- - Enforce an alt text size limit.
  - Allow spoilering previews.
 
 TODO For Public Instance

@@ -180,6 +180,8 @@ def attachments_upload() -> Dict[str, object]:
         alt_text = str(atch.get('alt_text', ''))
         if not filename or not rawdata or "," not in rawdata:
             raise Exception("Attachment data corrupt or not provided in upload.")
+        if len(alt_text) > g.config.limits.alt_text_length:
+            raise UserException(f'Chosen attachment {filename} alt text is too long! Alt text cannot be longer than {g.config.alt_text_length} characters.')
 
         # Remember the old content type, because if we detect that it's wrong, or we convert the image
         # we will want to update the filename with the new correct extension.

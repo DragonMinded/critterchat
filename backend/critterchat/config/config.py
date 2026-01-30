@@ -68,6 +68,10 @@ class Limits:
         return int(self.__config.get("limits", {}).get("message_length", 64000))
 
     @property
+    def alt_text_length(self) -> int:
+        return int(self.__config.get("limits", {}).get("alt_text_length", 64000))
+
+    @property
     def icon_size(self) -> int:
         return int(self.__config.get("limits", {}).get("icon_size", 128))
 
