@@ -2,7 +2,6 @@ TODO Immediate
 ==============
 
  - Allow spoilering previews.
- - Alt text for image attachments.
 
 TODO For Public Instance
 ========================

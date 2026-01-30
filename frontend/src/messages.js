@@ -908,8 +908,16 @@ class Messages {
 
                     html += '    <div class="attachments">';
                     message.attachments.forEach((attachment) => {
+                        var attachImg = $(
+                            '<img src="' + attachment.uri + '"' + this._getDims(attachment, desiredHeight) + '/>'
+                        ).attr('alt', attachment.metadata.alt_text || "message attachment");
+
+                        if (attachment.metadata.alt_text) {
+                            attachImg = attachImg.attr('title', attachment.metadata.alt_text);
+                        }
+
                         html += '      <a target="_blank" href="' + attachment.uri + '">';
-                        html += '        <img src="' + attachment.uri + '"' + this._getDims(attachment, desiredHeight) + '/>';
+                        html += '        ' + attachImg.prop('outerHTML');
                         html += '      </a>';
                     });
                     html += '    </div>';

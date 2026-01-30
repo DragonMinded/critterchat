@@ -53,6 +53,9 @@
     --attachment-picker-background: light-dark(#ffffff, #222222);
     --attachment-picker-delete-background: light-dark(#ffffff, #222222);
     --attachment-picker-delete-foreground: light-dark(#000000, #ffffff);
+    --attachment-picker-alt-text-background: light-dark(#ffffff, #222222);
+    --attachment-picker-alt-text-foreground: light-dark(#000000, #ffffff);
+    --attachment-picker-alt-text-missing-foreground: light-dark(#505050, #b8b8b8);
 
     --error-border: light-dark(#b3b3b3, #1c1c1c);
     --error-error: light-dark(#e4a7a7, #d77575);
@@ -136,6 +139,9 @@ body.smallest {
 
     --attachment-picker-top: 3.5px;
     --attachment-picker-padding: 8px;
+    --attachment-picker-alt-text-left: 5px;
+    --attachment-picker-alt-text-bottom: 5px;
+    --attachment-picker-alt-text-image-size: 300px;
 
     --back-nav-width: 32px;
     --back-nav-height: 32px;
@@ -215,6 +221,9 @@ body.smaller {
 
     --attachment-picker-top: 3.5px;
     --attachment-picker-padding: 9px;
+    --attachment-picker-alt-text-left: 5px;
+    --attachment-picker-alt-text-bottom: 5px;
+    --attachment-picker-alt-text-image-size: 325px;
 
     --back-nav-width: 32px;
     --back-nav-height: 32px;
@@ -294,6 +303,9 @@ body:not(.smallest):not(.smaller):not(.larger):not(.largest) {
 
     --attachment-picker-top: 3.5px;
     --attachment-picker-padding: 10px;
+    --attachment-picker-alt-text-left: 5px;
+    --attachment-picker-alt-text-bottom: 5px;
+    --attachment-picker-alt-text-image-size: 350px;
 
     --back-nav-width: 36px;
     --back-nav-height: 36px;
@@ -373,6 +385,9 @@ body.larger {
 
     --attachment-picker-top: 3.5px;
     --attachment-picker-padding: 10px;
+    --attachment-picker-alt-text-left: 5px;
+    --attachment-picker-alt-text-bottom: 5px;
+    --attachment-picker-alt-text-image-size: 375px;
 
     --back-nav-width: 40px;
     --back-nav-height: 40px;
@@ -452,6 +467,9 @@ body.largest {
 
     --attachment-picker-top: 3.5px;
     --attachment-picker-padding: 10px;
+    --attachment-picker-alt-text-left: 5px;
+    --attachment-picker-alt-text-bottom: 5px;
+    --attachment-picker-alt-text-image-size: 400px;
 
     --back-nav-width: 44px;
     --back-nav-height: 44px;
@@ -728,6 +746,28 @@ div.uploadpicker-container div.upload div.delete-container {
     border: 2px solid var(--attachment-picker-delete-foreground);
     border-radius: 50%;
     display: flex;
+}
+
+div.uploadpicker-container div.upload div.alt-text-container {
+    position: absolute;
+    cursor: pointer;
+    width: 2.5em;
+    height: 1.5em;
+    left: var(--attachment-picker-alt-text-left);
+    bottom: var(--attachment-picker-alt-text-bottom);
+    border-radius: var(--button-border-radius);
+    background: var(--attachment-picker-alt-text-background);
+    color: var(--attachment-picker-alt-text-missing-foreground);
+    border: 2px solid var(--attachment-picker-alt-text-foreground);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-transform: uppercase;
+    font-size: var(--application-text-size-12);
+}
+
+div.uploadpicker-container div.upload div.alt-text-container.present {
+    color: var(--attachment-picker-alt-text-foreground);
 }
 
 div.uploadpicker-container img {
@@ -1194,7 +1234,8 @@ div.warning > div.actions,
 div.information > div.actions,
 div.chatdetails > div.actions,
 div.editprofile > div.actions,
-div.editpreferences > div.actions
+div.editpreferences > div.actions,
+div.alt-text > div.actions
 {
     display: flex;
     flex-direction: row;
@@ -1310,11 +1351,11 @@ div.chatdetails div.icon, div.chatdetails div.picker, div.editprofile div.icon, 
     justify-content: center;
 }
 
-div.chatdetails dl, div.editprofile dl, div.editpreferences dl {
+div.chatdetails dl, div.editprofile dl, div.editpreferences dl, div.alt-text dl {
     margin: 0px;
 }
 
-div.chatdetails dt, div.editprofile dt, div.editpreferences dt {
+div.chatdetails dt, div.editprofile dt, div.editpreferences dt, div.alt-text dt {
     font-size: var(--application-text-size-14);
 }
 
@@ -1323,7 +1364,7 @@ div.editpreferences h4 {
     margin-bottom: 0px;
 }
 
-div.chatdetails dl.name dd, div.chatdetails dl.topic dd, div.editprofile dl.name dd, div.editprofile dl.about dd {
+div.chatdetails dl.name dd, div.chatdetails dl.topic dd, div.editprofile dl.name dd, div.editprofile dl.about dd, div.alt-text dd {
     display: flex;
     margin-left: 0px;
 }
@@ -1333,6 +1374,27 @@ div.chatdetails dl.name input, div.chatdetails dl.topic input, div.editprofile d
 }
 
 div.editprofile dl.about textarea {
+    width: 100%;
+    height: 8em;
+}
+
+div.alt-text div.alt-text-image {
+    display: flex;
+    justify-content: center;
+    padding-bottom: var(--application-pane-padding);
+}
+
+div.alt-text div.alt-text-text {
+    padding-bottom: var(--application-pane-padding);
+}
+
+div.alt-text-image img {
+    max-height: var(--attachment-picker-alt-text-image-size);
+    max-width: 100%;
+    width: auto;
+}
+
+div.alt-text-text textarea {
     width: 100%;
     height: 8em;
 }

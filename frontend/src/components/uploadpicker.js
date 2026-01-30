@@ -1,5 +1,6 @@
 import $ from "jquery";
 import { flash } from "../utils.js";
+import { displayAltTextEditor } from "../modals/alttextmodal.js";
 
 class UploadPicker {
     constructor( eventBus, screenState, textBox ) {
@@ -126,6 +127,7 @@ class UploadPicker {
                         room.files.push({
                             filename: file.name,
                             data: fr.result,
+                            alt_text: '',
                         });
 
                         this._drawRoom( roomid );
@@ -163,9 +165,14 @@ class UploadPicker {
                 .attr('id', roomid + '-upload-' + idx)
                 .appendTo(container);
             $('<img />')
-                .attr('height', 75)
+                .attr('height', 100)
                 .attr('src', upload.data)
                 .appendTo(item);
+            const altcontainer = $('<div />')
+                .attr('class', 'alt-text-container' + (upload.alt_text ? " present" : ""))
+                .attr('id', roomid + '-alt-' + idx)
+                .appendTo(item);
+            $('<div />').text('alt').appendTo(altcontainer);
             const delcontainer = $('<div />')
                 .attr('class', 'delete-container')
                 .attr('id', roomid + '-upload-' + idx)
@@ -185,6 +192,26 @@ class UploadPicker {
                 room.files.splice(idx, 1);
 
                 this._drawRoom( parts[0] );
+            }
+        });
+
+        $('div.uploadpicker div.alt-text-container').on('click', (event) => {
+            const jqe = $(event.currentTarget);
+            const parts = jqe.attr('id').split('-');
+
+            if (this.rooms.has(parts[0])) {
+                const room = this.rooms.get(parts[0]);
+                const idx = parseInt(parts[2]);
+
+                displayAltTextEditor( room.files[idx].data, room.files[idx].alt_text, (event, alt_text) => {
+                    room.files[idx].alt_text = alt_text;
+
+                    if (alt_text) {
+                        jqe.addClass('present');
+                    } else {
+                        jqe.removeClass('present');
+                    }
+                });
             }
         });
 
