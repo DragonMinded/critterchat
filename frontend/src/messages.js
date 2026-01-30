@@ -327,6 +327,7 @@ class Messages {
     setPreferences( preferences ) {
         this.preferences = preferences;
         this._combineMessages(true);
+        this.uploadPicker.resizeRooms();
     }
 
     /**

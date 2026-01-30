@@ -41,12 +41,12 @@ class UploadPicker {
 
         // Handle sizing ourselves to the chat box when the window resizes.
         $(window).resize(() => {
-            this._resizeRooms();
+            this.resizeRooms();
         });
 
         // Handle sizing ourselves to the chat box when the info panel resizes.
         eventBus.on('updateinfo', (_info) => {
-            this._resizeRooms();
+            this.resizeRooms();
         }, true);
 
         $( 'input#message-files' ).on( 'change', (event) => {
@@ -237,8 +237,9 @@ class UploadPicker {
     }
 
     // Repositions all known rooms, called when the window is resized or when
-    // the info pane is toggled on desktop.
-    _resizeRooms() {
+    // the info pane is toggled on desktop. Also called when preferences change
+    // because this can change the layout.
+    resizeRooms() {
         this.rooms.forEach((_val, roomid) => {
             this._reposition(roomid);
         });
