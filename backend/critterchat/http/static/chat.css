@@ -11,6 +11,7 @@
 
     --conversation-background: light-dark(#efefef, #373737);
     --conversation-text: light-dark(#000000, #dddddd);
+    --conversation-spoiler: light-dark(#000000, #000000);
     --conversation-topic: light-dark(#707070, #707070);
     --conversation-timestamp: light-dark(#666666, #848484);
     --conversation-highlighted-background: light-dark(#e0e0e0, #242424);
@@ -1154,8 +1155,9 @@ div.conversation div.item div.message {
 
 div.conversation div.item div.message.sensitive {
     cursor: pointer;
-    color: var(--conversation-text);
-    background: var(--conversation-text);
+    color: var(--conversation-spoiler);
+    background: var(--conversation-spoiler);
+    user-select: none;
 }
 
 div.conversation div.item div.message.sensitive img {
