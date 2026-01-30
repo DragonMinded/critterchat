@@ -142,6 +142,7 @@ body.smallest {
 
     --attachment-picker-top: 3.5px;
     --attachment-picker-padding: 8px;
+    --attachment-picker-item-height: 100px;
     --attachment-picker-alt-text-left: 4px;
     --attachment-picker-alt-text-bottom: 4px;
     --attachment-picker-alt-text-image-size: 300px;
@@ -230,6 +231,7 @@ body.smaller {
 
     --attachment-picker-top: 3.5px;
     --attachment-picker-padding: 9px;
+    --attachment-picker-item-height: 115px;
     --attachment-picker-alt-text-left: 4px;
     --attachment-picker-alt-text-bottom: 4px;
     --attachment-picker-alt-text-image-size: 325px;
@@ -318,6 +320,7 @@ body:not(.smallest):not(.smaller):not(.larger):not(.largest) {
 
     --attachment-picker-top: 3.5px;
     --attachment-picker-padding: 10px;
+    --attachment-picker-item-height: 130px;
     --attachment-picker-alt-text-left: 4px;
     --attachment-picker-alt-text-bottom: 4px;
     --attachment-picker-alt-text-image-size: 350px;
@@ -406,6 +409,7 @@ body.larger {
 
     --attachment-picker-top: 3.5px;
     --attachment-picker-padding: 10px;
+    --attachment-picker-item-height: 145px;
     --attachment-picker-alt-text-left: 4px;
     --attachment-picker-alt-text-bottom: 4px;
     --attachment-picker-alt-text-image-size: 375px;
@@ -494,6 +498,7 @@ body.largest {
 
     --attachment-picker-top: 3.5px;
     --attachment-picker-padding: 10px;
+    --attachment-picker-item-height: 160px;
     --attachment-picker-alt-text-left: 4px;
     --attachment-picker-alt-text-bottom: 4px;
     --attachment-picker-alt-text-image-size: 400px;
@@ -805,6 +810,10 @@ div.uploadpicker-container {
 
 div.uploadpicker-container div.upload {
     position: relative;
+}
+
+div.uploadpicker-container div.upload > img {
+    height: var(--attachment-picker-item-height);
 }
 
 div.uploadpicker-container div.upload div.delete-container {

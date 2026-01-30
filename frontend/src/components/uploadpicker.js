@@ -166,7 +166,6 @@ class UploadPicker {
                 .attr('id', roomid + '-upload-' + idx)
                 .appendTo(container);
             $('<img />')
-                .attr('height', 100)
                 .attr('src', upload.data)
                 .appendTo(item);
             const altcontainer = $('<div />')
