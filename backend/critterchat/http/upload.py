@@ -34,7 +34,7 @@ def avatar_upload() -> Dict[str, object]:
 
 def _icon_upload(uploadtype: str) -> Dict[str, object]:
     # Ensure that we only allow certain size uploads.
-    request.max_content_length = (((g.config.limits.icon_size * 1024) * 4) / 3) + 1024
+    request.max_content_length = (((g.config.limits.icon_size * 1024) * 4) // 3) + 1024
 
     attachmentservice = AttachmentService(g.config, g.data)
     body = request.get_data(as_text=True)
@@ -83,7 +83,7 @@ def _icon_upload(uploadtype: str) -> Dict[str, object]:
 @jsonify
 def notifications_upload() -> Dict[str, object]:
     # Ensure that we only allow certain size uploads.
-    request.max_content_length = ((((g.config.limits.notification_size * 1024) * 4) / 3) + 1024) * len(UserNotification)
+    request.max_content_length = ((((g.config.limits.notification_size * 1024) * 4) // 3) + 1024) * len(UserNotification)
 
     attachmentservice = AttachmentService(g.config, g.data)
     body = request.json or {}
@@ -158,7 +158,7 @@ def notifications_upload() -> Dict[str, object]:
 @jsonify
 def attachments_upload() -> Dict[str, object]:
     # Ensure that we only allow certain size uploads.
-    request.max_content_length = ((((g.config.limits.attachment_size * 1024) * 4) / 3) + 2048) * g.config.limits.attachment_max
+    request.max_content_length = ((((g.config.limits.attachment_size * 1024) * 4) // 3) + 2048) * g.config.limits.attachment_max
 
     attachmentservice = AttachmentService(g.config, g.data)
     body = request.json or {}
@@ -181,7 +181,7 @@ def attachments_upload() -> Dict[str, object]:
         if not filename or not rawdata or "," not in rawdata:
             raise Exception("Attachment data corrupt or not provided in upload.")
         if len(alt_text) > g.config.limits.alt_text_length:
-            raise UserException(f'Chosen attachment {filename} alt text is too long! Alt text cannot be longer than {g.config.alt_text_length} characters.')
+            raise UserException(f'Chosen attachment {filename} alt text is too long! Alt text cannot be longer than {g.config.limits.alt_text_length} characters.')
 
         # Remember the old content type, because if we detect that it's wrong, or we convert the image
         # we will want to update the filename with the new correct extension.

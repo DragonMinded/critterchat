@@ -174,7 +174,9 @@ def recover(recovery: str) -> Response:
 @account.route("/logout")
 @loginrequired
 def logout() -> Response:
-    g.data.user.destroy_session(g.sessionID)
+    # Should always be true on loginrequired endpoints, but let's be safe.
+    if g.sessionID:
+        g.data.user.destroy_session(g.sessionID)
     return redirect(url_for("welcome.home"))  # type: ignore
 
 

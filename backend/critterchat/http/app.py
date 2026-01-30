@@ -12,14 +12,15 @@ from flask import (
     make_response,
     url_for,
     flash,
-    g,
+    g as base_g,
 )
+from flask.ctx import _AppCtxGlobals
 from flask_socketio import SocketIO  # type: ignore
 from flask_cors import CORS  # type: ignore
 
 from ..common import AESCipher
 from ..config import Config
-from ..data import Data, UserPermission
+from ..data import Data, User, UserPermission
 from .templates import templates_location
 from .static import static_location
 
@@ -62,16 +63,36 @@ config: Config = Config()
 
 
 # A quick hack to teach mypy about the valid SID parameter.
-class StreamingRequest(Request):
+class CritterChatRequest(Request):
     sid: Any
 
 
-request: StreamingRequest = cast(StreamingRequest, base_request)
+request: CritterChatRequest = cast(CritterChatRequest, base_request)
+
+
+# A quick hack to teach mypy about our request global parameters.
+class CritterChatGlobal(_AppCtxGlobals):
+    # Our config global, always available.
+    config: Config
+
+    # Data object, we lie that it's always available because we only don't load
+    # it when we're in static endpoints which never get to our code.
+    data: Data
+
+    # Optional parameters that could be set if the user is logged in.
+    sessionID: Optional[str]
+    user: Optional[User]
+
+
+g: CritterChatGlobal = cast(CritterChatGlobal, base_g)
 
 
 @app.before_request
 def before_request() -> None:
     g.config = config
+    g.data = None  # type: ignore
+    g.sessionID = None
+    g.user = None
 
     if request.endpoint in {"static"}:
         # This is just serving cached compiled frontends, skip loading from DB
