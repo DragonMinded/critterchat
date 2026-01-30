@@ -750,9 +750,12 @@ def message(json: Dict[str, object]) -> Dict[str, object]:
             socketio.emit('error', {'error': 'Too many attachments!'}, room=request.sid)
             return {'status': 'failed'}
 
+        # Add any sensitivity tag.
+        sensitive = bool(json.get('sensitive'))
+
         if represents_real_text(message) or attachments:
             try:
-                messageservice.add_message(roomid, userid, message, attachments)
+                messageservice.add_message(roomid, userid, message, sensitive, attachments)
                 return {'status': 'success'}
             except MessageServiceException as e:
                 socketio.emit('error', {'error': str(e)}, room=request.sid)

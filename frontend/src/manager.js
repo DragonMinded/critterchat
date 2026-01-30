@@ -493,21 +493,26 @@ export function manager(socket) {
     eventBus.on('message', (msg) => {
         const roomid = msg.roomid;
         const message = msg.message;
+        const sensitive = msg.sensitive;
         var attachments = msg.attachments;
 
         if (attachments.length > 0) {
             // Need to upload attachments first before sending message.
             uploader.uploadAttachments(attachments, (aids) => {
-                socket.emit('message', {'roomid': roomid, 'message': message, 'attachments': aids}, (response) => {
-                    if (response.status == "success") {
-                        eventBus.emit('messageack', {'roomid': msg.roomid, 'status': 'success'});
-                    } else {
-                        eventBus.emit('messageack', {'roomid': msg.roomid, 'status': 'failure'});
-                    }
-                });
+                socket.emit(
+                    'message',
+                    {'roomid': roomid, 'message': message, 'sensitive': sensitive, 'attachments': aids},
+                    (response) => {
+                        if (response.status == "success") {
+                            eventBus.emit('messageack', {'roomid': msg.roomid, 'status': 'success'});
+                        } else {
+                            eventBus.emit('messageack', {'roomid': msg.roomid, 'status': 'failure'});
+                        }
+                    },
+                );
             });
         } else {
-            socket.emit('message', {'roomid': roomid, 'message': message}, (response) => {
+            socket.emit('message', {'roomid': roomid, 'message': message, 'sensitive': sensitive}, (response) => {
                 if (response.status == "success") {
                     eventBus.emit('messageack', {'roomid': msg.roomid, 'status': 'success'});
                 } else {

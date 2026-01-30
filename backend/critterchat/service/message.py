@@ -1,5 +1,5 @@
 import emoji
-from typing import Final, List, Optional, Set
+from typing import Dict, Final, List, Optional, Set
 
 from ..config import Config
 from ..common import Time
@@ -101,7 +101,14 @@ class MessageService:
         ]
         return history
 
-    def add_message(self, roomid: RoomID, userid: UserID, message: str, attachments: List[AttachmentID]) -> Optional[Action]:
+    def add_message(
+        self,
+        roomid: RoomID,
+        userid: UserID,
+        message: str,
+        sensitive: bool,
+        attachments: List[AttachmentID],
+    ) -> Optional[Action]:
         message = emoji.emojize(emoji.emojize(message, language="alias"), language="en")
         if len(message) > self.__config.limits.message_length:
             raise MessageServiceException("You're trying to send a message that is too long!")
@@ -111,12 +118,16 @@ class MessageService:
             userid=userid,
         )
 
+        messagedata: Dict[str, object] = {"message": message}
+        if sensitive:
+            messagedata["sensitive"] = True
+
         action = Action(
             actionid=NewActionID,
             timestamp=Time.now(),
             occupant=occupant,
             action=ActionType.MESSAGE,
-            details={"message": message},
+            details=messagedata,
         )
 
         attachmentids: List[AttachmentID] = []

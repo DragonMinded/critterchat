@@ -178,6 +178,7 @@ def attachments_upload() -> Dict[str, object]:
         filename = str(atch.get('filename', ''))
         rawdata = str(atch.get('data', ''))
         alt_text = str(atch.get('alt_text', ''))
+        sensitive = bool(atch.get('sensitive'))
         if not filename or not rawdata or "," not in rawdata:
             raise Exception("Attachment data corrupt or not provided in upload.")
         if len(alt_text) > g.config.limits.alt_text_length:
@@ -221,7 +222,12 @@ def attachments_upload() -> Dict[str, object]:
         attachmentid = attachmentservice.create_attachment(
             content_type,
             filename,
-            {MetadataType.WIDTH: width, MetadataType.HEIGHT: height, MetadataType.ALT_TEXT: alt_text},
+            {
+                MetadataType.WIDTH: width,
+                MetadataType.HEIGHT: height,
+                MetadataType.ALT_TEXT: alt_text,
+                MetadataType.SENSITIVE: sensitive,
+            },
         )
         if attachmentid is None:
             raise Exception("Could not insert message attachment!")

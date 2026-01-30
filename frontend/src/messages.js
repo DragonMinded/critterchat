@@ -96,7 +96,15 @@ class Messages {
                         }
 
                         // Now, send the event.
-                        this.eventBus.emit('message', {'roomid': roomid, 'message': message, 'attachments': files});
+                        this.eventBus.emit(
+                            'message',
+                            {
+                                'roomid': roomid,
+                                'message': message,
+                                'sensitive': $( 'div.message-visibility' ).hasClass('message-sensitive'),
+                                'attachments': files,
+                            },
+                        );
                     }
                 }
             }
@@ -173,6 +181,16 @@ class Messages {
             }
         });
 
+        $( 'div.message-visibility' ).on( 'click', () => {
+            event.preventDefault();
+
+            if ($( 'div.message-visibility' ).hasClass('message-sensitive')) {
+                $( 'div.message-visibility' ).addClass('message-visible').removeClass('message-sensitive');
+            } else {
+                $( 'div.message-visibility' ).addClass('message-sensitive').removeClass('message-visible');
+            }
+        });
+
         // Set up dynamic mobile detection.
         eventBus.on( 'resize', (newSize) => {
             this.size = newSize;
@@ -203,7 +221,8 @@ class Messages {
                 }
 
                 // Always clear the attachment store for the room.
-                this.pending.set(info.roomid, "");
+                this.pending.set(info.roomid, {"message": "", "sensitive": false});
+                $( 'div.message-visibility' ).addClass('message-visible').removeClass('message-sensitive');
                 this.uploadPicker.clearRoom( info.roomid );
             } else {
                 // Just unblock the control to try again.
@@ -389,15 +408,27 @@ class Messages {
             if (roomid != this.roomid) {
                 // First, save any old room message.
                 if (this.roomid) {
-                    this.pending.set(this.roomid, $( 'input#message' ).val());
+                    this.pending.set(
+                        this.roomid,
+                        {
+                            "message": $( 'input#message' ).val(),
+                            "sensitive": $( 'div.message-visibility' ).hasClass('message-sensitive'),
+                        },
+                    );
                     this.uploadPicker.hideRoom( this.roomid );
                 }
 
                 // Now, show new room's message.
                 if (this.pending.has(roomid)) {
-                    $( 'input#message' ).val(this.pending.get(roomid));
+                    $( 'input#message' ).val(this.pending.get(roomid).message);
+                    if ( this.pending.get(roomid).sensitive ) {
+                        $( 'div.message-visibility' ).addClass('message-sensitive').removeClass('message-visible');
+                    } else {
+                        $( 'div.message-visibility' ).addClass('message-visible').removeClass('message-sensitive');
+                    }
                 } else {
                     $( 'input#message' ).val('');
+                    $( 'div.message-visibility' ).addClass('message-visible').removeClass('message-sensitive');
                 }
                 this.uploadPicker.showRoom( roomid );
 
@@ -434,7 +465,9 @@ class Messages {
      */
     closeRoom( roomid ) {
         // Nuke pending message since we're closing the room.
-        this.pending.set(roomid, '');
+        this.pending.set(roomid, {'message': '', 'sensitive': false});
+        $( 'div.message-visibility' ).addClass('message-visible').removeClass('message-sensitive');
+
         this.uploadPicker.hideRoom( roomid );
 
         if (roomid == this.roomid) {
@@ -902,7 +935,7 @@ class Messages {
                 html += '      <span class="name" dir="auto" id="' + message.occupant.id + '">' + escapeHtml(message.occupant.nickname) + '</span>';
                 html += '      <span class="timestamp">' + formatDateTime(message.timestamp) + '</span>';
                 html += '    </div>';
-                html += '    <div class="message' + (highlighted ? " highlighted" : "") + '" dir="auto" id="' + message.id + '">' + content + '</div>';
+                html += '    <div class="message' + (highlighted ? " highlighted" : "") + (message.details.sensitive ? " sensitive" : "") + '" dir="auto" id="' + message.id + '">' + content + '</div>';
 
                 if (message.attachments.length) {
                     const desiredHeight = message.attachments.length == 1 ? 300 : 100;
@@ -997,6 +1030,16 @@ class Messages {
 
                 var id = $(event.currentTarget).attr('id')
                 this.eventBus.emit('displayprofile', id);
+            });
+
+            // Allow un-spoilering sensitive messages.
+            $('div.message.sensitive').on('click', (event) => {
+                event.stopPropagation();
+                event.stopImmediatePropagation();
+
+                const elem = $(event.currentTarget);
+                elem.removeClass('sensitive');
+                elem.off();
             });
         }
 

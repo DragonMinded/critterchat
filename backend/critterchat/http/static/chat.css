@@ -57,6 +57,8 @@
     --attachment-picker-alt-text-foreground: light-dark(#000000, #ffffff);
     --attachment-picker-alt-text-missing-foreground: light-dark(#505050, #b8b8b8);
 
+    --message-visibility-hover: light-dark(#111bf2, #2b34ed);
+
     --error-border: light-dark(#b3b3b3, #1c1c1c);
     --error-error: light-dark(#e4a7a7, #d77575);
     --error-warning: light-dark(#e4c9a7, #d0a46d);
@@ -143,6 +145,9 @@ body.smallest {
     --attachment-picker-alt-text-bottom: 5px;
     --attachment-picker-alt-text-image-size: 300px;
 
+    --message-visible-top: 3.5px;
+    --message-sensitive-top: 3.5px;
+
     --back-nav-width: 32px;
     --back-nav-height: 32px;
     --back-nav-top-margin: 2px;
@@ -150,7 +155,7 @@ body.smallest {
 
     --conversation-panel-height: 36px;
     --conversation-topic-max-height: 26px;
-    --conversation-newmessage-icon-padding: 39px;
+    --conversation-newmessage-icon-padding: 56px;
     --conversation-newmessage-indicator-top: -35px;
     --conversation-newmessage-indicator-width: 110px;
     --conversation-newmessage-indicator-border-radius: 10px;
@@ -225,6 +230,9 @@ body.smaller {
     --attachment-picker-alt-text-bottom: 5px;
     --attachment-picker-alt-text-image-size: 325px;
 
+    --message-visible-top: 3.5px;
+    --message-sensitive-top: 3.5px;
+
     --back-nav-width: 32px;
     --back-nav-height: 32px;
     --back-nav-top-margin: 2px;
@@ -232,7 +240,7 @@ body.smaller {
 
     --conversation-panel-height: 36px;
     --conversation-topic-max-height: 26px;
-    --conversation-newmessage-icon-padding: 44px;
+    --conversation-newmessage-icon-padding: 60px;
     --conversation-newmessage-indicator-top: -35px;
     --conversation-newmessage-indicator-width: 117px;
     --conversation-newmessage-indicator-border-radius: 10px;
@@ -307,6 +315,9 @@ body:not(.smallest):not(.smaller):not(.larger):not(.largest) {
     --attachment-picker-alt-text-bottom: 5px;
     --attachment-picker-alt-text-image-size: 350px;
 
+    --message-visible-top: 3.5px;
+    --message-sensitive-top: 3.5px;
+
     --back-nav-width: 36px;
     --back-nav-height: 36px;
     --back-nav-top-margin: 2px;
@@ -314,7 +325,7 @@ body:not(.smallest):not(.smaller):not(.larger):not(.largest) {
 
     --conversation-panel-height: 38px;
     --conversation-topic-max-height: 28px;
-    --conversation-newmessage-icon-padding: 47px;
+    --conversation-newmessage-icon-padding: 63px;
     --conversation-newmessage-indicator-top: -35px;
     --conversation-newmessage-indicator-width: 125px;
     --conversation-newmessage-indicator-border-radius: 10px;
@@ -389,6 +400,9 @@ body.larger {
     --attachment-picker-alt-text-bottom: 5px;
     --attachment-picker-alt-text-image-size: 375px;
 
+    --message-visible-top: 3.5px;
+    --message-sensitive-top: 3.5px;
+
     --back-nav-width: 40px;
     --back-nav-height: 40px;
     --back-nav-top-margin: 2px;
@@ -396,7 +410,7 @@ body.larger {
 
     --conversation-panel-height: 42px;
     --conversation-topic-max-height: 34px;
-    --conversation-newmessage-icon-padding: 52px;
+    --conversation-newmessage-icon-padding: 70px;
     --conversation-newmessage-indicator-top: -35px;
     --conversation-newmessage-indicator-width: 135px;
     --conversation-newmessage-indicator-border-radius: 10px;
@@ -471,6 +485,9 @@ body.largest {
     --attachment-picker-alt-text-bottom: 5px;
     --attachment-picker-alt-text-image-size: 400px;
 
+    --message-visible-top: 3.5px;
+    --message-sensitive-top: 3.5px;
+
     --back-nav-width: 44px;
     --back-nav-height: 44px;
     --back-nav-top-margin: 2px;
@@ -478,7 +495,7 @@ body.largest {
 
     --conversation-panel-height: 46px;
     --conversation-topic-max-height: 40px;
-    --conversation-newmessage-icon-padding: 57px;
+    --conversation-newmessage-icon-padding: 77px;
     --conversation-newmessage-indicator-top: -35px;
     --conversation-newmessage-indicator-width: 150px;
     --conversation-newmessage-indicator-border-radius: 10px;
@@ -522,6 +539,10 @@ div.container {
     display: flex;
     width: 100%;
     height: 100%;
+}
+
+div.preload {
+    display: none;
 }
 
 input:not([type=file]):not([type=button]) {
@@ -708,7 +729,7 @@ div.maskable.attachment-picker {
     margin-top: var(--attachment-picker-top);
     mask-image: url('attachment.svg');
     position: absolute;
-    right: 1.5em;
+    right: 1.4em;
 }
 
 div.maskable.back-button-svg {
@@ -717,8 +738,30 @@ div.maskable.back-button-svg {
     mask-image: url('left-arrow-circle.svg');
 }
 
+div.maskable.message-visible {
+    width: 1.2em;
+    height: 1.2em;
+    margin-top: var(--message-visible-top);
+    mask-image: url('visible.svg');
+    position: absolute;
+    right: 2.6em;
+}
+
+div.maskable.message-sensitive {
+    width: 1.2em;
+    height: 1.2em;
+    margin-top: var(--message-sensitive-top);
+    mask-image: url('sensitive.svg');
+    position: absolute;
+    right: 2.6em;
+}
+
 div.attachment-picker:hover {
     color: var(--attachment-picker-hover);
+}
+
+div.message-visibility:hover {
+    color: var(--message-visibility-hover);
 }
 
 div.uploadpicker-container {
@@ -1107,6 +1150,16 @@ div.conversation div.item div.message {
     font-size: var(--application-text-size-14);
     overflow-wrap: break-word;
     word-break: break-word;
+}
+
+div.conversation div.item div.message.sensitive {
+    cursor: pointer;
+    color: var(--conversation-text);
+    background: var(--conversation-text);
+}
+
+div.conversation div.item div.message.sensitive img {
+    opacity: 0%;
 }
 
 div.conversation div.item.combined div.icon {

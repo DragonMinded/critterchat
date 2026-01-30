@@ -164,6 +164,7 @@ class MetadataType(StrEnum):
     WIDTH = 'width'
     HEIGHT = 'height'
     ALT_TEXT = 'alt_text'
+    SENSITIVE = 'sensitive'
 
 
 class Attachment:
