@@ -762,7 +762,7 @@ div.maskable.back-button-svg {
 div.maskable.info-button-svg {
     width: var(--nav-button-width);
     height: var(--nav-button-height);
-    mask-image: url('information.svg');
+    mask-image: url('info.svg');
 }
 
 div.maskable.message-visible {
