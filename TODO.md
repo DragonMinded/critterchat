@@ -1,12 +1,13 @@
 TODO Immediate
 ==============
 
+ - Channel permissions.
+
 TODO For Public Instance
 ========================
 
  - Stickers support in some form.
  - Emote/emoji reactions to messages.
- - Channel permissions.
 
 TODO Low Priority
 =================
