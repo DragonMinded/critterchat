@@ -35,21 +35,13 @@ class Info {
         $( '#infotoggle' ).on( 'click', (event) => {
             event.preventDefault();
 
-            if (this.size == "mobile") {
-                this.inputState.setState("empty");
-                this.screenState.setState("info");
-            } else {
-                this.inputState.setState("empty");
-                if ($('div.container > div.info').hasClass('hidden')) {
-                    $('div.container > div.info').removeClass('hidden');
-                    this.lastSettings.info = "shown";
-                } else {
-                    $('div.container > div.info').addClass('hidden');
-                    this.lastSettings.info = "hidden";
-                }
+            this._infoToggle();
+        });
 
-                this.eventBus.emit('updateinfo', this.lastSettings.info);
-            }
+        $( 'div.top-info div.info' ).on( 'click', (event) => {
+            event.preventDefault();
+
+            this._infoToggle();
         });
 
         $( '#leave-room' ).on( 'click', (event) => {
@@ -118,6 +110,8 @@ class Info {
     _updateSize() {
         if (this.size == "mobile") {
             $( 'div.info div.back' ).show();
+            $( 'div.top-info div.info' ).show();
+            $( 'div.chat form.actions div.info' ).hide();
             if (this.screenState.current == "info") {
                 $( 'div.container > div.info' ).removeClass('hidden').addClass('full');
             } else {
@@ -125,11 +119,34 @@ class Info {
             }
         } else {
             $( 'div.info div.back' ).hide();
+            $( 'div.top-info div.info' ).hide();
+            $( 'div.chat form.actions div.info' ).show();
             if (this.lastSettings.info == "shown") {
                 $( 'div.container > div.info' ).removeClass('hidden').removeClass('full');
             } else {
                 $( 'div.container > div.info' ).addClass('hidden').removeClass('full');
             }
+        }
+    }
+
+    /**
+     * Called whenever one of the info buttons is clicked.
+     */
+    _infoToggle() {
+        if (this.size == "mobile") {
+            this.inputState.setState("empty");
+            this.screenState.setState("info");
+        } else {
+            this.inputState.setState("empty");
+            if ($('div.container > div.info').hasClass('hidden')) {
+                $('div.container > div.info').removeClass('hidden');
+                this.lastSettings.info = "shown";
+            } else {
+                $('div.container > div.info').addClass('hidden');
+                this.lastSettings.info = "hidden";
+            }
+
+            this.eventBus.emit('updateinfo', this.lastSettings.info);
         }
     }
 

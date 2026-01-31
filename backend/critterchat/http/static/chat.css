@@ -153,10 +153,10 @@ body.smallest {
     --message-visible-top: 3.5px;
     --message-sensitive-top: 3.5px;
 
-    --back-nav-width: 32px;
-    --back-nav-height: 32px;
-    --back-nav-top-margin: 2px;
-    --back-nav-bottom-margin: -2px;
+    --nav-button-width: 32px;
+    --nav-button-height: 32px;
+    --nav-button-top-margin: 2px;
+    --nav-button-bottom-margin: -2px;
 
     --conversation-panel-height: 36px;
     --conversation-topic-max-height: 26px;
@@ -242,10 +242,10 @@ body.smaller {
     --message-visible-top: 3.5px;
     --message-sensitive-top: 3.5px;
 
-    --back-nav-width: 32px;
-    --back-nav-height: 32px;
-    --back-nav-top-margin: 2px;
-    --back-nav-bottom-margin: -2px;
+    --nav-button-width: 32px;
+    --nav-button-height: 32px;
+    --nav-button-top-margin: 2px;
+    --nav-button-bottom-margin: -2px;
 
     --conversation-panel-height: 36px;
     --conversation-topic-max-height: 26px;
@@ -331,10 +331,10 @@ body:not(.smallest):not(.smaller):not(.larger):not(.largest) {
     --message-visible-top: 3.5px;
     --message-sensitive-top: 3.5px;
 
-    --back-nav-width: 36px;
-    --back-nav-height: 36px;
-    --back-nav-top-margin: 2px;
-    --back-nav-bottom-margin: -2px;
+    --nav-button-width: 36px;
+    --nav-button-height: 36px;
+    --nav-button-top-margin: 2px;
+    --nav-button-bottom-margin: -2px;
 
     --conversation-panel-height: 38px;
     --conversation-topic-max-height: 28px;
@@ -420,10 +420,10 @@ body.larger {
     --message-visible-top: 3.5px;
     --message-sensitive-top: 3.5px;
 
-    --back-nav-width: 40px;
-    --back-nav-height: 40px;
-    --back-nav-top-margin: 2px;
-    --back-nav-bottom-margin: -2px;
+    --nav-button-width: 40px;
+    --nav-button-height: 40px;
+    --nav-button-top-margin: 2px;
+    --nav-button-bottom-margin: -2px;
 
     --conversation-panel-height: 42px;
     --conversation-topic-max-height: 34px;
@@ -509,10 +509,10 @@ body.largest {
     --message-visible-top: 3.5px;
     --message-sensitive-top: 3.5px;
 
-    --back-nav-width: 44px;
-    --back-nav-height: 44px;
-    --back-nav-top-margin: 2px;
-    --back-nav-bottom-margin: -2px;
+    --nav-button-width: 44px;
+    --nav-button-height: 44px;
+    --nav-button-top-margin: 2px;
+    --nav-button-bottom-margin: -2px;
 
     --conversation-panel-height: 46px;
     --conversation-topic-max-height: 40px;
@@ -754,9 +754,15 @@ div.maskable.attachment-picker {
 }
 
 div.maskable.back-button-svg {
-    width: var(--back-nav-width);
-    height: var(--back-nav-height);
-    mask-image: url('left-arrow-circle.svg');
+    width: var(--nav-button-width);
+    height: var(--nav-button-height);
+    mask-image: url('back.svg');
+}
+
+div.maskable.info-button-svg {
+    width: var(--nav-button-width);
+    height: var(--nav-button-height);
+    mask-image: url('information.svg');
 }
 
 div.maskable.message-visible {
@@ -1066,12 +1072,12 @@ div.chat > div.top-info {
     padding-right: var(--application-pane-padding);
 }
 
-div.top-info div.back, div.info div.back {
+div.top-info div.back, div.info div.back, div.top-info div.info {
     cursor: default;
     display: none;
     position: relative;
-    margin-top: var(--back-nav-top-margin);
-    margin-bottom: var(--back-nav-bottom-margin);
+    margin-top: var(--nav-button-top-margin);
+    margin-bottom: var(--nav-button-bottom-margin);
 }
 
 div.top-info div.icon {
@@ -1115,6 +1121,10 @@ div.top-info div.topic {
 div.top-info img.emote, div.top-info img.emoji {
     height: 1em ! important;
     margin-bottom: -0.2em ! important;
+}
+
+div.top-info div.info {
+    margin-left: auto;
 }
 
 div.chat > div.conversation-wrapper {
