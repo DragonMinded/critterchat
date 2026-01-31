@@ -33,4 +33,5 @@ export function displayAltTextEditor( image, existing, applyCallback ) {
 
     // Finally, display the modal.
     $('#alt-text-form').modal();
+    $('#alt-text-text').focus();
 }
