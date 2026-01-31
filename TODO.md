@@ -1,7 +1,6 @@
 TODO Immediate
 ==============
 
- - Fix visibility button on individual attachments being wrong color for the eye itself.
  - Channel permissions.
 
 TODO For Public Instance

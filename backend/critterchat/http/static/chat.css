@@ -863,7 +863,7 @@ div.uploadpicker-container div.upload div.sensitive-container {
     bottom: var(--attachment-picker-visible-bottom);
     border-radius: var(--button-border-radius);
     background: var(--attachment-picker-alt-text-background);
-    color: var(--attachment-picker-alt-text-missing-foreground);
+    color: var(--attachment-picker-alt-text-foreground);
     border: 2px solid var(--attachment-picker-alt-text-foreground);
     display: flex;
     justify-content: center;
