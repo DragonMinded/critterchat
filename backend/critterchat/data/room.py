@@ -13,6 +13,7 @@ from .types import (
     ActionType,
     Occupant,
     Room,
+    RoomPurpose,
     NewUserID,
     NewActionID,
     NewAttachmentID,
@@ -36,7 +37,7 @@ room = Table(
     Column("topic", String(255)),
     Column("autojoin", Boolean),
     Column("icon", Integer),
-    Column("public", Boolean),
+    Column("purpose", String(10), nullable=False),
     Column("last_action", Integer, nullable=False),
     mysql_charset="utf8mb4",
 )
@@ -108,6 +109,16 @@ class RoomData(BaseData):
             room.newest_action = newest_actions[room.id]
         return rooms
 
+    def _get_purpose(self, purpose: str) -> RoomPurpose:
+        if purpose == RoomPurpose.ROOM:
+            return RoomPurpose.ROOM
+        elif purpose == RoomPurpose.CHAT:
+            return RoomPurpose.CHAT
+        elif purpose == RoomPurpose.DIRECT_MESSAGE:
+            return RoomPurpose.DIRECT_MESSAGE
+        else:
+            raise Exception("Logic error, can't find purpose!")
+
     def get_joined_rooms(self, userid: UserID, include_left: bool = False) -> List[Room]:
         """
         Given a user ID, look up the rooms that user is in.
@@ -127,7 +138,7 @@ class RoomData(BaseData):
             extra = "AND inactive != TRUE"
 
         sql = f"""
-            SELECT id, name, topic, icon, public, last_action FROM room WHERE id in (
+            SELECT id, name, topic, icon, purpose, last_action FROM room WHERE id in (
                 SELECT room_id FROM occupant WHERE user_id = :userid {extra}
             )
         """
@@ -137,7 +148,7 @@ class RoomData(BaseData):
                 roomid=RoomID(result['id']),
                 name=result['name'],
                 topic=result['topic'],
-                public=bool(result['public']),
+                purpose=self._get_purpose(str(result['purpose'])),
                 last_action_timestamp=result['last_action'],
                 iconid=AttachmentID(result['icon']) if result['icon'] else None,
                 deficonid=None,
@@ -191,7 +202,7 @@ class RoomData(BaseData):
             return []
 
         sql = """
-            SELECT id, name, topic, icon, public, last_action FROM room WHERE id in (
+            SELECT id, name, topic, icon, purpose, last_action FROM room WHERE id in (
                 SELECT room_id FROM occupant WHERE user_id = :userid AND inactive != TRUE
             )
         """
@@ -204,7 +215,7 @@ class RoomData(BaseData):
                 roomid=RoomID(result['id']),
                 name=result['name'],
                 topic=result['topic'],
-                public=bool(result['public']),
+                purpose=self._get_purpose(str(result['purpose'])),
                 last_action_timestamp=result['last_action'],
                 iconid=AttachmentID(result['icon']) if result['icon'] else None,
                 deficonid=None,
@@ -223,7 +234,7 @@ class RoomData(BaseData):
             list of Room objects representing the rooms on the network
         """
         sql = """
-            SELECT id, name, topic, icon, public, last_action FROM room
+            SELECT id, name, topic, icon, purpose, last_action FROM room
         """
         if name is not None:
             sql += " WHERE (name IS NULL OR name = '' OR name COLLATE utf8mb4_general_ci LIKE :name)"
@@ -234,7 +245,7 @@ class RoomData(BaseData):
                 roomid=RoomID(result['id']),
                 name=result['name'],
                 topic=result['topic'],
-                public=bool(result['public']),
+                purpose=self._get_purpose(str(result['purpose'])),
                 last_action_timestamp=result['last_action'],
                 iconid=AttachmentID(result['icon']) if result['icon'] else None,
                 deficonid=None,
@@ -253,18 +264,18 @@ class RoomData(BaseData):
             list of Room objects representing the public rooms on the network
         """
         sql = """
-            SELECT id, name, topic, icon, public, last_action FROM room WHERE public = TRUE
+            SELECT id, name, topic, icon, purpose, last_action FROM room WHERE purpose = :purpose
         """
         if name is not None:
             sql += " AND (name IS NULL OR name = '' OR name COLLATE utf8mb4_general_ci LIKE :name)"
 
-        cursor = self.execute(sql, {"name": f"%{name}%"})
+        cursor = self.execute(sql, {"name": f"%{name}%", "purpose": RoomPurpose.ROOM})
         return self._hydrate_actions([
             Room(
                 roomid=RoomID(result['id']),
                 name=result['name'],
                 topic=result['topic'],
-                public=bool(result['public']),
+                purpose=self._get_purpose(str(result['purpose'])),
                 last_action_timestamp=result['last_action'],
                 iconid=AttachmentID(result['icon']) if result['icon'] else None,
                 deficonid=None,
@@ -289,18 +300,18 @@ class RoomData(BaseData):
             return []
 
         sql = """
-            SELECT id, name, topic, icon, public, last_action FROM room WHERE public = TRUE
+            SELECT id, name, topic, icon, purpose, last_action FROM room WHERE purpose = :purpose
         """
         if name is not None:
             sql += " AND (name IS NULL OR name = '' OR name COLLATE utf8mb4_general_ci LIKE :name)"
 
-        cursor = self.execute(sql, {"userid": userid, "name": f"%{name}%"})
+        cursor = self.execute(sql, {"userid": userid, "name": f"%{name}%", "purpose": RoomPurpose.ROOM})
         return self._hydrate_actions([
             Room(
                 roomid=RoomID(result['id']),
                 name=result['name'],
                 topic=result['topic'],
-                public=bool(result['public']),
+                purpose=self._get_purpose(str(result['purpose'])),
                 last_action_timestamp=result['last_action'],
                 iconid=AttachmentID(result['icon']) if result['icon'] else None,
                 deficonid=None,
@@ -316,7 +327,7 @@ class RoomData(BaseData):
             list of Room objects representing the rooms the user will auto-join.
         """
         sql = """
-            SELECT id, name, topic, icon, public, last_action FROM room WHERE autojoin = TRUE
+            SELECT id, name, topic, icon, purpose, last_action FROM room WHERE autojoin = TRUE
         """
 
         cursor = self.execute(sql, {})
@@ -325,7 +336,7 @@ class RoomData(BaseData):
                 roomid=RoomID(result['id']),
                 name=result['name'],
                 topic=result['topic'],
-                public=bool(result['public']),
+                purpose=self._get_purpose(str(result['purpose'])),
                 last_action_timestamp=result['last_action'],
                 iconid=AttachmentID(result['icon']) if result['icon'] else None,
                 deficonid=None,
@@ -375,7 +386,7 @@ class RoomData(BaseData):
             roomid=room_id,
             name=result['name'],
             topic=result['topic'],
-            public=bool(result['public']),
+            purpose=self._get_purpose(str(result['purpose'])),
             last_action_timestamp=result['last_action'],
             oldest_action=oldest_actions.get(room_id),
             newest_action=newest_actions.get(room_id),
@@ -396,9 +407,9 @@ class RoomData(BaseData):
 
         timestamp = Time.now()
         sql = """
-            INSERT INTO room (`name`, `topic`, `public`, `last_action`, `icon`) VALUES (:name, :topic, :public, :timestamp, :icon)
+            INSERT INTO room (`name`, `topic`, `purpose`, `last_action`, `icon`) VALUES (:name, :topic, :purpose, :timestamp, :icon)
         """
-        cursor = self.execute(sql, {"name": room.name, "topic": room.topic, "public": room.public, "timestamp": timestamp, "icon": room.iconid})
+        cursor = self.execute(sql, {"name": room.name, "topic": room.topic, "purpose": room.purpose, "timestamp": timestamp, "icon": room.iconid})
         if cursor.rowcount != 1:
             return None
         newroom = self.get_room(RoomID(cursor.lastrowid))
@@ -406,7 +417,7 @@ class RoomData(BaseData):
             room.id = newroom.id
             room.name = newroom.name
             room.topic = newroom.topic
-            room.public = newroom.public
+            room.purpose = newroom.purpose
             room.iconid = newroom.iconid
             room.last_action_timestamp = timestamp
 

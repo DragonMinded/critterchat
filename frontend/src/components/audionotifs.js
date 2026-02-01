@@ -44,10 +44,14 @@ class AudioNotifications {
                     }
                 }
             } else if (notif.action == "join") {
-                sound = this.sounds[USER_JOINED];
+                if (notif.type != "dm") {
+                    sound = this.sounds[USER_JOINED];
+                }
             } else if (notif.action == "leave") {
-                sound = this.sounds[USER_LEFT];
-            } 
+                if (notif.type != "dm") {
+                    sound = this.sounds[USER_LEFT];
+                }
+            }
 
             if (sound) {
                 sound.play();

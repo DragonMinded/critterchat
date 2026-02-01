@@ -91,7 +91,7 @@ class ChatDetails {
             var photoType = this.room['public'] ? 'room' : 'avatar';
             $('div.chatdetails div.icon').removeClass('avatar').removeClass('room').addClass(photoType);
 
-            var roomType = this.room.type == "chat" ? "chat" : "room";
+            var roomType = this.room.type == "room" ? "room" : "chat";
             $("#chatdetails-name-label").text(roomType + " name");
             $("#chatdetails-name").attr('placeholder', 'Type a custom name for this ' + roomType + '...');
             $("#chatdetails-topic-label").text(roomType + " topic");

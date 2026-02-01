@@ -2,6 +2,11 @@ TODO Immediate
 ==============
 
  - Channel permissions.
+ - Ensure that a user can't join a channel or chat that they can't see (check public flag for rooms).
+ - Fix issue with people that have left from 1:1 messages.
+ - Don't show join/leave on 1:1 messages.
+ - Auto-rejoin on receive message in 1:1.
+ - Change "leave chat" to "close chat" for 1:1 messages.
 
 TODO For Public Instance
 ========================

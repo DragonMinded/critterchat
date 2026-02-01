@@ -10,7 +10,7 @@ from ..data import (
     Attachment,
     Occupant,
     Room,
-    RoomType,
+    RoomPurpose,
     RoomSearchResult,
     User,
     UserPermission,
@@ -188,9 +188,11 @@ class MessageService:
         return user
 
     def __infer_room_info(self, userid: UserID, room: Room) -> None:
-        if room.public:
+        if room.purpose == RoomPurpose.ROOM:
             room_name = "Unnamed Public Chat"
-            room_type = RoomType.ROOM
+            occupants = self.__data.room.get_room_occupants(room.id)
+        elif room.purpose == RoomPurpose.CHAT:
+            room_name = "Unnamed Private Chat"
             occupants = self.__data.room.get_room_occupants(room.id)
         else:
             # Figure out how many people are in the chat, name it after them.
@@ -200,10 +202,8 @@ class MessageService:
                 # but I guess there could be a race between grabbing the rooms and occupants,
                 # so let's just throw in a funny easter egg.
                 room_name = "An Empty Cavern"
-                room_type = RoomType.UNKNOWN
             elif len(occupants) == 1:
                 room_name = "Chat with Myself"
-                room_type = RoomType.CHAT
                 if room.iconid is None or room.iconid in {DefaultAvatarID, DefaultRoomID}:
                     room.iconid = occupants[0].iconid
                 room.deficonid = occupants[0].iconid
@@ -211,31 +211,30 @@ class MessageService:
                 not_me = [o for o in occupants if o.userid != userid]
                 if len(not_me) == 1:
                     room_name = f"Chat with {not_me[0].nickname}"
-                    room_type = RoomType.CHAT
                     if room.iconid is None or room.iconid in {DefaultAvatarID, DefaultRoomID}:
                         room.iconid = not_me[0].iconid
                     room.deficonid = not_me[0].iconid
                 else:
                     room_name = "Unnamed Private Chat"
-                    room_type = RoomType.ROOM
             else:
+                # This should never happen, but let's account for it anyway.
                 room_name = "Unnamed Private Chat"
-                room_type = RoomType.ROOM
 
-        room.type = room_type
         room.occupants = occupants
         if not room.name:
             room.name = room_name
 
-        if room_type == RoomType.CHAT:
+        if room.purpose in {RoomPurpose.CHAT, RoomPurpose.DIRECT_MESSAGE}:
             self.__attachments.resolve_chat_icon(room)
-        if room_type == RoomType.ROOM:
+        elif room.purpose == RoomPurpose.ROOM:
             self.__attachments.resolve_room_icon(room)
+        else:
+            raise Exception("Logic error, unexpected room purpose!")
 
     def create_public_room(self, name: str, topic: str, autojoin: bool = False) -> Room:
         # Create a new public room, possibly with auto-join enabled, and return it. If auto-join is
         # enabled then join all existing users to the room after creating.
-        room = Room(NewRoomID, name, topic, True, None, None)
+        room = Room(NewRoomID, name, topic, RoomPurpose.ROOM, None, None)
         self.__data.room.create_room(room)
 
         if autojoin:
@@ -271,14 +270,15 @@ class MessageService:
         # Finally, return the room.
         return room
 
-    def create_chat(self, userid: UserID, otherid: UserID) -> Room:
+    def create_direct_message(self, userid: UserID, otherid: UserID) -> Room:
         # First, find all rooms that the first user is in or was ever in.
         rooms = self.__data.room.get_joined_rooms(userid, include_left=True)
 
         # Now, for each of these, see if the only ones in the room are the two IDs.
         for room in rooms:
-            if room.public:
-                # Private chats never can go to a public room even if that only has the two of you chatting.
+            if room.purpose != RoomPurpose.DIRECT_MESSAGE:
+                # Private chats never can go to a public room or a group chat even
+                # if that only has the two of you chatting.
                 continue
 
             occupants = self.__data.room.get_room_occupants(room.id, include_left=True)
@@ -295,7 +295,7 @@ class MessageService:
                     return room
 
         # Now, create a new room since we don't have an existing one.
-        room = Room(NewRoomID, "", "", False, None, None)
+        room = Room(NewRoomID, "", "", RoomPurpose.DIRECT_MESSAGE, None, None)
         self.__data.room.create_room(room)
         self.join_room(room.id, userid)
         self.join_room(room.id, otherid)
@@ -418,7 +418,7 @@ class MessageService:
         # Now, figure out all of the private conversations that we shouldn't duplicate users for.
         ignored: Set[UserID] = set()
         for room in rooms:
-            if room.type != RoomType.CHAT:
+            if room.purpose != RoomPurpose.DIRECT_MESSAGE:
                 continue
             if len(room.occupants) == 1:
                 ignored.add(room.occupants[0].userid)
@@ -444,7 +444,7 @@ class MessageService:
         for room in rooms:
             icon = room.icon
             handle: Optional[str] = None
-            if room.type == RoomType.CHAT:
+            if room.purpose == RoomPurpose.DIRECT_MESSAGE:
                 if len(room.occupants) == 1:
                     handle = "@" + room.occupants[0].username
                 elif len(room.occupants) == 2:
@@ -455,13 +455,13 @@ class MessageService:
                 raise Exception("Logic error, should have been inferred above!")
 
             if room.id in memberof:
-                results.append(RoomSearchResult(room.name, handle, room.type, True, room.public, room.id, None, icon))
+                results.append(RoomSearchResult(room.name, handle, room.purpose, True, room.id, None, icon))
             else:
-                results.append(RoomSearchResult(room.name, handle, room.type, False, room.public, room.id, None, icon))
+                results.append(RoomSearchResult(room.name, handle, room.purpose, False, room.id, None, icon))
         for user in potentialusers:
             icon = user.icon
             if not icon:
                 raise Exception("Logic error, should have been inferred above!")
-            results.append(RoomSearchResult(user.nickname, f"@{user.username}", RoomType.CHAT, False, False, None, user.id, icon))
+            results.append(RoomSearchResult(user.nickname, f"@{user.username}", RoomPurpose.DIRECT_MESSAGE, False, None, user.id, icon))
 
         return results

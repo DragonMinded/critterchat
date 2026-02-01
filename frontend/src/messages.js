@@ -994,7 +994,7 @@ class Messages {
                 html += '  </div>';
                 html += '</div>';
             } else if (message.action == "change_info") {
-                var type = this.roomType == "chat" ? "chat" : "room";
+                var type = this.roomType == "room" ? "room" : "chat";
 
                 html  = '<div class="item" id="' + message.id + '">';
                 html += '  <div class="content-wrapper">';

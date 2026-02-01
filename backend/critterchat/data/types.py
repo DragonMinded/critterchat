@@ -217,10 +217,10 @@ class Attachment:
             return None
 
 
-class RoomType(StrEnum):
-    UNKNOWN = 'unknown'
-    CHAT = 'chat'
+class RoomPurpose(StrEnum):
     ROOM = 'room'
+    CHAT = 'chat'
+    DIRECT_MESSAGE = 'dm'
 
 
 class Room:
@@ -229,7 +229,7 @@ class Room:
         roomid: RoomID,
         name: str,
         topic: str,
-        public: bool,
+        purpose: RoomPurpose,
         iconid: Optional[AttachmentID],
         deficonid: Optional[AttachmentID],
         oldest_action: Optional[ActionID] = None,
@@ -237,16 +237,18 @@ class Room:
         last_action_timestamp: int = 0,
     ) -> None:
         self.id = roomid
-        self.type = RoomType.UNKNOWN
         self.name = name or ""
         self.customname = self.name
         self.topic = topic or ""
-        self.public = public
+        self.purpose = purpose
         self.oldest_action = oldest_action
         self.newest_action = newest_action
         self.last_action_timestamp = last_action_timestamp
         self.iconid = iconid
         self.deficonid = deficonid
+
+        # Resolved based on the purpose of the room itself.
+        self.public = purpose == RoomPurpose.ROOM
 
         # Resolved only after lookup by attachment system.
         self.icon: Optional[str] = None
@@ -258,7 +260,7 @@ class Room:
     def to_dict(self) -> Dict[str, object]:
         return {
             "id": Room.from_id(self.id),
-            "type": self.type,
+            "type": self.purpose,
             "name": self.name,
             "customname": self.customname,
             "topic": self.topic,
@@ -290,27 +292,28 @@ class RoomSearchResult:
         self,
         name: str,
         handle: Optional[str],
-        roomType: RoomType,
+        purpose: RoomPurpose,
         joined: bool,
-        public: bool,
         roomid: Optional[RoomID],
         userid: Optional[UserID],
         icon: str,
     ) -> None:
         self.name = name
         self.handle = handle
-        self.type = roomType
+        self.purpose = purpose
         self.joined = joined
         self.roomid = roomid
         self.userid = userid
-        self.public = public
         self.icon = icon
+
+        # Resolved from room type.
+        self.public = purpose == RoomPurpose.ROOM
 
     def to_dict(self) -> Dict[str, object]:
         return {
             "name": self.name,
             "handle": self.handle,
-            "type": self.type,
+            "type": self.purpose,
             "icon": self.icon,
             "public": self.public,
             "joined": self.joined,

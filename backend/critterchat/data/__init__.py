@@ -8,7 +8,7 @@ from .types import (
     Migration,
     Occupant,
     Room,
-    RoomType,
+    RoomPurpose,
     RoomSearchResult,
     User,
     UserPreferences,
@@ -58,6 +58,6 @@ __all__ = [
     "UserNotification",
     "Occupant",
     "Room",
-    "RoomType",
+    "RoomPurpose",
     "RoomSearchResult",
 ]

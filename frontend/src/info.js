@@ -51,12 +51,26 @@ class Info {
             var roomid = $( '#leave-room' ).attr('roomid');
             this.rooms.forEach((room) => {
                 if (room.id == roomid) {
-                    displayWarning(
-                        room.type == 'room' ?
+                    var msg = "";
+
+                    if (room.type == "room") {
+                        msg =(
                             'Leaving this room will mean you no longer receive messages from the other members. You can still ' +
-                            're-join this room in the future by searching for the room\'s name and clicking "join".' :
-                            'Leaving this chat will mean you no longer receive messages from the other chatter. You can still ' +
-                            're-join this chat in the future by searching for the chatter\'s name and clicking "message".',
+                            're-join this room in the future by searching for the room\'s name and clicking "join".'
+                        );
+                    } else if(room.type == "chat") {
+                        msg =(
+                            'Leaving this chat will mean you no longer receive messages from the other chatters. You can still ' +
+                            're-join this chat in the future if you are re-invited to the chat.'
+                        );
+                    } else {
+                        // This is a 1:1 conversation, you can always reopen these.
+                        this.eventBus.emit('leaveroom', $( '#leave-room' ).attr('roomid'));
+                        return;
+                    }
+
+                    displayWarning(
+                        msg,
                         'yes, leave',
                         'no, stay here',
                         () => {
@@ -319,22 +333,16 @@ class Info {
                     var title;
                     var iconType;
                     if (room.type == "chat") {
-                        if (room['public']) {
-                            title = "Public group chat";
-                            iconType = 'room';
-                        } else {
-                            title = "Private chat";
-                            iconType = 'avatar';
-                        }
+                        title = "Private chat";
+                        iconType = 'avatar';
+                        $( 'div.top-info div.room-indicator' ).addClass('hidden');
+                    } else if (room.type == "dm") {
+                        title = "Direct message";
+                        iconType = 'avatar';
                         $( 'div.top-info div.room-indicator' ).addClass('hidden');
                     } else {
-                        if (room['public']) {
-                            title = "Public room";
-                            iconType = 'room';
-                        } else {
-                            title = "Private room";
-                            iconType = 'room';
-                        }
+                        title = "Public room";
+                        iconType = 'room';
                         $( 'div.top-info div.room-indicator' ).removeClass('hidden');
                     }
                     $( '#room-title' ).text(title);
@@ -379,18 +387,13 @@ class Info {
                 if (room.id == roomid) {
                     var title;
                     if (room.type == "chat") {
-                        if (room['public']) {
-                            title = "Public group chat";
-                        } else {
-                            title = "Private chat";
-                        }
+                        title = "Private chat";
+                        $( 'div.top-info div.room-indicator' ).addClass('hidden');
+                    } else if (room.type == "dm") {
+                        title = "Direct message";
                         $( 'div.top-info div.room-indicator' ).addClass('hidden');
                     } else {
-                        if (room['public']) {
-                            title = "Public room";
-                        } else {
-                            title = "Private room";
-                        }
+                        title = "Public room";
                         $( 'div.top-info div.room-indicator' ).removeClass('hidden');
                     }
                     $( '#room-title' ).text(title);

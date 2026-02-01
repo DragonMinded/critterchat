@@ -157,7 +157,7 @@ class Menu {
                 }
             });
             rooms.forEach((room) => {
-                if (room.type == "chat") {
+                if (room.type == "chat" || room.type == "dm") {
                     sortedRooms.push(room);
                 }
             });
