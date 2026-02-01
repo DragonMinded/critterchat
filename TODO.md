@@ -2,7 +2,6 @@ TODO Immediate
 ==============
 
  - Channel permissions.
- - Ensure that a user can't join a channel or chat that they can't see (check public flag for rooms).
 
 TODO For Public Instance
 ========================

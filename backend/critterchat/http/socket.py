@@ -759,9 +759,6 @@ def message(json: Dict[str, object]) -> Dict[str, object]:
 
         if represents_real_text(message) or attachments:
             try:
-                # First, ensure that DMs re-open when messaging the other user again.
-                messageservice.rejoin_direct_message(roomid)
-
                 # Now, send the message itself.
                 messageservice.add_message(roomid, userid, message, sensitive, attachments)
                 return {'status': 'success'}
@@ -826,25 +823,33 @@ def joinroom(json: Dict[str, object]) -> None:
     with info.lock:
         roomid = Room.to_id(str(json.get('roomid')))
         if roomid:
-            messageservice.join_room(roomid, userid)
-            actual_id = roomid
+            try:
+                messageservice.join_room(roomid, userid)
+                actual_id = roomid
+            except MessageServiceException as e:
+                socketio.emit('error', {'error': str(e)}, room=request.sid)
+                return
 
         otherid = User.to_id(str(json.get('roomid')))
         if otherid:
-            room = messageservice.create_direct_message(userid, otherid)
-            if room:
+            try:
+                room = messageservice.create_direct_message(userid, otherid)
                 actual_id = room.id
+            except MessageServiceException as e:
+                socketio.emit('error', {'error': str(e)}, room=request.sid)
+                return
 
-        # Grab all rooms that the user is in, based on their user ID.
-        rooms = messageservice.get_joined_rooms(userid)
+        if actual_id:
+            # Grab all rooms that the user is in, based on their user ID.
+            rooms = messageservice.get_joined_rooms(userid)
 
-        # Pre-charge the delta fetches for all rooms this user is in.
-        for room in rooms:
-            action = messageservice.get_last_room_action(room.id)
-            if action:
-                info.fetchlimit[room.id] = action.id
-            else:
-                info.fetchlimit[room.id] = NewActionID
+            # Pre-charge the delta fetches for all rooms this user is in.
+            for room in rooms:
+                action = messageservice.get_last_room_action(room.id)
+                if action:
+                    info.fetchlimit[room.id] = action.id
+                else:
+                    info.fetchlimit[room.id] = NewActionID
 
     if actual_id:
         socketio.emit('roomlist', {

@@ -86,7 +86,7 @@ class MessageService:
         if not room:
             return []
 
-        history = self.__data.room.get_room_history(roomid, before=before, limit=self.MAX_HISTORY)
+        history = self.__data.room.get_room_history(room.id, before=before, limit=self.MAX_HISTORY)
         history = self._resolve_attachments(history)
         history = [
             self.__attachments.resolve_action_icon(e)
@@ -120,6 +120,9 @@ class MessageService:
         message = emoji.emojize(emoji.emojize(message, language="alias"), language="en")
         if len(message) > self.__config.limits.message_length:
             raise MessageServiceException("You're trying to send a message that is too long!")
+
+        # First, ensure that DMs re-open when messaging the other user again.
+        self.rejoin_direct_message(roomid)
 
         occupant = Occupant(
             occupantid=NewOccupantID,
@@ -252,7 +255,7 @@ class MessageService:
                 if UserPermission.ACTIVATED not in user.permissions:
                     continue
 
-                self.join_room(room.id, user.id)
+                self.__data.room.join_room(room.id, user.id)
         else:
             self.__data.room.set_room_autojoin(room.id, False)
 
@@ -320,10 +323,17 @@ class MessageService:
         # an incoming message.
         occupants = self.__data.room.get_room_occupants(room.id, include_left=True)
         for occupant in occupants:
-            self.join_room(room.id, occupant.userid)
+            self.__data.room.join_room(room.id, occupant.userid)
 
     def join_room(self, roomid: RoomID, userid: UserID) -> None:
-        self.__data.room.join_room(roomid, userid)
+        # First, check permissions for the room the user is trying to join, to ensure
+        # we can't pull any shenanigans and try to join a private room or chat we don't
+        # have an invite to.
+        room = self.__data.room.get_room(roomid)
+        if (room is None) or (not room.public):
+            raise MessageServiceException("Room does not exist!")
+
+        self.__data.room.join_room(room.id, userid)
 
     def leave_room(self, roomid: RoomID, userid: UserID) -> None:
         self.__data.room.leave_room(roomid, userid)
