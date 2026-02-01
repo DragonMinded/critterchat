@@ -82,12 +82,20 @@ class MessageService:
         return self.__attachments.resolve_action_icon(history[0]) if history else None
 
     def get_room_history(self, roomid: RoomID, before: Optional[ActionID] = None) -> List[Action]:
+        room = self.__data.room.get_room(roomid)
+        if not room:
+            return []
+
         history = self.__data.room.get_room_history(roomid, before=before, limit=self.MAX_HISTORY)
         history = self._resolve_attachments(history)
         history = [
             self.__attachments.resolve_action_icon(e)
             for e in history
-            if e.action in ActionType.unread_types()
+            if e.action in (
+                ActionType.unread_dm_types()
+                if room.purpose == RoomPurpose.DIRECT_MESSAGE
+                else ActionType.unread_types()
+            )
         ]
         return history
 

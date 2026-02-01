@@ -12,6 +12,7 @@ from ..common import Time
 from .base import BaseData, metadata
 from .types import (
     ActionType,
+    RoomPurpose,
     User,
     UserPreferences,
     UserSettings,
@@ -140,6 +141,16 @@ class UserData(BaseData):
         passhash = pbkdf2_sha512.hash(actual_password)
 
         return passhash, salt
+
+    def _get_purpose(self, purpose: str) -> RoomPurpose:
+        if purpose == RoomPurpose.ROOM:
+            return RoomPurpose.ROOM
+        elif purpose == RoomPurpose.CHAT:
+            return RoomPurpose.CHAT
+        elif purpose == RoomPurpose.DIRECT_MESSAGE:
+            return RoomPurpose.DIRECT_MESSAGE
+        else:
+            raise Exception("Logic error, can't find purpose!")
 
     def validate_password(self, userid: UserID, password: str) -> bool:
         """
@@ -712,19 +723,27 @@ class UserData(BaseData):
             return []
 
         sql = """
-            SELECT room_id, action_id FROM lastseen WHERE user_id = :userid
+            SELECT lastseen.room_id AS room_id, lastseen.action_id AS action_id, room.purpose AS purpose
+            FROM lastseen
+            JOIN room ON room.id = lastseen.room_id
+            WHERE user_id = :userid
         """
         cursor = self.execute(sql, {"userid": userid})
         counts = [
-            (RoomID(result['room_id']), ActionID(result['action_id']))
+            (RoomID(result['room_id']), ActionID(result['action_id']), self._get_purpose(result['purpose']))
             for result in cursor.mappings()
         ]
 
-        def hydrate_existing_count(roomid: RoomID, actionid: ActionID) -> int:
+        def hydrate_existing_count(roomid: RoomID, actionid: ActionID, purpose: RoomPurpose) -> int:
+            if purpose == RoomPurpose.DIRECT_MESSAGE:
+                types = list(ActionType.unread_dm_types())
+            else:
+                types = list(ActionType.unread_types())
+
             sql = """
                 SELECT COUNT(id) AS count FROM action WHERE `room_id` = :roomid AND `id` > :actionid AND `action` IN :types
             """
-            cursor = self.execute(sql, {"roomid": roomid, "actionid": actionid, "types": list(ActionType.unread_types())})
+            cursor = self.execute(sql, {"roomid": roomid, "actionid": actionid, "types": types})
             if cursor.rowcount != 1:
                 return 0
             result = cursor.mappings().fetchone()
@@ -732,37 +751,42 @@ class UserData(BaseData):
 
         # There's probably a SQL way to do this, but I don't want to bang my head against
         # it right now, so it can come in a future improvement.
-        computed_counts = [(c[0], hydrate_existing_count(c[0], c[1])) for c in counts]
+        computed_counts = [(c[0], hydrate_existing_count(c[0], c[1], c[2])) for c in counts]
 
         # Now, make sure if we were joined to a room or a chat while we were completely gone
         # that we still count the actions for that room or chat as well.
         seen = [c[0] for c in computed_counts]
         if seen:
             sql = """
-                SELECT id FROM room WHERE id NOT IN :seen AND id IN (
+                SELECT id, purpose FROM room WHERE id NOT IN :seen AND id IN (
                     SELECT room_id FROM occupant WHERE user_id = :userid AND inactive != TRUE
                 )
             """
         else:
             sql = """
-                SELECT id FROM room WHERE id IN (
+                SELECT id, purpose FROM room WHERE id IN (
                     SELECT room_id FROM occupant WHERE user_id = :userid AND inactive != TRUE
                 )
             """
         cursor = self.execute(sql, {"seen": seen, "userid": userid})
-        extra_rooms = [RoomID(result['id']) for result in cursor.mappings()]
+        extra_rooms = [(RoomID(result['id']), self._get_purpose(result['purpose'])) for result in cursor.mappings()]
 
-        def hydrate_new_count(roomid: RoomID) -> int:
+        def hydrate_new_count(roomid: RoomID, purpose: RoomPurpose) -> int:
+            if purpose == RoomPurpose.DIRECT_MESSAGE:
+                types = list(ActionType.unread_dm_types())
+            else:
+                types = list(ActionType.unread_types())
+
             sql = """
                 SELECT COUNT(id) AS count FROM action WHERE `room_id` = :roomid AND `action` IN :types
             """
-            cursor = self.execute(sql, {"roomid": roomid, "types": list(ActionType.unread_types())})
+            cursor = self.execute(sql, {"roomid": roomid, "types": types})
             if cursor.rowcount != 1:
                 return 0
             result = cursor.mappings().fetchone()
             return int(result["count"])
 
-        computed_counts += [(c, hydrate_new_count(c)) for c in extra_rooms]
+        computed_counts += [(c[0], hydrate_new_count(c[0], c[1])) for c in extra_rooms]
         return computed_counts
 
     def get_last_seen_actions(self, userid: UserID) -> List[Tuple[RoomID, ActionID]]:

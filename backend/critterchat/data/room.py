@@ -778,6 +778,16 @@ class RoomData(BaseData):
                 # Trying to send as an occupant that we're not?
                 return
 
+        # Now, figure out the room type for last action calculations.
+        sql = "SELECT purpose FROM room WHERE id = :roomid"
+        cursor = self.execute(sql, {"roomid": roomid})
+        if cursor.rowcount != 1:
+            # Trying to insert an action and the room doesn't exist?
+            return
+
+        result = cursor.mappings().fetchone()
+        purpose = self._get_purpose(result['purpose'])
+
         # Now, attempt to insert the action itself.
         sql = """
             INSERT INTO action
@@ -802,8 +812,13 @@ class RoomData(BaseData):
             action.occupant.inactive = newoccupant.inactive
             action.occupant.iconid = newoccupant.iconid
 
+        if purpose == RoomPurpose.DIRECT_MESSAGE:
+            types = ActionType.unread_dm_types()
+        else:
+            types = ActionType.unread_types()
+
         # Finally, record the action timestamp into the room if it is an action that causes badging.
-        if action.action in ActionType.unread_types():
+        if action.action in types:
             sql = """
                 UPDATE room SET `last_action` = :ts WHERE `id` = :roomid AND `last_action` < :ts
             """

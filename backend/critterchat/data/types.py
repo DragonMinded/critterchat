@@ -374,6 +374,7 @@ class ActionType(StrEnum):
 
     @staticmethod
     def unread_types() -> Set["ActionType"]:
+        # Type of actions that matter to unread counts and badges.
         return {
             ActionType.MESSAGE,
             ActionType.JOIN,
@@ -382,7 +383,16 @@ class ActionType(StrEnum):
         }
 
     @staticmethod
+    def unread_dm_types() -> Set["ActionType"]:
+        # Type of actions that matter specifically to DM unread counts and badges.
+        return {
+            ActionType.MESSAGE,
+            ActionType.CHANGE_INFO,
+        }
+
+    @staticmethod
     def update_types() -> Set["ActionType"]:
+        # Type of actions that matter for delivering update notifications to clients.
         return {
             ActionType.MESSAGE,
             ActionType.JOIN,

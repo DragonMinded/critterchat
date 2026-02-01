@@ -562,22 +562,13 @@ class Messages {
         var newerMessages = 0;
         this.messages.forEach((message) => {
             if (message.order > lastMessage.order) {
-                if (this.roomType == "dm") {
-                    if (
-                        message.action == "message" ||
-                        message.action == "change_info"
-                    ) {
-                        newerMessages += 1;
-                    }
-                } else {
-                    if (
-                        message.action == "message" ||
-                        message.action == "join" ||
-                        message.action == "leave" ||
-                        message.action == "change_info"
-                    ) {
-                        newerMessages += 1;
-                    }
+                if (
+                    message.action == "message" ||
+                    (this.roomType != "dm" && message.action == "join") ||
+                    (this.roomType != "dm" && message.action == "leave") ||
+                    message.action == "change_info"
+                ) {
+                    newerMessages += 1;
                 }
             }
         });

@@ -27,6 +27,7 @@ class Menu {
 
         this.rooms = [];
         this.selected = "";
+        this.roomType = "chat";
         this.pendingRoomSelect = "";
         this.lastSettings = {};
         this.roomsLoaded = false;
@@ -320,15 +321,18 @@ class Menu {
      */
     selectRoom( roomid ) {
         var found = false;
+        var roomType = "chat";
         for (const room of this.rooms) {
             if (room.id == roomid) {
                 found = true;
+                roomType = room.type;
                 break;
             }
         }
 
         if (found && roomid != this.selected) {
             this.selected = roomid;
+            this.roomType = roomType;
             this._updateSelected();
             this._clearBadges(roomid);
 
@@ -353,6 +357,7 @@ class Menu {
     closeRoom( roomid ) {
         if (this.selected == roomid ) {
             this.selected = "";
+            this.roomType = "chat";
 
             var conversations = $('div.menu > div.rooms');
             conversations.find('div.item#' + roomid).remove();
@@ -387,8 +392,8 @@ class Menu {
         actions.forEach((action) => {
             if (
                 action.action == "message" ||
-                action.action == "join" ||
-                action.action == "leave" ||
+                (this.roomType != "dm" && action.action == "join") ||
+                (this.roomType != "dm" && action.action == "leave") ||
                 action.action == "change_info"
             ) {
                 count += 1;
