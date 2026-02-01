@@ -351,10 +351,12 @@ class Info {
                         $( 'div.top-info div.room-indicator' ).removeClass('hidden');
                     }
                     $( '#room-title' ).text(title);
-                    if (room.type == 'room') {
-                        $( '#leave-type' ).text('room');
+                    if (room.type == 'chat') {
+                        $( '#leave-type' ).text('leave chat');
+                    } else if (room.type == 'dm') {
+                        $( '#leave-type' ).text('close chat');
                     } else {
-                        $( '#leave-type' ).text('chat');
+                        $( '#leave-type' ).text('leave room');
                     }
 
                     $( 'div.info div.title-wrapper' ).show();
@@ -403,10 +405,12 @@ class Info {
                         $( 'div.top-info div.room-indicator' ).removeClass('hidden');
                     }
                     $( '#room-title' ).text(title);
-                    if (room.type == 'room') {
-                        $( '#leave-type' ).text('room');
+                    if (room.type == 'chat') {
+                        $( '#leave-type' ).text('leave chat');
+                    } else if (room.type == 'dm') {
+                        $( '#leave-type' ).text('close chat');
                     } else {
-                        $( '#leave-type' ).text('chat');
+                        $( '#leave-type' ).text('leave room');
                     }
 
                     $( 'div.top-info div.title' ).html(escapeHtml(room.name));
