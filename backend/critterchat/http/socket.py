@@ -168,20 +168,24 @@ def background_thread_proc_impl() -> None:
                     # Figure out if rooms have changed, so we can start monitoring.
                     rooms = messageservice.get_joined_rooms(user.id)
 
+                    includes: Set[RoomID] = set()
                     for room in rooms:
                         if room.id not in info.fetchlimit:
+                            includes.add(room.id)
                             updated = True
+
                             lastaction = messageservice.get_last_room_action(room.id)
                             if lastaction:
                                 info.fetchlimit[room.id] = lastaction.id
                             else:
                                 info.fetchlimit[room.id] = NewActionID
 
-                    # Calculate any badge updates that the client needs to know about.
+                    # Calculate any badge updates that the client needs to know about, including
+                    # badges on newly-joined rooms.
                     lastseen = userservice.get_last_seen_counts(user.id)
                     counts: Dict[RoomID, int] = {}
                     for roomid, count in lastseen.items():
-                        if count < info.lastseen.get(roomid, 0):
+                        if roomid in includes or count < info.lastseen.get(roomid, 0):
                             counts[roomid] = count
                         info.lastseen[roomid] = count
 

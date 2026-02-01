@@ -3,7 +3,7 @@ TODO Immediate
 
  - Channel permissions.
  - Ensure that a user can't join a channel or chat that they can't see (check public flag for rooms).
- - Fix badge not showing up on new/reopened DM, fix wrong badge count for join/leave.
+ - Fix wrong badge count for DMs when rejoining.
 
 TODO For Public Instance
 ========================

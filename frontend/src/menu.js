@@ -185,7 +185,7 @@ class Menu {
         // Make sure to preserve badge counts since we're overwriting our rooms list.
         var counts = {};
         this.rooms.forEach((room) => {
-            counts[room.id] = room.count;
+            counts[room.id] = room.count || "";
         });
 
         // Make a copy instead of holding onto a reference, so we can mutate.
