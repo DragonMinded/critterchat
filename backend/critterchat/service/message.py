@@ -195,7 +195,7 @@ class MessageService:
             room_name = "Unnamed Private Chat"
             occupants = self.__data.room.get_room_occupants(room.id)
         else:
-            # Figure out how many people are in the chat, name it after them.
+            # Figure out how many people are in the direct message, name it after them.
             occupants = self.__data.room.get_room_occupants(room.id, include_left=True)
             if not occupants:
                 # This shouldn't happen, since we would have to be the sole occupant,

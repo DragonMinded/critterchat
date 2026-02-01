@@ -360,14 +360,15 @@ class Messages {
     }
 
     /**
-     * Called wnever the manager informs us of room occupants for a given room. We only care about
+     * Called whenever the manager informs us of room occupants for a given room. We only care about
      * occupants for the room we're in, so ignore any out-of-date notifications for rooms we have
      * clicked away from. We use this to keep our mentioning auto-complete up to date, so users
      * can select from an auto-complete popover when mentioning another user.
      */
     setOccupants( roomid, occupants ) {
         if (roomid == this.roomid) {
-            this.occupants = occupants.filter((occupant) => !occupant.inactive);
+            // Make a copy of the occupants so we can mess with it later.
+            this.occupants = occupants.filter((_occupant) => true);
             this.occupants.sort((a, b) => { return a.username.localeCompare(b.username); });
             this.occupantsLoaded = true;
             this._updateUsers();
