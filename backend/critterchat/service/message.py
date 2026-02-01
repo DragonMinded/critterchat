@@ -289,18 +289,30 @@ class MessageService:
                         break
                 else:
                     # Found the room, just return this room after making both parties join it.
-                    self.join_room(room.id, userid)
-                    self.join_room(room.id, otherid)
+                    self.__data.room.join_room(room.id, userid)
+                    self.__data.room.shadow_join_room(room.id, otherid)
                     self.__infer_room_info(userid, room)
                     return room
 
         # Now, create a new room since we don't have an existing one.
         room = Room(NewRoomID, "", "", RoomPurpose.DIRECT_MESSAGE, None, None)
         self.__data.room.create_room(room)
-        self.join_room(room.id, userid)
-        self.join_room(room.id, otherid)
+        self.__data.room.join_room(room.id, userid)
+        self.__data.room.shadow_join_room(room.id, otherid)
         self.__infer_room_info(userid, room)
         return room
+
+    def rejoin_direct_message(self, roomid: RoomID) -> None:
+        # Ensure that the room exists and is a direct message.
+        room = self.__data.room.get_room(roomid)
+        if room is None or room.purpose != RoomPurpose.DIRECT_MESSAGE:
+            return
+
+        # Join all occupants including left occupants to the room so they can receive
+        # an incoming message.
+        occupants = self.__data.room.get_room_occupants(room.id, include_left=True)
+        for occupant in occupants:
+            self.join_room(room.id, occupant.userid)
 
     def join_room(self, roomid: RoomID, userid: UserID) -> None:
         self.__data.room.join_room(roomid, userid)
@@ -368,7 +380,14 @@ class MessageService:
         return sorted(rooms, key=lambda r: r.last_action_timestamp, reverse=True)
 
     def get_room_occupants(self, roomid: RoomID) -> List[Occupant]:
-        occupants = [self.__attachments.resolve_occupant_icon(o) for o in self.__data.room.get_room_occupants(roomid)]
+        room = self.__data.room.get_room(roomid)
+        if not room:
+            return []
+
+        occupants = [
+            self.__attachments.resolve_occupant_icon(o)
+            for o in self.__data.room.get_room_occupants(roomid, include_left=room.purpose == RoomPurpose.DIRECT_MESSAGE)
+        ]
         return sorted(occupants, key=lambda o: o.nickname)
 
     def get_autojoin_rooms(self, userid: UserID) -> List[Room]:

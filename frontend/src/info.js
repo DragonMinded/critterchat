@@ -24,6 +24,7 @@ class Info {
         this.visibility = initialVisibility;
 
         this.roomid = "";
+        this.roomType = "chat";
         this.occupants = [];
         this.rooms = [];
         this.lastSettings = {};
@@ -235,11 +236,15 @@ class Info {
         if (this.roomsLoaded && this.occupantsLoaded) {
             history.forEach((entry) => {
                 if (entry.action == "join") {
-                    this.occupants.push(entry.occupant);
-                    changed = true;
+                    if (this.roomType != "dm") {
+                        this.occupants.push(entry.occupant);
+                        changed = true;
+                    }
                 } else if (entry.action == "leave") {
-                    this.occupants = this.occupants.filter((occupant) => occupant.id != entry.occupant.id);
-                    changed = true;
+                    if (this.roomType != "dm") {
+                        this.occupants = this.occupants.filter((occupant) => occupant.id != entry.occupant.id);
+                        changed = true;
+                    }
                 } else if (entry.action == "change_profile") {
                     this.occupants.forEach((occupant) => {
                         if (occupant.id == entry.occupant.id) {
@@ -364,6 +369,7 @@ class Info {
 
                     updated = true;
 
+                    this.roomType = room.type;
                     this.chatdetails.setRoom(room);
                 }
             });
@@ -425,6 +431,7 @@ class Info {
             this.occupantsLoaded = false;
             this.infoLoaded = false;
             this.roomid = "";
+            this.roomType = "chat";
 
             $( 'div.info > div.occupants' ).empty();
             $( '#leave-room' ).attr('roomid', '');

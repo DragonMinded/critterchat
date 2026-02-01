@@ -755,6 +755,10 @@ def message(json: Dict[str, object]) -> Dict[str, object]:
 
         if represents_real_text(message) or attachments:
             try:
+                # First, ensure that DMs re-open when messaging the other user again.
+                messageservice.rejoin_direct_message(roomid)
+
+                # Now, send the message itself.
                 messageservice.add_message(roomid, userid, message, sensitive, attachments)
                 return {'status': 'success'}
             except MessageServiceException as e:

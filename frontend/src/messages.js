@@ -561,13 +561,22 @@ class Messages {
         var newerMessages = 0;
         this.messages.forEach((message) => {
             if (message.order > lastMessage.order) {
-                if (
-                    message.action == "message" ||
-                    message.action == "join" ||
-                    message.action == "leave" ||
-                    message.action == "change_info"
-                ) {
-                    newerMessages += 1;
+                if (this.roomType == "dm") {
+                    if (
+                        message.action == "message" ||
+                        message.action == "change_info"
+                    ) {
+                        newerMessages += 1;
+                    }
+                } else {
+                    if (
+                        message.action == "message" ||
+                        message.action == "join" ||
+                        message.action == "leave" ||
+                        message.action == "change_info"
+                    ) {
+                        newerMessages += 1;
+                    }
                 }
             }
         });
@@ -622,14 +631,16 @@ class Messages {
         var selfMessage = false;
         if (this.occupantsLoaded) {
             actions.forEach((message) => {
-                // This is where we get notified of user joins and leaves.
-                if (message.action == "join") {
-                    // Add a new occupant to our list.
-                    this.occupants.push(message.occupant);
-                    changed = true;
-                } else if (message.action == "leave") {
-                    this.occupants = this.occupants.filter((occupant) => occupant.id != message.occupant.id);
-                    changed = true;
+                if (this.roomType != "dm") {
+                    // This is where we get notified of user joins and leaves.
+                    if (message.action == "join") {
+                        // Add a new occupant to our list.
+                        this.occupants.push(message.occupant);
+                        changed = true;
+                    } else if (message.action == "leave") {
+                        this.occupants = this.occupants.filter((occupant) => occupant.id != message.occupant.id);
+                        changed = true;
+                    }
                 }
 
                 // Remove -- new -- indicator on receipt of own message instead of on send, since
@@ -969,7 +980,7 @@ class Messages {
                 }
                 html += '  </div>';
                 html += '</div>';
-            } else if (message.action == "join") {
+            } else if (this.roomType != "dm" && message.action == "join") {
                 html  = '<div class="item" id="' + message.id + '">';
                 html += '  <div class="content-wrapper">';
                 html += '    <div class="meta-wrapper">';
@@ -981,7 +992,7 @@ class Messages {
                 html += '    </div>';
                 html += '  </div>';
                 html += '</div>';
-            } else if (message.action == "leave") {
+            } else if (this.roomType != "dm" && message.action == "leave") {
                 html  = '<div class="item" id="' + message.id + '">';
                 html += '  <div class="content-wrapper">';
                 html += '    <div class="meta-wrapper">';
@@ -1098,7 +1109,8 @@ class Messages {
                 const occupant = msg.occupant.id;
                 const timestamp = msg.timestamp;
 
-                // First, non-messages always break the chain.
+                // First, non-messages always break the chain. Even in DMs where user leave and
+                // join messages are hidden.
                 if (msg.action != "message") {
                     // This is a join/part/change info/etc, reset our combining.
                     lastOccupant = undefined;

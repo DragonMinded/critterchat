@@ -460,6 +460,35 @@ class RoomData(BaseData):
                 )
                 self.insert_action(roomid, action)
 
+    def shadow_join_room(self, roomid: RoomID, userid: UserID) -> None:
+        """
+        Given a room to join and a user who wants to join, try shadow joining that room. That just
+        means that if there's already an entry in the occupants table for this entry, ignore it.
+        Otherwise, join the user in an inactive state. Note that this never generates an action
+        because it's meant for associating DMs with different chatters.
+
+        Parameters:
+            roomid - ID of the room we wish to join.
+            userid - ID of the user wishing to join.
+        """
+        if userid is NewUserID or roomid is NewRoomID:
+            return None
+
+        with self.transaction():
+            # First, figure out if we're already joined.
+            sql = """
+                SELECT id FROM occupant WHERE `user_id` = :userid AND `room_id` = :roomid
+            """
+            cursor = self.execute(sql, {"userid": userid, "roomid": roomid})
+            already_joined = cursor.rowcount > 0
+
+            # Now, if we're not, then shadow-join it.
+            if not already_joined:
+                sql = """
+                    INSERT INTO occupant (`user_id`, `room_id`, `inactive`) VALUES (:userid, :roomid, TRUE)
+                """
+                self.execute(sql, {"userid": userid, "roomid": roomid})
+
     def leave_room(self, roomid: RoomID, userid: UserID) -> None:
         """
         Given a room to leave and a user who wants to leave, try leaving that room.
