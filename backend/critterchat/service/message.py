@@ -91,11 +91,12 @@ class MessageService:
         history = [
             self.__attachments.resolve_action_icon(e)
             for e in history
-            if e.action in (
-                ActionType.unread_dm_types()
-                if room.purpose == RoomPurpose.DIRECT_MESSAGE
-                else ActionType.unread_types()
-            )
+            # We intentionally over-fetch joins/leaves for DMs here, because the "load more history"
+            # component needs to know if there's any more history, and it does that by comparing
+            # its own list of events to the oldest event to see if there's anything more to load. If
+            # we filter out the first events (a join in every case) for DMs, it never knows to stop
+            # showing the load more indicator.
+            if e.action in ActionType.unread_types()
         ]
         return history
 
