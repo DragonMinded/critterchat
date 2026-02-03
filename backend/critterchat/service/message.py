@@ -196,6 +196,7 @@ class MessageService:
         # Copy the data over so the client can display it.
         user.iconid = occupant.iconid
         user.nickname = occupant.nickname
+        user.occupantid = occupantid
         self.__attachments.resolve_user_icon(user)
         return user
 

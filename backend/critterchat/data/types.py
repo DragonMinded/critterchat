@@ -49,6 +49,9 @@ class User:
         self.iconid = iconid
         self.icon: Optional[str] = None
 
+        # Only set when this user is looked up through message service based on an OID.
+        self.occupantid: Optional[OccupantID] = None
+
     def to_dict(self, *, admin: bool = False) -> Dict[str, object]:
         retval: Dict[str, object] = {
             "id": User.from_id(self.id),
@@ -57,6 +60,9 @@ class User:
             "about": self.about,
             "icon": self.icon,
         }
+
+        if self.occupantid:
+            retval["occupantid"] = Occupant.from_id(self.occupantid)
 
         if admin:
             retval["permissions"] = [p.name for p in self.permissions]

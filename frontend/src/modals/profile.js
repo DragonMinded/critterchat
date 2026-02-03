@@ -13,6 +13,7 @@ class Profile {
     constructor( eventBus ) {
         this.eventBus = eventBus;
         this.userid = undefined;
+        this.profileid = undefined;
 
         $('#profile-form').on('submit', (event) => {
             event.stopPropagation();
@@ -47,13 +48,14 @@ class Profile {
         });
 
         this.eventBus.on('adminack', (response) => {
-            if (this.userid) {
+            const id = this.profileid || this.userid;
+            if (id) {
                 if (
                     response.action == "activate" ||
                     response.action == "deactivate"
                 ) {
                     // Reload profile.
-                    this.eventBus.emit('refreshprofile', this.userid);
+                    this.eventBus.emit('refreshprofile', id);
                 }
             }
         });
@@ -94,6 +96,7 @@ class Profile {
 
         // Ensure we can send chat requests to the right place.
         this.userid = profile.id;
+        this.profileid = profile.occupantid;
     }
 
     /**
@@ -104,6 +107,7 @@ class Profile {
 
         // Ensure we don't accidentally retain stale user IDs.
         this.userid = undefined;
+        this.profileid = undefined;
 
         $('#profile-form div.admin-wrapper').hide();
         $('#profile-form div.loading').show();
