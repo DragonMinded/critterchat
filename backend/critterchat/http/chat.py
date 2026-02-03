@@ -6,7 +6,7 @@ from typing import Dict
 
 from .app import app, static_location, templates_location, loginrequired, jsonify, uncacheable, g
 from ..common import get_emoji_unicode_dict, get_aliases_unicode_dict
-from ..data import DefaultAvatarID, DefaultRoomID, FaviconID, User
+from ..data import DefaultAvatarID, DefaultRoomID, FaviconID, User, UserPermission
 from ..service import AttachmentService, EmoteService
 
 
@@ -68,6 +68,7 @@ def home() -> Response:
 
     userid = None if (not g.user) else User.from_id(g.user.id)
     username = None if (not g.user) else g.user.username
+    permissions = set() if (not g.user) else g.user.permissions
     jsname = _get_frontend_filename()
     cachebust = _get_frontend_version() + "-" + _get_fingerprint_hash()
 
@@ -81,6 +82,7 @@ def home() -> Response:
         emotes=emotes,
         userid=userid,
         username=username,
+        admin=UserPermission.ADMINISTRATOR in permissions,
         maxabout=g.config.limits.about_length,
         maxmessage=g.config.limits.message_length,
         maxalttext=g.config.limits.alt_text_length,
@@ -112,6 +114,7 @@ def config() -> Dict[str, object]:
 
     userid = None if (not g.user) else User.from_id(g.user.id)
     username = None if (not g.user) else g.user.username
+    permissions = set() if (not g.user) else g.user.permissions
 
     return {
         "title": g.config.name,
@@ -119,6 +122,7 @@ def config() -> Dict[str, object]:
         "emotes": emotes,
         "userid": userid,
         "username": username,
+        "admin": UserPermission.ADMINISTRATOR in permissions,
         "maxabout": g.config.limits.about_length,
         "maxmessage": g.config.limits.message_length,
         "maxalttext": g.config.limits.alt_text_length,

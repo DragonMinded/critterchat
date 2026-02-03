@@ -26,6 +26,15 @@ class Profile {
                 this.eventBus.emit('joinroom', this.userid);
             }
         });
+
+        $('#profile-deactivate').on('click', (event) => {
+            event.stopPropagation();
+            event.stopImmediatePropagation();
+
+            if (this.userid) {
+                this.eventBus.emit('admin', {action: 'deactivate', userid: this.userid});
+            }
+        });
     }
 
     /**
@@ -48,6 +57,11 @@ class Profile {
         $('#profile-form div.loading').hide();
         $('#profile-form div.profile').show();
 
+        // Display admin and moderator actions if needed.
+        if (window.admin) {
+            $('#profile-form div.admin-wrapper').show();
+        }
+
         // Ensure we can send chat requests to the right place.
         this.userid = profile.id;
     }
@@ -61,6 +75,7 @@ class Profile {
         // Ensure we don't accidentally retain stale user IDs.
         this.userid = undefined;
 
+        $('#profile-form div.admin-wrapper').hide();
         $('#profile-form div.loading').show();
         $('#profile-form div.profile').hide();
         $('#profile-form').modal();

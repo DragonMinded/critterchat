@@ -1,6 +1,6 @@
 import traceback
 from threading import Lock
-from typing import Any, Dict, Final, List, Optional, Set, cast
+from typing import Any, Dict, Final, List, Literal, Optional, Set, cast
 
 from .app import socketio, config, request
 from ..common import AESCipher, Time, represents_real_text
@@ -294,6 +294,14 @@ def hydrate_tag(request: Dict[str, object], response: Dict[str, object]) -> Dict
     return {**response, 'tag': request['tag']}
 
 
+def flash(severity: Literal["success", "info", "warning", "error"], message: str, *, room: Any) -> None:
+    socketio.emit('flash', {'severity': severity, 'message': message}, room=room)
+
+
+def error(message: str, *, room: Any) -> None:
+    socketio.emit('error', {'error': message}, room=room)
+
+
 @socketio.on('connect')  # type: ignore
 def connect() -> None:
     unregister_sid(request.sid)
@@ -515,10 +523,10 @@ def updateprofile(json: Dict[str, object]) -> None:
         newname = ""
 
     if newname and len(newname) > 255:
-        socketio.emit('error', {'error': 'Your nickname is too long!'}, room=request.sid)
+        flash('warning', 'Your nickname is too long!', room=request.sid)
         return
     if len(newabout) > config.limits.about_length:
-        socketio.emit('error', {'error': 'Your about section is too long!'}, room=request.sid)
+        flash('warning', 'Your about section is too long!', room=request.sid)
         return
 
     icon: Optional[AttachmentID] = None
@@ -530,8 +538,9 @@ def updateprofile(json: Dict[str, object]) -> None:
         userprofile = userservice.lookup_user(userid)
         if userprofile:
             socketio.emit('profile', hydrate_tag(json, userprofile.to_dict()), room=request.sid)
+            flash('success', 'Your profile has been updated!', room=request.sid)
     except UserServiceException as e:
-        socketio.emit('error', {'error': str(e)}, room=request.sid)
+        error(str(e), room=request.sid)
 
 
 @socketio.on('updatepreferences')  # type: ignore
@@ -620,8 +629,9 @@ def updatepreferences(json: Dict[str, object]) -> None:
             notif_sounds=new_notif_sounds,
             notif_sounds_delete=notif_delete,
         )
+        flash('success', 'Your preferences have been updated!', room=request.sid)
     except UserServiceException as e:
-        socketio.emit('error', {'error': str(e)}, room=request.sid)
+        error(str(e), room=request.sid)
 
 
 @socketio.on('chatactions')  # type: ignore
@@ -751,7 +761,7 @@ def message(json: Dict[str, object]) -> Dict[str, object]:
                 attachments.append(aid)
 
         if len(attachments) > config.limits.attachment_max:
-            socketio.emit('error', {'error': 'Too many attachments!'}, room=request.sid)
+            flash('warning', 'Too many attachments!', room=request.sid)
             return {'status': 'failed'}
 
         # Add any sensitivity tag.
@@ -763,7 +773,7 @@ def message(json: Dict[str, object]) -> Dict[str, object]:
                 messageservice.add_message(roomid, userid, message, sensitive, attachments)
                 return {'status': 'success'}
             except MessageServiceException as e:
-                socketio.emit('error', {'error': str(e)}, room=request.sid)
+                error(str(e), room=request.sid)
 
     # Failed somehow, either got an exception or invalid room ID.
     return {'status': 'failed'}
@@ -827,7 +837,7 @@ def joinroom(json: Dict[str, object]) -> None:
                 messageservice.join_room(roomid, userid)
                 actual_id = roomid
             except MessageServiceException as e:
-                socketio.emit('error', {'error': str(e)}, room=request.sid)
+                error(str(e), room=request.sid)
                 return
 
         otherid = User.to_id(str(json.get('roomid')))
@@ -836,7 +846,7 @@ def joinroom(json: Dict[str, object]) -> None:
                 room = messageservice.create_direct_message(userid, otherid)
                 actual_id = room.id
             except MessageServiceException as e:
-                socketio.emit('error', {'error': str(e)}, room=request.sid)
+                error(str(e), room=request.sid)
                 return
 
         if actual_id:
@@ -912,4 +922,37 @@ def updateroom(json: Dict[str, object]) -> None:
         try:
             messageservice.update_room(roomid, userid, name=newname, topic=newtopic, icon=icon, icon_delete=icondelete)
         except MessageServiceException as e:
-            socketio.emit('error', {'error': str(e)}, room=request.sid)
+            error(str(e), room=request.sid)
+
+
+@socketio.on('admin')  # type: ignore
+def adminaction(json: Dict[str, object]) -> None:
+    data = Data(config)
+    userservice = UserService(config, data)
+
+    # Try to associate with a user if there is one.
+    userid = recover_userid(data, request.sid)
+    if userid is None:
+        return
+
+    # Ensure that the user is actually an admin.
+    user = userservice.lookup_user(userid)
+    if user is None:
+        return
+
+    if UserPermission.ADMINISTRATOR not in user.permissions:
+        return
+
+    # Grab the action and delegate.
+    action = str(json.get('action', ''))
+    if action == "deactivate":
+        # Deactivate user.
+        otheruserid = User.to_id(str(json.get('userid')))
+        if otheruserid:
+            userservice.remove_permission(otheruserid, UserPermission.ACTIVATED)
+            flash('success', 'User successfully deactivated!', room=request.sid)
+        else:
+            flash('error', 'User does not exist!', room=request.sid)
+
+    else:
+        error('Unrecognized action requested!', room=request.sid)

@@ -1461,12 +1461,12 @@ div.profile div.icon img {
     margin: 0px;
 }
 
-div.profile div.nickname-wrapper, div.profile div.actions-wrapper {
+div.profile div.nickname-wrapper, div.profile div.actions-wrapper, div.profile div.admin-wrapper {
     display: flex;
     justify-content: center;
 }
 
-div.profile div.actions-wrapper {
+div.profile div.actions-wrapper, div.profile div.admin-wrapper {
     margin-top: var(--modal-item-padding);
     margin-bottom: var(--modal-item-padding);
 }

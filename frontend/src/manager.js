@@ -386,6 +386,20 @@ export function manager(socket) {
         messagesInst.deleteEmotes(msg.deletions);
     });
 
+    socket.on('flash', (info) => {
+        // Handles when the server wants to display a flash message on the client.
+        flash(info.severity, info.message);
+    });
+
+    eventBus.on('admin', (details) => {
+        // We were notified that an admin action has been requested. Fire off the request to do so
+        // to the server, but only if we're an admin. The server also has checks for this, so this
+        // is just pre-emptive.
+        if (window.admin) {
+            socket.emit('admin', details);
+        }
+    });
+
     eventBus.on('displayprofile', (occupantid) => {
         // We were notified that the user wants to view a profile. Fire off a load request for the
         // profile and display the modal.

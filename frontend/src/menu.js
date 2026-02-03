@@ -320,11 +320,9 @@ class Menu {
      */
     selectRoom( roomid ) {
         var found = false;
-        var roomType = "chat";
         for (const room of this.rooms) {
             if (room.id == roomid) {
                 found = true;
-                roomType = room.type;
                 break;
             }
         }
