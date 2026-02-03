@@ -1,6 +1,7 @@
 TODO Immediate
 ==============
 
+ - Better double-post prevention including non-attachment messages.
  - Channel permissions.
 
 TODO For Public Instance
@@ -20,5 +21,6 @@ TODO Low Priority
  - Support creating an account flow with ability to disable instance-side and setting for auto-activate or moderator activate.
  - Allow config-based image attachment disable.
  - Support arbitrary info fields in profile for links to other services, etc.
+ - Allow arbitrary statuses such as "LIVE" with ability to put a link in.
  - Image attachment carousel instead of opening images in new browser tab.
  - Better styling of left/right lists without forcing the scrollbar to be visible.
