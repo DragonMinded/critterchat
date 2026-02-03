@@ -1,7 +1,6 @@
 TODO Immediate
 ==============
 
- - Better double-post prevention including non-attachment messages.
  - Channel permissions.
 
 TODO For Public Instance
