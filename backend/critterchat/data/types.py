@@ -28,6 +28,7 @@ class Migration(StrEnum):
 class UserPermission(IntEnum):
     ACTIVATED = 0x1
     WELCOMED = 0x2
+    ADMINISTRATOR = 0x4
 
 
 class User:

@@ -227,6 +227,50 @@ def deactivate_user(config: Config, username: str) -> None:
         data.close()
 
 
+def admin_user(config: Config, username: str) -> None:
+    """
+    Given an existing user that logs in with username, update their account to be marked
+    as an administrator, allowing them to take additional administration actions on the UI.
+    """
+
+    data = Data(config)
+
+    try:
+        userservice = UserService(config, data)
+        existing_user = userservice.find_user(username)
+        if not existing_user:
+            raise CommandException("User does not exist in the database!")
+        userservice.add_permission(existing_user.id, UserPermission.ADMINISTRATOR)
+
+        print(f"User with username {username} set as administrator")
+    except UserServiceException as e:
+        raise CommandException(str(e))
+    finally:
+        data.close()
+
+
+def deadmin_user(config: Config, username: str) -> None:
+    """
+    Given an existing user that logs in with username, update their account to not be
+    marked as an administrator, taking away any permissions they had to administer.
+    """
+
+    data = Data(config)
+
+    try:
+        userservice = UserService(config, data)
+        existing_user = userservice.find_user(username)
+        if not existing_user:
+            raise CommandException("User does not exist in the database!")
+        userservice.remove_permission(existing_user.id, UserPermission.ADMINISTRATOR)
+
+        print(f"User with username {username} unset as administrator")
+    except UserServiceException as e:
+        raise CommandException(str(e))
+    finally:
+        data.close()
+
+
 def list_emotes(config: Config, only_broken: bool) -> None:
     """
     List all of the custom emotes enabled on this network right now.
@@ -599,6 +643,34 @@ def main() -> None:
         help="username that the user uses to login with",
     )
 
+    # Only a few params for this one
+    admin_parser = user_commands.add_parser(
+        "admin",
+        help="apply administrator permissions to a user",
+        description="Apply administrator permissions to a user",
+    )
+    admin_parser.add_argument(
+        "-u",
+        "--username",
+        required=True,
+        type=str,
+        help="username that the user uses to login with",
+    )
+
+    # Only a few params for this one
+    deadmin_parser = user_commands.add_parser(
+        "deadmin",
+        help="remove administrator permissions from a user",
+        description="Remove administrator permissions from a user",
+    )
+    deadmin_parser.add_argument(
+        "-u",
+        "--username",
+        required=True,
+        type=str,
+        help="username that the user uses to login with",
+    )
+
     # Another subcommand here.
     emote_parser = commands.add_parser(
         "emote",
@@ -787,6 +859,10 @@ def main() -> None:
                 activate_user(config, args.username)
             elif args.user == "deactivate":
                 deactivate_user(config, args.username)
+            elif args.user == "admin":
+                admin_user(config, args.username)
+            elif args.user == "deadmin":
+                deadmin_user(config, args.username)
             else:
                 raise CLIException(f"Unknown user operation '{args.user}'")
 
