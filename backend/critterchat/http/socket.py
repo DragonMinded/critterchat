@@ -436,12 +436,15 @@ def profile(json: Dict[str, object]) -> None:
     if userid is None or info is None:
         return
 
+    user = userservice.lookup_user(userid)
+    admin = user is not None and UserPermission.ADMINISTRATOR in user.permissions
+
     otheruserid = User.to_id(str(json.get('userid')))
     if otheruserid:
         # Generic profile lookup request.
         userprofile = userservice.lookup_user(otheruserid)
         if userprofile:
-            socketio.emit('profile', hydrate_tag(json, userprofile.to_dict()), room=request.sid)
+            socketio.emit('profile', hydrate_tag(json, userprofile.to_dict(admin=admin)), room=request.sid)
             return
 
     occupantid = Occupant.to_id(str(json.get('userid')))
@@ -449,7 +452,7 @@ def profile(json: Dict[str, object]) -> None:
         # Per-room profile lookup request.
         userprofile = messageservice.lookup_occupant(occupantid)
         if userprofile:
-            socketio.emit('profile', hydrate_tag(json, userprofile.to_dict()), room=request.sid)
+            socketio.emit('profile', hydrate_tag(json, userprofile.to_dict(admin=admin)), room=request.sid)
             return
 
     # Locking our socket info so we can keep track of profiles sent to all sessions.
@@ -926,33 +929,47 @@ def updateroom(json: Dict[str, object]) -> None:
 
 
 @socketio.on('admin')  # type: ignore
-def adminaction(json: Dict[str, object]) -> None:
+def adminaction(json: Dict[str, object]) -> Dict[str, object]:
     data = Data(config)
     userservice = UserService(config, data)
 
     # Try to associate with a user if there is one.
     userid = recover_userid(data, request.sid)
     if userid is None:
-        return
+        return {'status': 'failed'}
 
     # Ensure that the user is actually an admin.
     user = userservice.lookup_user(userid)
     if user is None:
-        return
+        return {'status': 'failed'}
 
     if UserPermission.ADMINISTRATOR not in user.permissions:
-        return
+        return {'status': 'failed'}
 
     # Grab the action and delegate.
     action = str(json.get('action', ''))
-    if action == "deactivate":
+    if action == "activate":
+        # Activate user.
+        otheruserid = User.to_id(str(json.get('userid')))
+        if otheruserid:
+            userservice.add_permission(otheruserid, UserPermission.ACTIVATED)
+            flash('success', 'User successfully activated!', room=request.sid)
+            return {'status': 'success'}
+        else:
+            flash('error', 'User does not exist!', room=request.sid)
+            return {'status': 'failed'}
+
+    elif action == "deactivate":
         # Deactivate user.
         otheruserid = User.to_id(str(json.get('userid')))
         if otheruserid:
             userservice.remove_permission(otheruserid, UserPermission.ACTIVATED)
             flash('success', 'User successfully deactivated!', room=request.sid)
+            return {'status': 'success'}
         else:
             flash('error', 'User does not exist!', room=request.sid)
+            return {'status': 'failed'}
 
     else:
         error('Unrecognized action requested!', room=request.sid)
+        return {'status': 'failed'}

@@ -49,14 +49,19 @@ class User:
         self.iconid = iconid
         self.icon: Optional[str] = None
 
-    def to_dict(self) -> Dict[str, object]:
-        return {
+    def to_dict(self, *, admin: bool = False) -> Dict[str, object]:
+        retval: Dict[str, object] = {
             "id": User.from_id(self.id),
             "username": self.username,
             "nickname": self.nickname,
             "about": self.about,
             "icon": self.icon,
         }
+
+        if admin:
+            retval["permissions"] = [p.name for p in self.permissions]
+
+        return retval
 
     @staticmethod
     def from_id(userid: UserID) -> str:

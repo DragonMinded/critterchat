@@ -1,5 +1,6 @@
 import $ from "jquery";
 import linkifyHtml from "linkify-html";
+import { ACTIVATED } from "../common.js";
 import { escapeHtml } from "../utils.js";
 
 const linkifyOptions = { defaultProtocol: "http", target: "_blank", validate: { email: () => false } };
@@ -27,12 +28,33 @@ class Profile {
             }
         });
 
+        $('#profile-activate').on('click', (event) => {
+            event.stopPropagation();
+            event.stopImmediatePropagation();
+
+            if (this.userid) {
+                this.eventBus.emit('admin', {action: 'activate', userid: this.userid});
+            }
+        });
+
         $('#profile-deactivate').on('click', (event) => {
             event.stopPropagation();
             event.stopImmediatePropagation();
 
             if (this.userid) {
                 this.eventBus.emit('admin', {action: 'deactivate', userid: this.userid});
+            }
+        });
+
+        this.eventBus.on('adminack', (response) => {
+            if (this.userid) {
+                if (
+                    response.action == "activate" ||
+                    response.action == "deactivate"
+                ) {
+                    // Reload profile.
+                    this.eventBus.emit('refreshprofile', this.userid);
+                }
             }
         });
     }
@@ -60,6 +82,14 @@ class Profile {
         // Display admin and moderator actions if needed.
         if (window.admin) {
             $('#profile-form div.admin-wrapper').show();
+
+            if (profile.permissions.indexOf(ACTIVATED) >= 0) {
+                $('#profile-form #profile-activate').hide();
+                $('#profile-form #profile-deactivate').show();
+            } else {
+                $('#profile-form #profile-activate').show();
+                $('#profile-form #profile-deactivate').hide();
+            }
         }
 
         // Ensure we can send chat requests to the right place.

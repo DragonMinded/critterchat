@@ -1464,6 +1464,7 @@ div.profile div.icon img {
 div.profile div.nickname-wrapper, div.profile div.actions-wrapper, div.profile div.admin-wrapper {
     display: flex;
     justify-content: center;
+    gap: var(--modal-item-padding);
 }
 
 div.profile div.actions-wrapper, div.profile div.admin-wrapper {

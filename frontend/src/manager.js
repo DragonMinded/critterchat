@@ -396,7 +396,13 @@ export function manager(socket) {
         // to the server, but only if we're an admin. The server also has checks for this, so this
         // is just pre-emptive.
         if (window.admin) {
-            socket.emit('admin', details);
+            socket.emit('admin', details, (response) => {
+                if (response.status == "success") {
+                    eventBus.emit('adminack', {'action': details.action, 'status': 'success'});
+                } else {
+                    eventBus.emit('adminack', {'action': details.action, 'status': 'failure'});
+                }
+            });
         }
     });
 
@@ -405,6 +411,19 @@ export function manager(socket) {
         // profile and display the modal.
         profileInst.display();
 
+        socket.request('profile', {'userid': occupantid}, (evt, data) => {
+            if (evt != 'profile') {
+                // TODO: How do we surface this back to the server or somewhere meaningful?
+                console.log("Got unexpected event " + evt + " back from profile lookup request!");
+            } else {
+                // We got a profile response for a different user, display that on profile view.
+                profileInst.setProfile(data);
+            }
+        });
+    });
+
+    eventBus.on('refreshprofile', (occupantid) => {
+        // We were notified that the user is viewing a profile and wants to refresh it.
         socket.request('profile', {'userid': occupantid}, (evt, data) => {
             if (evt != 'profile') {
                 // TODO: How do we surface this back to the server or somewhere meaningful?
