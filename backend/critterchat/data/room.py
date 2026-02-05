@@ -14,6 +14,7 @@ from .types import (
     Occupant,
     Room,
     RoomPurpose,
+    UserPermission,
     NewUserID,
     NewActionID,
     NewAttachmentID,
@@ -52,6 +53,7 @@ occupant = Table(
     Column("user_id", Integer, nullable=False),
     Column("room_id", Integer, nullable=False, index=True),
     Column("inactive", Boolean, default=False),
+    Column("moderator", Boolean, default=False),
     Column("nickname", String(255)),
     Column("icon", Integer),
     UniqueConstraint("user_id", "room_id", name='uidrid'),
@@ -156,6 +158,38 @@ class RoomData(BaseData):
             for result in cursor.mappings()
         ])
 
+    def get_left_rooms(self, userid: UserID) -> List[Room]:
+        """
+        Given a user ID, look up the rooms that user was is in but has left.
+
+        Parameters:
+            userid - The ID of the user that we want rooms for.
+
+        Returns:
+            list of Room objects representing the rooms the user was previously in but isn't in now.
+        """
+        if userid is NewUserID:
+            return []
+
+        sql = """
+            SELECT id, name, topic, icon, purpose, last_action FROM room WHERE id in (
+                SELECT room_id FROM occupant WHERE user_id = :userid AND inactive = TRUE
+            )
+        """
+        cursor = self.execute(sql, {"userid": userid})
+        return self._hydrate_actions([
+            Room(
+                roomid=RoomID(result['id']),
+                name=result['name'],
+                topic=result['topic'],
+                purpose=self._get_purpose(str(result['purpose'])),
+                last_action_timestamp=result['last_action'],
+                iconid=AttachmentID(result['icon']) if result['icon'] else None,
+                deficonid=None,
+            )
+            for result in cursor.mappings()
+        ])
+
     def get_joined_room_occupants(self, userid: UserID) -> Dict[RoomID, Occupant]:
         """
         Given a user ID, look up the occupant data for that user in each room they're in.
@@ -173,10 +207,12 @@ class RoomData(BaseData):
                 occupant.room_id AS room_id,
                 occupant.nickname AS onick,
                 occupant.inactive AS inactive,
+                occupant.moderator AS moderator,
                 occupant.icon AS oicon,
                 profile.nickname AS pnick,
                 profile.icon AS picon,
-                user.username AS unick
+                user.username AS unick,
+                user.permissions AS permissions
             FROM occupant
             LEFT JOIN profile ON occupant.user_id = profile.user_id
             LEFT JOIN user ON occupant.user_id = user.id
@@ -566,12 +602,29 @@ class RoomData(BaseData):
         if not icon:
             icon = result['picon']
 
+        permissions = set()
+        bitmask = int(result['permissions'] or 0)
+        for perm in UserPermission:
+            if (bitmask & perm) == perm:
+                permissions.add(perm)
+
+        # Treat a user as inactive if they're deactivated or if they've left the channel.
+        inactive = bool(result['inactive'])
+        if UserPermission.ACTIVATED not in permissions:
+            inactive = True
+
+        # Treat a user as a moderator if they're an administrator.
+        moderator = bool(result['moderator'])
+        if UserPermission.ADMINISTRATOR in permissions:
+            moderator = True
+
         return Occupant(
             OccupantID(result['id']),
             UserID(result['user_id']),
             username=result['unick'],
             nickname=nickname,
-            inactive=bool(result['inactive']),
+            inactive=inactive,
+            moderator=moderator,
             iconid=AttachmentID(icon) if icon else None,
         )
 
@@ -596,10 +649,12 @@ class RoomData(BaseData):
                 occupant.user_id AS user_id,
                 occupant.nickname AS onick,
                 occupant.inactive AS inactive,
+                occupant.moderator AS moderator,
                 occupant.icon AS oicon,
                 profile.nickname AS pnick,
                 profile.icon AS picon,
-                user.username AS unick
+                user.username AS unick,
+                user.permissions AS permissions
             FROM occupant
             LEFT JOIN profile ON occupant.user_id = profile.user_id
             LEFT JOIN user ON occupant.user_id = user.id
@@ -625,10 +680,12 @@ class RoomData(BaseData):
                 occupant.user_id AS user_id,
                 occupant.nickname AS onick,
                 occupant.inactive AS inactive,
+                occupant.moderator AS moderator,
                 occupant.icon AS oicon,
                 profile.nickname AS pnick,
                 profile.icon AS picon,
-                user.username AS unick
+                user.username AS unick,
+                user.permissions AS permissions
             FROM occupant
             LEFT JOIN profile ON occupant.user_id = profile.user_id
             LEFT JOIN user ON occupant.user_id = user.id
@@ -708,10 +765,12 @@ class RoomData(BaseData):
                     occupant.user_id AS user_id,
                     occupant.nickname AS onick,
                     occupant.inactive AS inactive,
+                    occupant.moderator AS moderator,
                     occupant.icon AS oicon,
                     profile.nickname AS pnick,
                     profile.icon AS picon,
-                    user.username AS unick
+                    user.username AS unick,
+                    user.permissions AS permissions
                 FROM occupant
                 LEFT JOIN profile ON occupant.user_id = profile.user_id
                 LEFT JOIN user ON occupant.user_id = user.id

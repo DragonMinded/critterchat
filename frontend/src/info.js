@@ -212,7 +212,18 @@ class Info {
         if (roomid == this.roomid) {
             // Make a copy of the occupants so we can mess with it later if needed.
             this.occupants = occupants.filter((_occupant) => true);
-            this.occupants.sort((a, b) => { return a.nickname.localeCompare(b.nickname); });
+            this.occupants.sort((a, b) => {
+                if (this.roomType != "dm") {
+                    const aSort = this._computeSortOrder(a);
+                    const bSort = this._computeSortOrder(b);
+
+                    if (aSort != bSort) {
+                        return aSort - bSort;
+                    }
+                }
+
+                return a.nickname.localeCompare(b.nickname);
+            });
             this.occupantsLoaded = true;
 
             if (this.roomsLoaded && this.occupantsLoaded) {
@@ -240,11 +251,29 @@ class Info {
                     if (this.roomType != "dm") {
                         this.occupants.push(entry.occupant);
                         changed = true;
+                    } else {
+                        // This has the subtle bug of if you message somebody who was deactivated and they
+                        // also had previously been in your DM but closed it, it will show them as activated
+                        // again until you refresh or navigate away and back. This is a rare enough occurance
+                        // that I'm not worried about it.
+                        this.occupants.forEach((occupant) => {
+                            if (occupant.id == entry.occupant.id) {
+                                occupant.inactive = false;
+                                changed = true;
+                            }
+                        });
                     }
                 } else if (entry.action == "leave") {
                     if (this.roomType != "dm") {
                         this.occupants = this.occupants.filter((occupant) => occupant.id != entry.occupant.id);
                         changed = true;
+                    } else {
+                        this.occupants.forEach((occupant) => {
+                            if (occupant.id == entry.occupant.id) {
+                                occupant.inactive = true;
+                                changed = true;
+                            }
+                        });
                     }
                 } else if (entry.action == "change_profile") {
                     this.occupants.forEach((occupant) => {
@@ -255,14 +284,53 @@ class Info {
                     });
                     $('div.info > div.occupants div.item#' + entry.occupant.id + ' div.name').html(escapeHtml(entry.occupant.nickname));
                     $('div.info > div.occupants div.item#' + entry.occupant.id + ' div.icon img').attr('src', entry.occupant.icon);
+                } else if (entry.action == "change_users") {
+                    const newOccupants = new Map();
+                    entry.details.occupants.forEach((occupant) => {
+                        newOccupants.set(occupant.id, occupant);
+                    });
+
+                    this.occupants.forEach((occupant) => {
+                        if (newOccupants.has(occupant.id)) {
+                            const newOccupant = newOccupants.get(occupant.id);
+                            occupant.moderator = newOccupant.moderator;
+                            occupant.inactive = newOccupant.inactive;
+                        }
+                    });
+                    changed = true;
                 }
             });
         }
 
         if (changed) {
-            this.occupants.sort((a, b) => { return a.nickname.localeCompare(b.nickname); });
+            this.occupants.sort((a, b) => {
+                if (this.roomType != "dm") {
+                    const aSort = this._computeSortOrder(a);
+                    const bSort = this._computeSortOrder(b);
+
+                    if (aSort != bSort) {
+                        return aSort - bSort;
+                    }
+                }
+
+                return a.nickname.localeCompare(b.nickname);
+            });
             this._drawOccupants();
         }
+    }
+
+    /**
+     * Called by sort function to determine sort order of user attributes.
+     */
+    _computeSortOrder(occupant) {
+        if (occupant.inactive) {
+            return 2;
+        }
+        if (occupant.moderator) {
+            return 0;
+        }
+
+        return 1;
     }
 
     /**
@@ -277,7 +345,12 @@ class Info {
 
         this.occupants.forEach((occupant) => {
             // Now, draw it fresh since it's not an update.
-            var html = '<div class="item" id="' + occupant.id + '">';
+            var cls = "item";
+            if (occupant.inactive) {
+                cls += " faded";
+            }
+
+            var html = '<div class="' + cls + '" id="' + occupant.id + '">';
             html    += '  <div class="icon avatar">';
             html    += '    <img src="' + occupant.icon + '" />';
             html    += '  </div>';

@@ -11,10 +11,12 @@ from ..data import (
     User,
     Action,
     ActionType,
+    RoomPurpose,
     DefaultAvatarID,
     DefaultRoomID,
     FaviconID,
     NewActionID,
+    NewOccupantID,
     ActionID,
     AttachmentID,
     Occupant,
@@ -320,6 +322,7 @@ class UserService:
             raise UserServiceException("User does not exist to add permission!")
         user.permissions.add(permission)
         self.__data.user.update_user(user)
+        self.__notify_users_updated(userid, permission)
 
     def remove_permission(self, userid: UserID, permission: UserPermission) -> None:
         user = self.__data.user.get_user(userid)
@@ -328,6 +331,38 @@ class UserService:
         if permission in user.permissions:
             user.permissions.remove(permission)
         self.__data.user.update_user(user)
+        self.__notify_users_updated(userid, permission)
+
+    def __notify_users_updated(self, userid: UserID, permission: UserPermission) -> None:
+        # Only want to notify on things that change actual user status in a room.
+        if permission not in {UserPermission.ACTIVATED, UserPermission.ADMINISTRATOR}:
+            return
+
+        # Look up all rooms that this user is in and add an action to them notifying users changed.
+        joinedrooms = self.__data.room.get_joined_rooms(userid)
+        leftrooms = self.__data.room.get_left_rooms(userid)
+        leftrooms = [r for r in leftrooms if r.purpose == RoomPurpose.DIRECT_MESSAGE]
+
+        # Shouldn't happen, but let's not double-notify.
+        seen: Set[RoomID] = set()
+        for room in [*joinedrooms, *leftrooms]:
+            if room.id in seen:
+                continue
+            seen.add(room.id)
+
+            occupant = Occupant(
+                occupantid=NewOccupantID,
+                userid=userid,
+            )
+            action = Action(
+                actionid=NewActionID,
+                timestamp=Time.now(),
+                occupant=occupant,
+                action=ActionType.CHANGE_USERS,
+                # For this action, the details will be filled in at look-up time.
+                details={},
+            )
+            self.__data.room.insert_action(room.id, action)
 
     def mark_last_seen(self, userid: UserID, roomid: RoomID, actionid: ActionID) -> None:
         self.__data.user.mark_last_seen(userid, roomid, actionid)

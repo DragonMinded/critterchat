@@ -949,6 +949,10 @@ div.icon div.badge.empty, div.back div.badge.empty {
     display: none;
 }
 
+div.item.faded {
+    opacity: 65%;
+}
+
 div.rooms div.item div.icon, div.results div.item div.icon, div.occupants div.item div.icon {
     position: relative;
 }

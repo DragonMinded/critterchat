@@ -343,12 +343,14 @@ class Occupant:
         nickname: str = "",
         iconid: Optional[AttachmentID] = None,
         inactive: bool = False,
+        moderator: bool = False,
     ) -> None:
         self.id = occupantid
         self.userid = userid
         self.username = username
         self.nickname = nickname
         self.inactive = inactive
+        self.moderator = moderator
         self.iconid = iconid
         self.icon: Optional[str] = None
 
@@ -359,6 +361,7 @@ class Occupant:
             "username": self.username,
             "nickname": self.nickname,
             "inactive": self.inactive,
+            "moderator": self.moderator,
             "icon": self.icon,
         }
 
@@ -383,6 +386,7 @@ class ActionType(StrEnum):
     LEAVE = 'leave'
     CHANGE_INFO = 'change_info'
     CHANGE_PROFILE = 'change_profile'
+    CHANGE_USERS = 'change_users'
 
     @staticmethod
     def unread_types() -> Set["ActionType"]:
@@ -411,6 +415,7 @@ class ActionType(StrEnum):
             ActionType.LEAVE,
             ActionType.CHANGE_INFO,
             ActionType.CHANGE_PROFILE,
+            ActionType.CHANGE_USERS,
         }
 
 

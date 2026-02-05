@@ -14,6 +14,7 @@ from ..service import (
 from ..data import (
     Data,
     Action,
+    ActionType,
     Attachment,
     Room,
     User,
@@ -136,6 +137,9 @@ def background_thread_proc_impl() -> None:
 
             sockets: List[SocketInfo] = list(socket_to_info.values())
 
+        # Keep a lookup of room occupants so we don't look this up repeatedly during CHANGE_USERS events.
+        occupantcache: Dict[RoomID, List[Occupant]] = {}
+
         for info in sockets:
             # Lock this so other communication with this client doesn't get out of order.
             locked = info.lock.acquire(blocking=False)
@@ -156,6 +160,17 @@ def background_thread_proc_impl() -> None:
                             if actions:
                                 for action in actions:
                                     fetchlimit = action.id if fetchlimit is None else max(fetchlimit, action.id)
+                                    if action.action == ActionType.CHANGE_USERS:
+                                        if roomid not in occupantcache:
+                                            room = messageservice.lookup_room(roomid, user.id)
+                                            if room:
+                                                occupantcache[roomid] = room.occupants
+
+                                        if roomid in occupantcache:
+                                            action.details = {
+                                                "occupants": [o.to_dict() for o in occupantcache[roomid]],
+                                            }
+
                                 info.fetchlimit[roomid] = fetchlimit or NewActionID
 
                                 socketio.emit('chatactions', {
@@ -653,9 +668,13 @@ def chatactions(json: Dict[str, object]) -> None:
     with info.lock:
         roomid = Room.to_id(str(json.get('roomid')))
         if roomid:
+            # Grab the current room in our joined rooms list. There's a way more performant
+            # way to do this but we can fix that later.
             rooms = messageservice.get_joined_rooms(userid)
-            joinedrooms = {room.id for room in rooms}
-            if roomid not in joinedrooms:
+            rooms = [r for r in rooms if r.id == roomid]
+            room = rooms[0] if rooms else None
+
+            if not room:
                 # Trying to grab chat for a room we're not in!
                 return
 
@@ -668,6 +687,11 @@ def chatactions(json: Dict[str, object]) -> None:
                 fetchlimit = afterid
                 for action in actions:
                     fetchlimit = max(fetchlimit, action.id)
+                    if action.action == ActionType.CHANGE_USERS:
+                        action.details = {
+                            "occupants": [o.to_dict() for o in room.occupants],
+                        }
+
                 info.fetchlimit[roomid] = fetchlimit
 
                 socketio.emit('chatactions', hydrate_tag(json, {
