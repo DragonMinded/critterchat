@@ -352,11 +352,24 @@ class Info {
         var scrollPos = occupantElement.scrollTop();
         occupantElement.empty();
 
+        var lastType = undefined;
+        const typeMap = ['moderators', 'chatters', 'inactive'];
+
         this.occupants.forEach((occupant) => {
             // Now, draw it fresh since it's not an update.
             var cls = "item";
             if (occupant.inactive) {
                 cls += " faded";
+            }
+
+            if (this.moderated) {
+                const curType = typeMap[this._computeSortOrder(occupant)];
+                if (curType != lastType) {
+                    lastType = curType;
+
+                    var header = '<div class="header">' + curType + '</div>';
+                    occupantElement.append(header);
+                }
             }
 
             var html = '<div class="' + cls + '" id="' + occupant.id + '">';

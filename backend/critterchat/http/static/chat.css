@@ -1375,6 +1375,15 @@ div.occupants div.item {
     border: 1px solid transparent;
 }
 
+div.occupants div.header {
+    text-transform: uppercase;
+    font-size: var(--application-text-size-12);
+}
+
+div.occupants div.header:not(:first-child) {
+    padding-top: var(--application-item-padding);
+}
+
 div.search, div.warning, div.information {
     height: var(--modal-fixed-height);
     display: flex;
