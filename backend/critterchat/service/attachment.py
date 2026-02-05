@@ -387,7 +387,8 @@ class AttachmentService:
         return occupant
 
     def resolve_action_icon(self, action: Action) -> Action:
-        self.resolve_occupant_icon(action.occupant)
+        if action.occupant:
+            self.resolve_occupant_icon(action.occupant)
 
         if action.action == ActionType.CHANGE_INFO:
             details = action.details

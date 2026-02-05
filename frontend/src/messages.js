@@ -629,7 +629,7 @@ class Messages {
                 // Remove -- new -- indicator on receipt of own message instead of on send, since
                 // it can take a little while to round trip and the double change to the message
                 // window looks weird.
-                if (message.occupant.username == window.username) {
+                if (message.occupant && message.occupant.username == window.username) {
                     if (
                         message.action == "message" ||
                         message.action == "change_info"
@@ -994,8 +994,13 @@ class Messages {
                 html += '  <div class="content-wrapper">';
                 html += '    <div class="meta-wrapper">';
                 html += '      <div class="action-wrapper">';
-                html += '        <span class="name" dir="auto" id="' + message.occupant.id + '">' + escapeHtml(message.occupant.nickname) + '</span>';
-                html += '        <span class="action">has updated the ' + type + '\'s info!</span>';
+
+                if (message.occupant) {
+                    html += '        <span class="name" dir="auto" id="' + message.occupant.id + '">' + escapeHtml(message.occupant.nickname) + '</span>';
+                    html += '        <span class="action">has updated the ' + type + '\'s info!</span>';
+                } else {
+                    html += '        <span class="action">The ' + type + '\'s info has been updated!</span>';
+                }
                 html += '      </div>';
                 html += '      <span class="timestamp">' + formatDateTime(message.timestamp) + '</span>';
                 html += '    </div>';
@@ -1017,16 +1022,18 @@ class Messages {
                 }
             }
 
-            // Allow clicking a username in a message to view the person's profile.
-            $('div.item#' + message.id + ' span.name#' + message.occupant.id).on('click', (event) => {
-                event.stopPropagation();
-                event.stopImmediatePropagation();
+            if (message.occupant) {
+                // Allow clicking a username in a message to view the person's profile.
+                $('div.item#' + message.id + ' span.name#' + message.occupant.id).on('click', (event) => {
+                    event.stopPropagation();
+                    event.stopImmediatePropagation();
 
-                this.inputState.setState("empty");
+                    this.inputState.setState("empty");
 
-                var id = $(event.currentTarget).attr('id')
-                this.eventBus.emit('displayprofile', id);
-            });
+                    var id = $(event.currentTarget).attr('id')
+                    this.eventBus.emit('displayprofile', id);
+                });
+            }
 
             // Allow clicking on a username in the message itself.
             $('div.item#' + message.id + ' span.name-link').on('click', (event) => {
@@ -1089,7 +1096,7 @@ class Messages {
 
             messages.find('div.item').each((_idx, elem) => {
                 const msg = indexedMessages.get($(elem).attr('id'));
-                const occupant = msg.occupant.id;
+                const occupant = msg.occupant ? msg.occupant.id : "nobody";
                 const timestamp = msg.timestamp;
 
                 // First, non-messages always break the chain. Even in DMs where user leave and

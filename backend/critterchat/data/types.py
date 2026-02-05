@@ -430,16 +430,21 @@ class Action:
         self,
         actionid: ActionID,
         timestamp: int,
-        occupant: Occupant,
+        occupant: Optional[Occupant],
         action: ActionType,
         details: Dict[str, object],
         attachments: List[Attachment] = [],
     ) -> None:
         self.id = actionid
         self.timestamp = timestamp
-        self.occupant = occupant
         self.action = action
         self.details = details
+
+        # Can be None, but only for specific action types. Right now that's just CHANGE_INFO
+        # so that room info can be updated from the CLI.
+        self.occupant = occupant
+
+        # Only ever populated for message type.
         self.attachments = attachments
 
     def to_dict(self) -> Dict[str, object]:
@@ -447,7 +452,7 @@ class Action:
             "id": Action.from_id(self.id),
             "order": self.id,
             "timestamp": self.timestamp,
-            "occupant": self.occupant.to_dict(),
+            "occupant": self.occupant.to_dict() if self.occupant else None,
             "action": self.action,
             "details": self.details,
             "attachments": [a.to_dict() for a in self.attachments],

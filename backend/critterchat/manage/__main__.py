@@ -480,9 +480,7 @@ def modify_public_room_autojoin(config: Config, roomid: str, autojoin: str) -> N
 
 def modify_public_room_moderated(config: Config, roomid: str, moderated: str) -> None:
     """
-    Modify an existing room by ID, setting it's moderated property. Note that when toggling this
-    through the admin interface, it does not refresh the display for anyone currently in the room
-    since there is no user to associate the change with.
+    Modify an existing room by ID, setting it's moderated property.
     """
 
     data = Data(config)

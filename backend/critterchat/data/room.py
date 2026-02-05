@@ -70,7 +70,7 @@ action = Table(
     Column("id", Integer, nullable=False, primary_key=True, autoincrement=True),
     Column("timestamp", Integer, nullable=False),
     Column("room_id", Integer, nullable=False, index=True),
-    Column("occupant_id", Integer, nullable=False),
+    Column("occupant_id", Integer),
     Column("action", String(32)),
     Column("details", JSON),
     mysql_charset="utf8mb4",
@@ -689,10 +689,14 @@ class RoomData(BaseData):
         """
         self.execute(sql, {"roomid": room.id, "name": room.name, "topic": room.topic, "iconid": iconid, "moderated": room.moderated})
 
-        occupant = Occupant(
-            occupantid=NewOccupantID,
-            userid=userid,
-        )
+        if userid is NewUserID:
+            occupant = None
+        else:
+            occupant = Occupant(
+                occupantid=NewOccupantID,
+                userid=userid,
+            )
+
         action = Action(
             actionid=NewActionID,
             timestamp=Time.now(),
@@ -871,7 +875,8 @@ class RoomData(BaseData):
             return []
 
         # Now, scoop up all of our occupants that we should look up.
-        occupantids = {x['occupant_id'] for x in data}
+        occupantids = {x['occupant_id'] for x in data if x['occupant_id'] is not None}
+
         if occupantids:
             sql = """
                 SELECT
@@ -901,7 +906,7 @@ class RoomData(BaseData):
             Action(
                 actionid=ActionID(x['id']),
                 timestamp=x['timestamp'],
-                occupant=mapping[OccupantID(x['occupant_id'])],
+                occupant=mapping[OccupantID(x['occupant_id'])] if x['occupant_id'] is not None else None,
                 action=x['action'],
                 details=json.loads(str(x['details'] or "{}")),
             )
@@ -936,24 +941,33 @@ class RoomData(BaseData):
         if action.id is not NewActionID:
             raise Exception("Logic error, cannot insert already-persisted action as a new action!")
 
-        if action.occupant.userid is NewUserID:
-            # Cannot insert an action as a fake user.
-            return
-
-        # First, find the occupant ID.
-        sql = "SELECT id FROM occupant WHERE room_id = :roomid AND user_id = :userid AND inactive != TRUE LIMIT 1"
-        cursor = self.execute(sql, {"roomid": roomid, "userid": action.occupant.userid})
-        if cursor.rowcount != 1:
-            # Trying to insert an action and we're not in the room?
-            return
-
-        result = cursor.mappings().fetchone()
-        occupant = result['id']
-
-        if action.occupant.id is not NewOccupantID:
-            if action.occupant.id != OccupantID(occupant):
-                # Trying to send as an occupant that we're not?
+        if action.occupant:
+            if action.occupant.userid is NewUserID:
+                # Cannot insert an action as a fake user. This should be performed as an action without
+                # an occupant.
                 return
+
+            # First, find the occupant ID.
+            sql = "SELECT id FROM occupant WHERE room_id = :roomid AND user_id = :userid AND inactive != TRUE LIMIT 1"
+            cursor = self.execute(sql, {"roomid": roomid, "userid": action.occupant.userid})
+            if cursor.rowcount != 1:
+                # Trying to insert an action and we're not in the room?
+                return
+
+            result = cursor.mappings().fetchone()
+            occupant = result['id']
+
+            if action.occupant.id is not NewOccupantID:
+                if action.occupant.id != OccupantID(occupant):
+                    # Trying to send as an occupant that we're not?
+                    return
+
+        else:
+            if action.action not in {ActionType.CHANGE_INFO}:
+                # Cannot insert this action type without an occupant to link to.
+                return
+
+            occupant = None
 
         # Now, figure out the room type for last action calculations.
         sql = "SELECT purpose FROM room WHERE id = :roomid"
@@ -980,14 +994,15 @@ class RoomData(BaseData):
 
         # Hydrate what we've just persisted.
         action.id = ActionID(cursor.lastrowid)
-        action.occupant.id = OccupantID(occupant)
+        if action.occupant and occupant is not None:
+            action.occupant.id = OccupantID(occupant)
 
-        # Now, hydrate the occupant itself so the nickname is present on the response.
-        newoccupant = self.get_room_occupant(action.occupant.id)
-        if newoccupant:
-            action.occupant.nickname = newoccupant.nickname
-            action.occupant.inactive = newoccupant.inactive
-            action.occupant.iconid = newoccupant.iconid
+            # Now, hydrate the occupant itself so the nickname is present on the response.
+            newoccupant = self.get_room_occupant(action.occupant.id)
+            if newoccupant:
+                action.occupant.nickname = newoccupant.nickname
+                action.occupant.inactive = newoccupant.inactive
+                action.occupant.iconid = newoccupant.iconid
 
         if purpose == RoomPurpose.DIRECT_MESSAGE:
             types = ActionType.unread_dm_types()
