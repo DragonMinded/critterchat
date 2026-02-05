@@ -502,6 +502,66 @@ def modify_public_room_moderated(config: Config, roomid: str, moderated: str) ->
         data.close()
 
 
+def grant_public_room_moderator(config: Config, roomid: str, username: str) -> None:
+    """
+    Modify an existing room by ID, setting a user by username as a moderator. Note that
+    the user must be in the room and will not be added if they are not.
+    """
+
+    data = Data(config)
+    try:
+        userservice = UserService(config, data)
+        existing_user = userservice.find_user(username)
+        if not existing_user:
+            raise CommandException("User does not exist in the database!")
+
+        actual_id = Room.to_id(roomid)
+        if actual_id is None:
+            raise CommandException("Room ID is not valid!")
+
+        messageservice = MessageService(config, data)
+        messageservice.grant_room_moderator(actual_id, existing_user.id)
+
+        print(f"User with username {username} granted moderator role for room with ID {Room.from_id(actual_id)}.")
+
+    except MessageServiceException as e:
+        raise CommandException(str(e))
+    except UserServiceException as e:
+        raise CommandException(str(e))
+    finally:
+        data.close()
+
+
+def revoke_public_room_moderator(config: Config, roomid: str, username: str) -> None:
+    """
+    Modify an existing room by ID, removing a user by username as a moderator. Note that
+    the user must be in the room and will not be ejected, just the moderator role revoked.
+    """
+
+    data = Data(config)
+    try:
+        userservice = UserService(config, data)
+        existing_user = userservice.find_user(username)
+        if not existing_user:
+            raise CommandException("User does not exist in the database!")
+
+        actual_id = Room.to_id(roomid)
+        if actual_id is None:
+            raise CommandException("Room ID is not valid!")
+
+        messageservice = MessageService(config, data)
+        messageservice.revoke_room_moderator(actual_id, existing_user.id)
+
+        print(f"User with username {username} revoked moderator role for room with ID {Room.from_id(actual_id)}.")
+
+    except MessageServiceException as e:
+        raise CommandException(str(e))
+    except UserServiceException as e:
+        raise CommandException(str(e))
+    finally:
+        data.close()
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="A utility for administrating the DB.")
     parser.add_argument(
@@ -876,6 +936,48 @@ def main() -> None:
         help="whether the room is set to moderated or free-for-all",
     )
 
+    # A few params for this one
+    grantmoderator_parser = room_commands.add_parser(
+        "grant_moderator",
+        help="grant moderator role to a user in a room",
+        description="Grant moderator role to a user in a room.",
+    )
+    grantmoderator_parser.add_argument(
+        "-i",
+        "--id",
+        type=str,
+        required=True,
+        help="ID of the room that you are adding a moderator to.",
+    )
+    grantmoderator_parser.add_argument(
+        "-u",
+        "--username",
+        required=True,
+        type=str,
+        help="username that the user uses to login with",
+    )
+
+    # A few params for this one
+    revokemoderator_parser = room_commands.add_parser(
+        "revoke_moderator",
+        help="revoke moderator role from a user in a room",
+        description="Revoke moderator role from a user in a room.",
+    )
+    revokemoderator_parser.add_argument(
+        "-i",
+        "--id",
+        type=str,
+        required=True,
+        help="ID of the room that you are removing a moderator from.",
+    )
+    revokemoderator_parser.add_argument(
+        "-u",
+        "--username",
+        required=True,
+        type=str,
+        help="username that the user uses to login with",
+    )
+
     args = parser.parse_args()
 
     config = Config()
@@ -951,6 +1053,10 @@ def main() -> None:
                 modify_public_room_autojoin(config, args.id, args.autojoin)
             elif args.room == "moderated":
                 modify_public_room_moderated(config, args.id, args.moderated)
+            elif args.room == "grant_moderator":
+                grant_public_room_moderator(config, args.id, args.username)
+            elif args.room == "revoke_moderator":
+                revoke_public_room_moderator(config, args.id, args.username)
             else:
                 raise CLIException(f"Unknown room operation '{args.room}'")
 

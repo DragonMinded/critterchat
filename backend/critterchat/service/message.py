@@ -201,6 +201,34 @@ class MessageService:
         self.__attachments.resolve_user_icon(user)
         return user
 
+    def grant_room_moderator(self, roomid: RoomID, userid: UserID) -> None:
+        user = self.__data.user.get_user(userid)
+        if not user:
+            raise MessageServiceException("User not found!")
+
+        room = self.__data.room.get_room(roomid)
+        if not room:
+            raise MessageServiceException("Room not found!")
+
+        if room.purpose != RoomPurpose.ROOM:
+            raise MessageServiceException("Cannot grant moderator for user in non-public room!")
+
+        self.__data.room.grant_room_moderator(room.id, user.id)
+
+    def revoke_room_moderator(self, roomid: RoomID, userid: UserID) -> None:
+        user = self.__data.user.get_user(userid)
+        if not user:
+            raise MessageServiceException("User not found!")
+
+        room = self.__data.room.get_room(roomid)
+        if not room:
+            raise MessageServiceException("Room not found!")
+
+        if room.purpose != RoomPurpose.ROOM:
+            raise MessageServiceException("Cannot revoke moderator for occupant in non-public room!")
+
+        self.__data.room.revoke_room_moderator(room.id, user.id)
+
     def grant_occupant_moderator(self, occupantid: OccupantID) -> None:
         occupant = self.__data.room.get_room_occupant(occupantid)
         if not occupant:
@@ -212,9 +240,6 @@ class MessageService:
 
         if room.purpose != RoomPurpose.ROOM:
             raise MessageServiceException("Cannot grant moderator for occupant in non-public room!")
-
-        if occupant.moderator:
-            return
 
         self.__data.room.grant_room_moderator(room.id, occupant.userid)
 
@@ -229,9 +254,6 @@ class MessageService:
 
         if room.purpose != RoomPurpose.ROOM:
             raise MessageServiceException("Cannot revoke moderator for occupant in non-public room!")
-
-        if not occupant.moderator:
-            return
 
         self.__data.room.revoke_room_moderator(room.id, occupant.userid)
 

@@ -4,7 +4,6 @@ TODO Immediate
  - Modify "moderated" attribute on update info packet.
  - Display moderated/normal/inactive users in moderated rooms.
  - Allow admins to change moderated status of channel in info.
- - Allow promoting/demoting mods from command-line.
  - Allow changing room name/topic/icon from command-line.
  - Hide edit info button for moderated rooms when you aren't a moderator.
  - Block updating info if you aren't a moderator or admin for moderated rooms.
