@@ -25,6 +25,7 @@ class Info {
 
         this.roomid = "";
         this.roomType = "chat";
+        this.moderated = false;
         this.occupants = [];
         this.rooms = [];
         this.lastSettings = {};
@@ -323,11 +324,16 @@ class Info {
      * Called by sort function to determine sort order of user attributes.
      */
     _computeSortOrder(occupant) {
-        if (occupant.inactive) {
-            return 2;
+        if (this.roomType != "dm") {
+            if (occupant.inactive) {
+                return 2;
+            }
         }
-        if (occupant.moderator) {
-            return 0;
+
+        if (this.moderated) {
+            if (occupant.moderator) {
+                return 0;
+            }
         }
 
         return 1;
@@ -446,6 +452,7 @@ class Info {
                     updated = true;
 
                     this.roomType = room.type;
+                    this.moderated = room.moderated;
                     this.chatdetails.setRoom(room);
                 }
             });
@@ -510,6 +517,7 @@ class Info {
             this.infoLoaded = false;
             this.roomid = "";
             this.roomType = "chat";
+            this.moderated = false;
 
             $( 'div.info > div.occupants' ).empty();
             $( '#leave-room' ).attr('roomid', '');

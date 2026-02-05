@@ -51,6 +51,7 @@ class User:
 
         # Only set when this user is looked up through message service based on an OID.
         self.occupantid: Optional[OccupantID] = None
+        self.moderator: Optional[bool] = None
 
     def to_dict(self, *, admin: bool = False) -> Dict[str, object]:
         retval: Dict[str, object] = {
@@ -63,6 +64,8 @@ class User:
 
         if self.occupantid:
             retval["occupantid"] = Occupant.from_id(self.occupantid)
+        if self.moderator is not None:
+            retval["moderator"] = self.moderator
 
         if admin:
             retval["permissions"] = [p.name for p in self.permissions]

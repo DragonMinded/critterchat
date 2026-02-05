@@ -1,6 +1,6 @@
 import $ from "jquery";
 import linkifyHtml from "linkify-html";
-import { ACTIVATED } from "../common.js";
+import { ACTIVATED, ADMINISTRATOR } from "../common.js";
 import { escapeHtml } from "../utils.js";
 
 const linkifyOptions = { defaultProtocol: "http", target: "_blank", validate: { email: () => false } };
@@ -47,12 +47,32 @@ class Profile {
             }
         });
 
+        $('#profile-mod').on('click', (event) => {
+            event.stopPropagation();
+            event.stopImmediatePropagation();
+
+            if (this.userid) {
+                this.eventBus.emit('admin', {action: 'mod', occupantid: this.profileid});
+            }
+        });
+
+        $('#profile-demod').on('click', (event) => {
+            event.stopPropagation();
+            event.stopImmediatePropagation();
+
+            if (this.userid) {
+                this.eventBus.emit('admin', {action: 'demod', occupantid: this.profileid});
+            }
+        });
+
         this.eventBus.on('adminack', (response) => {
             const id = this.profileid || this.userid;
             if (id) {
                 if (
                     response.action == "activate" ||
-                    response.action == "deactivate"
+                    response.action == "deactivate" ||
+                    response.action == "mod" ||
+                    response.action == "demod"
                 ) {
                     // Reload profile.
                     this.eventBus.emit('refreshprofile', id);
@@ -85,12 +105,33 @@ class Profile {
         if (window.admin) {
             $('#profile-form div.admin-wrapper').show();
 
+            // Allow any user to be activated or deactivated.
             if (profile.permissions.indexOf(ACTIVATED) >= 0) {
                 $('#profile-form #profile-activate').hide();
                 $('#profile-form #profile-deactivate').show();
             } else {
                 $('#profile-form #profile-activate').show();
                 $('#profile-form #profile-deactivate').hide();
+            }
+
+            // Don't want to set/revoke mod privileges on a global profile.
+            if (profile.occupantid) {
+                // Only allow non-admins to be moderators, because admins are implicitly moderators already.
+                if (profile.permissions.indexOf(ADMINISTRATOR) < 0) {
+                    if (profile.moderator) {
+                        $('#profile-form #profile-mod').hide();
+                        $('#profile-form #profile-demod').show();
+                    } else {
+                        $('#profile-form #profile-mod').show();
+                        $('#profile-form #profile-demod').hide();
+                    }
+                } else {
+                    $('#profile-form #profile-mod').hide();
+                    $('#profile-form #profile-demod').hide();
+                }
+            } else {
+                $('#profile-form #profile-mod').hide();
+                $('#profile-form #profile-demod').hide();
             }
         }
 

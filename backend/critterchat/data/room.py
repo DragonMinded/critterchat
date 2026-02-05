@@ -439,6 +439,27 @@ class RoomData(BaseData):
             deficonid=None,
         )
 
+    def get_occupant_room(self, occupantid: OccupantID) -> Optional[Room]:
+        """
+        Given an occupant ID, get the room that occupant is in.
+
+        Parameters:
+            occupantid - The ID of the occupant we want to fetch the room for.
+        """
+
+        if occupantid is NewOccupantID:
+            return None
+
+        sql = """
+            SELECT room_id FROM occupant WHERE id = :occupantid
+        """
+        cursor = self.execute(sql, {"occupantid": occupantid})
+        if cursor.rowcount != 1:
+            return None
+        result = cursor.mappings().fetchone()
+        room_id = RoomID(result['room_id'])
+        return self.get_room(room_id)
+
     def create_room(self, room: Room) -> None:
         """
         Given some parameters for a room, create that room and return it.
@@ -577,11 +598,15 @@ class RoomData(BaseData):
 
         with self.transaction():
             sql = """
-                SELECT id FROM occupant WHERE `user_id` = :userid AND `room_id` = :roomid AND moderator = FALSE
+                SELECT moderator FROM occupant WHERE `user_id` = :userid AND `room_id` = :roomid
             """
             cursor = self.execute(sql, {"userid": userid, "roomid": roomid})
             if cursor.rowcount != 1:
                 # Not in room or already moderator.
+                return
+            result = cursor.mappings().fetchone()
+            moderator = bool(result['moderator'])
+            if moderator:
                 return
 
             sql = """
@@ -615,11 +640,15 @@ class RoomData(BaseData):
 
         with self.transaction():
             sql = """
-                SELECT id FROM occupant WHERE `user_id` = :userid AND `room_id` = :roomid AND moderator = TRUE
+                SELECT moderator FROM occupant WHERE `user_id` = :userid AND `room_id` = :roomid
             """
             cursor = self.execute(sql, {"userid": userid, "roomid": roomid})
             if cursor.rowcount != 1:
                 # Not in room or already not a moderator.
+                return
+            result = cursor.mappings().fetchone()
+            moderator = bool(result['moderator'])
+            if not moderator:
                 return
 
             sql = """

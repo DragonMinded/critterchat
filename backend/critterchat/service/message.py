@@ -197,8 +197,43 @@ class MessageService:
         user.iconid = occupant.iconid
         user.nickname = occupant.nickname
         user.occupantid = occupantid
+        user.moderator = occupant.moderator
         self.__attachments.resolve_user_icon(user)
         return user
+
+    def grant_occupant_moderator(self, occupantid: OccupantID) -> None:
+        occupant = self.__data.room.get_room_occupant(occupantid)
+        if not occupant:
+            raise MessageServiceException("Occupant not found!")
+
+        room = self.__data.room.get_occupant_room(occupantid)
+        if not room:
+            raise MessageServiceException("Occupant not found!")
+
+        if room.purpose != RoomPurpose.ROOM:
+            raise MessageServiceException("Cannot grant moderator for occupant in non-public room!")
+
+        if occupant.moderator:
+            return
+
+        self.__data.room.grant_room_moderator(room.id, occupant.userid)
+
+    def revoke_occupant_moderator(self, occupantid: OccupantID) -> None:
+        occupant = self.__data.room.get_room_occupant(occupantid)
+        if not occupant:
+            raise MessageServiceException("Occupant not found!")
+
+        room = self.__data.room.get_occupant_room(occupantid)
+        if not room:
+            raise MessageServiceException("Occupant not found!")
+
+        if room.purpose != RoomPurpose.ROOM:
+            raise MessageServiceException("Cannot revoke moderator for occupant in non-public room!")
+
+        if not occupant.moderator:
+            return
+
+        self.__data.room.revoke_room_moderator(room.id, occupant.userid)
 
     def __infer_room_info(self, userid: UserID, room: Room) -> None:
         if room.purpose == RoomPurpose.ROOM:

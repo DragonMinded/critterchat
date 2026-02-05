@@ -956,6 +956,7 @@ def updateroom(json: Dict[str, object]) -> None:
 def adminaction(json: Dict[str, object]) -> Dict[str, object]:
     data = Data(config)
     userservice = UserService(config, data)
+    messageservice = MessageService(config, data)
 
     # Try to associate with a user if there is one.
     userid = recover_userid(data, request.sid)
@@ -972,28 +973,58 @@ def adminaction(json: Dict[str, object]) -> Dict[str, object]:
 
     # Grab the action and delegate.
     action = str(json.get('action', ''))
-    if action == "activate":
-        # Activate user.
-        otheruserid = User.to_id(str(json.get('userid')))
-        if otheruserid:
-            userservice.add_permission(otheruserid, UserPermission.ACTIVATED)
-            flash('success', 'User successfully activated!', room=request.sid)
-            return {'status': 'success'}
-        else:
-            flash('error', 'User does not exist!', room=request.sid)
-            return {'status': 'failed'}
 
-    elif action == "deactivate":
-        # Deactivate user.
-        otheruserid = User.to_id(str(json.get('userid')))
-        if otheruserid:
-            userservice.remove_permission(otheruserid, UserPermission.ACTIVATED)
-            flash('success', 'User successfully deactivated!', room=request.sid)
-            return {'status': 'success'}
-        else:
-            flash('error', 'User does not exist!', room=request.sid)
-            return {'status': 'failed'}
+    try:
+        if action == "activate":
+            # Activate user.
+            otheruserid = User.to_id(str(json.get('userid')))
+            if otheruserid:
+                userservice.add_permission(otheruserid, UserPermission.ACTIVATED)
+                flash('success', 'User activated!', room=request.sid)
+                return {'status': 'success'}
+            else:
+                flash('error', 'User does not exist!', room=request.sid)
+                return {'status': 'failed'}
 
-    else:
-        error('Unrecognized action requested!', room=request.sid)
+        elif action == "deactivate":
+            # Deactivate user.
+            otheruserid = User.to_id(str(json.get('userid')))
+            if otheruserid:
+                userservice.remove_permission(otheruserid, UserPermission.ACTIVATED)
+                flash('success', 'User deactivated!', room=request.sid)
+                return {'status': 'success'}
+            else:
+                flash('error', 'User does not exist!', room=request.sid)
+                return {'status': 'failed'}
+
+        elif action == "mod":
+            # Set an occupant as a moderator.
+            occupantid = Occupant.to_id(str(json.get('occupantid')))
+            if occupantid:
+                messageservice.grant_occupant_moderator(occupantid)
+                flash('success', 'User moderator role granted for room!', room=request.sid)
+                return {'status': 'success'}
+            else:
+                flash('error', 'User does not exist!', room=request.sid)
+                return {'status': 'failed'}
+
+        elif action == "demod":
+            # Set an occupant as a regular user.
+            occupantid = Occupant.to_id(str(json.get('occupantid')))
+            if occupantid:
+                messageservice.revoke_occupant_moderator(occupantid)
+                flash('success', 'User moderator role revoked for room!', room=request.sid)
+                return {'status': 'success'}
+            else:
+                flash('error', 'User does not exist!', room=request.sid)
+                return {'status': 'failed'}
+
+        else:
+            error('Unrecognized action requested!', room=request.sid)
+            return {'status': 'failed'}
+    except MessageServiceException as e:
+        flash('error', str(e), room=request.sid)
+        return {'status': 'failed'}
+    except UserServiceException as e:
+        flash('error', str(e), room=request.sid)
         return {'status': 'failed'}
