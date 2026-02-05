@@ -244,10 +244,10 @@ class MessageService:
         else:
             raise Exception("Logic error, unexpected room purpose!")
 
-    def create_public_room(self, name: str, topic: str, autojoin: bool = False) -> Room:
+    def create_public_room(self, name: str, topic: str, autojoin: bool = False, moderated: bool = False) -> Room:
         # Create a new public room, possibly with auto-join enabled, and return it. If auto-join is
         # enabled then join all existing users to the room after creating.
-        room = Room(NewRoomID, name, topic, RoomPurpose.ROOM, None, None)
+        room = Room(NewRoomID, name, topic, RoomPurpose.ROOM, moderated, None, None)
         self.__data.room.create_room(room)
 
         if autojoin:
@@ -276,11 +276,35 @@ class MessageService:
         if not room:
             raise MessageServiceException("Room does not exist!")
 
+        # Next, only allow changes to public rooms.
+        if room.purpose != RoomPurpose.ROOM:
+            raise MessageServiceException("Room is not public!")
+
         # Grab info, update the autojoin property.
         self.__infer_room_info(NewUserID, room)
         self.__data.room.set_room_autojoin(room.id, autojoin)
 
         # Finally, return the room.
+        return room
+
+    def update_public_room_moderated(self, roomid: RoomID, userid: UserID, moderated: bool) -> Room:
+        # First, look up the room, making sure it exists.
+        room = self.__data.room.get_room(roomid)
+        if not room:
+            raise MessageServiceException("Room does not exist!")
+
+        # Next, only allow changes to public rooms.
+        if room.purpose != RoomPurpose.ROOM:
+            raise MessageServiceException("Room is not public!")
+
+        # Only change room's details if it's actually changing.
+        if room.moderated == moderated:
+            return room
+
+        room.moderated = moderated
+        self.__data.room.update_room(room, userid)
+
+        # Finally, return the updated room.
         return room
 
     def create_direct_message(self, userid: UserID, otherid: UserID) -> Room:
@@ -308,7 +332,7 @@ class MessageService:
                     return room
 
         # Now, create a new room since we don't have an existing one.
-        room = Room(NewRoomID, "", "", RoomPurpose.DIRECT_MESSAGE, None, None)
+        room = Room(NewRoomID, "", "", RoomPurpose.DIRECT_MESSAGE, False, None, None)
         self.__data.room.create_room(room)
         self.__data.room.join_room(room.id, userid)
         self.__data.room.shadow_join_room(room.id, otherid)

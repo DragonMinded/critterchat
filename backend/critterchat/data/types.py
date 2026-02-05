@@ -242,6 +242,7 @@ class Room:
         name: str,
         topic: str,
         purpose: RoomPurpose,
+        moderated: bool,
         iconid: Optional[AttachmentID],
         deficonid: Optional[AttachmentID],
         oldest_action: Optional[ActionID] = None,
@@ -253,6 +254,7 @@ class Room:
         self.customname = self.name
         self.topic = topic or ""
         self.purpose = purpose
+        self.moderated = moderated
         self.oldest_action = oldest_action
         self.newest_action = newest_action
         self.last_action_timestamp = last_action_timestamp
@@ -277,6 +279,7 @@ class Room:
             "customname": self.customname,
             "topic": self.topic,
             "public": self.public,
+            "moderated": self.moderated,
             "oldest_action": Action.from_id(self.oldest_action) if self.oldest_action else None,
             "newest_action": Action.from_id(self.newest_action) if self.newest_action else None,
             "last_action_timestamp": self.last_action_timestamp,

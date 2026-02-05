@@ -431,7 +431,7 @@ def list_public_rooms(config: Config) -> None:
         data.close()
 
 
-def create_public_room(config: Config, name: Optional[str], topic: Optional[str], autojoin: str) -> None:
+def create_public_room(config: Config, name: Optional[str], topic: Optional[str], autojoin: str, moderated: str) -> None:
     """
     Create a new public room on the network, optionally setting it as auto-join when
     accounts are created and joining existing users to the room.
@@ -440,7 +440,7 @@ def create_public_room(config: Config, name: Optional[str], topic: Optional[str]
     data = Data(config)
     try:
         messageservice = MessageService(config, data)
-        room = messageservice.create_public_room(name or "", topic or "", autojoin == "on")
+        room = messageservice.create_public_room(name or "", topic or "", autojoin == "on", moderated == "on")
 
         if autojoin == "on":
             print(f"Room created with ID {Room.from_id(room.id)} and all activated users joined to the room.")
@@ -471,6 +471,32 @@ def modify_public_room_autojoin(config: Config, roomid: str, autojoin: str) -> N
             print(f"Room with ID {Room.from_id(actual_id)} set to auto join new users.")
         else:
             print(f"Room with ID {Room.from_id(actual_id)} set to not auto join new users.")
+
+    except MessageServiceException as e:
+        raise CommandException(str(e))
+    finally:
+        data.close()
+
+
+def modify_public_room_moderated(config: Config, roomid: str, moderated: str) -> None:
+    """
+    Modify an existing room by ID, setting it's moderated property. Note that when toggling this
+    through the admin interface, it does not refresh the display for anyone currently in the room
+    since there is no user to associate the change with.
+    """
+
+    data = Data(config)
+    try:
+        actual_id = Room.to_id(roomid)
+        if actual_id is None:
+            raise CommandException("Room ID is not valid!")
+        messageservice = MessageService(config, data)
+        messageservice.update_public_room_moderated(actual_id, NewUserID, moderated == "on")
+
+        if moderated == "on":
+            print(f"Room with ID {Room.from_id(actual_id)} set to moderated.")
+        else:
+            print(f"Room with ID {Room.from_id(actual_id)} set to free-for-all.")
 
     except MessageServiceException as e:
         raise CommandException(str(e))
@@ -799,6 +825,14 @@ def main() -> None:
         default="off",
         help="whether the room is set to auto-join on account creation or not",
     )
+    createroom_parser.add_argument(
+        "-m",
+        "--moderated",
+        type=str,
+        choices=["on", "off"],
+        required=True,
+        help="whether the room is set to moderated or free-for-all",
+    )
 
     # A few params for this one
     autojoinroom_parser = room_commands.add_parser(
@@ -820,6 +854,28 @@ def main() -> None:
         choices=["on", "off"],
         required=True,
         help="whether the room is set to auto-join on account creation or not",
+    )
+
+    # A few params for this one
+    moderatedroom_parser = room_commands.add_parser(
+        "moderated",
+        help="modify a public room's moderated property",
+        description="Modify a public room's moderated property.",
+    )
+    moderatedroom_parser.add_argument(
+        "-i",
+        "--id",
+        type=str,
+        required=True,
+        help="ID of the room that you are modifying the moderated property of",
+    )
+    moderatedroom_parser.add_argument(
+        "-m",
+        "--moderated",
+        type=str,
+        choices=["on", "off"],
+        required=True,
+        help="whether the room is set to moderated or free-for-all",
     )
 
     args = parser.parse_args()
@@ -892,9 +948,11 @@ def main() -> None:
             elif args.room == "list":
                 list_public_rooms(config)
             elif args.room == "create":
-                create_public_room(config, args.name, args.topic, args.autojoin)
+                create_public_room(config, args.name, args.topic, args.autojoin, args.moderated)
             elif args.room == "autojoin":
                 modify_public_room_autojoin(config, args.id, args.autojoin)
+            elif args.room == "moderated":
+                modify_public_room_moderated(config, args.id, args.moderated)
             else:
                 raise CLIException(f"Unknown room operation '{args.room}'")
 

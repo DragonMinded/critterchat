@@ -36,7 +36,8 @@ room = Table(
     Column("id", Integer, nullable=False, primary_key=True, autoincrement=True),
     Column("name", String(255)),
     Column("topic", String(255)),
-    Column("autojoin", Boolean),
+    Column("autojoin", Boolean, default=False),
+    Column("moderated", Boolean, default=False),
     Column("icon", Integer),
     Column("purpose", String(10), nullable=False),
     Column("last_action", Integer, nullable=False),
@@ -140,7 +141,7 @@ class RoomData(BaseData):
             extra = "AND inactive != TRUE"
 
         sql = f"""
-            SELECT id, name, topic, icon, purpose, last_action FROM room WHERE id in (
+            SELECT id, name, topic, icon, purpose, moderated, last_action FROM room WHERE id in (
                 SELECT room_id FROM occupant WHERE user_id = :userid {extra}
             )
         """
@@ -151,6 +152,7 @@ class RoomData(BaseData):
                 name=result['name'],
                 topic=result['topic'],
                 purpose=self._get_purpose(str(result['purpose'])),
+                moderated=bool(result['moderated']),
                 last_action_timestamp=result['last_action'],
                 iconid=AttachmentID(result['icon']) if result['icon'] else None,
                 deficonid=None,
@@ -172,7 +174,7 @@ class RoomData(BaseData):
             return []
 
         sql = """
-            SELECT id, name, topic, icon, purpose, last_action FROM room WHERE id in (
+            SELECT id, name, topic, icon, purpose, moderated, last_action FROM room WHERE id in (
                 SELECT room_id FROM occupant WHERE user_id = :userid AND inactive = TRUE
             )
         """
@@ -183,6 +185,7 @@ class RoomData(BaseData):
                 name=result['name'],
                 topic=result['topic'],
                 purpose=self._get_purpose(str(result['purpose'])),
+                moderated=bool(result['moderated']),
                 last_action_timestamp=result['last_action'],
                 iconid=AttachmentID(result['icon']) if result['icon'] else None,
                 deficonid=None,
@@ -238,7 +241,7 @@ class RoomData(BaseData):
             return []
 
         sql = """
-            SELECT id, name, topic, icon, purpose, last_action FROM room WHERE id in (
+            SELECT id, name, topic, icon, purpose, moderated, last_action FROM room WHERE id in (
                 SELECT room_id FROM occupant WHERE user_id = :userid AND inactive != TRUE
             )
         """
@@ -252,6 +255,7 @@ class RoomData(BaseData):
                 name=result['name'],
                 topic=result['topic'],
                 purpose=self._get_purpose(str(result['purpose'])),
+                moderated=bool(result['moderated']),
                 last_action_timestamp=result['last_action'],
                 iconid=AttachmentID(result['icon']) if result['icon'] else None,
                 deficonid=None,
@@ -270,7 +274,7 @@ class RoomData(BaseData):
             list of Room objects representing the rooms on the network
         """
         sql = """
-            SELECT id, name, topic, icon, purpose, last_action FROM room
+            SELECT id, name, topic, icon, purpose, moderated, last_action FROM room
         """
         if name is not None:
             sql += " WHERE (name IS NULL OR name = '' OR name COLLATE utf8mb4_general_ci LIKE :name)"
@@ -282,6 +286,7 @@ class RoomData(BaseData):
                 name=result['name'],
                 topic=result['topic'],
                 purpose=self._get_purpose(str(result['purpose'])),
+                moderated=bool(result['moderated']),
                 last_action_timestamp=result['last_action'],
                 iconid=AttachmentID(result['icon']) if result['icon'] else None,
                 deficonid=None,
@@ -300,7 +305,7 @@ class RoomData(BaseData):
             list of Room objects representing the public rooms on the network
         """
         sql = """
-            SELECT id, name, topic, icon, purpose, last_action FROM room WHERE purpose = :purpose
+            SELECT id, name, topic, icon, purpose, moderated, last_action FROM room WHERE purpose = :purpose
         """
         if name is not None:
             sql += " AND (name IS NULL OR name = '' OR name COLLATE utf8mb4_general_ci LIKE :name)"
@@ -312,6 +317,7 @@ class RoomData(BaseData):
                 name=result['name'],
                 topic=result['topic'],
                 purpose=self._get_purpose(str(result['purpose'])),
+                moderated=bool(result['moderated']),
                 last_action_timestamp=result['last_action'],
                 iconid=AttachmentID(result['icon']) if result['icon'] else None,
                 deficonid=None,
@@ -336,7 +342,7 @@ class RoomData(BaseData):
             return []
 
         sql = """
-            SELECT id, name, topic, icon, purpose, last_action FROM room WHERE purpose = :purpose
+            SELECT id, name, topic, icon, purpose, moderated, last_action FROM room WHERE purpose = :purpose
         """
         if name is not None:
             sql += " AND (name IS NULL OR name = '' OR name COLLATE utf8mb4_general_ci LIKE :name)"
@@ -348,6 +354,7 @@ class RoomData(BaseData):
                 name=result['name'],
                 topic=result['topic'],
                 purpose=self._get_purpose(str(result['purpose'])),
+                moderated=bool(result['moderated']),
                 last_action_timestamp=result['last_action'],
                 iconid=AttachmentID(result['icon']) if result['icon'] else None,
                 deficonid=None,
@@ -363,7 +370,7 @@ class RoomData(BaseData):
             list of Room objects representing the rooms the user will auto-join.
         """
         sql = """
-            SELECT id, name, topic, icon, purpose, last_action FROM room WHERE autojoin = TRUE
+            SELECT id, name, topic, icon, purpose, moderated, last_action FROM room WHERE autojoin = TRUE
         """
 
         cursor = self.execute(sql, {})
@@ -373,6 +380,7 @@ class RoomData(BaseData):
                 name=result['name'],
                 topic=result['topic'],
                 purpose=self._get_purpose(str(result['purpose'])),
+                moderated=bool(result['moderated']),
                 last_action_timestamp=result['last_action'],
                 iconid=AttachmentID(result['icon']) if result['icon'] else None,
                 deficonid=None,
@@ -423,6 +431,7 @@ class RoomData(BaseData):
             name=result['name'],
             topic=result['topic'],
             purpose=self._get_purpose(str(result['purpose'])),
+            moderated=bool(result['moderated']),
             last_action_timestamp=result['last_action'],
             oldest_action=oldest_actions.get(room_id),
             newest_action=newest_actions.get(room_id),
@@ -443,9 +452,9 @@ class RoomData(BaseData):
 
         timestamp = Time.now()
         sql = """
-            INSERT INTO room (`name`, `topic`, `purpose`, `last_action`, `icon`) VALUES (:name, :topic, :purpose, :timestamp, :icon)
+            INSERT INTO room (`name`, `topic`, `moderated`, `purpose`, `last_action`, `icon`) VALUES (:name, :topic, :moderated, :purpose, :timestamp, :icon)
         """
-        cursor = self.execute(sql, {"name": room.name, "topic": room.topic, "purpose": room.purpose, "timestamp": timestamp, "icon": room.iconid})
+        cursor = self.execute(sql, {"name": room.name, "topic": room.topic, "moderated": room.moderated, "purpose": room.purpose, "timestamp": timestamp, "icon": room.iconid})
         if cursor.rowcount != 1:
             return None
         newroom = self.get_room(RoomID(cursor.lastrowid))
@@ -555,6 +564,82 @@ class RoomData(BaseData):
         """
         self.execute(sql, {"userid": userid, "roomid": roomid})
 
+    def grant_room_moderator(self, roomid: RoomID, userid: UserID) -> None:
+        """
+        Given a room and a user who should be set as a moderator, set that user as a moderator.
+
+        Parameters:
+            roomid - ID of the room we wish to update.
+            userid - ID of the user wishing to be moderator.
+        """
+        if userid is NewUserID or roomid is NewRoomID:
+            return
+
+        with self.transaction():
+            sql = """
+                SELECT id FROM occupant WHERE `user_id` = :userid AND `room_id` = :roomid AND moderator = FALSE
+            """
+            cursor = self.execute(sql, {"userid": userid, "roomid": roomid})
+            if cursor.rowcount != 1:
+                # Not in room or already moderator.
+                return
+
+            sql = """
+                UPDATE occupant SET moderator = TRUE WHERE `user_id` = :userid AND `room_id` = :roomid
+            """
+            self.execute(sql, {"userid": userid, "roomid": roomid})
+
+            occupant = Occupant(
+                occupantid=NewOccupantID,
+                userid=userid,
+            )
+            action = Action(
+                actionid=NewActionID,
+                timestamp=Time.now(),
+                occupant=occupant,
+                action=ActionType.CHANGE_USERS,
+                details={},
+            )
+            self.insert_action(roomid, action)
+
+    def revoke_room_moderator(self, roomid: RoomID, userid: UserID) -> None:
+        """
+        Given a room and a user who should be unset as a moderator, unset that user as a moderator.
+
+        Parameters:
+            roomid - ID of the room we wish to update.
+            userid - ID of the user wishing to not be moderator.
+        """
+        if userid is NewUserID or roomid is NewRoomID:
+            return
+
+        with self.transaction():
+            sql = """
+                SELECT id FROM occupant WHERE `user_id` = :userid AND `room_id` = :roomid AND moderator = TRUE
+            """
+            cursor = self.execute(sql, {"userid": userid, "roomid": roomid})
+            if cursor.rowcount != 1:
+                # Not in room or already not a moderator.
+                return
+
+            sql = """
+                UPDATE occupant SET moderator = FALSE WHERE `user_id` = :userid AND `room_id` = :roomid
+            """
+            self.execute(sql, {"userid": userid, "roomid": roomid})
+
+            occupant = Occupant(
+                occupantid=NewOccupantID,
+                userid=userid,
+            )
+            action = Action(
+                actionid=NewActionID,
+                timestamp=Time.now(),
+                occupant=occupant,
+                action=ActionType.CHANGE_USERS,
+                details={},
+            )
+            self.insert_action(roomid, action)
+
     def update_room(self, room: Room, userid: UserID) -> None:
         """
         Given a valid room, update its details to match the given object.
@@ -571,9 +656,9 @@ class RoomData(BaseData):
             iconid = None
 
         sql = """
-            UPDATE room SET name = :name, topic = :topic, icon = :iconid WHERE id = :roomid
+            UPDATE room SET name = :name, topic = :topic, icon = :iconid, moderated = :moderated WHERE id = :roomid
         """
-        self.execute(sql, {"roomid": room.id, "name": room.name, "topic": room.topic, "iconid": iconid})
+        self.execute(sql, {"roomid": room.id, "name": room.name, "topic": room.topic, "iconid": iconid, "moderated": room.moderated})
 
         occupant = Occupant(
             occupantid=NewOccupantID,
@@ -584,7 +669,7 @@ class RoomData(BaseData):
             timestamp=Time.now(),
             occupant=occupant,
             action=ActionType.CHANGE_INFO,
-            details={"name": room.name, "topic": room.topic, "iconid": iconid},
+            details={"name": room.name, "topic": room.topic, "iconid": iconid, "moderated": room.moderated},
         )
         self.insert_action(room.id, action)
 
@@ -821,6 +906,10 @@ class RoomData(BaseData):
 
         if action.id is not NewActionID:
             raise Exception("Logic error, cannot insert already-persisted action as a new action!")
+
+        if action.occupant.userid is NewUserID:
+            # Cannot insert an action as a fake user.
+            return
 
         # First, find the occupant ID.
         sql = "SELECT id FROM occupant WHERE room_id = :roomid AND user_id = :userid AND inactive != TRUE LIMIT 1"
