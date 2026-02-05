@@ -299,6 +299,9 @@ class Info {
                         }
                     });
                     changed = true;
+                } else if (entry.action == "change_info") {
+                    this.moderated = entry.details.moderated;
+                    changed = true;
                 }
             });
         }

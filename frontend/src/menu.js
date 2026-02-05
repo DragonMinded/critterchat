@@ -400,7 +400,12 @@ class Menu {
                 action.action == "change_info"
             ) {
                 count += 1;
-                if (action.occupant.username != window.username) {
+                if (action.occupant) {
+                    if (action.occupant.username != window.username) {
+                        notMeCount += 1;
+                    }
+                } else {
+                    // Definitely wasn't me.
                     notMeCount += 1;
                 }
             }

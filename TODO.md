@@ -1,7 +1,6 @@
 TODO Immediate
 ==============
 
- - Modify "moderated" attribute on update info packet.
  - Display moderated/normal/inactive users in moderated rooms.
  - Allow admins to change moderated status of channel in info.
  - Allow changing room name/topic/icon from command-line.
