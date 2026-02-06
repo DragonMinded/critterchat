@@ -27,6 +27,7 @@ class ChatDetails {
                 this.eventBus.emit('updateroom', {'roomid': this.room.id, 'details': {
                     'name': $('#chatdetails-name').val().substring(0, 255),
                     'topic': $('#chatdetails-topic').val().substring(0, 255),
+                    'moderated': $('form#chatdetails-form  input[type=radio][name="moderation"]:checked').val() == "moderated",
                     'icon': this.icon,
                     'icon_delete': this.iconDelete,
                 }});
@@ -96,6 +97,16 @@ class ChatDetails {
             $("#chatdetails-name").attr('placeholder', 'Type a custom name for this ' + roomType + '...');
             $("#chatdetails-topic-label").text(roomType + " topic");
             $("#chatdetails-topic").attr('placeholder', 'Type a topic for this ' + roomType + '...');
+
+            // Only show moderator options for admins.
+            if (window.admin && this.room.type == "room") {
+                $("form#chatdetails-form dl.moderation").show();
+                $('form#chatdetails-form  input[type=radio][name="moderation"]').val([
+                    this.room.moderated ? "moderated" : "free-for-all"
+                ]);
+            } else {
+                $("form#chatdetails-form dl.moderation").hide();
+            }
 
             $('#chatdetails-name').val(this.room.customname);
             $('#chatdetails-topic').val(this.room.topic);

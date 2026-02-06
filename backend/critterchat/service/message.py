@@ -427,6 +427,7 @@ class MessageService:
         userid: UserID,
         name: Optional[str] = None,
         topic: Optional[str] = None,
+        moderated: Optional[bool] = None,
         icon: Optional[AttachmentID] = None,
         icon_delete: bool = False,
     ) -> None:
@@ -455,6 +456,9 @@ class MessageService:
             if topic is not None:
                 changed = changed or (room.topic != topic)
                 room.topic = topic
+            if moderated is not None:
+                changed = changed or (room.moderated != moderated)
+                room.moderated = moderated
 
             # Allow updating icon or deleting icon.
             if icon is not None:

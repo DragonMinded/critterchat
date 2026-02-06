@@ -1409,7 +1409,7 @@ div.preference input.notification {
     padding-bottom: var(--modal-item-padding);
 }
 
-div.preference div.explain {
+div.preference div.explain, div.chatdetails div.explain {
     color: var(--application-subtle-text);
     padding-bottom: var(--application-item-padding);
 }
@@ -1527,8 +1527,16 @@ div.editpreferences h4 {
     margin-bottom: 0px;
 }
 
-div.chatdetails dl.name dd, div.chatdetails dl.topic dd, div.editprofile dl.name dd, div.editprofile dl.about dd, div.alt-text dd {
+div.chatdetails dl.name dd,
+div.chatdetails dl.topic dd,
+div.editprofile dl.name dd,
+div.editprofile dl.about dd,
+div.alt-text dd {
     display: flex;
+    margin-left: 0px;
+}
+
+div.chatdetails dl.moderation dd {
     margin-left: 0px;
 }
 

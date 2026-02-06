@@ -916,10 +916,16 @@ def lastaction(json: Dict[str, object]) -> None:
 def updateroom(json: Dict[str, object]) -> None:
     data = Data(config)
     messageservice = MessageService(config, data)
+    userservice = UserService(config, data)
 
     # Try to associate with a user if there is one.
     userid = recover_userid(data, request.sid)
     if userid is None:
+        return
+
+    # Figure out if the user is an admin or not.
+    user = userservice.lookup_user(userid)
+    if user is None:
         return
 
     # Grab all rooms that match this search result
@@ -930,6 +936,10 @@ def updateroom(json: Dict[str, object]) -> None:
         newtopic = str(details.get('topic', '')).strip()
         newicon = str(details.get('icon', '')).strip()
         icondelete = bool(details.get('icon_delete', ''))
+
+        newmoderated: Optional[bool] = None
+        if UserPermission.ADMINISTRATOR in user.permissions:
+            newmoderated = bool(details.get('moderated', ''))
 
         if not represents_real_text(newname):
             newname = ""
@@ -947,7 +957,15 @@ def updateroom(json: Dict[str, object]) -> None:
             icon = Attachment.to_id(newicon)
 
         try:
-            messageservice.update_room(roomid, userid, name=newname, topic=newtopic, icon=icon, icon_delete=icondelete)
+            messageservice.update_room(
+                roomid,
+                userid,
+                name=newname,
+                topic=newtopic,
+                moderated=newmoderated,
+                icon=icon,
+                icon_delete=icondelete,
+            )
         except MessageServiceException as e:
             error(str(e), room=request.sid)
 

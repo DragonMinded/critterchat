@@ -1,10 +1,10 @@
 TODO Immediate
 ==============
 
- - Allow admins to change moderated status of channel in info.
  - Allow changing room name/topic/icon from command-line.
- - Hide edit info button for moderated rooms when you aren't a moderator.
  - Block updating info if you aren't a moderator or admin for moderated rooms.
+ - Ability to mute user in public room.
+ - Show muted users as inactive in moderated room.
 
 TODO For Public Instance
 ========================

@@ -343,11 +343,83 @@ class Info {
     }
 
     /**
+     * Used to ask whether the current client user is a moderator of this room.
+     */
+    _isModerator() {
+        if (this.roomType != "room") {
+            return false;
+        }
+
+        if (!this.moderated) {
+            return false;
+        }
+
+        if (!this.occupantsLoaded) {
+            return false;
+        }
+
+        var moderator = false;
+        this.occupants.forEach((occupant) => {
+            if (occupant.userid != window.userid) {
+                return;
+            }
+
+            if (occupant.moderator) {
+                moderator = true;
+                return;
+            }
+        });
+
+        return moderator;
+    }
+
+    /**
+     * Used to ask whether the current user is allowed to update info for this room.
+     */
+    _canUpdateInfo() {
+        if (this.roomType != "room") {
+            return true;
+        }
+
+        if (!this.moderated) {
+            return true;
+        }
+
+        if (!this.occupantsLoaded) {
+            return false;
+        }
+
+        var moderator = false;
+        this.occupants.forEach((occupant) => {
+            if (occupant.userid != window.userid) {
+                return;
+            }
+
+            if (occupant.moderator) {
+                moderator = true;
+                return;
+            }
+        });
+
+        return moderator;
+    }
+
+    /**
      * Update the DOM to include a mirror of our known occupants for a room. We always maintain the
      * occupant list sorted alphabetically by nickname, so this function simply makes sure the right
      * names are in the right order.
      */
     _drawOccupants() {
+        // First, show or hide the edit info button depending on room moderation.
+        const infoControl = $('button#edit-info').parent();
+        if (this._canUpdateInfo()) {
+            infoControl.show();
+        } else {
+            infoControl.hide();
+        }
+        $( 'div.info div.actions' ).show();
+
+        // Now, draw the actual occupants.
         var occupantElement = $('div.info > div.occupants')
         var scrollPos = occupantElement.scrollTop();
         occupantElement.empty();
@@ -427,6 +499,8 @@ class Info {
             this.roomid = roomid;
 
             $('div.info > div.occupants').empty();
+            $( 'div.info div.actions' ).hide();
+
             var updated = false;
 
             this.rooms.forEach((room) => {
@@ -456,7 +530,6 @@ class Info {
                     }
 
                     $( 'div.info div.title-wrapper' ).show();
-                    $( 'div.info div.actions' ).show();
                     $( 'div.top-info div.icon' ).removeClass('room').removeClass('avatar').addClass(iconType);
                     $( 'div.top-info div.icon img' ).attr('src', room.icon);
                     $( 'div.top-info div.icon' ).removeClass('hidden');

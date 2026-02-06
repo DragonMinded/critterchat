@@ -22,6 +22,22 @@
             <dt id="chatdetails-topic-label"></dt>
             <dd><input type="text" id="chatdetails-topic" autocomplete="off" maxlength="255" /></dd>
         </dl>
+        <dl class="moderation">
+            <dt id="chatdetails-moderation-label">moderation</dt>
+            <dd>
+                <div class="options">
+                    <input type="radio" id="chatdetails-moderation-free-for-all" name="moderation" value="free-for-all" />
+                    <label for="chatdetails-moderation-free-for-all">free for all</label>
+                    <input type="radio" id="chatdetails-moderation-moderated" name="moderation" value="moderated" />
+                    <label for="chatdetails-moderation-moderated">moderated</label>
+                </div>
+                <div class="explain">
+                    When set to free for all, anyone in the room can edit the name, topic and room icon.
+                    Nobody is in control over member ability to speak. When set to moderated, only room
+                    moderators can edit details about the room and can mute users if necessary.
+                </div>
+            </dd>
+        </dl>
         <div class="actions">
             <div class="item">
                 <button type="button" id="chatdetails-confirm">update info</button>
