@@ -459,7 +459,11 @@ class Info {
                 this.inputState.setState("empty");
 
                 var id = $(event.currentTarget).attr('id')
-                this.eventBus.emit('displayprofile', id);
+                this.rooms.forEach((room) => {
+                    if (room.id == this.roomid) {
+                        this.eventBus.emit('displayprofile', {userid: id, room: room});
+                    }
+                });
             });
 
         });

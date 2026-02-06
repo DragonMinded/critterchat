@@ -114,8 +114,9 @@ class Profile {
                 $('#profile-form #profile-deactivate').hide();
             }
 
-            // Don't want to set/revoke mod privileges on a global profile.
-            if (profile.occupantid) {
+            // Don't want to set/revoke mod privileges on a global profile or on a user in a room that isn't
+            // moderated.
+            if (this.room && this.room.type == "room" && this.room.moderated && profile.occupantid) {
                 // Only allow non-admins to be moderators, because admins are implicitly moderators already.
                 if (profile.permissions.indexOf(ADMINISTRATOR) < 0) {
                     if (profile.moderator) {
@@ -141,14 +142,17 @@ class Profile {
     }
 
     /**
-     * Called when we want to display a profile.
+     * Called when we want to display a profile. Takes an optional room (sometimes undefined
+     * when this isn't called from clicking on a user in a room) that we're being displayed
+     * in.
      */
-    display() {
+    display( room ) {
         $.modal.close();
 
         // Ensure we don't accidentally retain stale user IDs.
         this.userid = undefined;
         this.profileid = undefined;
+        this.room = room;
 
         $('#profile-form div.admin-wrapper').hide();
         $('#profile-form div.loading').show();

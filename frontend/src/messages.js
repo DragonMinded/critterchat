@@ -1031,7 +1031,7 @@ class Messages {
                     this.inputState.setState("empty");
 
                     var id = $(event.currentTarget).attr('id')
-                    this.eventBus.emit('displayprofile', id);
+                    this.eventBus.emit('displayprofile', {userid: id, room: this.rooms.get(this.roomid)});
                 });
             }
 
@@ -1041,7 +1041,7 @@ class Messages {
                 event.stopImmediatePropagation();
 
                 var id = $(event.currentTarget).attr('id')
-                this.eventBus.emit('displayprofile', id);
+                this.eventBus.emit('displayprofile', {userid: id, room: this.rooms.get(this.roomid)});
             });
 
             // Allow un-spoilering sensitive messages.

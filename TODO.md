@@ -25,3 +25,4 @@ TODO Low Priority
  - Allow arbitrary statuses such as "LIVE" with ability to put a link in.
  - Image attachment carousel instead of opening images in new browser tab.
  - Better styling of left/right lists without forcing the scrollbar to be visible.
+ - Rate limiting on actions, which will eventually be needed.

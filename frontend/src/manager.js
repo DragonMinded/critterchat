@@ -406,12 +406,12 @@ export function manager(socket) {
         }
     });
 
-    eventBus.on('displayprofile', (occupantid) => {
+    eventBus.on('displayprofile', (info) => {
         // We were notified that the user wants to view a profile. Fire off a load request for the
         // profile and display the modal.
-        profileInst.display();
+        profileInst.display( info.room );
 
-        socket.request('profile', {'userid': occupantid}, (evt, data) => {
+        socket.request('profile', {'userid': info.userid}, (evt, data) => {
             if (evt != 'profile') {
                 // TODO: How do we surface this back to the server or somewhere meaningful?
                 console.log("Got unexpected event " + evt + " back from profile lookup request!");
@@ -422,9 +422,10 @@ export function manager(socket) {
         });
     });
 
-    eventBus.on('refreshprofile', (occupantid) => {
-        // We were notified that the user is viewing a profile and wants to refresh it.
-        socket.request('profile', {'userid': occupantid}, (evt, data) => {
+    eventBus.on('refreshprofile', (profileid) => {
+        // We were notified that the user is viewing a profile and wants to refresh it. Note that
+        // the profile ID could be a user ID or an occupant ID, the backend system handles both.
+        socket.request('profile', {'userid': profileid}, (evt, data) => {
             if (evt != 'profile') {
                 // TODO: How do we surface this back to the server or somewhere meaningful?
                 console.log("Got unexpected event " + evt + " back from profile lookup request!");
