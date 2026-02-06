@@ -2,7 +2,6 @@ TODO Immediate
 ==============
 
  - Allow changing room name/topic/icon from command-line.
- - Block updating info if you aren't a moderator or admin for moderated rooms.
  - Ability to mute user in public room.
  - Show muted users as inactive in moderated room.
 

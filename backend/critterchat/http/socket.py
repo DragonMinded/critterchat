@@ -931,6 +931,22 @@ def updateroom(json: Dict[str, object]) -> None:
     # Grab all rooms that match this search result
     roomid = Room.to_id(str(json.get('roomid')))
     if roomid is not None:
+        room = messageservice.lookup_room(roomid, user.id)
+        if room is None:
+            # Trying to update a non-existent room?
+            return
+
+        occupants = [o for o in room.occupants if o.userid == user.id]
+        if len(occupants) != 1:
+            # Trying to update a room we're not in or more than one match?
+            return
+        myself = occupants[0]
+
+        # Now, if it's a moderated room, make sure we're a moderator.
+        if room.moderated and not myself.moderator:
+            # Nice try buck-o.
+            return
+
         details = cast(Dict[str, object], json.get('details', {}))
         newname = str(details.get('name', '')).strip()
         newtopic = str(details.get('topic', '')).strip()
@@ -945,12 +961,6 @@ def updateroom(json: Dict[str, object]) -> None:
             newname = ""
         if not represents_real_text(newtopic):
             newtopic = ""
-
-        rooms = messageservice.get_joined_rooms(userid)
-        joinedrooms = {room.id for room in rooms}
-        if roomid not in joinedrooms:
-            # Trying to grab chat for a room we're not in!
-            return
 
         icon: Optional[AttachmentID] = None
         if newicon:
