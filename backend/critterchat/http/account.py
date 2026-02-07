@@ -53,6 +53,8 @@ def loginpost() -> Response:
             "SessionID",
             aes.encrypt(sessionID),
             expires=Time.now() + (90 * Time.SECONDS_IN_DAY),
+            samesite="strict",
+            httponly=True,
         )
         return response
     else:
