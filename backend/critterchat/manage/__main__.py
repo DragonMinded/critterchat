@@ -8,18 +8,23 @@ from typing import Optional
 from critterchat.data import (
     Data,
     DBCreateException,
+    MetadataType,
     UserPermission,
     User,
     Room,
+    RoomPurpose,
     NewUserID,
     DefaultAvatarID,
     DefaultRoomID,
+    AttachmentID,
     FaviconID,
 )
 from critterchat.config import Config, load_config
 from critterchat.service import (
     AttachmentService,
     AttachmentServiceException,
+    AttachmentServiceUnsupportedImageException,
+    AttachmentServiceInvalidSizeException,
     EmoteService,
     EmoteServiceException,
     MessageService,
@@ -431,7 +436,14 @@ def list_public_rooms(config: Config) -> None:
         data.close()
 
 
-def create_public_room(config: Config, name: Optional[str], topic: Optional[str], autojoin: str, moderated: str) -> None:
+def create_public_room(
+    config: Config,
+    name: Optional[str],
+    topic: Optional[str],
+    icon: Optional[str],
+    autojoin: str,
+    moderated: str,
+) -> None:
     """
     Create a new public room on the network, optionally setting it as auto-join when
     accounts are created and joining existing users to the room.
@@ -439,13 +451,101 @@ def create_public_room(config: Config, name: Optional[str], topic: Optional[str]
 
     data = Data(config)
     try:
+        attachmentid: Optional[AttachmentID] = None
+        if icon:
+            with open(icon, "rb") as bfp:
+                icondata = bfp.read()
+
+            attachmentservice = AttachmentService(config, data)
+            try:
+                icondata, width, height, content_type = attachmentservice.prepare_attachment_image(
+                    icondata,
+                    AttachmentService.MAX_ICON_WIDTH,
+                    AttachmentService.MAX_ICON_HEIGHT,
+                )
+            except AttachmentServiceUnsupportedImageException:
+                raise CommandException("Room image is an unrecognized format.")
+            except AttachmentServiceInvalidSizeException:
+                raise CommandException(f"Invalid image size for room. Roomss must be a maximum of {AttachmentService.MAX_ICON_WIDTH}x{AttachmentService.MAX_ICON_HEIGHT}")
+
+            if width != height:
+                raise CommandException("Room image is not square.")
+
+            attachmentid = attachmentservice.create_attachment(
+                content_type,
+                None,
+                {MetadataType.WIDTH: width, MetadataType.HEIGHT: height}
+            )
+            if attachmentid is None:
+                raise CommandException("Could not insert new room icon.")
+            attachmentservice.put_attachment_data(attachmentid, icondata)
+
         messageservice = MessageService(config, data)
-        room = messageservice.create_public_room(name or "", topic or "", autojoin == "on", moderated == "on")
+        room = messageservice.create_public_room(name or "", topic or "", attachmentid, autojoin == "on", moderated == "on")
 
         if autojoin == "on":
             print(f"Room created with ID {Room.from_id(room.id)} and all activated users joined to the room.")
         else:
             print(f"Room created with ID {Room.from_id(room.id)}.")
+
+    except MessageServiceException as e:
+        raise CommandException(str(e))
+    finally:
+        data.close()
+
+
+def modify_public_room_info(config: Config, roomid: str, name: Optional[str], topic: Optional[str], icon: Optional[str]) -> None:
+    """
+    Modify an existing room by ID, optionally setting a new name, title, or icon (or sometimes multiple).
+    """
+
+    data = Data(config)
+    try:
+        actual_id = Room.to_id(roomid)
+        if actual_id is None:
+            raise CommandException("Room ID is not valid!")
+        messageservice = MessageService(config, data)
+        room = messageservice.lookup_room(actual_id, NewUserID)
+        if not room:
+            raise CommandException("Room ID is not valid!")
+        if room.purpose != RoomPurpose.ROOM:
+            raise CommandException("Room is not public!")
+
+        attachmentid: Optional[AttachmentID] = None
+        icon_delete = False
+        if icon and icon != "default":
+            with open(icon, "rb") as bfp:
+                icondata = bfp.read()
+
+            attachmentservice = AttachmentService(config, data)
+            try:
+                icondata, width, height, content_type = attachmentservice.prepare_attachment_image(
+                    icondata,
+                    AttachmentService.MAX_ICON_WIDTH,
+                    AttachmentService.MAX_ICON_HEIGHT,
+                )
+            except AttachmentServiceUnsupportedImageException:
+                raise CommandException("Room image is an unrecognized format.")
+            except AttachmentServiceInvalidSizeException:
+                raise CommandException(f"Invalid image size for room. Roomss must be a maximum of {AttachmentService.MAX_ICON_WIDTH}x{AttachmentService.MAX_ICON_HEIGHT}")
+
+            if width != height:
+                raise CommandException("Room image is not square.")
+
+            attachmentid = attachmentservice.create_attachment(
+                content_type,
+                None,
+                {MetadataType.WIDTH: width, MetadataType.HEIGHT: height}
+            )
+            if attachmentid is None:
+                raise CommandException("Could not insert new room icon.")
+            attachmentservice.put_attachment_data(attachmentid, icondata)
+        elif icon == "default":
+            icon_delete = True
+
+        messageservice.update_room(actual_id, NewUserID, name=name, topic=topic, icon=attachmentid, icon_delete=icon_delete)
+
+        print(f"Room with ID {Room.from_id(actual_id)} updated information.")
 
     except MessageServiceException as e:
         raise CommandException(str(e))
@@ -876,6 +976,13 @@ def main() -> None:
         help="topic of the room that you are creating",
     )
     createroom_parser.add_argument(
+        "-c",
+        "--icon",
+        type=str,
+        default=None,
+        help="image file you would like to use as the room's icon",
+    )
+    createroom_parser.add_argument(
         "-a",
         "--autojoin",
         type=str,
@@ -888,8 +995,43 @@ def main() -> None:
         "--moderated",
         type=str,
         choices=["on", "off"],
-        required=True,
+        default="off",
         help="whether the room is set to moderated or free-for-all",
+    )
+
+    # A few params for this one
+    changeroominfo_parser = room_commands.add_parser(
+        "info",
+        help="modify a public room's info such as name, title or icon",
+        description="Modify a public room's info such as name, title or icon.",
+    )
+    changeroominfo_parser.add_argument(
+        "-i",
+        "--id",
+        type=str,
+        required=True,
+        help="ID of the room that you are modifying the information of",
+    )
+    changeroominfo_parser.add_argument(
+        "-n",
+        "--name",
+        type=str,
+        default=None,
+        help="new name of the room",
+    )
+    changeroominfo_parser.add_argument(
+        "-t",
+        "--topic",
+        type=str,
+        default=None,
+        help="new topic of the room",
+    )
+    changeroominfo_parser.add_argument(
+        "-c",
+        "--icon",
+        type=str,
+        default=None,
+        help="image file you would like to use as the room's new icon, or \"default\" to unset a custom icon",
     )
 
     # A few params for this one
@@ -1048,7 +1190,9 @@ def main() -> None:
             elif args.room == "list":
                 list_public_rooms(config)
             elif args.room == "create":
-                create_public_room(config, args.name, args.topic, args.autojoin, args.moderated)
+                create_public_room(config, args.name, args.topic, args.icon, args.autojoin, args.moderated)
+            elif args.room == "info":
+                modify_public_room_info(config, args.id, args.name, args.topic, args.icon)
             elif args.room == "autojoin":
                 modify_public_room_autojoin(config, args.id, args.autojoin)
             elif args.room == "moderated":

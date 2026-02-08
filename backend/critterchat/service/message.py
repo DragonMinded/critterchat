@@ -301,10 +301,17 @@ class MessageService:
         else:
             raise Exception("Logic error, unexpected room purpose!")
 
-    def create_public_room(self, name: str, topic: str, autojoin: bool = False, moderated: bool = False) -> Room:
+    def create_public_room(
+        self,
+        name: str,
+        topic: str,
+        icon: Optional[AttachmentID],
+        autojoin: bool = False,
+        moderated: bool = False,
+    ) -> Room:
         # Create a new public room, possibly with auto-join enabled, and return it. If auto-join is
         # enabled then join all existing users to the room after creating.
-        room = Room(NewRoomID, name, topic, RoomPurpose.ROOM, moderated, None, None)
+        room = Room(NewRoomID, name, topic, RoomPurpose.ROOM, moderated, icon, None)
         self.__data.room.create_room(room)
 
         if autojoin:

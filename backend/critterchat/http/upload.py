@@ -72,7 +72,7 @@ def _icon_upload(uploadtype: str) -> Dict[str, object]:
 
     attachmentid = attachmentservice.create_attachment(content_type, None, {MetadataType.WIDTH: width, MetadataType.HEIGHT: height})
     if attachmentid is None:
-        raise Exception(f"Could not insert new {uploadtype}.")
+        raise Exception(f"Could not insert new {uploadtype} icon.")
     attachmentservice.put_attachment_data(attachmentid, icon)
 
     return {'attachmentid': Attachment.from_id(attachmentid)}
