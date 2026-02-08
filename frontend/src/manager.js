@@ -328,13 +328,9 @@ export function manager(socket) {
         if (roomType) {
             msg.actions.forEach((message) => {
                 if (message.action == "join") {
-                    if (message.occupant.username != window.username) {
-                        eventBus.emit("notification", {"action": "join", "type": roomType});
-                    }
+                    eventBus.emit("notification", {"action": "join", "type": roomType});
                 } else if (message.action == "leave") {
-                    if (message.occupant.username != window.username) {
-                        eventBus.emit("notification", {"action": "leave", "type": roomType});
-                    }
+                    eventBus.emit("notification", {"action": "leave", "type": roomType});
                 } else if (message.action == "message") {
                     if (message.occupant.username == window.username) {
                         eventBus.emit("notification", {"action": "messageSend", "type": roomType})
