@@ -3,7 +3,7 @@
 cookie_key: "you_should_type_something_long_and_random_here"
 
 # Instance-wide pepper for hashing passwords. Change this to something long and random. If you
-# chnage this on an existing instance, all existing accounts will need their password reset.
+# change this on an existing instance, all existing accounts will need their password reset.
 password_key: "you_should_also_change_this_to_something_long_and_random"
 
 # The name of the instance.

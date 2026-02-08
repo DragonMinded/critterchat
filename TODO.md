@@ -26,3 +26,4 @@ TODO Low Priority
  - Image attachment carousel instead of opening images in new browser tab.
  - Better styling of left/right lists without forcing the scrollbar to be visible.
  - Rate limiting on actions, which will eventually be needed.
+ - Support a different subdomain for attachment uploads so conversion can be done on a different host.
