@@ -1,7 +1,6 @@
 TODO Immediate
 ==============
 
- - Ability to mute user in public room.
  - Better styling of left/right lists without forcing the scrollbar to be visible.
  - Work on scroll reset behavior when loading old messages and combining them.
  - Work on scroll reset behavior of left/right info panel when redrawing.
@@ -27,3 +26,4 @@ TODO Low Priority
  - Image attachment carousel instead of opening images in new browser tab.
  - Rate limiting on actions, which will eventually be needed.
  - Allow unimportant flash messages to fade away after awhile.
+ - Audit DB usage (lots of redundant fetches), add per-request cache to alleviate.

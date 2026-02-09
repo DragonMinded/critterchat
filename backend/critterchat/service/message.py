@@ -118,11 +118,27 @@ class MessageService:
         sensitive: bool,
         attachments: List[AttachmentID],
     ) -> Optional[Action]:
+        # Ensure we're not trying to send too much text.
         message = emoji.emojize(emoji.emojize(message, language="alias"), language="en")
         if len(message) > self.__config.limits.message_length:
             raise MessageServiceException("You're trying to send a message that is too long!")
 
-        # First, ensure that DMs re-open when messaging the other user again.
+        # Now, make sure the room is valid.
+        room = self.__data.room.get_room(roomid)
+        if not room:
+            raise MessageServiceException("You cannot message a room that does not exist!")
+
+        # Now, make sure the user adding to the room is here and not muted.
+        occupants = self.__data.room.get_room_occupants(room.id, room.purpose == RoomPurpose.DIRECT_MESSAGE)
+        for occupant in occupants:
+            if occupant.userid == userid:
+                if occupant.muted:
+                    raise MessageServiceException("You are muted!")
+                break
+        else:
+            raise MessageServiceException("You cannot message a room that you are not a member of!")
+
+        # Now that we've passed checks, ensure that DMs re-open when messaging the other user again.
         self.rejoin_direct_message(roomid)
 
         occupant = Occupant(
@@ -507,6 +523,21 @@ class MessageService:
         icon: Optional[AttachmentID] = None,
         icon_delete: bool = False,
     ) -> None:
+        # First, make sure the room is valid.
+        room = self.__data.room.get_room(roomid)
+        if not room:
+            raise MessageServiceException("You cannot update a room that does not exist!")
+        occupants = self.__data.room.get_room_occupants(room.id, room.purpose == RoomPurpose.DIRECT_MESSAGE)
+
+        # Now, make sure the user adding to the room is here and not muted.
+        for occupant in occupants:
+            if occupant.userid == userid:
+                if occupant.muted:
+                    raise MessageServiceException("You are muted!")
+                break
+        else:
+            raise MessageServiceException("You cannot update a room that you are not a member of!")
+
         # Sanitize inputs.
         if icon == DefaultAvatarID or icon == DefaultRoomID or icon == FaviconID:
             icon = None
@@ -520,36 +551,34 @@ class MessageService:
                 # Trying to sneak a bad attachment in.
                 raise MessageServiceException("Updated room icon is not valid!")
 
-        room = self.__data.room.get_room(roomid)
-        if room:
-            changed = False
-            old_icon = room.iconid
+        changed = False
+        old_icon = room.iconid
 
-            # Update only if we changed name/topic.
-            if name is not None:
-                changed = changed or (room.name != name)
-                room.name = name
-            if topic is not None:
-                changed = changed or (room.topic != topic)
-                room.topic = topic
-            if moderated is not None:
-                changed = changed or (room.moderated != moderated)
-                room.moderated = moderated
+        # Update only if we changed name/topic.
+        if name is not None:
+            changed = changed or (room.name != name)
+            room.name = name
+        if topic is not None:
+            changed = changed or (room.topic != topic)
+            room.topic = topic
+        if moderated is not None:
+            changed = changed or (room.moderated != moderated)
+            room.moderated = moderated
 
-            # Allow updating icon or deleting icon.
-            if icon is not None:
-                room.iconid = icon
-            elif icon_delete:
-                room.iconid = None
+        # Allow updating icon or deleting icon.
+        if icon is not None:
+            room.iconid = icon
+        elif icon_delete:
+            room.iconid = None
 
-            # Calculate whether we changed the icon.
-            if room.iconid == DefaultAvatarID or room.iconid == DefaultRoomID or room.iconid == FaviconID:
-                room.iconid = None
-            if room.iconid != old_icon:
-                changed = True
+        # Calculate whether we changed the icon.
+        if room.iconid == DefaultAvatarID or room.iconid == DefaultRoomID or room.iconid == FaviconID:
+            room.iconid = None
+        if room.iconid != old_icon:
+            changed = True
 
-            if changed:
-                self.__data.room.update_room(room, userid)
+        if changed:
+            self.__data.room.update_room(room, userid)
 
     def get_joined_rooms(self, userid: UserID) -> List[Room]:
         rooms = self.__data.room.get_joined_rooms(userid)

@@ -172,11 +172,16 @@ class Profile {
         }
 
         if (
-            this.actor &&
-            this.actor.moderator &&
             this.room &&
             this.room.type == "room" &&
-            this.room.moderated && profile.occupantid
+            ((
+                this.actor &&
+                this.actor.moderator &&
+                this.room.moderated
+            ) || (
+                window.admin
+            )) &&
+            profile.occupantid
         ) {
             $('#profile-form div.admin-wrapper').show();
 

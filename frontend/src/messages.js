@@ -41,6 +41,7 @@ class Messages {
         this.screenState = screenState;
         this.size = initialSize;
         this.visibility = initialVisibility;
+        this.connected = false;
         this.messages = [];
         this.occupants = [];
         this.rooms = new Map();
@@ -231,11 +232,13 @@ class Messages {
 
         // Ensure that we don't let any messages get sent during downtime.
         eventBus.on('connected', () => {
-            $( 'button#sendmessage' ).prop('disabled', false);
             this.awaitingResponse = new Map();
+            this.connected = true;
+            this._recalculateSendEnabled();
         });
         eventBus.on('disconnected', () => {
-            $( 'button#sendmessage' ).prop('disabled', true);
+            this.connected = false;
+            this._recalculateSendEnabled();
         });
 
         this.screenState.registerStateChangeCallback(() => {
@@ -281,6 +284,31 @@ class Messages {
 
         // Ensure that the input box itself doesn't allow messages to be too long.
         $('#message').attr("maxlength", window.maxmessage);
+    }
+
+    /**
+     * Called when we need to resolve whether to enable or disable the send button. This only needs to
+     * happen when moving between a muted and unmuted room, or when disconnecting or reconnecting.
+     */
+    _recalculateSendEnabled() {
+        const me = this._getSelf();
+
+        // Start with the assumption we're unmuted, and only disable if we're disconnected.
+        var disabled = !this.connected;
+
+        // Also disable if we're not in any active room.
+        if (!this.roomid) {
+            disabled = true;
+        }
+
+        if (me) {
+            if (me.muted) {
+                // Always be disabled in this chat, even if we're connected.
+                disabled = true;
+            }
+        }
+
+        $( 'button#sendmessage' ).prop('disabled', disabled);
     }
 
     /**
@@ -367,6 +395,7 @@ class Messages {
             this.occupants.sort((a, b) => { return a.username.localeCompare(b.username); });
             this.occupantsLoaded = true;
             this._updateUsers();
+            this._recalculateSendEnabled();
         }
     }
 
@@ -459,6 +488,7 @@ class Messages {
                     this.lastActionPending = false;
                     this.roomType = this.rooms.get(roomid).type;
                     this._updateUsers();
+                    this._recalculateSendEnabled();
 
                     $('div.chat > div.conversation-wrapper > div.conversation').empty();
                     $( '#message-actions' ).attr('roomid', roomid);
@@ -491,6 +521,7 @@ class Messages {
             this.occupantsLoaded = false;
             this.lastActionPending = false;
             this._updateUsers();
+            this._recalculateSendEnabled();
 
             $('div.chat > div.conversation-wrapper > div.conversation').empty();
             $( '#message-actions' ).attr('roomid', '');
@@ -661,6 +692,7 @@ class Messages {
         if (changed) {
             this.occupants.sort((a, b) => { return a.username.localeCompare(b.username); });
             this._updateUsers();
+            this._recalculateSendEnabled();
         }
 
         this._drawActions( actions );
@@ -1028,6 +1060,24 @@ class Messages {
                 // Just update the name and icon since this is a change.
                 $('div.chat > div.conversation-wrapper > div.conversation span.name#' + message.occupant.id).html(escapeHtml(message.occupant.nickname));
                 $('div.chat > div.conversation-wrapper > div.conversation div.icon#' + message.occupant.id + ' img').attr('src', message.occupant.icon);
+            } else if (message.action == "change_users") {
+                if (this.occupantsLoaded) {
+                    const newOccupants = new Map();
+                    message.details.occupants.forEach((occupant) => {
+                        newOccupants.set(occupant.id, occupant);
+                    });
+
+                    this.occupants.forEach((occupant) => {
+                        if (newOccupants.has(occupant.id)) {
+                            const newOccupant = newOccupants.get(occupant.id);
+                            occupant.moderator = newOccupant.moderator;
+                            occupant.inactive = newOccupant.inactive;
+                            occupant.muted = newOccupant.muted;
+                        }
+                    });
+
+                    this._recalculateSendEnabled();
+                }
             }
 
             // Place either before or after existing messages depending on if it's a backfill or a new message.
