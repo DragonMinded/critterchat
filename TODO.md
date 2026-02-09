@@ -1,11 +1,13 @@
 TODO Immediate
 ==============
 
+ - Instantiate logger and get some logging messages sprinkled around.
+ - Emote/emoji reactions to messages.
+
 TODO For Public Instance
 ========================
 
  - Stickers support in some form.
- - Emote/emoji reactions to messages.
 
 TODO Low Priority
 =================
