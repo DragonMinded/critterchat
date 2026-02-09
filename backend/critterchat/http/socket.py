@@ -1107,8 +1107,14 @@ def modaction(json: Dict[str, object]) -> Dict[str, object]:
             if room.moderated:
                 # Moderated room needs this user to be a mod or an admin to act.
                 myself = [o for o in room.occupants if o.userid == user.id]
-                if len(myself) == 1:
-                    is_moderator = myself[0].moderator
+                if len(myself) != 1:
+                    flash('error', 'You cannot mute or unmute somebody in a room you are not in!', room=request.sid)
+                    return {'status': 'failed'}
+
+                is_moderator = myself[0].moderator
+                if myself[0].id == otheruserid:
+                    flash('error', 'You cannot mute or unmute yourself!', room=request.sid)
+                    return {'status': 'failed'}
 
                 if is_moderator or is_admin:
                     if action == "mute":
