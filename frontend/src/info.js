@@ -296,6 +296,7 @@ class Info {
                             const newOccupant = newOccupants.get(occupant.id);
                             occupant.moderator = newOccupant.moderator;
                             occupant.inactive = newOccupant.inactive;
+                            occupant.muted = newOccupant.muted;
                         }
                     });
                     changed = true;
@@ -328,7 +329,7 @@ class Info {
      */
     _computeSortOrder(occupant) {
         if (this.roomType != "dm") {
-            if (occupant.inactive) {
+            if (occupant.inactive || occupant.muted) {
                 return 2;
             }
         }
@@ -430,7 +431,7 @@ class Info {
         this.occupants.forEach((occupant) => {
             // Now, draw it fresh since it's not an update.
             var cls = "item";
-            if (occupant.inactive) {
+            if (occupant.inactive || occupant.muted) {
                 cls += " faded";
             }
 

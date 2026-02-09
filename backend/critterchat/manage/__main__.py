@@ -662,6 +662,66 @@ def revoke_public_room_moderator(config: Config, roomid: str, username: str) -> 
         data.close()
 
 
+def mute_public_room_user(config: Config, roomid: str, username: str) -> None:
+    """
+    Mute a specific user in a specific room. They will not be able to send messages or
+    update info anymore.
+    """
+
+    data = Data(config)
+    try:
+        userservice = UserService(config, data)
+        existing_user = userservice.find_user(username)
+        if not existing_user:
+            raise CommandException("User does not exist in the database!")
+
+        actual_id = Room.to_id(roomid)
+        if actual_id is None:
+            raise CommandException("Room ID is not valid!")
+
+        messageservice = MessageService(config, data)
+        messageservice.mute_room_user(actual_id, existing_user.id)
+
+        print(f"User with username {username} muted in room with ID {Room.from_id(actual_id)}.")
+
+    except MessageServiceException as e:
+        raise CommandException(str(e))
+    except UserServiceException as e:
+        raise CommandException(str(e))
+    finally:
+        data.close()
+
+
+def unmute_public_room_user(config: Config, roomid: str, username: str) -> None:
+    """
+    Unmute a specific user in a specific room. They will not be able to send messages or
+    update info anymore.
+    """
+
+    data = Data(config)
+    try:
+        userservice = UserService(config, data)
+        existing_user = userservice.find_user(username)
+        if not existing_user:
+            raise CommandException("User does not exist in the database!")
+
+        actual_id = Room.to_id(roomid)
+        if actual_id is None:
+            raise CommandException("Room ID is not valid!")
+
+        messageservice = MessageService(config, data)
+        messageservice.unmute_room_user(actual_id, existing_user.id)
+
+        print(f"User with username {username} unmuted in room with ID {Room.from_id(actual_id)}.")
+
+    except MessageServiceException as e:
+        raise CommandException(str(e))
+    except UserServiceException as e:
+        raise CommandException(str(e))
+    finally:
+        data.close()
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="A utility for administrating the DB.")
     parser.add_argument(
@@ -1120,6 +1180,48 @@ def main() -> None:
         help="username that the user uses to login with",
     )
 
+    # A few params for this one
+    muteuser_parser = room_commands.add_parser(
+        "mute_user",
+        help="mute a user in a room",
+        description="Mute a user in a room.",
+    )
+    muteuser_parser.add_argument(
+        "-i",
+        "--id",
+        type=str,
+        required=True,
+        help="ID of the room that you are muting a user in.",
+    )
+    muteuser_parser.add_argument(
+        "-u",
+        "--username",
+        required=True,
+        type=str,
+        help="username that the user uses to login with",
+    )
+
+    # A few params for this one
+    unmuteuser_parser = room_commands.add_parser(
+        "unmute_user",
+        help="unmute a user in a room",
+        description="Unmute a user in a room.",
+    )
+    unmuteuser_parser.add_argument(
+        "-i",
+        "--id",
+        type=str,
+        required=True,
+        help="ID of the room that you are unmuting a user in.",
+    )
+    unmuteuser_parser.add_argument(
+        "-u",
+        "--username",
+        required=True,
+        type=str,
+        help="username that the user uses to login with",
+    )
+
     args = parser.parse_args()
 
     config = Config()
@@ -1201,6 +1303,10 @@ def main() -> None:
                 grant_public_room_moderator(config, args.id, args.username)
             elif args.room == "revoke_moderator":
                 revoke_public_room_moderator(config, args.id, args.username)
+            elif args.room == "mute_user":
+                mute_public_room_user(config, args.id, args.username)
+            elif args.room == "unmute_user":
+                unmute_public_room_user(config, args.id, args.username)
             else:
                 raise CLIException(f"Unknown room operation '{args.room}'")
 

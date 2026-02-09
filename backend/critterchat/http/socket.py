@@ -1066,3 +1066,75 @@ def adminaction(json: Dict[str, object]) -> Dict[str, object]:
     except UserServiceException as e:
         flash('error', str(e), room=request.sid)
         return {'status': 'failed'}
+
+
+@socketio.on('mod')  # type: ignore
+def modaction(json: Dict[str, object]) -> Dict[str, object]:
+    data = Data(config)
+    userservice = UserService(config, data)
+    messageservice = MessageService(config, data)
+
+    # Try to associate with a user if there is one.
+    userid = recover_userid(data, request.sid)
+    if userid is None:
+        return {'status': 'failed'}
+
+    # Figure out if the user is actually an admin, because there's some mod actions that
+    # an admin can take (such as muting/unmuting in free-for-all public rooms).
+    user = userservice.lookup_user(userid)
+    if user is None:
+        return {'status': 'failed'}
+
+    is_admin = UserPermission.ADMINISTRATOR in user.permissions
+
+    # Grab the action and delegate.
+    action = str(json.get('action', ''))
+
+    try:
+        if action in {"mute", "unmute"}:
+            # Mute user in channel.
+            otheruserid = Occupant.to_id(str(json.get('occupantid')))
+            if not otheruserid:
+                flash('error', 'User does not exist!', room=request.sid)
+                return {'status': 'failed'}
+
+            room = messageservice.get_occupant_room(otheruserid)
+            if not room:
+                flash('error', 'User does not exist!', room=request.sid)
+                return {'status': 'failed'}
+
+            is_moderator = False
+            if room.moderated:
+                # Moderated room needs this user to be a mod or an admin to act.
+                myself = [o for o in room.occupants if o.userid == user.id]
+                if len(myself) == 1:
+                    is_moderator = myself[0].moderator
+
+                if is_moderator or is_admin:
+                    if action == "mute":
+                        messageservice.mute_occupant(otheruserid)
+                    else:
+                        messageservice.unmute_occupant(otheruserid)
+                    return {'status': 'success'}
+
+            else:
+                # Free-for-all room needs this user to simply be an admin.
+                if is_admin:
+                    if action == "mute":
+                        messageservice.mute_occupant(otheruserid)
+                    else:
+                        messageservice.unmute_occupant(otheruserid)
+                    return {'status': 'success'}
+
+            # Silently refuse to modify, due to user not having the correct role.
+            return {'status': 'failed'}
+
+        else:
+            error('Unrecognized action requested!', room=request.sid)
+            return {'status': 'failed'}
+    except MessageServiceException as e:
+        flash('error', str(e), room=request.sid)
+        return {'status': 'failed'}
+    except UserServiceException as e:
+        flash('error', str(e), room=request.sid)
+        return {'status': 'failed'}

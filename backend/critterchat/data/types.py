@@ -354,6 +354,7 @@ class Occupant:
         iconid: Optional[AttachmentID] = None,
         inactive: bool = False,
         moderator: bool = False,
+        muted: bool = False,
     ) -> None:
         self.id = occupantid
         self.userid = userid
@@ -361,6 +362,7 @@ class Occupant:
         self.nickname = nickname
         self.inactive = inactive
         self.moderator = moderator
+        self.muted = muted
         self.iconid = iconid
         self.icon: Optional[str] = None
 
@@ -372,6 +374,7 @@ class Occupant:
             "nickname": self.nickname,
             "inactive": self.inactive,
             "moderator": self.moderator,
+            "muted": self.muted,
             "icon": self.icon,
         }
 

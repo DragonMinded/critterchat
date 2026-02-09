@@ -257,6 +257,62 @@ class MessageService:
 
         self.__data.room.revoke_room_moderator(room.id, occupant.userid)
 
+    def mute_occupant(self, occupantid: OccupantID) -> None:
+        occupant = self.__data.room.get_room_occupant(occupantid)
+        if not occupant:
+            raise MessageServiceException("Occupant not found!")
+
+        room = self.__data.room.get_occupant_room(occupantid)
+        if not room:
+            raise MessageServiceException("Occupant not found!")
+
+        if room.purpose != RoomPurpose.ROOM:
+            raise MessageServiceException("Cannot mute occupant in non-public room!")
+
+        self.__data.room.mute_room_occupant(room.id, occupant.userid)
+
+    def unmute_occupant(self, occupantid: OccupantID) -> None:
+        occupant = self.__data.room.get_room_occupant(occupantid)
+        if not occupant:
+            raise MessageServiceException("Occupant not found!")
+
+        room = self.__data.room.get_occupant_room(occupantid)
+        if not room:
+            raise MessageServiceException("Occupant not found!")
+
+        if room.purpose != RoomPurpose.ROOM:
+            raise MessageServiceException("Cannot unmute occupant in non-public room!")
+
+        self.__data.room.unmute_room_occupant(room.id, occupant.userid)
+
+    def mute_room_user(self, roomid: RoomID, userid: UserID) -> None:
+        user = self.__data.user.get_user(userid)
+        if not user:
+            raise MessageServiceException("User not found!")
+
+        room = self.__data.room.get_room(roomid)
+        if not room:
+            raise MessageServiceException("Occupant not found!")
+
+        if room.purpose != RoomPurpose.ROOM:
+            raise MessageServiceException("Cannot mute occupant in non-public room!")
+
+        self.__data.room.mute_room_occupant(room.id, user.id)
+
+    def unmute_room_user(self, roomid: RoomID, userid: UserID) -> None:
+        user = self.__data.user.get_user(userid)
+        if not user:
+            raise MessageServiceException("User not found!")
+
+        room = self.__data.room.get_room(roomid)
+        if not room:
+            raise MessageServiceException("Occupant not found!")
+
+        if room.purpose != RoomPurpose.ROOM:
+            raise MessageServiceException("Cannot unmute occupant in non-public room!")
+
+        self.__data.room.unmute_room_occupant(room.id, user.id)
+
     def __infer_room_info(self, userid: UserID, room: Room) -> None:
         if room.purpose == RoomPurpose.ROOM:
             room_name = "Unnamed Public Chat"
@@ -332,6 +388,18 @@ class MessageService:
         room = self.__data.room.get_room(roomid)
         if room:
             self.__infer_room_info(userid, room)
+        return room
+
+    def get_occupant_room(self, occupantid: OccupantID) -> Optional[Room]:
+        occupant = self.__data.room.get_room_occupant(occupantid)
+        if not occupant:
+            return None
+
+        room = self.__data.room.get_occupant_room(occupantid)
+        if not room:
+            return None
+
+        self.__infer_room_info(occupant.userid, room)
         return room
 
     def update_public_room_autojoin(self, roomid: RoomID, autojoin: bool) -> Room:

@@ -2,7 +2,6 @@ TODO Immediate
 ==============
 
  - Ability to mute user in public room.
- - Show muted users as inactive in moderated room.
  - Better styling of left/right lists without forcing the scrollbar to be visible.
  - Work on scroll reset behavior when loading old messages and combining them.
  - Work on scroll reset behavior of left/right info panel when redrawing.

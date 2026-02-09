@@ -55,6 +55,7 @@ occupant = Table(
     Column("room_id", Integer, nullable=False, index=True),
     Column("inactive", Boolean, default=False),
     Column("moderator", Boolean, default=False),
+    Column("muted", Boolean, default=False),
     Column("nickname", String(255)),
     Column("icon", Integer),
     UniqueConstraint("user_id", "room_id", name='uidrid'),
@@ -211,6 +212,7 @@ class RoomData(BaseData):
                 occupant.nickname AS onick,
                 occupant.inactive AS inactive,
                 occupant.moderator AS moderator,
+                occupant.muted AS muted,
                 occupant.icon AS oicon,
                 profile.nickname AS pnick,
                 profile.icon AS picon,
@@ -602,11 +604,12 @@ class RoomData(BaseData):
             """
             cursor = self.execute(sql, {"userid": userid, "roomid": roomid})
             if cursor.rowcount != 1:
-                # Not in room or already moderator.
+                # Not in room, can't modify.
                 return
             result = cursor.mappings().fetchone()
             moderator = bool(result['moderator'])
             if moderator:
+                # Already a moderator.
                 return
 
             sql = """
@@ -644,15 +647,102 @@ class RoomData(BaseData):
             """
             cursor = self.execute(sql, {"userid": userid, "roomid": roomid})
             if cursor.rowcount != 1:
-                # Not in room or already not a moderator.
+                # Not in room, can't modify.
                 return
             result = cursor.mappings().fetchone()
             moderator = bool(result['moderator'])
             if not moderator:
+                # Already not a moderator.
                 return
 
             sql = """
                 UPDATE occupant SET moderator = FALSE WHERE `user_id` = :userid AND `room_id` = :roomid
+            """
+            self.execute(sql, {"userid": userid, "roomid": roomid})
+
+            occupant = Occupant(
+                occupantid=NewOccupantID,
+                userid=userid,
+            )
+            action = Action(
+                actionid=NewActionID,
+                timestamp=Time.now(),
+                occupant=occupant,
+                action=ActionType.CHANGE_USERS,
+                details={},
+            )
+            self.insert_action(roomid, action)
+
+    def mute_room_occupant(self, roomid: RoomID, userid: UserID) -> None:
+        """
+        Given a room and a user who should be muted, mute that user.
+
+        Parameters:
+            roomid - ID of the room we wish to update.
+            userid - ID of the user that should be muted.
+        """
+        if userid is NewUserID or roomid is NewRoomID:
+            return
+
+        with self.transaction():
+            sql = """
+                SELECT muted FROM occupant WHERE `user_id` = :userid AND `room_id` = :roomid
+            """
+            cursor = self.execute(sql, {"userid": userid, "roomid": roomid})
+            if cursor.rowcount != 1:
+                # Not in room, cannot modify.
+                return
+            result = cursor.mappings().fetchone()
+            muted = bool(result['muted'])
+            if muted:
+                # Alredy muted.
+                return
+
+            sql = """
+                UPDATE occupant SET muted = TRUE WHERE `user_id` = :userid AND `room_id` = :roomid
+            """
+            self.execute(sql, {"userid": userid, "roomid": roomid})
+
+            occupant = Occupant(
+                occupantid=NewOccupantID,
+                userid=userid,
+            )
+            action = Action(
+                actionid=NewActionID,
+                timestamp=Time.now(),
+                occupant=occupant,
+                action=ActionType.CHANGE_USERS,
+                details={},
+            )
+            self.insert_action(roomid, action)
+
+    def unmute_room_occupant(self, roomid: RoomID, userid: UserID) -> None:
+        """
+        Given a room and a user who should be unmuted, unmute that user.
+
+        Parameters:
+            roomid - ID of the room we wish to update.
+            userid - ID of the user that should be unmuted.
+        """
+        if userid is NewUserID or roomid is NewRoomID:
+            return
+
+        with self.transaction():
+            sql = """
+                SELECT muted FROM occupant WHERE `user_id` = :userid AND `room_id` = :roomid
+            """
+            cursor = self.execute(sql, {"userid": userid, "roomid": roomid})
+            if cursor.rowcount != 1:
+                # Not in room, cannot modify.
+                return
+            result = cursor.mappings().fetchone()
+            muted = bool(result['muted'])
+            if not muted:
+                # Already unmuted.
+                return
+
+            sql = """
+                UPDATE occupant SET muted = FALSE WHERE `user_id` = :userid AND `room_id` = :roomid
             """
             self.execute(sql, {"userid": userid, "roomid": roomid})
 
@@ -736,6 +826,9 @@ class RoomData(BaseData):
         if UserPermission.ADMINISTRATOR in permissions:
             moderator = True
 
+        # Mute status is simpler.
+        muted = bool(result['muted'])
+
         return Occupant(
             OccupantID(result['id']),
             UserID(result['user_id']),
@@ -743,6 +836,7 @@ class RoomData(BaseData):
             nickname=nickname,
             inactive=inactive,
             moderator=moderator,
+            muted=muted,
             iconid=AttachmentID(icon) if icon else None,
         )
 
@@ -768,6 +862,7 @@ class RoomData(BaseData):
                 occupant.nickname AS onick,
                 occupant.inactive AS inactive,
                 occupant.moderator AS moderator,
+                occupant.muted AS muted,
                 occupant.icon AS oicon,
                 profile.nickname AS pnick,
                 profile.icon AS picon,
@@ -799,6 +894,7 @@ class RoomData(BaseData):
                 occupant.nickname AS onick,
                 occupant.inactive AS inactive,
                 occupant.moderator AS moderator,
+                occupant.muted AS muted,
                 occupant.icon AS oicon,
                 profile.nickname AS pnick,
                 profile.icon AS picon,
@@ -885,6 +981,7 @@ class RoomData(BaseData):
                     occupant.nickname AS onick,
                     occupant.inactive AS inactive,
                     occupant.moderator AS moderator,
+                    occupant.muted AS muted,
                     occupant.icon AS oicon,
                     profile.nickname AS pnick,
                     profile.icon AS picon,
