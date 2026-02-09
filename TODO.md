@@ -1,8 +1,6 @@
 TODO Immediate
 ==============
 
- - Work on scroll reset behavior when loading old messages and combining them.
-
 TODO For Public Instance
 ========================
 

@@ -741,7 +741,14 @@ class Messages {
             const oldest = messages.first();
 
             if (messages && oldest) {
-                this.scrollTo = {id: oldest.attr('id'), position: oldest.position().top};
+                // Figure out if it's a message, because those end up positioned differently when
+                // they're combined with previous messages that get loaded.
+                const message = oldest.find('div.message');
+                var delta = 0;
+                if (message.length == 1) {
+                    delta = Math.round(message.position().top - oldest.position().top);
+                }
+                this.scrollTo = {id: oldest.attr('id'), position: Math.round(oldest.position().top), delta: delta};
             }
 
             $( '.scrolled-top' ).removeClass('untriggered');
@@ -760,9 +767,12 @@ class Messages {
         if (this.scrollTo.id) {
             const item = $('div.chat > div.conversation-wrapper > div.conversation > div.item#' + this.scrollTo.id);
             if (item && item.position()) {
-                const delta = item.position().top - this.scrollTo.position;
+                var delta = Math.round(item.position().top - this.scrollTo.position);
+                if (item.hasClass('combined')) {
+                    delta -= this.scrollTo.delta;
+                }
                 if (delta) {
-                    var box = $( 'div.chat > div.conversation-wrapper' );
+                    const box = $( 'div.chat > div.conversation-wrapper' );
                     box[0].scrollTop = box[0].scrollTop + delta;
                 }
             }
