@@ -80,6 +80,7 @@ preferences = Table(
     Column("color_scheme", String(8)),
     Column("desktop_size", String(10)),
     Column("mobile_size", String(10)),
+    Column("admin_controls", String(10)),
     Column("title_notifs", Boolean),
     Column("mobile_audio_notifs", Boolean),
     Column("audio_notifs", Integer),
@@ -476,6 +477,7 @@ class UserData(BaseData):
             color_scheme=str(result['color_scheme'] or "system"),
             desktop_size=str(result['desktop_size'] or "normal"),
             mobile_size=str(result['mobile_size'] or "normal"),
+            admin_controls=str(result['admin_controls'] or "visible"),
             title_notifs=bool(result['title_notifs']),
             mobile_audio_notifs=bool(result['mobile_audio_notifs']),
             audio_notifs=notifications,
@@ -509,15 +511,16 @@ class UserData(BaseData):
 
         sql = """
             INSERT INTO `preferences`
-                (`user_id`, `rooms_on_top`, `combined_messages`, `color_scheme`, `desktop_size`, `mobile_size`, `title_notifs`, `mobile_audio_notifs`, `audio_notifs`, `timestamp`)
+                (`user_id`, `rooms_on_top`, `combined_messages`, `color_scheme`, `desktop_size`, `mobile_size`, `admin_controls`, `title_notifs`, `mobile_audio_notifs`, `audio_notifs`, `timestamp`)
             VALUES
-                (:userid, :rooms_on_top, :combined_messages, :color_scheme, :desktop_size, :mobile_size, :title_notifs, :mobile_audio_notifs, :audio_notifs, :ts)
+                (:userid, :rooms_on_top, :combined_messages, :color_scheme, :desktop_size, :mobile_size, :admin_controls, :title_notifs, :mobile_audio_notifs, :audio_notifs, :ts)
             ON DUPLICATE KEY UPDATE
                 `rooms_on_top` = :rooms_on_top,
                 `combined_messages` = :combined_messages,
                 `color_scheme` = :color_scheme,
                 `desktop_size` = :desktop_size,
                 `mobile_size` = :mobile_size,
+                `admin_controls` = :admin_controls,
                 `title_notifs` = :title_notifs,
                 `mobile_audio_notifs` = :mobile_audio_notifs,
                 `audio_notifs` = :audio_notifs,
@@ -530,6 +533,7 @@ class UserData(BaseData):
             "color_scheme": preferences.color_scheme,
             "desktop_size": preferences.desktop_size,
             "mobile_size": preferences.mobile_size,
+            "admin_controls": preferences.admin_controls,
             "title_notifs": preferences.title_notifs,
             "mobile_audio_notifs": preferences.mobile_audio_notifs,
             "audio_notifs": audio_notifs,

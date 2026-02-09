@@ -132,6 +132,7 @@ class UserPreferences:
         color_scheme: str,
         desktop_size: str,
         mobile_size: str,
+        admin_controls: str,
         title_notifs: bool,
         mobile_audio_notifs: bool,
         audio_notifs: Set[UserNotification],
@@ -142,6 +143,7 @@ class UserPreferences:
         self.color_scheme = color_scheme
         self.desktop_size = desktop_size
         self.mobile_size = mobile_size
+        self.admin_controls = admin_controls
         self.title_notifs = title_notifs
         self.mobile_audio_notifs = mobile_audio_notifs
         self.audio_notifs = audio_notifs
@@ -154,6 +156,7 @@ class UserPreferences:
             "color_scheme": self.color_scheme,
             "desktop_size": self.desktop_size,
             "mobile_size": self.mobile_size,
+            "admin_controls": self.admin_controls,
             "title_notifs": self.title_notifs,
             "mobile_audio_notifs": self.mobile_audio_notifs,
             "audio_notifs": [str(an.name) for an in self.audio_notifs],
@@ -169,6 +172,7 @@ class UserPreferences:
             color_scheme="system",
             desktop_size="normal",
             mobile_size="normal",
+            admin_controls="visible",
             title_notifs=True,
             mobile_audio_notifs=False,
             audio_notifs=set(),

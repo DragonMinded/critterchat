@@ -606,6 +606,12 @@ def updatepreferences(json: Dict[str, object]) -> None:
             "larger": "larger",
             "largest": "largest",
         }.get(str(new_mobile_size))
+    new_admin_controls = json.get('admin_controls', None)
+    if new_admin_controls is not None:
+        new_admin_controls = {
+            "hidden": "hidden",
+            "visible": "visible",
+        }.get(str(new_admin_controls))
     new_title_notifs = json.get('title_notifs', None)
     if new_title_notifs is not None:
         new_title_notifs = bool(new_title_notifs)
@@ -644,6 +650,7 @@ def updatepreferences(json: Dict[str, object]) -> None:
             color_scheme=new_color_scheme,
             desktop_size=new_desktop_size,
             mobile_size=new_mobile_size,
+            admin_controls=new_admin_controls,
             title_notifs=new_title_notifs,
             mobile_audio_notifs=new_mobile_audio_notifs,
             audio_notifs=new_audio_notifs,

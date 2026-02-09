@@ -87,6 +87,7 @@ class UserService:
         color_scheme: Optional[str] = None,
         desktop_size: Optional[str] = None,
         mobile_size: Optional[str] = None,
+        admin_controls: Optional[str] = None,
         title_notifs: Optional[bool] = None,
         mobile_audio_notifs: Optional[bool] = None,
         audio_notifs: Optional[Set[str]] = None,
@@ -108,6 +109,8 @@ class UserService:
             prefs.desktop_size = desktop_size
         if mobile_size is not None:
             prefs.mobile_size = mobile_size
+        if admin_controls is not None:
+            prefs.admin_controls = admin_controls
         if title_notifs is not None:
             prefs.title_notifs = title_notifs
         if mobile_audio_notifs is not None:

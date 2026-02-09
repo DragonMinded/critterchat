@@ -42,6 +42,7 @@ class EditPreferences {
                     'mobile_size': $('input[type=radio][name="mobile-size"]:checked').val(),
                     'title_notifs': $('#editpreferences-title-notifications').is(":checked"),
                     'mobile_audio_notifs': $('#editpreferences-mobile-audio-notifications').is(":checked"),
+                    'admin_controls': $('input[type=radio][name="admin-controls"]:checked').val(),
                     'audio_notifs': set_audio_notifs,
                     'notif_sounds': this.newnotifications,
                     'notif_sounds_delete': Object.keys(this.deletednotifications),
@@ -158,6 +159,7 @@ class EditPreferences {
             $('input[type=radio][name="color-scheme"]').val([this.preferences.color_scheme]);
             $('input[type=radio][name="desktop-size"]').val([this.preferences.desktop_size]);
             $('input[type=radio][name="mobile-size"]').val([this.preferences.mobile_size]);
+            $('input[type=radio][name="admin-controls"]').val([this.preferences.admin_controls]);
 
             AUDIO_PREFS.forEach((pref) => {
                 const checked = this.preferences.audio_notifs.includes(pref);
@@ -174,6 +176,16 @@ class EditPreferences {
                     $('#editpreferences-audio-notification-' + pref.toLowerCase() + '-cancel').hide();
                 }
             });
+
+            // Display admin settings if needed. These don't need to be kept secret, but if the user is
+            // not an admin there's no reason to show the preferences below.
+            if (window.admin) {
+                $('#editpreferences-admin-controls-container').show();
+            } else {
+                $('#editpreferences-admin-controls-container').hide();
+            }
+
+            // Display the actual modal.
             $('#editpreferences-form').modal();
         }
     }
