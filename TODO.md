@@ -4,6 +4,9 @@ TODO Immediate
  - Admin-only preference to hide admin stuff.
  - Ability to mute user in public room.
  - Show muted users as inactive in moderated room.
+ - Better styling of left/right lists without forcing the scrollbar to be visible.
+ - Work on scroll reset behavior when loading old messages and combining them.
+ - Work on scroll reset behavior of left/right info panel when redrawing.
 
 TODO For Public Instance
 ========================
@@ -24,6 +27,4 @@ TODO Low Priority
  - Support arbitrary info fields in profile for links to other services, etc.
  - Allow arbitrary statuses such as "LIVE" with ability to put a link in.
  - Image attachment carousel instead of opening images in new browser tab.
- - Better styling of left/right lists without forcing the scrollbar to be visible.
  - Rate limiting on actions, which will eventually be needed.
- - Support a different subdomain for attachment uploads so conversion can be done on a different host.
