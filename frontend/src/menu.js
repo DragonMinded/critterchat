@@ -82,6 +82,7 @@ class Menu {
             this.size = newSize;
             this._updateSize();
             this._recalculateVisibility();
+            this._recalculateScrollPadding();
         });
 
         eventBus.on( 'updatevisibility', (newVisibility) => {
@@ -92,10 +93,16 @@ class Menu {
         this.screenState.registerStateChangeCallback(() => {
             this._updateSize();
             this._recalculateVisibility();
+            this._recalculateScrollPadding();
+        });
+
+        $(window).resize(() => {
+            this._recalculateScrollPadding();
         });
 
         this._updateSize();
         this._recalculateVisibility();
+        this._recalculateScrollPadding();
     }
 
     /**
@@ -309,7 +316,22 @@ class Menu {
             });
         }
 
+        this._recalculateScrollPadding();
         this._updateSelected();
+    }
+
+    /**
+     * Called whenever the window is redrawn or resized so we can control the padding by our
+     * scrollbar.
+     */
+    _recalculateScrollPadding() {
+        var conversations = $('div.menu > div.rooms');
+
+        if (conversations.hasScrollBar()) {
+            conversations.addClass('scroll');
+        } else {
+            conversations.removeClass('scroll');
+        }
     }
 
     /**

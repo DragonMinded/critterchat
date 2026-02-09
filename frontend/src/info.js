@@ -109,13 +109,20 @@ class Info {
         eventBus.on( 'resize', (newSize) => {
             this.size = newSize;
             this._updateSize();
+            this._recalculateScrollPadding();
         });
 
         this.screenState.registerStateChangeCallback(() => {
             this._updateSize();
+            this._recalculateScrollPadding();
+        });
+
+        $(window).resize(() => {
+            this._recalculateScrollPadding();
         });
 
         this._updateSize();
+        this._recalculateScrollPadding();
     }
 
     /**
@@ -479,6 +486,7 @@ class Info {
         });
 
         occupantElement.scrollTop(scrollPos);
+        this._recalculateScrollPadding();
     }
 
     /**
@@ -557,6 +565,7 @@ class Info {
                     this.roomType = room.type;
                     this.moderated = room.moderated;
                     this.chatdetails.setRoom(room);
+                    this._recalculateScrollPadding();
                 }
             });
 
@@ -565,6 +574,20 @@ class Info {
             if (updated) {
                 this.infoLoaded = true;
             }
+        }
+    }
+
+    /**
+     * Called whenever the window is redrawn or resized so we can control the padding by our
+     * scrollbar.
+     */
+    _recalculateScrollPadding() {
+        var conversations = $('div.info > div.occupants');
+
+        if (conversations.hasScrollBar()) {
+            conversations.addClass('scroll');
+        } else {
+            conversations.removeClass('scroll');
         }
     }
 
@@ -630,6 +653,7 @@ class Info {
             $( 'div.top-info div.icon' ).addClass('hidden');
             $( 'div.info div.title-wrapper' ).hide();
             $( 'div.info div.actions' ).hide();
+            this._recalculateScrollPadding();
         }
     }
 }

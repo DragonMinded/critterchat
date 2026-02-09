@@ -900,7 +900,10 @@ div.menu > div.rooms {
     flex-direction: column;
     display: flex;
     gap: var(--application-item-padding);
-    overflow-y: scroll;
+    overflow-y: auto;
+}
+
+div.menu > div.rooms.scroll {
     padding-right: var(--application-pane-padding);
 }
 
@@ -1362,7 +1365,10 @@ div.info > div.occupants {
     flex-direction: column;
     display: flex;
     gap: var(--application-item-padding);
-    overflow-y: scroll;
+    overflow-y: auto;
+}
+
+div.info > div.occupants.scroll {
     padding-right: var(--application-pane-padding);
 }
 
@@ -1568,14 +1574,6 @@ div.alt-text-image img {
 div.alt-text-text textarea {
     width: 100%;
     height: 8em;
-}
-
-div.info > div.occupants {
-    display: flex;
-    flex-direction: column;
-    flex-grow: 1;
-    overflow-y: scroll;
-    padding-right: var(--application-pane-padding);
 }
 
 div.info > div.title-wrapper {

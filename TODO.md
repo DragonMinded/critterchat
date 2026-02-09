@@ -1,9 +1,7 @@
 TODO Immediate
 ==============
 
- - Better styling of left/right lists without forcing the scrollbar to be visible.
  - Work on scroll reset behavior when loading old messages and combining them.
- - Work on scroll reset behavior of left/right info panel when redrawing.
 
 TODO For Public Instance
 ========================
