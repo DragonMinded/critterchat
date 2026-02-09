@@ -26,3 +26,4 @@ TODO Low Priority
  - Allow arbitrary statuses such as "LIVE" with ability to put a link in.
  - Image attachment carousel instead of opening images in new browser tab.
  - Rate limiting on actions, which will eventually be needed.
+ - Allow unimportant flash messages to fade away after awhile.

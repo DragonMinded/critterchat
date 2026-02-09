@@ -408,10 +408,21 @@ export function manager(socket) {
         }
     });
 
+    eventBus.on('mod', (details) => {
+        // We were notified that a mod action has been requested.
+        socket.emit('mod', details, (response) => {
+            if (response.status == "success") {
+                eventBus.emit('modack', {'action': details.action, 'status': 'success'});
+            } else {
+                eventBus.emit('modack', {'action': details.action, 'status': 'failure'});
+            }
+        });
+    });
+
     eventBus.on('displayprofile', (info) => {
         // We were notified that the user wants to view a profile. Fire off a load request for the
         // profile and display the modal.
-        profileInst.display( info.room );
+        profileInst.display( info.room, info.actor );
 
         socket.request('profile', {'userid': info.userid}, (evt, data) => {
             if (evt != 'profile') {

@@ -198,6 +198,7 @@ class MessageService:
         user.nickname = occupant.nickname
         user.occupantid = occupantid
         user.moderator = occupant.moderator
+        user.muted = occupant.muted
         self.__attachments.resolve_user_icon(user)
         return user
 

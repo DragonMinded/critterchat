@@ -15,6 +15,7 @@ class Profile {
         this.userid = undefined;
         this.profileid = undefined;
         this.preferences = {};
+        this.actor = undefined;
 
         $('#profile-form').on('submit', (event) => {
             event.stopPropagation();
@@ -52,7 +53,7 @@ class Profile {
             event.stopPropagation();
             event.stopImmediatePropagation();
 
-            if (this.userid) {
+            if (this.profileid) {
                 this.eventBus.emit('admin', {action: 'mod', occupantid: this.profileid});
             }
         });
@@ -61,8 +62,26 @@ class Profile {
             event.stopPropagation();
             event.stopImmediatePropagation();
 
-            if (this.userid) {
+            if (this.profileid) {
                 this.eventBus.emit('admin', {action: 'demod', occupantid: this.profileid});
+            }
+        });
+
+        $('#profile-mute').on('click', (event) => {
+            event.stopPropagation();
+            event.stopImmediatePropagation();
+
+            if (this.profileid) {
+                this.eventBus.emit('mod', {action: 'mute', occupantid: this.profileid});
+            }
+        });
+
+        $('#profile-unmute').on('click', (event) => {
+            event.stopPropagation();
+            event.stopImmediatePropagation();
+
+            if (this.profileid) {
+                this.eventBus.emit('mod', {action: 'unmute', occupantid: this.profileid});
             }
         });
 
@@ -74,6 +93,19 @@ class Profile {
                     response.action == "deactivate" ||
                     response.action == "mod" ||
                     response.action == "demod"
+                ) {
+                    // Reload profile.
+                    this.eventBus.emit('refreshprofile', id);
+                }
+            }
+        });
+
+        this.eventBus.on('modack', (response) => {
+            const id = this.profileid || this.userid;
+            if (id) {
+                if (
+                    response.action == "mute" ||
+                    response.action == "unmute"
                 ) {
                     // Reload profile.
                     this.eventBus.emit('refreshprofile', id);
@@ -110,6 +142,9 @@ class Profile {
         $('#profile-form div.loading').hide();
         $('#profile-form div.profile').show();
 
+        // Start by hiding admin tools until we know which ones to display.
+        this._hideAdminTools();
+
         // Display admin and moderator actions if needed.
         if (window.admin && this.preferences.admin_controls == "visible") {
             $('#profile-form div.admin-wrapper').show();
@@ -133,9 +168,24 @@ class Profile {
                     $('#profile-form #profile-mod').show();
                     $('#profile-form #profile-demod').hide();
                 }
+            }
+        }
+
+        if (
+            this.actor &&
+            this.actor.moderator &&
+            this.room &&
+            this.room.type == "room" &&
+            this.room.moderated && profile.occupantid
+        ) {
+            $('#profile-form div.admin-wrapper').show();
+
+            if (profile.muted) {
+                $('#profile-form #profile-mute').hide();
+                $('#profile-form #profile-unmute').show();
             } else {
-                $('#profile-form #profile-mod').hide();
-                $('#profile-form #profile-demod').hide();
+                $('#profile-form #profile-mute').show();
+                $('#profile-form #profile-unmute').hide();
             }
         }
 
@@ -145,21 +195,35 @@ class Profile {
     }
 
     /**
+     * Specifically used to hide all admin and moderator tools before choosing what to display.
+     */
+    _hideAdminTools() {
+        $('#profile-form #profile-mod').hide();
+        $('#profile-form #profile-demod').hide();
+        $('#profile-form #profile-activate').hide();
+        $('#profile-form #profile-deactivate').hide();
+        $('#profile-form #profile-muted').hide();
+        $('#profile-form #profile-unmute').hide();
+    }
+
+    /**
      * Called when we want to display a profile. Takes an optional room (sometimes undefined
      * when this isn't called from clicking on a user in a room) that we're being displayed
      * in.
      */
-    display( room ) {
+    display( room, actor ) {
         $.modal.close();
 
         // Ensure we don't accidentally retain stale user IDs.
         this.userid = undefined;
         this.profileid = undefined;
         this.room = room;
+        this.actor = actor;
 
         $('#profile-form div.admin-wrapper').hide();
         $('#profile-form div.loading').show();
         $('#profile-form div.profile').hide();
+        this._hideAdminTools();
         $('#profile-form').modal();
     }
 }

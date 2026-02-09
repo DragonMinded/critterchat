@@ -459,10 +459,19 @@ class Info {
 
                 this.inputState.setState("empty");
 
+                var occupant = undefined;
+                if (this.occupantsLoaded) {
+                    this.occupants.forEach((potential) => {
+                        if (potential.userid == window.userid) {
+                            occupant = potential;
+                        }
+                    });
+                }
+
                 var id = $(event.currentTarget).attr('id')
                 this.rooms.forEach((room) => {
                     if (room.id == this.roomid) {
-                        this.eventBus.emit('displayprofile', {userid: id, room: room});
+                        this.eventBus.emit('displayprofile', {userid: id, room: room, actor: occupant});
                     }
                 });
             });

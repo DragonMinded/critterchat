@@ -371,6 +371,24 @@ class Messages {
     }
 
     /**
+     * Called to grab our own occupant object when needed.
+     */
+    _getSelf() {
+        if (this.occupantsLoaded) {
+            var occupant = undefined;
+            this.occupants.forEach((potential) => {
+                if (potential.userid == window.userid) {
+                    occupant = potential;
+                }
+            });
+
+            return occupant;
+        } else {
+            return undefined;
+        }
+    }
+
+    /**
      * Called whenever the manager informs us of an updated room list from the server. The room list
      * is always absolute and includes all relevant rooms that we're in, ordered by last update newest
      * to oldest. We only really care about the room list so we can track info about the currently
@@ -1031,7 +1049,7 @@ class Messages {
                     this.inputState.setState("empty");
 
                     var id = $(event.currentTarget).attr('id')
-                    this.eventBus.emit('displayprofile', {userid: id, room: this.rooms.get(this.roomid)});
+                    this.eventBus.emit('displayprofile', {userid: id, room: this.rooms.get(this.roomid), actor: this._getSelf()});
                 });
             }
 
@@ -1041,7 +1059,7 @@ class Messages {
                 event.stopImmediatePropagation();
 
                 var id = $(event.currentTarget).attr('id')
-                this.eventBus.emit('displayprofile', {userid: id, room: this.rooms.get(this.roomid)});
+                this.eventBus.emit('displayprofile', {userid: id, room: this.rooms.get(this.roomid), actor: this._getSelf()});
             });
 
             // Allow un-spoilering sensitive messages.

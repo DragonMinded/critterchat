@@ -1113,8 +1113,10 @@ def modaction(json: Dict[str, object]) -> Dict[str, object]:
                 if is_moderator or is_admin:
                     if action == "mute":
                         messageservice.mute_occupant(otheruserid)
+                        flash('success', 'User muted!', room=request.sid)
                     else:
                         messageservice.unmute_occupant(otheruserid)
+                        flash('success', 'User unmuted!', room=request.sid)
                     return {'status': 'success'}
 
             else:
@@ -1122,8 +1124,10 @@ def modaction(json: Dict[str, object]) -> Dict[str, object]:
                 if is_admin:
                     if action == "mute":
                         messageservice.mute_occupant(otheruserid)
+                        flash('success', 'User muted!', room=request.sid)
                     else:
                         messageservice.unmute_occupant(otheruserid)
+                        flash('success', 'User unmuted!', room=request.sid)
                     return {'status': 'success'}
 
             # Silently refuse to modify, due to user not having the correct role.
