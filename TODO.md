@@ -1,7 +1,6 @@
 TODO Immediate
 ==============
 
- - Admin-only preference to hide admin stuff.
  - Ability to mute user in public room.
  - Show muted users as inactive in moderated room.
  - Better styling of left/right lists without forcing the scrollbar to be visible.

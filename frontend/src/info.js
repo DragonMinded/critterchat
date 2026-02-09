@@ -180,8 +180,8 @@ class Info {
      * connection success or reconnect. We don't care about this event but a handler was placed
      * here for consistency across top-level components.
      */
-    setPreferences( _preferences ) {
-        // This page intentionally left blank.
+    setPreferences( preferences ) {
+        this.chatdetails.setPreferences( preferences );
     }
 
     /**

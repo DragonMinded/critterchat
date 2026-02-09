@@ -14,6 +14,7 @@ class Profile {
         this.eventBus = eventBus;
         this.userid = undefined;
         this.profileid = undefined;
+        this.preferences = {};
 
         $('#profile-form').on('submit', (event) => {
             event.stopPropagation();
@@ -82,6 +83,14 @@ class Profile {
     }
 
     /**
+     * Called when our parent informs us that the user's preferences have been updated. We only
+     * care about the admin controls visibility preference here.
+     */
+    setPreferences( preferences ) {
+        this.preferences = preferences;
+    }
+
+    /**
      * Called whenever a profile is loaded for display by the server.
      */
     setProfile( profile ) {
@@ -102,7 +111,7 @@ class Profile {
         $('#profile-form div.profile').show();
 
         // Display admin and moderator actions if needed.
-        if (window.admin) {
+        if (window.admin && this.preferences.admin_controls == "visible") {
             $('#profile-form div.admin-wrapper').show();
 
             // Allow any user to be activated or deactivated.
@@ -115,19 +124,13 @@ class Profile {
             }
 
             // Don't want to set/revoke mod privileges on a global profile or on a user in a room that isn't
-            // moderated.
-            if (this.room && this.room.type == "room" && this.room.moderated && profile.occupantid) {
-                // Only allow non-admins to be moderators, because admins are implicitly moderators already.
-                if (profile.permissions.indexOf(ADMINISTRATOR) < 0) {
-                    if (profile.moderator) {
-                        $('#profile-form #profile-mod').hide();
-                        $('#profile-form #profile-demod').show();
-                    } else {
-                        $('#profile-form #profile-mod').show();
-                        $('#profile-form #profile-demod').hide();
-                    }
-                } else {
+            // moderated. Only allow non-admins to be moderators, because admins are implicitly moderators already.
+            if (this.room && this.room.type == "room" && this.room.moderated && profile.occupantid && profile.permissions.indexOf(ADMINISTRATOR) < 0) {
+                if (profile.moderator) {
                     $('#profile-form #profile-mod').hide();
+                    $('#profile-form #profile-demod').show();
+                } else {
+                    $('#profile-form #profile-mod').show();
                     $('#profile-form #profile-demod').hide();
                 }
             } else {

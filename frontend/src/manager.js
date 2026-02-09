@@ -301,6 +301,7 @@ export function manager(socket) {
         messagesInst.setPreferences(msg);
         infoInst.setPreferences(msg);
         notifInst.setPreferences(msg);
+        profileInst.setPreferences(msg);
     });
 
     socket.on('chathistory', (msg) => {

@@ -9,6 +9,7 @@ class ChatDetails {
     constructor( eventBus, inputState ) {
         this.eventBus = eventBus;
         this.inputState = inputState;
+        this.preferences = {};
         this.room = {};
         this.roomLoaded = false;
         this.icon = "";
@@ -99,7 +100,7 @@ class ChatDetails {
             $("#chatdetails-topic").attr('placeholder', 'Type a topic for this ' + roomType + '...');
 
             // Only show moderator options for admins.
-            if (window.admin && this.room.type == "room") {
+            if (window.admin && this.preferences.admin_controls == "visible" && this.room.type == "room") {
                 $("form#chatdetails-form dl.moderation").show();
                 $('form#chatdetails-form  input[type=radio][name="moderation"]').val([
                     this.room.moderated ? "moderated" : "free-for-all"
@@ -123,6 +124,14 @@ class ChatDetails {
     setRoom( room ) {
         this.room = room;
         this.roomLoaded = true;
+    }
+
+    /**
+     * Called when our parent informs us that the user's preferences have been updated. We only
+     * care about the admin controls visibility preference here.
+     */
+    setPreferences( preferences ) {
+        this.preferences = preferences;
     }
 
     /**
