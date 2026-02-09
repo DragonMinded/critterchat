@@ -13,6 +13,7 @@ import { Profile } from "./modals/profile.js";
 
 import { escapeHtml, flash, flashHook, containsStandaloneText } from "./utils.js";
 import { displayInfo } from "./modals/infomodal.js";
+import { ADMINISTRATOR } from "./common.js";
 
 /**
  * The socket and event manager for CritterChat's frontend. The various major components of the
@@ -259,6 +260,10 @@ export function manager(socket) {
         if (msg.id == window.userid) {
             // This should never change, but if we have info about it, let's update anyway.
             window.username = msg.username;
+
+            // This might change if the user is granted or revoked admin while using the app.
+            var permissions = msg.permissions || [];
+            window.admin = permissions.indexOf(ADMINISTRATOR) >= 0;
 
             // Notify various systems that our profile has been updated, so they can grab
             // things such as the nickname and our avatar.

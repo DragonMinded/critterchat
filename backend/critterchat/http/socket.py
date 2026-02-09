@@ -225,9 +225,10 @@ def background_thread_proc_impl() -> None:
                         ts = Time.now()
                         if userservice.has_updated_user(user.id, profilets):
                             userprofile = userservice.lookup_user(user.id)
+                            admin = userprofile is not None and UserPermission.ADMINISTRATOR in userprofile.permissions
                             if userprofile:
                                 info.profilets = ts
-                                socketio.emit('profile', userprofile.to_dict(), room=info.sid)
+                                socketio.emit('profile', userprofile.to_dict(admin=admin), room=info.sid)
 
                     if prefsts is not None:
                         ts = Time.now()
@@ -478,7 +479,7 @@ def profile(json: Dict[str, object]) -> None:
         userprofile = userservice.lookup_user(userid)
         if userprofile:
             info.profilets = ts
-            socketio.emit('profile', hydrate_tag(json, userprofile.to_dict()), room=request.sid)
+            socketio.emit('profile', hydrate_tag(json, userprofile.to_dict(admin=admin)), room=request.sid)
 
 
 @socketio.on('preferences')  # type: ignore
@@ -554,8 +555,10 @@ def updateprofile(json: Dict[str, object]) -> None:
     try:
         userservice.update_user(userid, name=newname, about=newabout, icon=icon, icon_delete=icondelete)
         userprofile = userservice.lookup_user(userid)
+        admin = userprofile is not None and UserPermission.ADMINISTRATOR in userprofile.permissions
+
         if userprofile:
-            socketio.emit('profile', hydrate_tag(json, userprofile.to_dict()), room=request.sid)
+            socketio.emit('profile', hydrate_tag(json, userprofile.to_dict(admin=admin)), room=request.sid)
             flash('success', 'Your profile has been updated!', room=request.sid)
     except UserServiceException as e:
         error(str(e), room=request.sid)
