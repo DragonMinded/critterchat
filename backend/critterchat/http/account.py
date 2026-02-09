@@ -1,7 +1,7 @@
 import string
-from flask import Blueprint, Response, make_response, render_template, url_for, redirect
+from flask import Blueprint, Response, make_response, render_template, redirect
 
-from .app import app, request, static_location, templates_location, loginprohibited, loginrequired, error, info, g
+from .app import app, absolute_url_for, request, static_location, templates_location, loginprohibited, loginrequired, error, info, g
 from ..common import AESCipher, Time
 from ..data import UserPermission, FaviconID
 from ..service import AttachmentService, UserService, UserServiceException
@@ -48,7 +48,7 @@ def loginpost() -> Response:
     if g.data.user.validate_password(user.id, password):
         aes = AESCipher(g.config.cookie_key)
         sessionID = g.data.user.create_session(user.id, expiration=90 * 86400)
-        response = make_response(redirect(url_for("chat.home")))
+        response = make_response(redirect(absolute_url_for("chat.home", component="base")))
         response.set_cookie(
             "SessionID",
             aes.encrypt(sessionID),
@@ -179,7 +179,7 @@ def logout() -> Response:
     # Should always be true on loginrequired endpoints, but let's be safe.
     if g.sessionID:
         g.data.user.destroy_session(g.sessionID)
-    return redirect(url_for("welcome.home"))  # type: ignore
+    return redirect(absolute_url_for("welcome.home", component="base"))  # type: ignore
 
 
 @account.route("/register", methods=["POST"])

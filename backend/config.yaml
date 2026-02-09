@@ -12,6 +12,10 @@ name: "Critter Chat Instance"
 # The base URL that you've deployed this instance on.
 base_url: "http://localhost:5678/"
 
+# The upload base URL that you've deployed an instance specifically for processing upload on. If
+# you are processing uploads on the same subdomain as the base URL, feel free to leave this as-is.
+upload_url: ~
+
 database:
   # IP or DNS entry for MySQL instance
   address: "localhost"
@@ -23,7 +27,8 @@ database:
   password: "critterchat"
 
 attachments:
-  # The URL prefix of the attachment store.
+  # The URL prefix of the attachment store. This can be a full URL such as "https://attachments.example.com/"
+  # or a prefix directory if attachments are served on the same subdomain as the base URL.
   prefix: "/attachments/"
 
   # The attachment system that is used for attachment storage.

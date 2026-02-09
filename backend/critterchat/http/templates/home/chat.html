@@ -1,14 +1,14 @@
 {% extends "base.html" %}
 {% block includes %}
-  <script src="{{ url_for('static', filename=jsname) }}"></script>
-  <script src="{{ url_for('static', filename='twemoji-16.0.1.min.js') }}"></script>
-  <link href="{{ url_for('static', filename='chat.css') }}?{{ cachebust }}" rel="stylesheet" />
-  <link href="{{ url_for('static', filename='autocomplete.css') }}?{{ cachebust }}" rel="stylesheet" />
-  <link href="{{ url_for('static', filename='emojisearch.css') }}?{{ cachebust }}" rel="stylesheet" />
-  <link href="{{ url_for('static', filename='jquery.modal.css') }}?{{ cachebust }}" rel="stylesheet" />
+  <script src="{{ absolute_url_for('static', component="base", filename=jsname) }}"></script>
+  <script src="{{ absolute_url_for('static', component="base", filename='twemoji-16.0.1.min.js') }}"></script>
+  <link href="{{ absolute_url_for('static', component="base", filename='chat.css') }}?{{ cachebust }}" rel="stylesheet" />
+  <link href="{{ absolute_url_for('static', component="base", filename='autocomplete.css') }}?{{ cachebust }}" rel="stylesheet" />
+  <link href="{{ absolute_url_for('static', component="base", filename='emojisearch.css') }}?{{ cachebust }}" rel="stylesheet" />
+  <link href="{{ absolute_url_for('static', component="base", filename='jquery.modal.css') }}?{{ cachebust }}" rel="stylesheet" />
   <script>
     window.twemojiOptions = {
-        base: "{{ url_for('static', filename='twemoji/') }}",
+        base: "{{ absolute_url_for('static', component="base", filename='twemoji/') }}",
         attributes: function( _icon, _variant ) {
             return {
                 width: "72",
@@ -16,11 +16,11 @@
             };
         },
     };
-    window.versionCheck = "{{ url_for('chat.version') }}";
-    window.uploadIcon = "{{ url_for('upload.icon_upload') }}";
-    window.uploadAvatar = "{{ url_for('upload.avatar_upload') }}";
-    window.uploadNotifications = "{{ url_for('upload.notifications_upload') }}";
-    window.uploadAttachments = "{{ url_for('upload.attachments_upload') }}";
+    window.versionCheck = "{{ absolute_url_for('chat.version', component="base") }}";
+    window.uploadIcon = "{{ absolute_url_for('upload.icon_upload', component="upload") }}";
+    window.uploadAvatar = "{{ absolute_url_for('upload.avatar_upload', component="upload") }}";
+    window.uploadNotifications = "{{ absolute_url_for('upload.notifications_upload', component="upload") }}";
+    window.uploadAttachments = "{{ absolute_url_for('upload.attachments_upload', component="upload") }}";
     window.appname = {{ title|tojson|safe }};
     window.version = {{ version|tojson|safe }};
     window.emojis = {{ emojis|tojson|safe }};
@@ -38,7 +38,7 @@
     window.maxattachments = {{ maxattachments|tojson|safe }};
     window.defavi = {{ defavi|tojson|safe }};
     window.defroom = {{ defroom|tojson|safe }};
-    window.silence = {{ url_for('static', filename='silence.mp3')|tojson|safe }};
+    window.silence = {{ absolute_url_for('static', component="base", filename='silence.mp3')|tojson|safe }};
   </script>
 {% endblock %}
 {% block content %}

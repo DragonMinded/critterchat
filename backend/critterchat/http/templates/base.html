@@ -7,9 +7,9 @@
         <style>
             @font-face {
                 font-family: "Atkinson Hyperlegible";
-                src: url("{{ url_for('static', filename='Atkinson-Hyperlegible-Regular-102.otf') }}") format("opentype"),
-                url("{{ url_for('static', filename='Atkinson-Hyperlegible-Regular-102.ttf') }}") format("truetype"),
-                url("{{ url_for('static', filename='Atkinson-Hyperlegible-Regular-102.woff') }}") format("woff");
+                src: url("{{ absolute_url_for('static', component='base', filename='Atkinson-Hyperlegible-Regular-102.otf') }}") format("opentype"),
+                url("{{ absolute_url_for('static', component='base', filename='Atkinson-Hyperlegible-Regular-102.ttf') }}") format("truetype"),
+                url("{{ absolute_url_for('static', component='base', filename='Atkinson-Hyperlegible-Regular-102.woff') }}") format("woff");
             }
         </style>
         <meta name="viewport" content="width=device-width, initial-scale=1.0, interactive-widget=resizes-content" />

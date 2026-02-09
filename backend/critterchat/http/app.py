@@ -1,3 +1,6 @@
+import hashlib
+import json
+import os
 import traceback
 from functools import wraps
 from typing import Any, Callable, Dict, Optional, cast
@@ -10,7 +13,7 @@ from flask import (
     redirect,
     request as base_request,
     make_response,
-    url_for,
+    url_for as original_url_for,
     flash,
     g as base_g,
 )
@@ -137,11 +140,95 @@ def teardown_request(exception: Any) -> None:
         data.close()
 
 
+def absolute_url_for(endpoint: str, *, component: str, filename: Optional[str] = None, **values: Any) -> str:
+    if endpoint == "static":
+        if filename is None:
+            raise Exception("Logic error, should always provide filename with static resource lookup!")
+
+        uri = original_url_for(endpoint, filename=filename, **values)
+    else:
+        if filename is not None:
+            raise Exception("Logic error, should never provide filename with non-static resource lookup!")
+
+        uri = original_url_for(endpoint, **values)
+
+    while uri and (uri[0] == "/"):
+        uri = uri[1:]
+
+    if component == "upload":
+        base = config.upload_url
+    elif component == "attachment":
+        base = config.attachments.prefix
+        if not (base.startswith("http://") or base.startswith("https://")):
+            while base[0] == "/":
+                base = base[1:]
+
+            while base[-1] == "/":
+                base = base[:-1]
+
+            uri = f"{base}/{uri}"
+            base = config.base_url
+    elif component == "base":
+        base = config.base_url
+    else:
+        raise Exception(f"Logic error, unknown component {component}!")
+
+    while base[-1] == "/":
+        base = base[:-1]
+
+    return f"{base}/{uri}"
+
+
+FINGERPRINT_INCLUDE_FILES = [
+    "autocomplete.css",
+    "chat.css",
+    "emojisearch.css",
+    "jquery.modal.css",
+]
+
+
+def get_fingerprint_hash() -> str:
+    # Intentionally not caching, because if we cache this but not the below chat.js,
+    # then on deploy users might get two notifications for an update instead of one
+    # depending on how fast the deploy happens.
+
+    file_hash = hashlib.md5()
+    for file in FINGERPRINT_INCLUDE_FILES:
+        filepath = os.path.join(static_location, file)
+        with open(filepath, "rb") as bfp:
+            file_hash.update(bfp.read())
+
+    return file_hash.hexdigest()
+
+
+def get_frontend_filename() -> str:
+    # Attempt to look up our frontend JS, used also for cache-busting.
+    jspath = os.path.join(static_location, "webpack-assets.json")
+    with open(jspath, "rb") as bfp:
+        jsdata = bfp.read().decode('utf-8')
+        jsblob = json.loads(jsdata)
+        return str(jsblob['main']['js'])
+
+
+def get_frontend_version() -> str:
+    return get_frontend_filename().replace('.js', '').replace('chat.', '')
+
+
+@app.context_processor
+def extrafunctions() -> Dict[str, Any]:
+    cachebust = get_frontend_version() + "-" + get_fingerprint_hash()
+
+    return {
+        "absolute_url_for": absolute_url_for,
+        "cachebust": f"cachebust={cachebust}",
+    }
+
+
 def loginrequired(func: Callable[..., Response]) -> Callable[..., Response]:
     @wraps(func)
     def decoratedfunction(*args: Any, **kwargs: Any) -> Response:
         if g.user is None or UserPermission.ACTIVATED not in g.user.permissions:
-            return redirect(url_for("account.login"))  # type: ignore
+            return redirect(absolute_url_for("account.login", component='base'))  # type: ignore
         else:
             return func(*args, **kwargs)
 
@@ -152,7 +239,7 @@ def loginprohibited(func: Callable[..., Response]) -> Callable[..., Response]:
     @wraps(func)
     def decoratedfunction(*args: Any, **kwargs: Any) -> Response:
         if not (g.user is None or UserPermission.ACTIVATED not in g.user.permissions):
-            return redirect(url_for("chat.home"))  # type: ignore
+            return redirect(absolute_url_for("chat.home", component='base'))  # type: ignore
         else:
             return func(*args, **kwargs)
 

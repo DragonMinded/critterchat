@@ -1,13 +1,13 @@
 {% extends "base.html" %}
 {% block includes %}
-  <link href="{{ url_for('static', filename='home.css') }}?{{ cachebust }}" rel="stylesheet" />
+  <link href="{{ absolute_url_for('static', component='base', filename='home.css') }}?{{ cachebust }}" rel="stylesheet" />
 {% endblock %}
 {% block content %}
     <div class="login">
         <div class="login-wrapper">
             <div class="section">
                 <h2>Welcome to {{ name }}!</h2>
-                <form action="{{ url_for('account.loginpost') }}" method="post">
+                <form action="{{ absolute_url_for('account.loginpost', component='base') }}" method="post">
                     <dl>
                         <dt>Username</dt>
                         <dd><input type="text" name="username" value="{{ username }}"/></dd>
@@ -19,7 +19,7 @@
                 </form>
             </div>
             <div class="section">
-                Don't have an account? <a href="{{ url_for('account.register') }}">Create one!</a>
+                Don't have an account? <a href="{{ absolute_url_for('account.register', component='base') }}">Create one!</a>
             </div>
         </div>
     </div>

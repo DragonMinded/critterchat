@@ -462,7 +462,18 @@ class AttachmentService:
 
     def get_attachment_url(self, attachmentid: AttachmentID) -> str:
         prefix = self.__config.attachments.prefix
-        if prefix[-1] == "/":
+        while prefix and (prefix[-1] == "/"):
             prefix = prefix[:-1]
 
-        return f"{prefix}/{self._get_attachment_name(attachmentid)}"
+        possibly_relative = f"{prefix}/{self._get_attachment_name(attachmentid)}"
+        if possibly_relative.startswith("http://") or possibly_relative.startswith("https://"):
+            return possibly_relative
+
+        while possibly_relative[0] == "/":
+            possibly_relative = possibly_relative[1:]
+
+        base = self.__config.base_url
+        while base[-1] == "/":
+            base = base[:-1]
+
+        return f"{base}/{possibly_relative}"

@@ -126,3 +126,10 @@ class Config(dict[str, Any]):
     @property
     def base_url(self) -> str:
         return str(self.get("base_url", "http://localhost:5678/"))
+
+    @property
+    def upload_url(self) -> str:
+        value = str(self.get("upload_url", ""))
+        if not value:
+            value = self.base_url
+        return value

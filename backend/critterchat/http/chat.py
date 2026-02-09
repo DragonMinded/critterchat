@@ -1,10 +1,18 @@
-import hashlib
-import json
-import os
 from flask import Blueprint, Response, render_template
 from typing import Dict
 
-from .app import app, static_location, templates_location, loginrequired, jsonify, uncacheable, g
+from .app import (
+    app,
+    static_location,
+    templates_location,
+    loginrequired,
+    jsonify,
+    uncacheable,
+    get_frontend_version,
+    get_frontend_filename,
+    get_fingerprint_hash,
+    g,
+)
 from ..common import get_emoji_unicode_dict, get_aliases_unicode_dict
 from ..data import DefaultAvatarID, DefaultRoomID, FaviconID, User, UserPermission
 from ..service import AttachmentService, EmoteService
@@ -16,41 +24,6 @@ chat = Blueprint(
     template_folder=templates_location,
     static_folder=static_location,
 )
-
-
-FINGERPRINT_INCLUDE_FILES = [
-    "autocomplete.css",
-    "chat.css",
-    "emojisearch.css",
-    "jquery.modal.css",
-]
-
-
-def _get_fingerprint_hash() -> str:
-    # Intentionally not caching, because if we cache this but not the below chat.js,
-    # then on deploy users might get two notifications for an update instead of one
-    # depending on how fast the deploy happens.
-
-    file_hash = hashlib.md5()
-    for file in FINGERPRINT_INCLUDE_FILES:
-        filepath = os.path.join(static_location, file)
-        with open(filepath, "rb") as bfp:
-            file_hash.update(bfp.read())
-
-    return file_hash.hexdigest()
-
-
-def _get_frontend_filename() -> str:
-    # Attempt to look up our frontend JS, used also for cache-busting.
-    jspath = os.path.join(static_location, "webpack-assets.json")
-    with open(jspath, "rb") as bfp:
-        jsdata = bfp.read().decode('utf-8')
-        jsblob = json.loads(jsdata)
-        return str(jsblob['main']['js'])
-
-
-def _get_frontend_version() -> str:
-    return _get_frontend_filename().replace('.js', '').replace('chat.', '')
 
 
 @chat.route("/chat")
@@ -69,14 +42,13 @@ def home() -> Response:
     userid = None if (not g.user) else User.from_id(g.user.id)
     username = None if (not g.user) else g.user.username
     permissions = set() if (not g.user) else g.user.permissions
-    jsname = _get_frontend_filename()
-    cachebust = _get_frontend_version() + "-" + _get_fingerprint_hash()
+    jsname = get_frontend_filename()
+    cachebust = get_frontend_version() + "-" + get_fingerprint_hash()
 
     return Response(render_template(
         "home/chat.html",
         title=f"{g.config.name}",
         jsname=jsname,
-        cachebust=f"cachebust={cachebust}",
         version=cachebust,
         emojis=emojis,
         emotes=emotes,
@@ -141,7 +113,7 @@ def config() -> Dict[str, object]:
 @uncacheable
 @jsonify
 def version() -> Dict[str, object]:
-    return {"js": _get_frontend_version() + "-" + _get_fingerprint_hash()}
+    return {"js": get_frontend_version() + "-" + get_fingerprint_hash()}
 
 
 app.register_blueprint(chat)
