@@ -7,7 +7,14 @@
         <div class="login-wrapper">
             <div class="section">
                 <h2>Register Account</h2>
-                <form action="{{ absolute_url_for('account.registerpost', component='base') }}" method="post">
+                {% if invite %}
+                    <form action="{{ absolute_url_for('account.invitepost', component='base', invite=invite) }}" method="post">
+                    {% if user %}
+                        <div>You were invited to {{ config.name }} by {{ user.nickname }}.</div>
+                    {% endif %}
+                {% else %}
+                    <form action="{{ absolute_url_for('account.registerpost', component='base') }}" method="post">
+                {% endif %}
                     <dl>
                         <dt>Desired Username</dt>
                         <dd><input type="text" name="username" value="{{ username }}"/></dd>

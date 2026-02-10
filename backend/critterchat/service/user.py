@@ -17,6 +17,7 @@ from ..data import (
     FaviconID,
     NewActionID,
     NewOccupantID,
+    NewUserID,
     ActionID,
     AttachmentID,
     Occupant,
@@ -271,6 +272,23 @@ class UserService:
         # Now, generate and return a recovery string for the user.
         recovery = self.__data.user.create_recovery(user.id)
         url = f"{self.__config.base_url}/recover/{recovery}"
+        while "//" in url:
+            url = url.replace("//", "/")
+        url = url.replace("http:/", "http://")
+        url = url.replace("https:/", "https://")
+        return url
+
+    def create_user_invite(self, userid: UserID) -> str:
+        if userid != NewUserID:
+            # First, ensure the user existis so we can get the ID of the user doing
+            # the inviting.
+            user = self.__data.user.get_user(userid)
+            if not user:
+                raise UserServiceException("User does not exist in the database!")
+
+        # Now, generate and return an invite string for the user.
+        invite = self.__data.user.create_invite(userid)
+        url = f"{self.__config.base_url}/register/{invite}"
         while "//" in url:
             url = url.replace("//", "/")
         url = url.replace("http:/", "http://")

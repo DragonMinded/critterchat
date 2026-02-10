@@ -6,7 +6,7 @@
     <div class="login">
         <div class="login-wrapper">
             <div class="section">
-                <h2>Welcome to {{ name }}!</h2>
+                <h2>Welcome to {{ config.name }}!</h2>
                 <form action="{{ absolute_url_for('account.loginpost', component='base') }}" method="post">
                     <dl>
                         <dt>Username</dt>

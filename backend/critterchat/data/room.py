@@ -133,7 +133,7 @@ class RoomData(BaseData):
         Returns:
             list of Room objects representing the rooms the user is in.
         """
-        if userid is NewUserID:
+        if userid == NewUserID:
             return []
 
         if include_left:
@@ -171,7 +171,7 @@ class RoomData(BaseData):
         Returns:
             list of Room objects representing the rooms the user was previously in but isn't in now.
         """
-        if userid is NewUserID:
+        if userid == NewUserID:
             return []
 
         sql = """
@@ -201,7 +201,7 @@ class RoomData(BaseData):
         Parameters:
             roomid - The ID of the user that we want occupants for.
         """
-        if userid is NewUserID:
+        if userid == NewUserID:
             return {}
 
         sql = """
@@ -239,7 +239,7 @@ class RoomData(BaseData):
         Returns:
             list of Room objects representing the rooms the user is in.
         """
-        if userid is NewUserID:
+        if userid == NewUserID:
             return []
 
         sql = """
@@ -340,7 +340,7 @@ class RoomData(BaseData):
         Returns:
             list of Room objects representing the rooms the user is in.
         """
-        if userid is NewUserID:
+        if userid == NewUserID:
             return []
 
         sql = """
@@ -398,7 +398,7 @@ class RoomData(BaseData):
             roomid - The ID of the room we're setting.
             autojoin - A boolean for whether the room should be autojoin or not.
         """
-        if roomid is NewRoomID:
+        if roomid == NewRoomID:
             return
 
         sql = """
@@ -414,7 +414,7 @@ class RoomData(BaseData):
             roomid - The ID of the room we want to fetch.
         """
 
-        if roomid is NewRoomID:
+        if roomid == NewRoomID:
             return None
 
         sql = """
@@ -449,7 +449,7 @@ class RoomData(BaseData):
             occupantid - The ID of the occupant we want to fetch the room for.
         """
 
-        if occupantid is NewOccupantID:
+        if occupantid == NewOccupantID:
             return None
 
         sql = """
@@ -470,7 +470,7 @@ class RoomData(BaseData):
             room - The room object to create.
         """
 
-        if room.id is not NewRoomID:
+        if room.id != NewRoomID:
             raise Exception("Logic error, cannot insert already-persisted room as a new room!")
 
         timestamp = Time.now()
@@ -497,7 +497,7 @@ class RoomData(BaseData):
             roomid - ID of the room we wish to join.
             userid - ID of the user wishing to join.
         """
-        if userid is NewUserID or roomid is NewRoomID:
+        if userid == NewUserID or roomid == NewRoomID:
             return None
 
         with self.transaction():
@@ -539,7 +539,7 @@ class RoomData(BaseData):
             roomid - ID of the room we wish to join.
             userid - ID of the user wishing to join.
         """
-        if userid is NewUserID or roomid is NewRoomID:
+        if userid == NewUserID or roomid == NewRoomID:
             return None
 
         with self.transaction():
@@ -565,7 +565,7 @@ class RoomData(BaseData):
             roomid - ID of the room we wish to leave.
             userid - ID of the user wishing to leave.
         """
-        if userid is NewUserID or roomid is NewRoomID:
+        if userid == NewUserID or roomid == NewRoomID:
             return
 
         # insert_action will ignore actions for anyone already out of the room.
@@ -595,7 +595,7 @@ class RoomData(BaseData):
             roomid - ID of the room we wish to update.
             userid - ID of the user wishing to be moderator.
         """
-        if userid is NewUserID or roomid is NewRoomID:
+        if userid == NewUserID or roomid == NewRoomID:
             return
 
         with self.transaction():
@@ -638,7 +638,7 @@ class RoomData(BaseData):
             roomid - ID of the room we wish to update.
             userid - ID of the user wishing to not be moderator.
         """
-        if userid is NewUserID or roomid is NewRoomID:
+        if userid == NewUserID or roomid == NewRoomID:
             return
 
         with self.transaction():
@@ -681,7 +681,7 @@ class RoomData(BaseData):
             roomid - ID of the room we wish to update.
             userid - ID of the user that should be muted.
         """
-        if userid is NewUserID or roomid is NewRoomID:
+        if userid == NewUserID or roomid == NewRoomID:
             return
 
         with self.transaction():
@@ -724,7 +724,7 @@ class RoomData(BaseData):
             roomid - ID of the room we wish to update.
             userid - ID of the user that should be unmuted.
         """
-        if userid is NewUserID or roomid is NewRoomID:
+        if userid == NewUserID or roomid == NewRoomID:
             return
 
         with self.transaction():
@@ -763,12 +763,12 @@ class RoomData(BaseData):
         """
         Given a valid room, update its details to match the given object.
         """
-        if room.id is NewRoomID:
+        if room.id == NewRoomID:
             return
 
         if (
             room.iconid is not None and
-            room.iconid is not NewAttachmentID
+            room.iconid != NewAttachmentID
         ):
             iconid = room.iconid
         else:
@@ -779,7 +779,7 @@ class RoomData(BaseData):
         """
         self.execute(sql, {"roomid": room.id, "name": room.name, "topic": room.topic, "iconid": iconid, "moderated": room.moderated})
 
-        if userid is NewUserID:
+        if userid == NewUserID:
             occupant = None
         else:
             occupant = Occupant(
@@ -847,7 +847,7 @@ class RoomData(BaseData):
         Parameters:
             roomid - The ID of the room that we want occupants for.
         """
-        if roomid is NewRoomID:
+        if roomid == NewRoomID:
             return []
 
         if include_left:
@@ -884,7 +884,7 @@ class RoomData(BaseData):
         Parameters:
             occupantid - The ID of the occupant we're curious about.
         """
-        if occupantid is NewOccupantID:
+        if occupantid == NewOccupantID:
             return None
 
         sql = """
@@ -944,7 +944,7 @@ class RoomData(BaseData):
         Returns:
             list of Action objects representing actions taken in the room.
         """
-        if roomid is NewRoomID:
+        if roomid == NewRoomID:
             return []
 
         # First, grab all the actions we can.
@@ -1032,14 +1032,14 @@ class RoomData(BaseData):
             roomid - ID of the room that the action should go into.
             action - The action itself that should be added.
         """
-        if roomid is NewRoomID:
+        if roomid == NewRoomID:
             raise Exception("Logic error, should not try to insert an action to a new room ID!")
 
-        if action.id is not NewActionID:
+        if action.id != NewActionID:
             raise Exception("Logic error, cannot insert already-persisted action as a new action!")
 
         if action.occupant:
-            if action.occupant.userid is NewUserID:
+            if action.occupant.userid == NewUserID:
                 # Cannot insert an action as a fake user. This should be performed as an action without
                 # an occupant.
                 return
@@ -1054,7 +1054,7 @@ class RoomData(BaseData):
             result = cursor.mappings().fetchone()
             occupant = result['id']
 
-            if action.occupant.id is not NewOccupantID:
+            if action.occupant.id != NewOccupantID:
                 if action.occupant.id != OccupantID(occupant):
                     # Trying to send as an occupant that we're not?
                     return

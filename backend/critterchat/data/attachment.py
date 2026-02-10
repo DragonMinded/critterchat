@@ -202,7 +202,7 @@ class AttachmentData(BaseData):
             attachmentid - The attachment ID we're curious about.
         """
 
-        if attachmentid is NewAttachmentID:
+        if attachmentid == NewAttachmentID:
             return None
 
         sql = """
@@ -320,7 +320,7 @@ class AttachmentData(BaseData):
         """
         Look up all custom notifications for a user.
         """
-        if userid is NewUserID:
+        if userid == NewUserID:
             return {}
 
         sql = """
@@ -350,7 +350,7 @@ class AttachmentData(BaseData):
         """
         Look up a custom notification for a user based on type.
         """
-        if userid is NewUserID:
+        if userid == NewUserID:
             return None
 
         sql = """
@@ -382,7 +382,7 @@ class AttachmentData(BaseData):
         """
         Given a custom notification and an attachment ID, insert or update the notification for a user.
         """
-        if userid is NewUserID:
+        if userid == NewUserID:
             return
 
         sql = """
@@ -396,7 +396,7 @@ class AttachmentData(BaseData):
         """
         Remove any existing notification of this type for this user.
         """
-        if userid is NewUserID:
+        if userid == NewUserID:
             return
 
         sql = """
@@ -422,7 +422,7 @@ class AttachmentData(BaseData):
         """
         Look up all action attachments for a given action or actions in the system.
         """
-        if actionid is NewActionID:
+        if actionid == NewActionID:
             return {}
 
         ids: List[ActionID] = []
@@ -469,9 +469,9 @@ class AttachmentData(BaseData):
         Given an action ID and an attachment ID, create a link between the two for later retrieval.
         """
 
-        if actionid is NewActionID:
+        if actionid == NewActionID:
             raise Exception("Logic error, should not try to link an action and an attachment with a new action ID!")
-        if attachmentid is NewAttachmentID:
+        if attachmentid == NewAttachmentID:
             raise Exception("Logic error, should not try to link an action and an attachment with a new attachment ID!")
 
         sql = """
@@ -484,9 +484,9 @@ class AttachmentData(BaseData):
         Given an action ID and an attachment ID, remove an existinga link between the two.
         """
 
-        if actionid is NewActionID:
+        if actionid == NewActionID:
             raise Exception("Logic error, should not try to unlink an action and an attachment with a new action ID!")
-        if attachmentid is NewAttachmentID:
+        if attachmentid == NewAttachmentID:
             raise Exception("Logic error, should not try to unlink an action and an attachment with a new attachment ID!")
 
         sql = """

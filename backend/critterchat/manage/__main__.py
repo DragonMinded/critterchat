@@ -188,6 +188,25 @@ def generate_password_recovery(config: Config, username: str) -> None:
         data.close()
 
 
+def generate_user_invite(config: Config) -> None:
+    """
+    Generate an invite URL that somebody can use to join an instance without needing
+    activation, and bypassing any disabled activation settings.
+    """
+
+    data = Data(config)
+
+    try:
+        userservice = UserService(config, data)
+        url = userservice.create_user_invite(NewUserID)
+
+        print(f"Generated invite URL for new user sign-up: {url}")
+    except UserServiceException as e:
+        raise CommandException(str(e))
+    finally:
+        data.close()
+
+
 def activate_user(config: Config, username: str) -> None:
     """
     Given an existing user that logs in with username, update their account to be in the active
@@ -825,6 +844,13 @@ def main() -> None:
     )
 
     # Only a few params for this one
+    user_commands.add_parser(
+        "generate_invite",
+        help="generate invite URL for a new user to sign up for the instance",
+        description="Generate invite URL for a new user to sign up for the instance.",
+    )
+
+    # Only a few params for this one
     change_password_parser = user_commands.add_parser(
         "change_password",
         help="change password for a user that can log in",
@@ -1251,6 +1277,8 @@ def main() -> None:
                 list_users(config)
             elif args.user == "create":
                 create_user(config, args.username, args.password)
+            elif args.user == "generate_invite":
+                generate_user_invite(config)
             elif args.user == "change_password":
                 change_user_password(config, args.username, args.password)
             elif args.user == "generate_recovery":

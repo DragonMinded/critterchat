@@ -21,7 +21,6 @@ def home() -> Response:
     return Response(render_template(
         "home/welcome.html",
         title=f"Welcome to {g.config.name}",
-        name=g.config.name,
         favicon=attachmentservice.get_attachment_url(FaviconID),
     ))
 
