@@ -597,6 +597,7 @@ form button, form input[type=button], form input::file-selector-button {
 textarea {
     font-family: "Atkinson Hyperlegible", Arial, Helvetica, sans-serif;
     font-size: var(--application-text-size-14);
+    background: var(--input-background);
 }
 
 button:enabled:hover, button:enabled:focus-visible, input[type=button]:enabled:hover, input::file-selector-button:hover {
