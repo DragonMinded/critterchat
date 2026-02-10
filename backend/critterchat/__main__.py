@@ -74,5 +74,7 @@ if __name__ == '__main__':
     perform_initialization_work(config)
 
     if args.nginx_proxy > 0:
-        app.wsgi_app = ProxyFix(app.wsgi_app, x_host=args.nginx_proxy, x_proto=args.nginx_proxy, x_for=args.nginx_proxy)  # type: ignore
+        logger.info(f"Fixing proxy headers with a depth of {args.nginx_proxy}")
+        app.wsgi_app = ProxyFix(app.wsgi_app, x_host=args.nginx_proxy, x_proto=args.nginx_proxy, x_for=args.nginx_proxy, x_prefix=args.nginx_proxy)  # type: ignore
+    logger.info(f"Running server listening on port {args.port}")
     socketio.run(app, host='0.0.0.0', port=args.port, debug=args.debug)
