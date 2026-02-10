@@ -222,6 +222,7 @@ def extrafunctions() -> Dict[str, Any]:
 
     return {
         "absolute_url_for": absolute_url_for,
+        "config": config,
         "cachebust": f"cachebust={cachebust}",
     }
 

@@ -1421,8 +1421,10 @@ div.preference div.explain, div.chatdetails div.explain {
     padding-bottom: var(--application-item-padding);
 }
 
-div.warning > div.warning-text, div.information > div.information-text {
+div.warning div.warning-text, div.information div.information-text {
+    height: calc(var(--modal-fixed-height) - var(--modal-item-padding) - var(--pane-action-button-height));
     flex-grow: 1;
+    overflow-y: auto;
 }
 
 div.search > div.actions div.searchbox {

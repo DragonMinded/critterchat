@@ -22,9 +22,11 @@
                     </dl>
                 </form>
             </div>
-            <div class="section">
-                Don't have an account? <a href="{{ absolute_url_for('account.register', component='base') }}">Create one!</a>
-            </div>
+            {% if config.account_registration.enabled %}
+                <div class="section">
+                    Don't have an account? <a href="{{ absolute_url_for('account.register', component='base') }}">Create one!</a>
+                </div>
+            {% endif %}
         </div>
     </div>
 {% endblock %}

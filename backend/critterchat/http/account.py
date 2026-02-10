@@ -18,9 +18,13 @@ account = Blueprint(
 @account.route("/login", methods=["POST"])
 @loginprohibited
 def loginpost() -> Response:
-    attachmentservice = AttachmentService(g.config, g.data)
     username = request.form["username"]
     password = request.form["password"]
+    return __login(username, password)
+
+
+def __login(username: str, password: str) -> Response:
+    attachmentservice = AttachmentService(g.config, g.data)
 
     original_username = username
     if username[0] == "@":
@@ -231,6 +235,10 @@ def registerpost() -> Response:
     password1 = request.form["password1"]
     password2 = request.form["password2"]
 
+    if not g.config.account_registration.enabled:
+        error("Account registration is disabled.")
+        return make_response(redirect(absolute_url_for("welcome.home", component="base")))
+
     if not username:
         error("You need to choose a username!")
         return Response(
@@ -299,15 +307,10 @@ def registerpost() -> Response:
                 )
             )
         else:
-            info("Your account was created successfully, feel free to log in!")
-            return Response(
-                render_template(
-                    "account/login.html",
-                    title="Log In",
-                    username=username,
-                    favicon=attachmentservice.get_attachment_url(FaviconID),
-                )
-            )
+            # No reason to make the user type the same username and password, just
+            # log them in using the credentials they just used.
+            info("Your account was created successfully!")
+            return __login(username, password1)
 
     except UserServiceException as e:
         error(str(e))

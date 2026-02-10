@@ -1,13 +1,19 @@
 TODO Immediate
 ==============
 
- - Emote/emoji reactions to messages.
- - Another pass over PROTOCOL.md.
+ - Invite user flow.
+ - Create invite from CLI.
+ - Allow create invite from UI when enabled.
+ - Mastodon client registration.
+ - OAuth from mastodon support.
+ - Welcome message support.
 
 TODO For Public Instance
 ========================
 
  - Stickers support in some form.
+ - Emote/emoji reactions to messages.
+ - Another pass over PROTOCOL.md.
 
 TODO Low Priority
 =================

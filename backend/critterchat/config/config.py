@@ -88,6 +88,23 @@ class Limits:
         return int(self.__config.get("limits", {}).get("attachment_max", 4))
 
 
+class AccountRegistration:
+    def __init__(self, parent_config: "Config") -> None:
+        self.__config = parent_config
+
+    @property
+    def enabled(self) -> bool:
+        return bool(self.__config.get("account_registration", {}).get("enabled", True))
+
+    @property
+    def invites(self) -> bool:
+        return bool(self.__config.get("account_registration", {}).get("invites", False))
+
+    @property
+    def auto_approve(self) -> bool:
+        return bool(self.__config.get("account_registration", {}).get("auto_approve", False))
+
+
 class Config(dict[str, Any]):
     def __init__(self, existing_contents: Dict[str, Any] = {}) -> None:
         super().__init__(existing_contents or {})
@@ -95,6 +112,7 @@ class Config(dict[str, Any]):
         self.database = Database(self)
         self.attachments = Attachments(self)
         self.limits = Limits(self)
+        self.account_registration = AccountRegistration(self)
 
     def clone(self) -> "Config":
         # Somehow its not possible to clone this object if an instantiated Engine is present,

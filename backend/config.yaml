@@ -61,3 +61,21 @@ limits:
 
   # The maximum size in KB of message attachments.
   attachment_size: 2048
+
+account_registration:
+  # Whether new account registration is enabled at all. If this is enabled, users can follow
+  # the register new account flow and create an account. If this is disabled, accounts can
+  # only be created through enabled oauth flows, invites or directly by an administrator.
+  enabled: true
+
+  # Whether user-registered accounts are automatically activated or not. If this is enabled,
+  # users who register new accounts are automatically activated and can chat immediately.
+  # If this is disabled, an admin must activate the user's account before it is usable. Note
+  # that this only affects local account creation, not account creation through supported
+  # oauth flows or through invites.
+  auto_approve: false
+
+  # Whether users can generate invites for others or not. If this is enabled, users can generate
+  # an invite link which allows somebody with the link to sign up for an account that is then
+  # auto-approved. If this is not enabled, then only admins can generate such links.
+  invites: false

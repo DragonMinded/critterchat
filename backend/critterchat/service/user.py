@@ -176,7 +176,10 @@ class UserService:
         if not user:
             raise UserServiceException("Username already exists, please choose another!")
 
-        # TODO: Check network settings and auto-activate user if the setting for this is enabled.
+        # Check network settings and auto-activate user if the setting for this is enabled.
+        if self.__config.account_registration.auto_approve:
+            self.add_permission(user.id, UserPermission.ACTIVATED)
+            user.permissions.add(UserPermission.ACTIVATED)
 
         # Finally, return the user that was just created.
         return user
