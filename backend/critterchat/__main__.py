@@ -2,6 +2,8 @@ from gevent import monkey
 monkey.patch_all()
 
 import argparse  # noqa
+import logging  # noqa
+from flask.logging import default_handler  # noqa
 from werkzeug.middleware.proxy_fix import ProxyFix  # noqa
 
 from critterchat.http import app, config, socketio  # noqa
@@ -21,27 +23,30 @@ import critterchat.http.socket  # noqa
 from critterchat.http.attachments import attachments  # noqa
 
 
+logger = logging.getLogger(__name__)
+
+
 def perform_initialization_work(config: Config) -> None:
     data = Data(config)
 
     # Ensure that the default avatars are copied to the attachment storage system.
     attachmentservice = AttachmentService(config, data)
-    print("Creating any default attachments required.")
+    logger.info("Creating any default attachments required.")
     attachmentservice.create_default_attachments()
-    print("Migrating any legacy attachments to current system.")
+    logger.info("Migrating any legacy attachments to current system.")
     attachmentservice.migrate_legacy_attachments()
 
     # Ensure that any nickname loopholes are fixed.
     userservice = UserService(config, data)
-    print("Migrating any legacy names to current rules.")
+    logger.info("Migrating any legacy names to current rules.")
     userservice.migrate_legacy_names()
 
     # Ensure any per-room nicknames loopholes are fixed.
     messageservice = MessageService(config, data)
-    print("Migrating any per-room legacy names to current rules.")
+    logger.info("Migrating any per-room legacy names to current rules.")
     messageservice.migrate_legacy_names()
 
-    print("Done with initialization.")
+    logger.info("Done with initialization.")
 
 
 if __name__ == '__main__':
@@ -54,6 +59,12 @@ if __name__ == '__main__':
 
     load_config(args.config, config)
     app.secret_key = config.cookie_key
+
+    root_logger = logging.getLogger()
+    while root_logger.hasHandlers():
+        root_logger.removeHandler(logger.handlers[0])
+    root_logger.addHandler(default_handler)
+    root_logger.setLevel(logging.DEBUG if args.debug else logging.INFO)
 
     # Attach local storage handler if we're local attachment type.
     if config.attachments.system == "local":

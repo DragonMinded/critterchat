@@ -1,3 +1,4 @@
+import logging
 import traceback
 from threading import Lock
 from typing import Any, Dict, Final, List, Literal, Optional, Set, cast
@@ -53,6 +54,7 @@ MAX_ICON_HEIGHT: Final[int] = 256
 socket_lock: Lock = Lock()
 socket_to_info: Dict[Any, SocketInfo] = {}
 background_thread: Optional[object] = None
+logger = logging.getLogger(__name__)
 
 
 def background_thread_proc() -> None:
@@ -61,8 +63,8 @@ def background_thread_proc() -> None:
             background_thread_proc_impl()
             return
         except Exception:
-            print(traceback.format_exc())
-            print("Background polling thread died with an exception, restarting!")
+            logger.error(traceback.format_exc())
+            logger.info("Background polling thread died with an exception, restarting!")
 
 
 def background_thread_proc_impl() -> None:
@@ -104,9 +106,9 @@ def background_thread_proc_impl() -> None:
             # Send the delta to the clients, intentionally not choosing a room here.
             if additions or deletions:
                 if additions:
-                    print("Detected the following added emotes: " + ", ".join(additions))
+                    logger.info("Detected the following added emotes: " + ", ".join(additions))
                 if deletions:
-                    print("Detected the following removed emotes: " + ", ".join(deletions))
+                    logger.info("Detected the following removed emotes: " + ", ".join(deletions))
                 socketio.emit('emotechanges', {
                     'additions': {f":{alias}:": newemotes[alias].to_dict() for alias in additions},
                     'deletions': [f":{d}:" for d in deletions],
@@ -128,7 +130,7 @@ def background_thread_proc_impl() -> None:
         # This prevents a misbehaving client from locking the whole network.
         with socket_lock:
             if not socket_to_info:
-                print("Shutting down message pump thread due to no more client sockets.")
+                logger.info("Shutting down message pump thread due to no more client sockets.")
 
                 global background_thread
                 background_thread = None
@@ -246,7 +248,7 @@ def register_sid(data: Data, sid: Any, sessionid: Optional[str]) -> None:
     with socket_lock:
         global background_thread
         if background_thread is None:
-            print("Starting message pump thread due to first client socket connection.")
+            logger.info("Starting message pump thread due to first client socket connection.")
             background_thread = socketio.start_background_task(background_thread_proc)
 
         user = None if sessionid is None else data.user.from_session(sessionid)

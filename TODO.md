@@ -1,7 +1,6 @@
 TODO Immediate
 ==============
 
- - Instantiate logger and get some logging messages sprinkled around.
  - Emote/emoji reactions to messages.
  - Another pass over PROTOCOL.md.
 

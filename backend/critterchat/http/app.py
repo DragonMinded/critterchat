@@ -1,5 +1,6 @@
 import hashlib
 import json
+import logging
 import os
 import traceback
 from functools import wraps
@@ -59,9 +60,10 @@ class CritterChatFlask(Flask):
         return Flask.get_send_file_max_age(self, name)
 
 
+logger = logging.getLogger(__name__)
 app = CritterChatFlask(__name__)
 CORS(app)
-socketio = SocketIO(app, logger=True, async_mode='gevent', cors_allowed_origins='*')
+socketio = SocketIO(app, logger=logger, async_mode='gevent', cors_allowed_origins='*')
 config: Config = Config()
 
 
@@ -256,7 +258,7 @@ def jsonify(func: Callable[..., Dict[str, Any]]) -> Callable[..., Response]:
                 code = e.code
             else:
                 code = 500
-                print(traceback.format_exc())
+                logger.error(traceback.format_exc())
 
             return make_response(flask_jsonify(
                 {
