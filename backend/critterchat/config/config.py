@@ -128,6 +128,18 @@ class Config(dict[str, Any]):
         return str(self.get("base_url", "http://localhost:5678/"))
 
     @property
+    def account_base(self) -> str:
+        account_base = self.base_url
+        if account_base.startswith("http://"):
+            account_base = account_base[7:]
+        if account_base.startswith("https://"):
+            account_base = account_base[8:]
+        if "/" in account_base:
+            account_base, _ = account_base.split("/", 1)
+
+        return account_base
+
+    @property
     def upload_url(self) -> str:
         value = str(self.get("upload_url", ""))
         if not value:

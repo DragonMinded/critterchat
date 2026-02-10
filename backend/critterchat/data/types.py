@@ -1,6 +1,8 @@
 from enum import IntEnum, StrEnum
 from typing import Dict, List, NewType, Optional, Set, Tuple
 
+from ..config import Config
+
 
 UserID = NewType("UserID", int)
 RoomID = NewType("RoomID", int)
@@ -54,7 +56,7 @@ class User:
         self.moderator: Optional[bool] = None
         self.muted: Optional[bool] = None
 
-    def to_dict(self, *, admin: bool = False) -> Dict[str, object]:
+    def to_dict(self, *, config: Optional[Config] = None, admin: bool = False) -> Dict[str, object]:
         retval: Dict[str, object] = {
             "id": User.from_id(self.id),
             "username": self.username,
@@ -69,6 +71,9 @@ class User:
             retval["moderator"] = self.moderator
         if self.muted is not None:
             retval["muted"] = self.muted
+
+        if config:
+            retval["full_username"] = f"@{self.username}@{config.account_base}"
 
         if admin:
             retval["permissions"] = [p.name for p in self.permissions]

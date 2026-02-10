@@ -230,7 +230,7 @@ def background_thread_proc_impl() -> None:
                             admin = userprofile is not None and UserPermission.ADMINISTRATOR in userprofile.permissions
                             if userprofile:
                                 info.profilets = ts
-                                socketio.emit('profile', userprofile.to_dict(admin=admin), room=info.sid)
+                                socketio.emit('profile', userprofile.to_dict(config=config, admin=admin), room=info.sid)
 
                     if prefsts is not None:
                         ts = Time.now()
@@ -462,7 +462,7 @@ def profile(json: Dict[str, object]) -> None:
         # Generic profile lookup request.
         userprofile = userservice.lookup_user(otheruserid)
         if userprofile:
-            socketio.emit('profile', hydrate_tag(json, userprofile.to_dict(admin=admin)), room=request.sid)
+            socketio.emit('profile', hydrate_tag(json, userprofile.to_dict(config=config, admin=admin)), room=request.sid)
             return
 
     occupantid = Occupant.to_id(str(json.get('userid')))
@@ -470,7 +470,7 @@ def profile(json: Dict[str, object]) -> None:
         # Per-room profile lookup request.
         userprofile = messageservice.lookup_occupant(occupantid)
         if userprofile:
-            socketio.emit('profile', hydrate_tag(json, userprofile.to_dict(admin=admin)), room=request.sid)
+            socketio.emit('profile', hydrate_tag(json, userprofile.to_dict(config=config, admin=admin)), room=request.sid)
             return
 
     # Locking our socket info so we can keep track of profiles sent to all sessions.
@@ -481,7 +481,7 @@ def profile(json: Dict[str, object]) -> None:
         userprofile = userservice.lookup_user(userid)
         if userprofile:
             info.profilets = ts
-            socketio.emit('profile', hydrate_tag(json, userprofile.to_dict(admin=admin)), room=request.sid)
+            socketio.emit('profile', hydrate_tag(json, userprofile.to_dict(config=config, admin=admin)), room=request.sid)
 
 
 @socketio.on('preferences')  # type: ignore
@@ -560,7 +560,7 @@ def updateprofile(json: Dict[str, object]) -> None:
         admin = userprofile is not None and UserPermission.ADMINISTRATOR in userprofile.permissions
 
         if userprofile:
-            socketio.emit('profile', hydrate_tag(json, userprofile.to_dict(admin=admin)), room=request.sid)
+            socketio.emit('profile', hydrate_tag(json, userprofile.to_dict(config=config, admin=admin)), room=request.sid)
             flash('success', 'Your profile has been updated!', room=request.sid)
     except UserServiceException as e:
         error(str(e), room=request.sid)

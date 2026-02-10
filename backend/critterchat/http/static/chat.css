@@ -1481,7 +1481,7 @@ div.profile div.icon img {
     margin: 0px;
 }
 
-div.profile div.nickname-wrapper, div.profile div.actions-wrapper, div.profile div.admin-wrapper {
+div.profile div.nickname-wrapper, div.profile div.username-wrapper, div.profile div.actions-wrapper, div.profile div.admin-wrapper {
     display: flex;
     justify-content: center;
     gap: var(--modal-item-padding);
@@ -1494,6 +1494,10 @@ div.profile div.actions-wrapper, div.profile div.admin-wrapper {
 
 div.profile div.nickname-wrapper div.nickname {
     font-weight: bold;
+}
+
+div.profile div.username-wrapper div.username {
+    font-size: var(--application-text-size-14);
 }
 
 div.profile hr {

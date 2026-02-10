@@ -130,6 +130,16 @@ class Profile {
         $('#profile-form #profile-icon').attr('src', profile.icon);
         $('#profile-form #profile-nickname').html(escapeHtml(profile.nickname));
 
+        if (profile.full_username) {
+            $('#profile-form div.username-wrapper').show();
+            $('#profile-form #profile-username').html(escapeHtml("@" + profile.username));
+
+            // At some point, when we have inter-instance DMs working, we will want to either allow
+            // toggling the full username or copying the full username to clipboard or something here.
+        } else {
+            $('#profile-form div.username-wrapper').hide();
+        }
+
         if (profile.about) {
             $('#profile-form #profile-about').html(linkifyHtml(escapeHtml(profile.about), linkifyOptions));
             $('#profile-form #profile-about').removeClass('empty');;

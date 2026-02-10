@@ -22,6 +22,26 @@ def loginpost() -> Response:
     username = request.form["username"]
     password = request.form["password"]
 
+    original_username = username
+    if username[0] == "@":
+        # The user logged in with their handle, including the @.
+        username = username[1:]
+
+    if "@" in username:
+        # The user is specifying username@server, right now we only support logging in to our
+        # own instance that way, so ensure that that's what's going on.
+        username, instance = username.split("@", 1)
+        if instance.lower() != g.config.account_base.lower():
+            error(f"Unsupported instance {instance.lower()}!")
+            return Response(
+                render_template(
+                    "account/login.html",
+                    title="Log In",
+                    username=original_username,
+                    favicon=attachmentservice.get_attachment_url(FaviconID),
+                )
+            )
+
     user = g.data.user.from_username(username)
     if user is None:
         error("Unrecognized username or password!")
@@ -29,7 +49,7 @@ def loginpost() -> Response:
             render_template(
                 "account/login.html",
                 title="Log In",
-                username=username,
+                username=original_username,
                 favicon=attachmentservice.get_attachment_url(FaviconID),
             )
         )
@@ -40,7 +60,7 @@ def loginpost() -> Response:
             render_template(
                 "account/login.html",
                 title="Log In",
-                username=username,
+                username=original_username,
                 favicon=attachmentservice.get_attachment_url(FaviconID),
             )
         )
@@ -63,7 +83,7 @@ def loginpost() -> Response:
             render_template(
                 "account/login.html",
                 title="Log In",
-                username=username,
+                username=original_username,
                 favicon=attachmentservice.get_attachment_url(FaviconID),
             )
         )
@@ -89,6 +109,27 @@ def recoverpost(recovery: str) -> Response:
     password1 = request.form["password1"]
     password2 = request.form["password2"]
 
+    original_username = username
+    if username[0] == "@":
+        # The user logged in with their handle, including the @.
+        username = username[1:]
+
+    if "@" in username:
+        # The user is specifying username@server, right now we only support logging in to our
+        # own instance that way, so ensure that that's what's going on.
+        username, instance = username.split("@", 1)
+        if instance.lower() != g.config.account_base.lower():
+            error(f"Unsupported instance {instance.lower()}!")
+            return Response(
+                render_template(
+                    "account/recover.html",
+                    title="Recover Account Password",
+                    username=original_username,
+                    recovery=recovery,
+                    favicon=attachmentservice.get_attachment_url(FaviconID),
+                )
+            )
+
     if not username:
         error("You need to specify your username!")
         return Response(
@@ -106,7 +147,7 @@ def recoverpost(recovery: str) -> Response:
             render_template(
                 "account/recover.html",
                 title="Recover Account Password",
-                username=username,
+                username=original_username,
                 recovery=recovery,
                 favicon=attachmentservice.get_attachment_url(FaviconID),
             )
@@ -118,7 +159,7 @@ def recoverpost(recovery: str) -> Response:
             render_template(
                 "account/recover.html",
                 title="Recover Account Password",
-                username=username,
+                username=original_username,
                 recovery=recovery,
                 favicon=attachmentservice.get_attachment_url(FaviconID),
             )
@@ -132,7 +173,7 @@ def recoverpost(recovery: str) -> Response:
                 render_template(
                     "account/login.html",
                     title="Log In",
-                    username=user.username,
+                    username=original_username,
                     favicon=attachmentservice.get_attachment_url(FaviconID),
                 )
             )
@@ -142,7 +183,7 @@ def recoverpost(recovery: str) -> Response:
                 render_template(
                     "account/login.html",
                     title="Log In",
-                    username=user.username,
+                    username=original_username,
                     favicon=attachmentservice.get_attachment_url(FaviconID),
                 )
             )
@@ -153,7 +194,7 @@ def recoverpost(recovery: str) -> Response:
             render_template(
                 "account/recover.html",
                 title="Recover Account Password",
-                username=username,
+                username=original_username,
                 recovery=recovery,
                 favicon=attachmentservice.get_attachment_url(FaviconID),
             )

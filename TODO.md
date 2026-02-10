@@ -25,4 +25,3 @@ TODO Low Priority
  - Rate limiting on actions, which will eventually be needed.
  - Allow unimportant flash messages to fade away after awhile.
  - Audit DB usage (lots of redundant fetches), add per-request cache to alleviate.
- - Show instance username on profile, allow logging on with @username, @username@instance, and username on login.
