@@ -375,3 +375,36 @@ Finally, once all those steps are done, re-start the backend service with
 `systemctl start critterchat`. If all went according to plan you should have the
 new version running on your instance. Users that are currently logged in should get
 a new update notification banner, and you can refresh the page to load the new version.
+
+## Docker Hosting
+
+### Getting Started
+
+To launch the default settings, simply clone the repo and navigate to `./critterchat-docker`, then run:
+```
+docker compose up -d
+```
+to launch the app. This uses the config in the `critterchat-docker` folder called `docker.config.yaml` and provides bind mounts for the mysql database as well as the attachments folder. After making a change to the configuration, run:
+```
+docker compose restart
+```
+to reload the instance and load the new settings.
+
+### Administration
+
+Administration tools and other CLI interfaces can be accessed using:
+```
+docker exec -it CritterChat /bin/sh
+```
+which will drop you to a shell inside the container.
+
+### Upgrading
+This has not been tested thoroughly, but should not cause any data loss since the database and attachments are kept in a bind mount. In theory it should be as simple as:
+```
+docker compose down
+git pull
+docker image rm critterchat-docker-backend:latest
+docker compose up -d
+```
+to pull the new code and relaunch it.
+NOTE! This does not currently take into account database migrations, which might need to be handled in the docker-entrypoint script.
