@@ -81,6 +81,12 @@ account_registration:
   invites: false
 
 authentication:
+  # Whether local authentication is enabled or not. Defaults to enabled because otherwise there
+  # would be no way to authenticate against created accounts. Turn this off if you want to
+  # only allow OAuth authentication. If you turn this off, you will also want to turn off invites
+  # and local registration.
+  local: true
+
   # List of Mastodon instances that you wish to allow OAuth-style authentication and account
   # creation from. Any instances here will be available as an alternative authentication to
   # username/password, and will allow new account creation for users authenticating for the first

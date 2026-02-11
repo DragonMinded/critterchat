@@ -94,7 +94,7 @@ CritterChat requires a recent version of MySQL to operate. Setting up and config
 an empty database is outside of the scope of this documentation, but there are plenty
 of guides online that will help you configure MySQL on whatever OS you choose to
 run this software on. Once you've created a database that is owned by an admin
-user and copied the `example/config.baremetal.yaml` example somewhere to update it with
+user and copied the `example/baremetal.config.yaml` example somewhere to update it with
 your configuration parameters, run the following in the `backend/` directory to create
 the necessary tables:
 
@@ -234,7 +234,7 @@ to purchase certificates and use them in your nginx config instead you can.
 Initial setup is fairly straightforward. Pick a directory that you will deploy to,
 create it, and make sure that it is owned by the user that will execute the server.
 Make sure that it is readable by the user that nginx uses since it will serve
-static assets out of this directory as well. Copy `example/config.baremetal.yaml`
+static assets out of this directory as well. Copy `example/baremetal.config.yaml`
 to the directory you've just created and make sure that you customize it for your
 installation. Create an attachments directory under the installation directory and
 again make sure that it is owned by the server user and readable by the nginx

@@ -1,0 +1,12 @@
+{% if config.authentication.local %}
+    <form action="{{ absolute_url_for('account.loginpost', component='base') }}" method="post">
+        <dl>
+            <dt>Username</dt>
+            <dd><input type="text" name="username" value="{{ username }}"/></dd>
+            <dt>Password</dt>
+            <dd><input type="password" name="password" /></dd>
+            <dt>&nbsp;</dt>
+            <dd><input type="submit" value="login" /></dd>
+        </dl>
+    </form>
+{% endif %}

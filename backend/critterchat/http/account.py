@@ -38,6 +38,10 @@ def loginpost() -> Response:
 def __login(username: str, password: str) -> Response:
     attachmentservice = AttachmentService(g.config, g.data)
 
+    if not g.config.authentication.local:
+        error("Account login is disabled.")
+        return make_response(redirect(absolute_url_for("welcome.home", component="base")))
+
     original_username = username
     if username and username[0] == "@":
         # The user logged in with their handle, including the @.
@@ -109,6 +113,10 @@ def __login(username: str, password: str) -> Response:
 @loginprohibited
 def login() -> Response:
     attachmentservice = AttachmentService(g.config, g.data)
+
+    if not g.config.authentication.local:
+        error("Account login is disabled.")
+        return make_response(redirect(absolute_url_for("welcome.home", component="base")))
 
     return Response(render_template(
         "account/login.html",

@@ -3,6 +3,12 @@ from sqlalchemy.engine import Engine
 from typing import Any, List, Dict, Optional
 
 
+def _bool(val: Any, default: bool) -> bool:
+    if val is None:
+        return default
+    return bool(val)
+
+
 class Database:
     def __init__(self, parent_config: "Config") -> None:
         self.__config = parent_config
@@ -98,15 +104,15 @@ class AccountRegistration:
 
     @property
     def enabled(self) -> bool:
-        return bool(self.__config.get("account_registration", {}).get("enabled") or True)
+        return _bool(self.__config.get("account_registration", {}).get("enabled"), True)
 
     @property
     def invites(self) -> bool:
-        return bool(self.__config.get("account_registration", {}).get("invites") or False)
+        return _bool(self.__config.get("account_registration", {}).get("invites"), False)
 
     @property
     def auto_approve(self) -> bool:
-        return bool(self.__config.get("account_registration", {}).get("auto_approve") or False)
+        return _bool(self.__config.get("account_registration", {}).get("auto_approve"), False)
 
 
 class MastodonConfig:
@@ -117,6 +123,10 @@ class MastodonConfig:
 class Authentication:
     def __init__(self, parent_config: "Config") -> None:
         self.__config = parent_config
+
+    @property
+    def local(self) -> bool:
+        return _bool(self.__config.get("authentication", {}).get("local"), True)
 
     @property
     def mastodon(self) -> List[MastodonConfig]:

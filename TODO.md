@@ -1,7 +1,6 @@
 TODO Immediate
 ==============
 
- - Mastodon client registration.
  - OAuth from mastodon support.
  - Welcome message support.
 
