@@ -1,7 +1,6 @@
 TODO Immediate
 ==============
 
- - Allow create invite from UI when enabled.
  - Mastodon client registration.
  - OAuth from mastodon support.
  - Welcome message support.

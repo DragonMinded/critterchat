@@ -767,6 +767,30 @@ def chathistory(json: Dict[str, object]) -> None:
                 }), room=request.sid)
 
 
+@socketio.on('invite')  # type: ignore
+def invite(json: Dict[str, object]) -> None:
+    data = Data(config)
+    userservice = UserService(config, data)
+
+    # Only allow generating invites if the server allows it or the user is
+    # an administrator.
+    userid = recover_userid(data, request.sid)
+    if userid is None:
+        return
+
+    # Ensure that the user is actually an admin.
+    user = userservice.lookup_user(userid)
+    if user is None:
+        return
+
+    is_admin = UserPermission.ADMINISTRATOR in user.permissions
+    if is_admin or config.account_registration.invites:
+        url = userservice.create_user_invite(user.id)
+        socketio.emit('invite', hydrate_tag(json, {'invite': url}), room=request.sid)
+    else:
+        error(f'Invites are disabled on {config.name}!', room=request.sid)
+
+
 @socketio.on('message')  # type: ignore
 def message(json: Dict[str, object]) -> Dict[str, object]:
     data = Data(config)

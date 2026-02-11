@@ -70,6 +70,13 @@ class Menu {
             );
         });
 
+        $( '#invite-user' ).on( 'click', (event) => {
+            event.preventDefault();
+
+            this.inputState.setState("empty");
+            this.eventBus.emit('generateinvite')
+        });
+
         // Set up the mobile back button.
         $( 'div.top-info div.back' ).on( 'click', (event) => {
             event.preventDefault();

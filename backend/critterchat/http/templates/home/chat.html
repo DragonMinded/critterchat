@@ -52,6 +52,14 @@
                     find or start chat
                 </button>
             </div>
+            {% if config.account_registration.invites or admin %}
+                <div class="item">
+                    <button type="button" id="invite-user">
+                        <div class="maskable invite-svg"></div>
+                        invite someone
+                    </button>
+                </div>
+            {% endif %}
         </div>
         <div class="actions">
             <div class="item">

@@ -1,3 +1,9 @@
+:root {
+    /* We really should have a common CSS to share these between this and chat.css. */
+    --emoji-height: 1.15em;
+    --emoji-max-width: 3.45em;
+}
+
 html, body {
     font-family: "Atkinson Hyperlegible", Arial, Helvetica, sans-serif;
     margin: 0px;
@@ -41,6 +47,14 @@ div.login div.section dd {
 
 div.login div.section dd input[type=text], div.login div.section dd input[type=password] {
     width: 100%;
+}
+
+img.emote, img.emoji {
+    display: inline-block;
+    margin-bottom: -0.25em;
+    max-width: var(--emoji-max-width);
+    height: var(--emoji-height);
+    width: auto;
 }
 
 ul.errors {

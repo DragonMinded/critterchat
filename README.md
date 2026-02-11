@@ -17,6 +17,7 @@ that can be enabled or disabled per-instance.
  - Custom emoji support controlled by the instance administrator.
  - Preferences for most appearance settings and optional notification sounds.
  - Image attachment support so images can be sent with messages.
+ - Various sign-up modes such as open registration, admin-approval and invite codes.
  - Collects absolutely no personal information, contains no tracking code.
 
 ## Wishlist
@@ -31,7 +32,6 @@ that can be enabled or disabled per-instance.
  - Sticker support.
  - Moderation tools for network admin (global mute, global ban, etc).
  - Moderation tools for individuals (block user, allow messages, allow in search, etc.).
- - Sign-up modes (admin approval, open sign-ups, invite only, etc.).
  - Emoji auto-categorization by prefix.
  - Arbitrary file attachments.
  - Sitewide CSS themeing with CSS moved to themes directory.

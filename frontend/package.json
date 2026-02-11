@@ -8,7 +8,7 @@
     "debug": "webpack --mode development",
     "test": "jest",
     "lint": "npx eslint src/",
-    "clean": "cd $INIT_CWD/../backend/critterchat/http/static && rm -f chat.*.js && rm -f chat.*.txt"
+    "clean": "cd $INIT_CWD/../backend/critterchat/http/static && rm -f chat.*.js && rm -f chat.*.txt && rm -f home.*.js && rm -f home.*.txt"
   },
   "keywords": [],
   "author": "",

@@ -1,10 +1,22 @@
 import string
 from flask import Blueprint, Response, make_response, render_template, redirect
 
-from .app import app, absolute_url_for, request, static_location, templates_location, loginprohibited, loginrequired, error, info, g
-from ..common import AESCipher, Time
+from .app import (
+    app,
+    absolute_url_for,
+    request,
+    static_location,
+    templates_location,
+    loginprohibited,
+    loginrequired,
+    get_frontend_filename,
+    error,
+    info,
+    g,
+)
+from ..common import AESCipher, Time, get_emoji_unicode_dict, get_aliases_unicode_dict
 from ..data import UserPermission, FaviconID
-from ..service import AttachmentService, UserService, UserServiceException
+from ..service import AttachmentService, EmoteService, UserService, UserServiceException
 
 
 account = Blueprint(
@@ -348,9 +360,19 @@ def invitepost(invite: str) -> Response:
         error("Invite is invalid or expired.")
         return make_response(redirect(absolute_url_for("welcome.home", component="base")))
 
-    user = g.data.user.from_invite(invite)
-
     attachmentservice = AttachmentService(g.config, g.data)
+    emoteservice = EmoteService(g.config, g.data)
+
+    user = g.data.user.from_invite(invite)
+    jsname = get_frontend_filename('home')
+
+    emojis = {
+        **get_emoji_unicode_dict('en'),
+        **get_aliases_unicode_dict(),
+    }
+    emojis = {key: emojis[key] for key in emojis if "__" not in key}
+    emotes = {f":{key}:": val.to_dict() for key, val in emoteservice.get_all_emotes().items()}
+
     username = request.form["username"]
     password1 = request.form["password1"]
     password2 = request.form["password2"]
@@ -363,6 +385,9 @@ def invitepost(invite: str) -> Response:
                 title="Register Account",
                 invite=invite,
                 user=user,
+                jsname=jsname,
+                emojis=emojis,
+                emotes=emotes,
                 favicon=attachmentservice.get_attachment_url(FaviconID),
             )
         )
@@ -377,6 +402,9 @@ def invitepost(invite: str) -> Response:
                     title="Register Account",
                     invite=invite,
                     user=user,
+                    jsname=jsname,
+                    emojis=emojis,
+                    emotes=emotes,
                     favicon=attachmentservice.get_attachment_url(FaviconID),
                 )
             )
@@ -389,6 +417,9 @@ def invitepost(invite: str) -> Response:
                 title="Register Account",
                 invite=invite,
                 user=user,
+                jsname=jsname,
+                emojis=emojis,
+                emotes=emotes,
                 favicon=attachmentservice.get_attachment_url(FaviconID),
             )
         )
@@ -402,6 +433,9 @@ def invitepost(invite: str) -> Response:
                 username=username,
                 invite=invite,
                 user=user,
+                jsname=jsname,
+                emojis=emojis,
+                emotes=emotes,
                 favicon=attachmentservice.get_attachment_url(FaviconID),
             )
         )
@@ -415,6 +449,9 @@ def invitepost(invite: str) -> Response:
                 username=username,
                 invite=invite,
                 user=user,
+                jsname=jsname,
+                emojis=emojis,
+                emotes=emotes,
                 favicon=attachmentservice.get_attachment_url(FaviconID),
             )
         )
@@ -440,6 +477,9 @@ def invitepost(invite: str) -> Response:
                 username=username,
                 invite=invite,
                 user=user,
+                jsname=jsname,
+                emojis=emojis,
+                emotes=emotes,
                 favicon=attachmentservice.get_attachment_url(FaviconID),
             )
         )
@@ -449,18 +489,30 @@ def invitepost(invite: str) -> Response:
 @loginprohibited
 def invite(invite: str) -> Response:
     attachmentservice = AttachmentService(g.config, g.data)
+    emoteservice = EmoteService(g.config, g.data)
 
     if not g.data.user.validate_invite(invite):
         error("Invite is invalid or expired.")
         return make_response(redirect(absolute_url_for("welcome.home", component="base")))
 
     user = g.data.user.from_invite(invite)
+    jsname = get_frontend_filename('home')
+
+    emojis = {
+        **get_emoji_unicode_dict('en'),
+        **get_aliases_unicode_dict(),
+    }
+    emojis = {key: emojis[key] for key in emojis if "__" not in key}
+    emotes = {f":{key}:": val.to_dict() for key, val in emoteservice.get_all_emotes().items()}
 
     return Response(render_template(
         "account/register.html",
         title="Register Account",
         invite=invite,
         user=user,
+        jsname=jsname,
+        emojis=emojis,
+        emotes=emotes,
         favicon=attachmentservice.get_attachment_url(FaviconID),
     ))
 

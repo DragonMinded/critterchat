@@ -1,5 +1,22 @@
 {% extends "base.html" %}
 {% block includes %}
+  {% if jsname %}
+    <script src="{{ absolute_url_for('static', component="base", filename=jsname) }}"></script>
+    <script src="{{ absolute_url_for('static', component="base", filename='twemoji-16.0.1.min.js') }}"></script>
+    <script>
+      window.twemojiOptions = {
+        base: "{{ absolute_url_for('static', component="base", filename='twemoji/') }}",
+        attributes: function( _icon, _variant ) {
+          return {
+            width: "72",
+            height: "72",
+          };
+        },
+      };
+      window.emojis = {{ emojis|tojson|safe }};
+      window.emotes = {{ emotes|tojson|safe }};
+    </script>
+  {% endif %}
   <link href="{{ absolute_url_for('static', component='base', filename='home.css') }}?{{ cachebust }}" rel="stylesheet" />
 {% endblock %}
 {% block content %}
@@ -10,7 +27,7 @@
                 {% if invite %}
                     <form action="{{ absolute_url_for('account.invitepost', component='base', invite=invite) }}" method="post">
                     {% if user %}
-                        <div>You were invited to {{ config.name }} by {{ user.nickname }}.</div>
+                        <div>You were invited to {{ config.name }} by <span class="convert-emoji">{{ user.nickname }}</span>.</div>
                     {% endif %}
                 {% else %}
                     <form action="{{ absolute_url_for('account.registerpost', component='base') }}" method="post">

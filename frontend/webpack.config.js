@@ -7,9 +7,12 @@ var assetsPluginInstance = new AssetsPlugin({
 })
 
 module.exports = {
-    entry: './src/chat.js',
+    entry: {
+        chat: './src/chat.js',
+        home: './src/home.js',
+    },
     output: {
-        filename: 'chat.[fullhash].js',
+        filename: '[name].[fullhash].js',
         path: path.resolve(__dirname, '../backend/critterchat/http/static'),
     },
     plugins: [assetsPluginInstance],

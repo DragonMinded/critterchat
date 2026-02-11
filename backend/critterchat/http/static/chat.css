@@ -703,6 +703,13 @@ div.maskable.search-svg {
     mask-image: url('search.svg');
 }
 
+div.maskable.invite-svg {
+    width: 1.3em;
+    height: 1.3em;
+    margin-bottom: -0.25em;
+    mask-image: url('invite.svg');
+}
+
 div.maskable.edit-svg {
     width: 1.3em;
     height: 1.3em;
@@ -1396,6 +1403,22 @@ div.search, div.warning, div.information {
     display: flex;
     flex-direction: column;
     gap: var(--modal-item-padding);
+}
+
+div.invite-wrapper {
+    padding-bottom: var(--modal-item-padding);
+}
+
+div.invite-link-wrapper {
+    display: flex;
+    justify-content: center;
+}
+
+div.invite-link-wrapper div.invite-link {
+    font-family: monospace;
+    border-radius: var(--button-border-radius);
+    padding: var(--button-h-padding);
+    border: 1px solid var(--input-button-border)
 }
 
 div.search > div.actions,

@@ -174,6 +174,28 @@ export function manager(socket) {
         }
     });
 
+    // Handles any sort of "copy-on-click" controls generically.
+    $( document ).on( 'click', '.copy-on-click', (event) => {
+        event.preventDefault();
+
+        const jqe = $(event.target);
+        const text = jqe.text();
+        if (text) {
+            const temp = $("<input>");
+            $("body").append(temp);
+            temp.val(text).select();
+            document.execCommand("copy");
+            temp.remove();
+
+            var type = jqe.attr('data-type');
+            if (!type) {
+                type = 'Text';
+            }
+
+            flash('info', type + ' copied to your clipboard!');
+        }
+    });
+
     // Instead of having a separate file and class for the welcome popover, we just handle
     // it here. Possibly bad, possibly okay, but it works and isn't hurting anyone so it
     // lives here for now. There's no real reason why it needs to be here versus in its own
@@ -388,6 +410,20 @@ export function manager(socket) {
         messagesInst.deleteEmotes(msg.deletions);
     });
 
+    socket.on('invite', (msg) => {
+        // Handles displaying an invite using the info panel.
+        const info = (
+            "A single-use invite link has been generated and associated with you. " +
+            "Feel free to give it to somebody so they can sign up to chat! " +
+            "Do note that the invite has been personalized to include your nickname."
+        );
+
+        displayInfo(
+            '<div class="invite-wrapper">' + info + '</div><div class="invite-link-wrapper"><div data-type="Link" class="invite-link copy-on-click">' + msg.invite + '</div></div>',
+            'okay!',
+        );
+    });
+
     socket.on('flash', (info) => {
         // Handles when the server wants to display a flash message on the client.
         flash(info.severity, info.message);
@@ -480,6 +516,12 @@ export function manager(socket) {
         // open or closed.
         settings.info = info;
         socket.emit('updatesettings', settings);
+    });
+
+
+    eventBus.on('generateinvite', () => {
+        // We were informed that the current user wants to generate an invite link. Do so.
+        socket.emit('invite', {});
     });
 
     eventBus.on('updateprofile', (profile) => {

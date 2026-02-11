@@ -4,6 +4,8 @@ build/
 critterchat.egg-info/
 backend/critterchat/http/static/chat.*.js
 backend/critterchat/http/static/chat.*.js.LICENSE.txt
+backend/critterchat/http/static/home.*.js
+backend/critterchat/http/static/home.*.js.LICENSE.txt
 backend/critterchat/http/static/webpack-assets.json
 frontend/dist/
 frontend/node_modules/

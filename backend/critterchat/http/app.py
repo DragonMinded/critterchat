@@ -203,13 +203,13 @@ def get_fingerprint_hash() -> str:
     return file_hash.hexdigest()
 
 
-def get_frontend_filename() -> str:
+def get_frontend_filename(entry: str = 'chat') -> str:
     # Attempt to look up our frontend JS, used also for cache-busting.
     jspath = os.path.join(static_location, "webpack-assets.json")
     with open(jspath, "rb") as bfp:
         jsdata = bfp.read().decode('utf-8')
         jsblob = json.loads(jsdata)
-        return str(jsblob['main']['js'])
+        return str(jsblob[entry]['js'])
 
 
 def get_frontend_version() -> str:
