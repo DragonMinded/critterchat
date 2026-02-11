@@ -13,6 +13,9 @@ services:
       - ./docker.config.yaml:/app/backend/config.yaml
       - ./mysqlkd/:/var/run/mysqld/
       - ./attachments/:/app/attachments
+#    environment:
+      # Defaults to false, set to a non-empty value to enable
+#      - BEHIND_NGINX_PROXY=True
     depends_on:
       db:
         condition: service_healthy
