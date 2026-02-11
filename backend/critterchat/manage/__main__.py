@@ -43,13 +43,13 @@ class CommandException(Exception):
     pass
 
 
-def create_db(config: Config) -> None:
+def create_db(config: Config, exist_okay: bool) -> None:
     """
     Given a config pointing at a valid MySQL DB, initializes that DB by creating all required tables.
     """
 
     data = Data(config)
-    data.create()
+    data.create(exist_okay=exist_okay)
     data.close()
 
 
@@ -761,10 +761,16 @@ def main() -> None:
     database_commands = database_parser.add_subparsers(dest="database")
 
     # No params for this one
-    database_commands.add_parser(
+    create_parser = database_commands.add_parser(
         "create",
         help="create tables in fresh DB",
         description="Create tables in fresh DB.",
+    )
+    create_parser.add_argument(
+        "-e",
+        "--existing-okay",
+        action='store_true',
+        help="don't error on existing database (useful for running in a container startup script)",
     )
 
     # Only a few params for this one
@@ -1260,7 +1266,7 @@ def main() -> None:
             if args.database is None:
                 raise CLIException("Unuspecified database operation!")
             elif args.database == "create":
-                create_db(config)
+                create_db(config, args.existing_okay)
             elif args.database == "generate":
                 generate_migration(config, args.message, args.allow_empty)
             elif args.database == "upgrade":

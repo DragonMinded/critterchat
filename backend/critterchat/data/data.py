@@ -93,13 +93,18 @@ class Data:
         os.chdir(base_dir)
         alembic.config.main(argv=alembicArgs)
 
-    def create(self) -> None:
+    def create(self, exist_okay: bool = False) -> None:
         """
         Create any tables that need to be created.
         """
         if self.__exists():
             # Cowardly refused to do anything, we should be using the upgrade path instead.
-            raise DBCreateException('Tables already created, use upgrade to upgrade schema!')
+            if exist_okay:
+                # Silently return, with no error. Useful in container init scripts that always
+                # want to init the DB if needed, then run the upgrade command.
+                return
+            else:
+                raise DBCreateException('Tables already created, use upgrade to upgrade schema!')
 
         metadata.create_all(
             self.__config.database.engine.connect(),
