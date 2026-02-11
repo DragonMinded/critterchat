@@ -102,8 +102,38 @@ class MastodonService:
 
     def _validate_instance(self, instance: MastodonInstance) -> bool:
         # Verifies that our credentials are correct for this instance.
+        if not instance.client_token:
+            resp = requests.post(
+                self._meth(instance.base_url, "/oauth/token"),
+                json={
+                    "client_id": instance.client_id,
+                    "client_secret": instance.client_secret,
+                    "redirect_uri": self._meth(self.__config.base_url, "/auth/mastodon"),
+                    "grant_type": "client_credentials",
+                    "scope": "profile",
+                },
+            )
+            if resp.status_code != 200:
+                return False
 
-        # TODO: Actually implement this!
+            body = resp.json()
+            if str(body.get("token_type")) != "Bearer":
+                return False
+
+            # Save the validated instance.
+            instance.client_token = str(body.get("access_token"))
+
+        # Now, verify that the token is still valid.
+        resp = requests.get(
+            self._meth(instance.base_url, "/api/v1/apps/verify_credentials"),
+            headers={
+                "Authorization": f"Bearer {instance.client_token}",
+            },
+        )
+        if resp.status_code != 200:
+            return False
+
+        # Yes, we're connected!
         return True
 
     def register_instance(self, base_url: str) -> MastodonInstance:

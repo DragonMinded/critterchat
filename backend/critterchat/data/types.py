@@ -505,3 +505,4 @@ class MastodonInstance:
         self.base_url = base_url
         self.client_id = client_id
         self.client_secret = client_secret
+        self.client_token: Optional[str] = None
