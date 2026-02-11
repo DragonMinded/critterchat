@@ -42,6 +42,7 @@ class AttachmentServiceInvalidSizeException(AttachmentServiceException):
 
 _hash_to_id_lut: Dict[str, AttachmentID] = {}
 _id_to_hash_lut: Dict[AttachmentID, str] = {}
+_emotes_initialized: bool = False
 
 
 class AttachmentService:
@@ -53,6 +54,17 @@ class AttachmentService:
     def __init__(self, config: Config, data: Data) -> None:
         self.__config = config
         self.__data = data
+
+        global _emotes_initialized
+        if not _emotes_initialized:
+            emotes = self.__data.attachment.get_emotes()
+            for emote in emotes:
+                _id_to_hash_lut[emote.attachmentid] = self._get_hashed_attachment_name(
+                    # Emotes always have an empty filename, we don't store it.
+                    emote.attachmentid, emote.content_type, None,
+                )
+
+            _emotes_initialized = True
 
     def get_content_type(self, filename: str) -> str:
         try:

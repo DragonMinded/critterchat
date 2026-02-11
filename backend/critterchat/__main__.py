@@ -53,6 +53,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Run the chat application backend.")
     parser.add_argument("-p", "--port", help="Port to listen on. Defaults to 5678", type=int, default=5678)
     parser.add_argument("-d", "--debug", help="Enable debug mode. Defaults to off", action="store_true")
+    parser.add_argument("-s", "--sql-query-log", help="Enable logging of SQL queries. Defaults to off", action="store_true")
     parser.add_argument("-n", "--nginx-proxy", help="Number of nginx proxies in front of this server. Defaults to 0", type=int, default=0)
     parser.add_argument("-c", "--config", help="Config file to parse for instance settings. Defaults to config.yaml", type=str, default="config.yaml")
     args = parser.parse_args()
@@ -65,6 +66,9 @@ if __name__ == '__main__':
         root_logger.removeHandler(logger.handlers[0])
     root_logger.addHandler(default_handler)
     root_logger.setLevel(logging.DEBUG if args.debug else logging.INFO)
+
+    if args.sql_query_log:
+        logging.getLogger("sqlalchemy.engine").setLevel(logging.INFO)
 
     # Attach local storage handler if we're local attachment type.
     if config.attachments.system == "local":
