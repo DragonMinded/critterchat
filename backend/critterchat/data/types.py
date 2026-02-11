@@ -509,3 +509,12 @@ class MastodonInstance:
         self.client_id = client_id
         self.client_secret = client_secret
         self.client_token: Optional[str] = None
+
+
+class MastodonProfile:
+    def __init__(self, instance_url: str, username: str, nickname: str, avatar: str, note: str) -> None:
+        self.instance_url = instance_url
+        self.username = username
+        self.nickname = nickname
+        self.avatar = avatar
+        self.note = note

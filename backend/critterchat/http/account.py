@@ -1,3 +1,4 @@
+import logging
 import string
 from flask import Blueprint, Response, make_response, render_template, redirect
 
@@ -17,7 +18,14 @@ from .app import (
 from .login import get_mastodon_providers
 from ..common import AESCipher, Time, get_emoji_unicode_dict, get_aliases_unicode_dict
 from ..data import UserPermission, FaviconID
-from ..service import AttachmentService, EmoteService, UserService, UserServiceException
+from ..service import (
+    AttachmentService,
+    EmoteService,
+    MastodonService,
+    MastodonServiceException,
+    UserService,
+    UserServiceException,
+)
 
 
 account = Blueprint(
@@ -26,6 +34,9 @@ account = Blueprint(
     template_folder=templates_location,
     static_folder=static_location,
 )
+
+
+logger = logging.getLogger(__name__)
 
 
 @account.route("/login", methods=["POST"])
@@ -532,6 +543,40 @@ def invite(invite: str) -> Response:
         emotes=emotes,
         favicon=attachmentservice.get_attachment_url(FaviconID),
     ))
+
+
+@account.route("/auth/mastodon")
+@loginprohibited
+def mastodonauth() -> Response:
+    mastodonservice = MastodonService(g.config, g.data)
+
+    # First, grab the code, and use that to get a user token.
+    code = request.args.get('code')
+    base_url = request.args.get('state')
+
+    if not code or not base_url:
+        error("Authorization code is missing or invalid.")
+        return make_response(redirect(absolute_url_for("welcome.home", component="base")))
+
+    instance = mastodonservice.lookup_instance(base_url)
+    if not instance:
+        logger.error(f"Failed to find registered instance under {base_url}")
+        error("Authorization code is missing or invalid.")
+        return make_response(redirect(absolute_url_for("welcome.home", component="base")))
+
+    try:
+        token = mastodonservice.get_user_token(instance, code)
+    except MastodonServiceException as e:
+        logger.error(f"Failed to validate login code: {e}")
+        token = None
+
+    if not token:
+        error("Authorization code is invalid.")
+        return make_response(redirect(absolute_url_for("welcome.home", component="base")))
+
+    # Now, grab the user's profile details so we can find the local account associated with this.
+    profile = mastodonservice.get_user_profile(instance, token)
+    return make_response(redirect(absolute_url_for("welcome.home", component="base")))
 
 
 app.register_blueprint(account)

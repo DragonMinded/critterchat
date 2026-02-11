@@ -1,10 +1,11 @@
 import logging
 import requests
 import urllib
-from typing import Dict, List, Optional
+from html.parser import HTMLParser
+from typing import Dict, List, Optional, Tuple
 
 from ..config import Config
-from ..data import Data, MastodonInstance, NewMastodonInstanceID
+from ..data import Data, MastodonProfile, MastodonInstance, NewMastodonInstanceID
 
 
 logger = logging.getLogger(__name__)
@@ -19,7 +20,6 @@ class MastodonInstanceDetails:
         self,
         base_url: str,
         authorize_url: Optional[str],
-        token_url: Optional[str],
         connected: bool,
         domain: Optional[str],
         title: Optional[str],
@@ -27,11 +27,136 @@ class MastodonInstanceDetails:
     ) -> None:
         self.base_url = base_url
         self.authorize_url = authorize_url
-        self.token_url = token_url
         self.connected = connected
         self.domain = domain
         self.title = title
         self.icons = icons
+
+
+class MastodonParser(HTMLParser):
+    def __init__(self) -> None:
+        super().__init__(convert_charrefs=True)
+        self.text = ""
+        self.predepth = 0
+        self.liststack: List[str] = []
+        self.listcount: List[int] = []
+
+    def handle_starttag(self, tag: str, attrs: List[Tuple[str, Optional[str]]]) -> None:
+        if tag in {"p", "blockquote", "pre"}:
+            needsNewline = bool(self.text) and self.text[-1] != "\n"
+            newLine = "\n" if needsNewline else ""
+
+            if newLine:
+                self.text += newLine
+            if tag == "pre":
+                self.predepth += 1
+        elif tag in {"span", "code"}:
+            # Spans are just wrapper elements with no formatting. Code usually denotes
+            # fixed width, but we don't support any formatting yet.
+            pass
+        elif tag == "br":
+            # No support for formatting yet.
+            self.text += "\n"
+        elif tag == "a":
+            # Right now, just underline links.
+            pass
+        elif tag == "b":
+            # No support for formatting yet.
+            pass
+        elif tag in {"i", "em"}:
+            # No support for formatting yet.
+            pass
+        elif tag == "u":
+            # No support for formatting yet.
+            pass
+        elif tag == "ul":
+            # Unordered list start.
+            self.liststack.append("ul")
+            self.listcount.append(0)
+        elif tag == "ol":
+            # Ordered list start.
+            self.liststack.append("ol")
+            self.listcount.append(0)
+        elif tag == "li":
+            # Check if we're ordered or unordered.
+            needsNewline = bool(self.text) and self.text[-1] != "\n"
+            newLine = "\n" if needsNewline else ""
+
+            if self.liststack and self.listcount:
+                if self.liststack[-1] == "ol":
+                    # Counted list.
+                    text = newLine + (" " * len(self.liststack)) + str(self.listcount[-1] + 1) + ". "
+                    self.text += text
+                elif self.liststack[-1] == "ul":
+                    # Uncounted list. Add an indented middot.
+                    text = newLine + (" " * len(self.liststack)) + "- "
+                    self.text += text
+                self.listcount[-1] += 1
+        else:
+            logger.info(f"Unsupported start tag {tag} in HTML parser")
+
+    def handle_endtag(self, tag: str) -> None:
+        if tag in {"p", "blockquote", "pre"}:
+            # Simple, handle this by adding up to two newlines as long as it
+            # doesn't already have those.
+            while self.text[-2:] != "\n\n":
+                self.text += "\n"
+
+            if tag == "pre":
+                self.predepth -= 1
+                if self.predepth < 0:
+                    self.predepth = 0
+        elif tag == "a":
+            # No support for formatting yet.
+            pass
+        elif tag == "b":
+            # No support for formatting yet.
+            pass
+        elif tag in {"i", "em"}:
+            # No support for formatting yet.
+            pass
+        elif tag == "u":
+            # No support for formatting yet.
+            pass
+        elif tag in {"span", "code", "br"}:
+            pass
+        elif tag in {"ul", "ol"}:
+            if self.liststack:
+                self.liststack = self.liststack[:-1]
+            if self.listcount:
+                self.listcount = self.listcount[:-1]
+
+            self.text += "\n\n"
+
+            if len(self.liststack) != len(self.listcount):
+                # Never should hit this, so except on it so I can debug.
+                raise Exception("Logic error, should never get out of sync!")
+        elif tag == "li":
+            # Nothing to do on close.
+            pass
+        else:
+            logger.info(f"Unsupported end tag {tag} in HTML parser")
+
+    def handle_data(self, data: str) -> None:
+        if self.predepth == 0:
+            # Get rid of newlines in favor of spaces, like HTML does.
+            data = data.replace("\r\n", "\n")
+            data = data.replace("\r", "\n")
+            while "\n\n" in data:
+                data = data.replace("\n\n", "\n")
+            data = data.replace("\n", " ")
+
+        self.text += data
+
+    def parsed(self) -> str:
+        text = self.text
+
+        while text and text[0].isspace():
+            text = text[1:]
+        while text and text[-1].isspace():
+            text = text[:-1]
+
+        return text
 
 
 class MastodonService:
@@ -73,7 +198,6 @@ class MastodonService:
             return MastodonInstanceDetails(
                 base_url=instance.base_url,
                 authorize_url=None,
-                token_url=None,
                 connected=False,
                 domain=None,
                 title=None,
@@ -92,7 +216,6 @@ class MastodonService:
             return MastodonInstanceDetails(
                 base_url=instance.base_url,
                 authorize_url=None,
-                token_url=None,
                 connected=False,
                 domain=None,
                 title=None,
@@ -101,7 +224,6 @@ class MastodonService:
 
         body = resp.json()
         auth_endpoint = str(body["authorization_endpoint"])
-        token_endpoint = str(body["token_endpoint"])
 
         # Add on our params so that we can provide a successful auth.
         auth_endpoint += "?" + urllib.parse.urlencode({
@@ -109,6 +231,7 @@ class MastodonService:
             'client_id': instance.client_id,
             'redirect_uri': self._meth(self.__config.base_url, "/auth/mastodon"),
             'scope': 'profile',
+            'state': instance.base_url,
         })
 
         # Now, hit the public instance information page and grab details.
@@ -123,7 +246,6 @@ class MastodonService:
             return MastodonInstanceDetails(
                 base_url=instance.base_url,
                 authorize_url=auth_endpoint,
-                token_url=token_endpoint,
                 connected=True,
                 domain=None,
                 title=None,
@@ -148,7 +270,6 @@ class MastodonService:
         return MastodonInstanceDetails(
             base_url=instance.base_url,
             authorize_url=auth_endpoint,
-            token_url=token_endpoint,
             connected=True,
             domain=domain,
             title=title,
@@ -245,3 +366,77 @@ class MastodonService:
         # Save this in the DB.
         self.__data.mastodon.store_instance(instance)
         return instance
+
+    def get_user_token(self, instance: MastodonInstance, code: str) -> Optional[str]:
+        # First, attempt to look up and validate the instance itself.
+        if not self._validate_instance(instance):
+            logger.error(f"Instance {instance.base_url} is not registered or is disconnected!")
+            return None
+
+        try:
+            resp = requests.post(
+                self._meth(instance.base_url, "/oauth/token"),
+                json={
+                    "client_id": instance.client_id,
+                    "client_secret": instance.client_secret,
+                    "redirect_uri": self._meth(self.__config.base_url, "/auth/mastodon"),
+                    "grant_type": "authorization_code",
+                    "code": code,
+                    "scope": "profile",
+                },
+            )
+        except Exception as e:
+            logger.error(f"Failed to fetch user token for {instance.base_url}: {e}")
+            resp = None
+
+        if not resp or resp.status_code != 200:
+            return None
+
+        body = resp.json()
+        if str(body.get("token_type")) != "Bearer":
+            return None
+
+        return str(body.get("access_token"))
+
+    def get_user_profile(self, instance: MastodonInstance, token: str) -> Optional[MastodonProfile]:
+        # First, ensure our client connection to the instance is good.
+        if not self._validate_instance(instance):
+            logger.error(f"Instance {instance.base_url} is not registered or is disconnected!")
+            return None
+
+        # Now, fetch the profile.
+        try:
+            resp = requests.get(
+                self._meth(instance.base_url, "/api/v1/accounts/verify_credentials"),
+                headers={
+                    "Authorization": f"Bearer {token}",
+                },
+            )
+        except Exception as e:
+            logger.error(f"Failed to fetch user profile for {instance.base_url}: {e}")
+            resp = None
+
+        if not resp or resp.status_code != 200:
+            if resp:
+                raise MastodonServiceException(f"Got {resp.status_code} from {instance.base_url} when fetching user profile!")
+            else:
+                return None
+
+        body = resp.json()
+        username = str(body["username"])
+        displayname = str(body["display_name"])
+        avatar = str(body["avatar"])
+        note = str(body["note"])
+
+        parser = MastodonParser()
+        parser.feed(note)
+        parser.close()
+        note = parser.parsed()
+
+        return MastodonProfile(
+            instance_url=instance.base_url,
+            username=username,
+            nickname=displayname,
+            avatar=avatar,
+            note=note,
+        )
