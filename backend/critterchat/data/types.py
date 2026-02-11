@@ -498,3 +498,10 @@ class Emote:
             "uri": self.uri,
             "dimensions": list(self.dimensions),
         }
+
+
+class MastodonInstance:
+    def __init__(self, base_url: str, client_id: str, client_secret: str) -> None:
+        self.base_url = base_url
+        self.client_id = client_id
+        self.client_secret = client_secret

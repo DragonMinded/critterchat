@@ -94,8 +94,8 @@ CritterChat requires a recent version of MySQL to operate. Setting up and config
 an empty database is outside of the scope of this documentation, but there are plenty
 of guides online that will help you configure MySQL on whatever OS you choose to
 run this software on. Once you've created a database that is owned by an admin
-user and copied the `backend/config.yaml` example somewhere to update it with your
-configuration parameters, run the following in the `backend/` directory to create
+user and copied the `example/config.baremetal.yaml` example somewhere to update it with
+your configuration parameters, run the following in the `backend/` directory to create
 the necessary tables:
 
 ```
@@ -234,15 +234,15 @@ to purchase certificates and use them in your nginx config instead you can.
 Initial setup is fairly straightforward. Pick a directory that you will deploy to,
 create it, and make sure that it is owned by the user that will execute the server.
 Make sure that it is readable by the user that nginx uses since it will serve
-static assets out of this directory as well. Copy your `config.yaml` file to the
-directory you've just created and make sure that you customize it for your
+static assets out of this directory as well. Copy `example/config.baremetal.yaml`
+to the directory you've just created and make sure that you customize it for your
 installation. Create an attachments directory under the installation directory and
 again make sure that it is owned by the server user and readable by the nginx
 user.
 
-Review the `config.yaml` file to ensure that you've modified everything you need
-to. Ensure that the `database` section points at your production database. Make
-sure that the `cookie_key`, `password_key` and `attachment_key` are all set to a
+Review your config.yaml to ensure that you've modified everything you need to.
+Ensure that the `database` section points at your production database. Make sure
+that the `cookie_key`, `password_key` and `attachment_key` are all set to a
 random string of sufficient length. I recommend keeping them different and using
 a random generator that can give you a string of at least 48 characters. Note that
 it is important to select good random values now and not change them in the future.

@@ -27,6 +27,8 @@ from critterchat.service import (
     AttachmentServiceInvalidSizeException,
     EmoteService,
     EmoteServiceException,
+    MastodonService,
+    MastodonServiceException,
     MessageService,
     MessageServiceException,
     UserService,
@@ -88,9 +90,56 @@ def generate_migration(config: Config, message: str, allow_empty: bool) -> None:
     data.close()
 
 
+def mastodon_register_all(config: Config) -> None:
+    """
+    Given configured Mastodon instances in our config, ensure that all of them are registered so that
+    we can perform OAuth and network lookups against it.
+    """
+
+    data = Data(config)
+    try:
+        mastodonservice = MastodonService(config, data)
+        for instance in config.authentication.mastodon:
+            print(f"Registering with {instance.base_url}")
+            mastodonservice.register_instance(instance.base_url)
+
+        print("Registered with all configured Mastodon instances.")
+
+    except MastodonServiceException as e:
+        raise CommandException(str(e))
+    finally:
+        data.close()
+
+
+def mastodon_list_all(config: Config) -> None:
+    """
+    List all registered instances in the DB and pull information from those instances to ensure they
+    are working.
+    """
+
+    data = Data(config)
+    try:
+        mastodonservice = MastodonService(config, data)
+        for instance in mastodonservice.get_all_instances():
+            details = mastodonservice.get_instance_details(instance)
+
+            print(f"Base URL: {details.base_url}")
+            print(f"Connected: {details.connected}")
+            if details.connected:
+                print(f"Domain: {details.domain}")
+                print(f"Title: {details.title}")
+
+            print("")
+
+    except MastodonServiceException as e:
+        raise CommandException(str(e))
+    finally:
+        data.close()
+
+
 def list_users(config: Config) -> None:
     """
-    List all users on the network.
+    List all users on the instance.
     """
 
     data = Data(config)
@@ -297,7 +346,7 @@ def deadmin_user(config: Config, username: str) -> None:
 
 def list_emotes(config: Config, only_broken: bool) -> None:
     """
-    List all of the custom emotes enabled on this network right now.
+    List all of the custom emotes enabled on this instance right now.
     """
 
     data = Data(config)
@@ -371,7 +420,7 @@ def add_emote(config: Config, alias: Optional[str], filename_or_directory: str) 
 
 def drop_emote(config: Config, alias: str) -> None:
     """
-    Given an alias of an existing emote, drop it from the network.
+    Given an alias of an existing emote, drop it from the instance.
     """
 
     data = Data(config)
@@ -434,7 +483,7 @@ def update_attachment(config: Config, attachment: str, file: str) -> None:
 
 def list_public_rooms(config: Config) -> None:
     """
-    List all public rooms on the network.
+    List all public rooms on the instance.
     """
 
     data = Data(config)
@@ -464,7 +513,7 @@ def create_public_room(
     moderated: str,
 ) -> None:
     """
-    Create a new public room on the network, optionally setting it as auto-join when
+    Create a new public room on the instance, optionally setting it as auto-join when
     accounts are created and joining existing users to the room.
     """
 
@@ -742,7 +791,7 @@ def unmute_public_room_user(config: Config, roomid: str, username: str) -> None:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="A utility for administrating the DB.")
+    parser = argparse.ArgumentParser(description="A utility for administrating a CritterChat instance.")
     parser.add_argument(
         "-c",
         "--config",
@@ -755,8 +804,8 @@ def main() -> None:
     # Another subcommand here.
     database_parser = commands.add_parser(
         "database",
-        help="modify backing DB for this network",
-        description="Modify backing DB for this network.",
+        help="modify backing DB for this instance",
+        description="Modify backing DB for this instance.",
     )
     database_commands = database_parser.add_subparsers(dest="database")
 
@@ -814,18 +863,40 @@ def main() -> None:
     )
 
     # Another subcommand here.
+    mastodon_parser = commands.add_parser(
+        "mastodon",
+        help="administer Mastodon OAuth for this instance",
+        description="Administer Mastodon OAuth for this instance.",
+    )
+    mastodon_commands = mastodon_parser.add_subparsers(dest="mastodon")
+
+    # No params for this one
+    mastodon_commands.add_parser(
+        "register",
+        help="register our instance with all configured Mastodon instances",
+        description="Register our instance with all configured Mastodon instances.",
+    )
+
+    # No params for this one
+    mastodon_commands.add_parser(
+        "list",
+        help="list Mastodon instances with details pulled from that instance",
+        description="List Mastodon instances with details pulled from that instace.",
+    )
+
+    # Another subcommand here.
     user_parser = commands.add_parser(
         "user",
-        help="modify backing DB for this network",
-        description="Modify backing DB for this network.",
+        help="modify backing DB for this instance",
+        description="Modify backing DB for this instance.",
     )
     user_commands = user_parser.add_subparsers(dest="user")
 
     # No params for this one
     user_commands.add_parser(
         "list",
-        help="list all users on this network",
-        description="List all users on this network.",
+        help="list all users on this instance",
+        description="List all users on this instance.",
     )
 
     # Only a few params for this one
@@ -950,8 +1021,8 @@ def main() -> None:
     # Another subcommand here.
     emote_parser = commands.add_parser(
         "emote",
-        help="modify custom emotes on the network",
-        description="Modify custom emotes on the network.",
+        help="modify custom emotes on the instance",
+        description="Modify custom emotes on the instance.",
     )
     emote_commands = emote_parser.add_subparsers(dest="emote")
 
@@ -1005,8 +1076,8 @@ def main() -> None:
     # Another subcommand here.
     attachment_parser = commands.add_parser(
         "attachment",
-        help="modify attachments on the network",
-        description="Modify attachments on the network.",
+        help="modify attachments on the instance",
+        description="Modify attachments on the instance.",
     )
     attachment_commands = attachment_parser.add_subparsers(dest="attach")
 
@@ -1035,8 +1106,8 @@ def main() -> None:
     # Another subcommand here.
     room_parser = commands.add_parser(
         "room",
-        help="modify public rooms on the network",
-        description="Modify public rooms on the network.",
+        help="modify public rooms on the instance",
+        description="Modify public rooms on the instance.",
     )
     room_commands = room_parser.add_subparsers(dest="room")
 
@@ -1275,6 +1346,16 @@ def main() -> None:
                 downgrade_db(config, args.tag)
             else:
                 raise CLIException(f"Unknown database operation '{args.database}'")
+
+        elif args.operation == "mastodon":
+            if args.mastodon is None:
+                raise CLIException("Unspecified mastodon operation!")
+            elif args.mastodon == "register":
+                mastodon_register_all(config)
+            elif args.mastodon == "list":
+                mastodon_list_all(config)
+            else:
+                raise CLIException(f"Unknown mastodon operation '{args.mastodon}'")
 
         elif args.operation == "user":
             if args.user is None:

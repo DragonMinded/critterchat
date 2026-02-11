@@ -16,6 +16,7 @@ from .user import UserData
 from .room import RoomData
 from .attachment import AttachmentData
 from .migration import MigrationData
+from .mastodon import MastodonData
 
 
 __all__ = [
@@ -55,6 +56,7 @@ class Data:
         self.room = RoomData(config, self.__session)
         self.attachment = AttachmentData(config, self.__session)
         self.migration = MigrationData(config, self.__session)
+        self.mastodon = MastodonData(config, self.__session)
 
     @classmethod
     def sqlalchemy_url(cls, config: Config) -> str:
