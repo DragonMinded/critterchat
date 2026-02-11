@@ -159,7 +159,7 @@ class Config(dict[str, Any]):
 
     @property
     def upload_url(self) -> str:
-        value = str(self.get("upload_url", ""))
+        value = str(self.get("upload_url", "") or "")
         if not value:
             value = self.base_url
         return value

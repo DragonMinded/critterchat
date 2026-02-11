@@ -1,0 +1,34 @@
+services:
+  backend:
+    container_name: CritterChat
+    build:
+      context: ..
+      dockerfile: ./critterchat-docker/Dockerfile
+    # Docker spews out a bunch of spam about not being able to pull this despite it being a local image, which is ugly
+    # But if it bothers you having the image named `critter-chat-docker-backend:latest`, you should uncomment this line:
+    # image: critterchat
+    ports:
+      - 5678:5678
+    volumes:
+      - ./docker.config.yaml:/app/backend/config.yaml
+      - ./mysqlkd/:/var/run/mysqld/
+      - ./attachments/:/app/attachments
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    container_name: CritterChat-MySQL
+    image: mysql
+    volumes:
+      - ./mysqlkd/:/var/run/mysqld/
+      - ./db:/var/lib/mysql
+    environment:
+      - MYSQL_DATABASE=critterchat
+      - MYSQL_USER=critterchat
+      - MYSQL_PASSWORD=critterchat
+      - MYSQL_RANDOM_ROOT_PASSWORD=yes
+    healthcheck:
+      test: ["CMD", "mysqladmin" ,"ping", "-h", "localhost"]
+      timeout: 10s
+      retries: 3
