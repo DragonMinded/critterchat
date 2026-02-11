@@ -3,7 +3,7 @@ from sqlalchemy.types import String, Integer
 from typing import List, Optional
 
 from .base import BaseData, metadata
-from .types import MastodonInstance
+from .types import MastodonInstance, MastodonInstanceID
 
 """
 Table representing a mastodon instance that we auth against.
@@ -29,6 +29,7 @@ class MastodonData(BaseData):
         cursor = self.execute(sql, {})
         return [
             MastodonInstance(
+                instanceid=MastodonInstanceID(result['id']),
                 base_url=str(result['base_url']),
                 client_id=str(result['client_id']),
                 client_secret=str(result['client_secret']),
@@ -48,6 +49,7 @@ class MastodonData(BaseData):
 
         result = cursor.mappings().fetchone()
         return MastodonInstance(
+            instanceid=MastodonInstanceID(result['id']),
             base_url=str(result['base_url']),
             client_id=str(result['client_id']),
             client_secret=str(result['client_secret']),
@@ -66,8 +68,13 @@ class MastodonData(BaseData):
             ON DUPLICATE KEY UPDATE
                 `client_id` = :client_id, `client_secret` = :client_secret
         """
-        self.execute(sql, {
+        cursor = self.execute(sql, {
             "base_url": instance.base_url,
             "client_id": instance.client_id,
             "client_secret": instance.client_secret,
         })
+        if cursor.rowcount != 1:
+            return
+
+        # Hydrate what we've just persisted.
+        instance.id = MastodonInstanceID(cursor.lastrowid)

@@ -9,11 +9,13 @@ RoomID = NewType("RoomID", int)
 OccupantID = NewType("OccupantID", int)
 ActionID = NewType("ActionID", int)
 AttachmentID = NewType("AttachmentID", int)
+MastodonInstanceID = NewType("MastodonInstanceID", int)
 
 
 NewUserID = UserID(-1)
 NewRoomID = RoomID(-1)
 NewOccupantID = OccupantID(-1)
+NewMastodonInstanceID = MastodonInstanceID(-1)
 NewActionID = ActionID(-1)
 NewAttachmentID = AttachmentID(-1)
 DefaultAvatarID = AttachmentID(-100)
@@ -501,7 +503,8 @@ class Emote:
 
 
 class MastodonInstance:
-    def __init__(self, base_url: str, client_id: str, client_secret: str) -> None:
+    def __init__(self, instanceid: MastodonInstanceID, base_url: str, client_id: str, client_secret: str) -> None:
+        self.id = instanceid
         self.base_url = base_url
         self.client_id = client_id
         self.client_secret = client_secret

@@ -2,7 +2,7 @@ import requests
 from typing import Dict, List, Optional
 
 from ..config import Config
-from ..data import Data, MastodonInstance
+from ..data import Data, MastodonInstance, NewMastodonInstanceID
 
 
 class MastodonServiceException(Exception):
@@ -159,6 +159,7 @@ class MastodonService:
         client_id = str(body["client_id"])
         client_secret = str(body["client_secret"])
         instance = MastodonInstance(
+            instanceid=NewMastodonInstanceID,
             base_url=base_url,
             client_id=client_id,
             client_secret=client_secret,

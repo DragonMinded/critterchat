@@ -2,6 +2,9 @@ TODO Immediate
 ==============
 
  - OAuth from mastodon support.
+ - Need a separate table for mastodon account link.
+ - Need to handle username collision.
+ - Need a deauth command for a mastodon instance.
  - Welcome message support.
 
 TODO For Public Instance
@@ -25,3 +28,5 @@ TODO Low Priority
  - Rate limiting on actions, which will eventually be needed.
  - Allow unimportant flash messages to fade away after awhile.
  - Audit DB usage (lots of redundant fetches), add per-request cache to alleviate.
+ - Link existing local account with an OAuth provider.
+ - Unlink existing local account from an OAuth provider.
