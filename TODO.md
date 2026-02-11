@@ -1,7 +1,6 @@
 TODO Immediate
 ==============
 
- - Fix config parser with explicit None defaults.
  - Move config.yaml to /example/config.baremetal.yaml
  - Mastodon client registration.
  - OAuth from mastodon support.
