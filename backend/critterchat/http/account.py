@@ -39,7 +39,7 @@ def __login(username: str, password: str) -> Response:
     attachmentservice = AttachmentService(g.config, g.data)
 
     original_username = username
-    if username[0] == "@":
+    if username and username[0] == "@":
         # The user logged in with their handle, including the @.
         username = username[1:]
 
@@ -126,7 +126,7 @@ def recoverpost(recovery: str) -> Response:
     password2 = request.form["password2"]
 
     original_username = username
-    if username[0] == "@":
+    if username and username[0] == "@":
         # The user logged in with their handle, including the @.
         username = username[1:]
 
