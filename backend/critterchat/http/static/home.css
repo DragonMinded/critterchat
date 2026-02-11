@@ -1,4 +1,11 @@
 :root {
+    --application-text-color: #0000000;
+
+    --input-border-color: #8f8f9d;
+    --input-border-radius: 3px;
+    --button-background-color: #e9e9ed;
+    --button-background-hover-color: #d0d0d7;
+
     /* We really should have a common CSS to share these between this and chat.css. */
     --emoji-height: 1.15em;
     --emoji-max-width: 3.45em;
@@ -6,6 +13,7 @@
 
 html, body {
     font-family: "Atkinson Hyperlegible", Arial, Helvetica, sans-serif;
+    color: var(--application-text-color);
     margin: 0px;
     padding: 0px;
     width: 100vw;
@@ -91,4 +99,45 @@ li.info {
 
 ul.errors button.close {
     display: none;
+}
+
+dt.padded {
+    height: 5px;
+}
+
+input {
+    border: 1px solid var(--input-border-color);
+    border-radius: var(--input-border-radius);
+}
+
+button, input[type=button] {
+    color: var(--application-text-color);
+    background: var(--button-background-color);
+    border: 1px solid var(--input-border-color);
+    border-radius: var(--input-border-radius);
+}
+
+button:hover, input[type=button]:hover {
+    background: var(--button-background-hover-color);
+}
+
+a.mastodon-login {
+    color: var(--application-text-color);
+    background: var(--button-background-color);
+    border: 1px solid var(--input-border-color);
+    border-radius: var(--input-border-radius);
+    padding: 5px;
+    text-decoration: none;
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+}
+
+a.mastodon-login:hover {
+    background: var(--button-background-hover-color);
+}
+
+a.mastodon-login img {
+    display: inline-block;
+    margin-bottom: -5px;
 }

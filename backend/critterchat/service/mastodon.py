@@ -1,8 +1,13 @@
+import logging
 import requests
+import urllib
 from typing import Dict, List, Optional
 
 from ..config import Config
 from ..data import Data, MastodonInstance, NewMastodonInstanceID
+
+
+logger = logging.getLogger(__name__)
 
 
 class MastodonServiceException(Exception):
@@ -13,12 +18,16 @@ class MastodonInstanceDetails:
     def __init__(
         self,
         base_url: str,
+        authorize_url: Optional[str],
+        token_url: Optional[str],
         connected: bool,
         domain: Optional[str],
         title: Optional[str],
         icons: Dict[str, str],
     ) -> None:
         self.base_url = base_url
+        self.authorize_url = authorize_url
+        self.token_url = token_url
         self.connected = connected
         self.domain = domain
         self.title = title
@@ -42,6 +51,18 @@ class MastodonService:
         # Just grab all known instances.
         return self.__data.mastodon.get_instances()
 
+    def get_configured_instances(self) -> List[MastodonInstance]:
+        # Grab all known instances that are also in our configuration. Note that if you do not
+        # register an instance but put it in your config, it won't show up here. Note also that
+        # if you register an instance but later remove it from your config, it will also not
+        # show up here. Note that this does not get the instance details itself either.
+        retval: List[MastodonInstance] = []
+        for instance in self.__config.authentication.mastodon:
+            obj = self.__data.mastodon.lookup_instance(instance.base_url)
+            if obj:
+                retval.append(obj)
+        return retval
+
     def lookup_instance(self, base_url: str) -> Optional[MastodonInstance]:
         # Attempt to grab existing instance from the DB.
         return self.__data.mastodon.lookup_instance(base_url)
@@ -51,26 +72,58 @@ class MastodonService:
         if not self._validate_instance(instance):
             return MastodonInstanceDetails(
                 base_url=instance.base_url,
+                authorize_url=None,
+                token_url=None,
                 connected=False,
                 domain=None,
                 title=None,
                 icons={},
             )
 
-        # Now, hit the public instance information page and grab details.
-        resp = requests.get(
-            self._meth(instance.base_url, "/api/v2/instance"),
-            json={
-                "client_name": self.__config.name,
-                "redirect_uris": self._meth(self.__config.base_url, "/auth/mastodon"),
-                "scopes": "profile",
-                "website": self.__config.base_url,
-            },
-        )
-        if resp.status_code != 200:
+        # Look up authorization endpoints from the well-known endpoint.
+        try:
+            resp = requests.get(self._meth(instance.base_url, "/.well-known/oauth-authorization-server"))
+        except Exception as e:
+            logger.error(f"Failed to probe {instance.base_url}: {e}")
+            resp = None
+
+        if not resp or resp.status_code != 200:
             # Couldn't pull info, return dummy data.
             return MastodonInstanceDetails(
                 base_url=instance.base_url,
+                authorize_url=None,
+                token_url=None,
+                connected=False,
+                domain=None,
+                title=None,
+                icons={},
+            )
+
+        body = resp.json()
+        auth_endpoint = str(body["authorization_endpoint"])
+        token_endpoint = str(body["token_endpoint"])
+
+        # Add on our params so that we can provide a successful auth.
+        auth_endpoint += "?" + urllib.parse.urlencode({
+            'response_type': 'code',
+            'client_id': instance.client_id,
+            'redirect_uri': self._meth(self.__config.base_url, "/auth/mastodon"),
+            'scope': 'profile',
+        })
+
+        # Now, hit the public instance information page and grab details.
+        try:
+            resp = requests.get(self._meth(instance.base_url, "/api/v2/instance"))
+        except Exception as e:
+            logger.error(f"Failed to probe {instance.base_url}: {e}")
+            resp = None
+
+        if not resp or resp.status_code != 200:
+            # Couldn't pull info, return dummy data.
+            return MastodonInstanceDetails(
+                base_url=instance.base_url,
+                authorize_url=auth_endpoint,
+                token_url=token_endpoint,
                 connected=True,
                 domain=None,
                 title=None,
@@ -94,6 +147,8 @@ class MastodonService:
 
         return MastodonInstanceDetails(
             base_url=instance.base_url,
+            authorize_url=auth_endpoint,
+            token_url=token_endpoint,
             connected=True,
             domain=domain,
             title=title,
@@ -103,17 +158,22 @@ class MastodonService:
     def _validate_instance(self, instance: MastodonInstance) -> bool:
         # Verifies that our credentials are correct for this instance.
         if not instance.client_token:
-            resp = requests.post(
-                self._meth(instance.base_url, "/oauth/token"),
-                json={
-                    "client_id": instance.client_id,
-                    "client_secret": instance.client_secret,
-                    "redirect_uri": self._meth(self.__config.base_url, "/auth/mastodon"),
-                    "grant_type": "client_credentials",
-                    "scope": "profile",
-                },
-            )
-            if resp.status_code != 200:
+            try:
+                resp = requests.post(
+                    self._meth(instance.base_url, "/oauth/token"),
+                    json={
+                        "client_id": instance.client_id,
+                        "client_secret": instance.client_secret,
+                        "redirect_uri": self._meth(self.__config.base_url, "/auth/mastodon"),
+                        "grant_type": "client_credentials",
+                        "scope": "profile",
+                    },
+                )
+            except Exception as e:
+                logger.error(f"Failed to probe {instance.base_url}: {e}")
+                resp = None
+
+            if not resp or resp.status_code != 200:
                 return False
 
             body = resp.json()
@@ -124,13 +184,18 @@ class MastodonService:
             instance.client_token = str(body.get("access_token"))
 
         # Now, verify that the token is still valid.
-        resp = requests.get(
-            self._meth(instance.base_url, "/api/v1/apps/verify_credentials"),
-            headers={
-                "Authorization": f"Bearer {instance.client_token}",
-            },
-        )
-        if resp.status_code != 200:
+        try:
+            resp = requests.get(
+                self._meth(instance.base_url, "/api/v1/apps/verify_credentials"),
+                headers={
+                    "Authorization": f"Bearer {instance.client_token}",
+                },
+            )
+        except Exception as e:
+            logger.error(f"Failed to probe {instance.base_url}: {e}")
+            resp = None
+
+        if not resp or resp.status_code != 200:
             return False
 
         # Yes, we're connected!
@@ -143,17 +208,25 @@ class MastodonService:
             return existing
 
         # Now, register this app against this instance.
-        resp = requests.post(
-            self._meth(base_url, "/api/v1/apps"),
-            json={
-                "client_name": self.__config.name,
-                "redirect_uris": self._meth(self.__config.base_url, "/auth/mastodon"),
-                "scopes": "profile",
-                "website": self.__config.base_url,
-            },
-        )
-        if resp.status_code != 200:
-            raise MastodonServiceException(f"Got {resp.status_code} from {base_url} when registering application!")
+        try:
+            resp = requests.post(
+                self._meth(base_url, "/api/v1/apps"),
+                json={
+                    "client_name": self.__config.name,
+                    "redirect_uris": self._meth(self.__config.base_url, "/auth/mastodon"),
+                    "scopes": "profile",
+                    "website": self.__config.base_url,
+                },
+            )
+        except Exception as e:
+            logger.error(f"Failed to probe {base_url}: {e}")
+            resp = None
+
+        if not resp or resp.status_code != 200:
+            if resp:
+                raise MastodonServiceException(f"Got {resp.status_code} from {base_url} when registering application!")
+            else:
+                raise MastodonServiceException(f"Failed to get response from {base_url} when registering application!")
 
         body = resp.json()
         client_id = str(body["client_id"])

@@ -11,6 +11,7 @@ from .emote import (
 from .mastodon import (
     MastodonService,
     MastodonServiceException,
+    MastodonInstanceDetails,
 )
 from .message import (
     MessageService,
@@ -32,6 +33,7 @@ __all__ = [
     "MastodonServiceException",
     "MessageService",
     "MessageServiceException",
+    "MastodonInstanceDetails",
     "UserService",
     "UserServiceException",
 ]

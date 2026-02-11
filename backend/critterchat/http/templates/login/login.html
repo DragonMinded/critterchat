@@ -5,8 +5,16 @@
             <dd><input type="text" name="username" value="{{ username }}"/></dd>
             <dt>Password</dt>
             <dd><input type="password" name="password" /></dd>
-            <dt>&nbsp;</dt>
+            <dt class="padded"></dt>
             <dd><input type="submit" value="login" /></dd>
         </dl>
     </form>
 {% endif %}
+{% for provider in mastodon_providers %}
+    <a href="{{ provider.authorize_url }}" class="mastodon-login">
+        {% if provider.icons %}
+            <img src="{{ provider.icons[provider.icons|first] }}" width="20" height="20" alt="{{ provider.domain }} icon" />
+        {% endif %}
+        login with {{ provider.title }}
+    </a>
+{% endfor %}

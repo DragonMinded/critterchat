@@ -14,6 +14,7 @@ from .app import (
     info,
     g,
 )
+from .login import get_mastodon_providers
 from ..common import AESCipher, Time, get_emoji_unicode_dict, get_aliases_unicode_dict
 from ..data import UserPermission, FaviconID
 from ..service import AttachmentService, EmoteService, UserService, UserServiceException
@@ -58,6 +59,7 @@ def __login(username: str, password: str) -> Response:
                     "account/login.html",
                     title="Log In",
                     username=original_username,
+                    mastodon_providers=get_mastodon_providers(),
                     favicon=attachmentservice.get_attachment_url(FaviconID),
                 )
             )
@@ -70,6 +72,7 @@ def __login(username: str, password: str) -> Response:
                 "account/login.html",
                 title="Log In",
                 username=original_username,
+                mastodon_providers=get_mastodon_providers(),
                 favicon=attachmentservice.get_attachment_url(FaviconID),
             )
         )
@@ -81,6 +84,7 @@ def __login(username: str, password: str) -> Response:
                 "account/login.html",
                 title="Log In",
                 username=original_username,
+                mastodon_providers=get_mastodon_providers(),
                 favicon=attachmentservice.get_attachment_url(FaviconID),
             )
         )
@@ -104,6 +108,7 @@ def __login(username: str, password: str) -> Response:
                 "account/login.html",
                 title="Log In",
                 username=original_username,
+                mastodon_providers=get_mastodon_providers(),
                 favicon=attachmentservice.get_attachment_url(FaviconID),
             )
         )
@@ -121,6 +126,7 @@ def login() -> Response:
     return Response(render_template(
         "account/login.html",
         title="Log In",
+        mastodon_providers=get_mastodon_providers(),
         favicon=attachmentservice.get_attachment_url(FaviconID),
     ))
 
@@ -198,6 +204,7 @@ def recoverpost(recovery: str) -> Response:
                     "account/login.html",
                     title="Log In",
                     username=original_username,
+                    mastodon_providers=get_mastodon_providers(),
                     favicon=attachmentservice.get_attachment_url(FaviconID),
                 )
             )
@@ -208,6 +215,7 @@ def recoverpost(recovery: str) -> Response:
                     "account/login.html",
                     title="Log In",
                     username=original_username,
+                    mastodon_providers=get_mastodon_providers(),
                     favicon=attachmentservice.get_attachment_url(FaviconID),
                 )
             )
@@ -323,6 +331,7 @@ def registerpost() -> Response:
                     "account/login.html",
                     title="Log In",
                     username=username,
+                    mastodon_providers=get_mastodon_providers(),
                     favicon=attachmentservice.get_attachment_url(FaviconID),
                 )
             )
