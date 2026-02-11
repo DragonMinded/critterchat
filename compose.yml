@@ -1,0 +1,22 @@
+services:
+    db:
+        image: mariadb:12.1
+        # userns_mode: "keep-id:uid=999,gid=999" # mariadb uid & gid
+        environment:
+            MYSQL_RANDOM_ROOT_PASSWORD: "yes"
+            MYSQL_USER: critterchat
+            MYSQL_PASSWORD: critterchat
+            MYSQL_DATABASE: critterchat
+        volumes:
+          - ./mysql:/var/lib/mysql:z
+    web:
+        build:
+            context: .
+            dockerfile: Containerfile
+        ports:
+            - "5678:5678"
+        depends_on:
+            - db
+        volumes:
+          - ./config.yaml:/usr/src/app/backend/config.yaml:z
+          - ./data:/data:z

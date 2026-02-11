@@ -375,3 +375,36 @@ Finally, once all those steps are done, re-start the backend service with
 `systemctl start critterchat`. If all went according to plan you should have the
 new version running on your instance. Users that are currently logged in should get
 a new update notification banner, and you can refresh the page to load the new version.
+
+# Container
+
+## Container build
+
+```
+podman-compose run build
+```
+ 
+
+## Start just the db and initialize the schema
+```
+podman-compose up db -d
+podman-compose run web -- python3 -m critterchat.manage -c /usr/src/app/backend/config.yaml database create
+```
+ 
+## Interactive shell in the web container
+```
+podman-compose run web sh
+```
+
+## Check container status
+```
+podman-compose ps 
+``` 
+
+## While it is running, list and activate users
+```
+podman-compose exec web -- python3 -m critterchat.manage -c /usr/src/app/backend/config.yaml user list
+
+
+podman-compose exec web -- python3 -m critterchat.manage -c /usr/src/app/backend/config.yaml user activate -u <username>
+```

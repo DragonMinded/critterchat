@@ -7,3 +7,7 @@ backend/critterchat/http/static/chat.*.js.LICENSE.txt
 backend/critterchat/http/static/webpack-assets.json
 frontend/dist/
 frontend/node_modules/
+# container; todo: organize this better
+/config.yaml
+data/
+mysql
