@@ -25,3 +25,4 @@ types-python-dateutil
 types-setuptools
 mypy
 flake8
+audioop-lts;python_version>='3.13'
