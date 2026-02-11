@@ -8,6 +8,10 @@ from .emote import (
     EmoteService,
     EmoteServiceException,
 )
+from .mastodon import (
+    MastodonService,
+    MastodonServiceException,
+)
 from .message import (
     MessageService,
     MessageServiceException,
@@ -24,6 +28,8 @@ __all__ = [
     "AttachmentServiceUnsupportedImageException",
     "EmoteService",
     "EmoteServiceException",
+    "MastodonService",
+    "MastodonServiceException",
     "MessageService",
     "MessageServiceException",
     "UserService",

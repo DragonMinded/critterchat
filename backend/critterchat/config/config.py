@@ -1,6 +1,6 @@
 import copy
 from sqlalchemy.engine import Engine
-from typing import Any, Dict, Optional
+from typing import Any, List, Dict, Optional
 
 
 class Database:
@@ -105,6 +105,35 @@ class AccountRegistration:
         return bool(self.__config.get("account_registration", {}).get("auto_approve", False))
 
 
+class MastodonConfig:
+    def __init__(self, base_url: str) -> None:
+        self.base_url = base_url
+
+
+class Authentication:
+    def __init__(self, parent_config: "Config") -> None:
+        self.__config = parent_config
+
+    @property
+    def mastodon(self) -> List[MastodonConfig]:
+        instances = self.__config.get("authentication", {}).get("mastodon", [])
+        if not isinstance(instances, list):
+            return []
+
+        retval: List[MastodonConfig] = []
+        for instance in instances:
+            if not isinstance(instance, dict):
+                continue
+
+            base_url = instance.get("base_url")
+            if not base_url:
+                continue
+
+            retval.append(MastodonConfig(base_url=base_url))
+
+        return retval
+
+
 class Config(dict[str, Any]):
     def __init__(self, existing_contents: Dict[str, Any] = {}) -> None:
         super().__init__(existing_contents or {})
@@ -113,6 +142,7 @@ class Config(dict[str, Any]):
         self.attachments = Attachments(self)
         self.limits = Limits(self)
         self.account_registration = AccountRegistration(self)
+        self.authentication = Authentication(self)
 
     def clone(self) -> "Config":
         # Somehow its not possible to clone this object if an instantiated Engine is present,
