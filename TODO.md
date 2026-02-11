@@ -1,7 +1,6 @@
 TODO Immediate
 ==============
 
- - Move config.yaml to /example/config.baremetal.yaml
  - Mastodon client registration.
  - OAuth from mastodon support.
  - Welcome message support.
