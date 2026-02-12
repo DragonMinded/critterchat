@@ -11,6 +11,7 @@ class Socket {
         this.callbacks = new Map();
         this.tags = new Map();
         this.socket = undefined;
+        this.connected = false;
 
         if ( loc ) {
             this.connect(loc);
@@ -49,11 +50,17 @@ class Socket {
 
     connect( loc ) {
         this.socket = io.connect(loc);
+        this.connected = true;
         this.socket.on('connect', () => { this._call("connect", {}); });
         this.socket.on('disconnect', () => { this._call("disconnect", {}); });
         this.socket.onAny((evt, ...args) => {
             this._handle(evt, args[0]);
         });
+    }
+
+    disconnect() {
+        this.connected = false;
+        this.socket.disconnect();
     }
 
     on( evt, callback ) {
@@ -65,6 +72,10 @@ class Socket {
     }
 
     emit( evt, data, ack ) {
+        if (!this.connected) {
+            return;
+        }
+
         if (ack) {
             this.socket.emit(evt, data, ack);
         } else {
@@ -73,6 +84,10 @@ class Socket {
     }
 
     request( evt, data, callback, ack ) {
+        if (!this.connected) {
+            return;
+        }
+
         const tag = uuidv4();
 
         this.tags.set(tag, callback);

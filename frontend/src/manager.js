@@ -141,6 +141,7 @@ export function manager(socket) {
     // the user to the login screen to reauth.
     socket.on('reload', () => {
         // Server wants us to reload, probably to de-auth ourselves after a remote logout.
+        socket.disconnect();
         window.location.reload();
     });
 
@@ -427,6 +428,12 @@ export function manager(socket) {
     socket.on('flash', (info) => {
         // Handles when the server wants to display a flash message on the client.
         flash(info.severity, info.message);
+    });
+
+    eventBus.on('logout', () => {
+        // We have a request to log out from the system.
+        socket.disconnect();
+        window.location.href = "/logout";
     });
 
     eventBus.on('admin', (details) => {

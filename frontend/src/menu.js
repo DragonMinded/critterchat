@@ -65,7 +65,7 @@ class Menu {
                 'yes, log out',
                 'no, stay here',
                 () => {
-                    window.location.href = "/logout";
+                    this.eventBus.emit("logout");
                 }
             );
         });
