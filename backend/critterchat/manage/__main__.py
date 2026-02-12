@@ -90,7 +90,7 @@ def generate_migration(config: Config, message: str, allow_empty: bool) -> None:
     data.close()
 
 
-def mastodon_register_all(config: Config) -> None:
+def mastodon_register_all(config: Config, filter_url: Optional[str] = None) -> None:
     """
     Given configured Mastodon instances in our config, ensure that all of them are registered so that
     we can perform OAuth and network lookups against it.
@@ -99,11 +99,19 @@ def mastodon_register_all(config: Config) -> None:
     data = Data(config)
     try:
         mastodonservice = MastodonService(config, data)
+        found = False
         for instance in config.authentication.mastodon:
+            if filter_url and instance.base_url != filter_url:
+                continue
+
             print(f"Registering with {instance.base_url}")
             mastodonservice.register_instance(instance.base_url)
+            found = True
 
-        print("Registered with all configured Mastodon instances.")
+        if filter_url and not found:
+            raise CommandException(f"Could not find Mastodon instance {filter_url} in config!")
+        else:
+            print("Registered with all configured Mastodon instances.")
 
     except MastodonServiceException as e:
         raise CommandException(str(e))
@@ -111,7 +119,7 @@ def mastodon_register_all(config: Config) -> None:
         data.close()
 
 
-def mastodon_list_all(config: Config) -> None:
+def mastodon_list_all(config: Config, filter_url: Optional[str] = None) -> None:
     """
     List all registered instances in the DB and pull information from those instances to ensure they
     are working.
@@ -120,7 +128,11 @@ def mastodon_list_all(config: Config) -> None:
     data = Data(config)
     try:
         mastodonservice = MastodonService(config, data)
+        found = False
         for instance in mastodonservice.get_all_instances():
+            if filter_url and instance.base_url != filter_url:
+                continue
+
             details = mastodonservice.get_instance_details(instance)
 
             print(f"Base URL: {details.base_url}")
@@ -130,6 +142,32 @@ def mastodon_list_all(config: Config) -> None:
                 print(f"Title: {details.title}")
 
             print("")
+            found = True
+
+        if filter_url and not found:
+            raise CommandException(f"Could not find Mastodon instance {filter_url} in config!")
+
+    except MastodonServiceException as e:
+        raise CommandException(str(e))
+    finally:
+        data.close()
+
+
+def mastodon_unregister(config: Config, base_url: str) -> None:
+    """
+    Given a configured Mastodon instance in our config, ensure that the specified one is unregistered
+    so that we can no longer perform OAuth nand network lookups against it.
+    """
+    data = Data(config)
+    try:
+        mastodonservice = MastodonService(config, data)
+        instance = mastodonservice.lookup_instance(base_url)
+        if not instance:
+            raise CommandException(f"Instance {base_url} does not exist or is already unregistered!")
+
+        mastodonservice.unregister_instance(instance.base_url)
+
+        print(f"Unregistered Mastodon instance {instance.base_url}")
 
     except MastodonServiceException as e:
         raise CommandException(str(e))
@@ -870,18 +908,46 @@ def main() -> None:
     )
     mastodon_commands = mastodon_parser.add_subparsers(dest="mastodon")
 
-    # No params for this one
-    mastodon_commands.add_parser(
+    # One optional param for this one.
+    register_instance_parser = mastodon_commands.add_parser(
         "register",
         help="register our instance with all configured Mastodon instances",
         description="Register our instance with all configured Mastodon instances.",
     )
+    register_instance_parser.add_argument(
+        "-i",
+        "--instance",
+        type=str,
+        default=None,
+        help="optional base url of specific instance we want to register",
+    )
 
-    # No params for this one
-    mastodon_commands.add_parser(
+    # One optional param for this one.
+    list_instance_parser = mastodon_commands.add_parser(
         "list",
         help="list Mastodon instances with details pulled from that instance",
         description="List Mastodon instances with details pulled from that instace.",
+    )
+    list_instance_parser.add_argument(
+        "-i",
+        "--instance",
+        type=str,
+        default=None,
+        help="optional base url of specific instance we want to list",
+    )
+
+    # One required param for this one.
+    unregister_instance_parser = mastodon_commands.add_parser(
+        "unregister",
+        help="unregister our instance with a specific Mastodon instance",
+        description="Unregister our instance with a specific Mastodon instance.",
+    )
+    unregister_instance_parser.add_argument(
+        "-i",
+        "--instance",
+        type=str,
+        required=True,
+        help="base url of specific instance we want to unregister",
     )
 
     # Another subcommand here.
@@ -1351,9 +1417,11 @@ def main() -> None:
             if args.mastodon is None:
                 raise CLIException("Unspecified mastodon operation!")
             elif args.mastodon == "register":
-                mastodon_register_all(config)
+                mastodon_register_all(config, args.instance)
             elif args.mastodon == "list":
-                mastodon_list_all(config)
+                mastodon_list_all(config, args.instance)
+            elif args.mastodon == "unregister":
+                mastodon_unregister(config, args.instance)
             else:
                 raise CLIException(f"Unknown mastodon operation '{args.mastodon}'")
 

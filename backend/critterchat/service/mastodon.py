@@ -369,6 +369,12 @@ class MastodonService:
         self.__data.mastodon.store_instance(instance)
         return instance
 
+    def unregister_instance(self, base_url: str) -> None:
+        # First, find the instance at all.
+        existing = self.__data.mastodon.lookup_instance(base_url)
+        if existing:
+            self.__data.mastodon.deactivate_instance(existing)
+
     def get_user(self, instance: MastodonInstance, username: str) -> Optional[User]:
         # Note that the username is the mastodon username, not our own local username.
         user_id = self.__data.mastodon.lookup_account_link(instance.base_url, username)

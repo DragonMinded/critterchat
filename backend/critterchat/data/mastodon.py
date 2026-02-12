@@ -1,10 +1,10 @@
 from sqlalchemy import Table, Column
 from sqlalchemy.schema import UniqueConstraint
-from sqlalchemy.types import String, Integer
+from sqlalchemy.types import String, Integer, Boolean
 from typing import List, Optional
 
 from .base import BaseData, metadata
-from .types import MastodonInstance, MastodonInstanceID, UserID
+from .types import MastodonInstance, MastodonInstanceID, NewMastodonInstanceID, UserID
 
 """
 Table representing a mastodon instance that we auth against.
@@ -16,6 +16,7 @@ mastodon_instance = Table(
     Column("base_url", String(512), nullable=False, unique=True, index=True),
     Column("client_id", String(256), nullable=False),
     Column("client_secret", String(256), nullable=False),
+    Column("inactive", Boolean, default=False),
     mysql_charset="utf8mb4",
 )
 
@@ -41,7 +42,7 @@ class MastodonData(BaseData):
         Return all known instances that we've registered with.
         """
 
-        sql = "SELECT * FROM mastodon_instance"
+        sql = "SELECT * FROM mastodon_instance WHERE inactive != TRUE"
         cursor = self.execute(sql, {})
         return [
             MastodonInstance(
@@ -58,7 +59,7 @@ class MastodonData(BaseData):
         obtained during registration.
         """
 
-        sql = "SELECT * FROM mastodon_instance WHERE base_url = :base_url LIMIT 1"
+        sql = "SELECT * FROM mastodon_instance WHERE base_url = :base_url AND inactive != TRUE LIMIT 1"
         cursor = self.execute(sql, {"base_url": base_url})
         if cursor.rowcount != 1:
             return None
@@ -73,16 +74,16 @@ class MastodonData(BaseData):
 
     def store_instance(self, instance: MastodonInstance) -> None:
         """
-        Given an instance, store it to the DB. If the instnace already exists, update
+        Given an instance, store it to the DB. If the instance already exists, update
         the client ID and secret.
         """
 
         sql = """
             INSERT INTO `mastodon_instance`
-                (`base_url`, `client_id`, `client_secret`)
-            VALUES (:base_url, :client_id, :client_secret)
+                (`base_url`, `client_id`, `client_secret`, `inactive`)
+            VALUES (:base_url, :client_id, :client_secret, FALSE)
             ON DUPLICATE KEY UPDATE
-                `client_id` = :client_id, `client_secret` = :client_secret
+                `client_id` = :client_id, `client_secret` = :client_secret, `inactive` = FALSE
         """
         cursor = self.execute(sql, {
             "base_url": instance.base_url,
@@ -95,6 +96,29 @@ class MastodonData(BaseData):
         # Hydrate what we've just persisted.
         instance.id = MastodonInstanceID(cursor.lastrowid)
 
+    def deactivate_instance(self, instance: MastodonInstance) -> None:
+        """
+        Given an instance, deactivate it so that it can't be used for OAuth anymore. Does
+        not sever any account links, so if it is re-activated in the future those account
+        links can be used for login again.
+        """
+
+        if instance.id == NewMastodonInstanceID:
+            return
+
+        with self.transaction():
+            sql = "SELECT id FROM mastodon_instance WHERE id = :id AND inactive != TRUE LIMIT 1"
+            cursor = self.execute(sql, {"id": instance.id})
+            if cursor.rowcount != 1:
+                return None
+
+            sql = """
+                UPDATE mastodon_instance
+                SET `client_id` = '', `client_secret` = '', `inactive` = TRUE
+                WHERE id = :id LIMIT 1
+            """
+            self.execute(sql, {"id": instance.id})
+
     def lookup_account_link(self, base_url: str, username: str) -> Optional[UserID]:
         """
         Given a base URL of an instance and a username that was found on that
@@ -105,7 +129,7 @@ class MastodonData(BaseData):
             SELECT user_id
             FROM mastodon_account_link
             WHERE instance_id IN (
-                SELECT id FROM mastodon_instance WHERE base_url = :base_url
+                SELECT id FROM mastodon_instance WHERE base_url = :base_url AND inactive != TRUE
             ) AND username = :username
             LIMIT 1
         """

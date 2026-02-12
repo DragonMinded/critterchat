@@ -1,8 +1,8 @@
 TODO Immediate
 ==============
 
- - Need a deauth command for a mastodon instance, can't delete or account links will fail.
  - Welcome message support.
+ - Count of users in each heading for moderated rooms, show "chatters" and "ianctive" for unmoderated public rooms.
 
 TODO For Public Instance
 ========================
