@@ -237,7 +237,8 @@ export function manager(socket) {
             'okay!',
             () => {
                 socket.emit('welcomeaccept', {});
-            }
+            },
+            true
         );
     });
 

@@ -6,7 +6,7 @@ import $ from "jquery";
  * clicking the confirm button. The user can always close the info panel without clicking
  * confirm by clicking outside of the modal or closing it.
  */
-export function displayInfo( infoText, confirmText, confirmCallback ) {
+export function displayInfo( infoText, confirmText, confirmCallback, sticky ) {
     // First, close any existing modal, since there can be only one.
     $.modal.close();
 
@@ -26,5 +26,14 @@ export function displayInfo( infoText, confirmText, confirmCallback ) {
     });
 
     // Finally, display the modal.
-    $('#info-form').modal();
+    if (sticky) {
+        // Only let something be sticky if we have a confirm callback, intentionally.
+        $('#info-form').modal({
+            escapeClose: false,
+            clickClose: false,
+            showClose: false,
+        });
+    } else {
+        $('#info-form').modal();
+    }
 }
