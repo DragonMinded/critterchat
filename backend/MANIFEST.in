@@ -2,6 +2,7 @@ include critterchat/data/migrations/alembic.ini
 include critterchat/http/templates/*.html
 include critterchat/http/templates/account/*.html
 include critterchat/http/templates/home/*.html
+include critterchat/http/templates/login/*.html
 include critterchat/http/templates/modals/*.html
 include critterchat/http/static/*.otf
 include critterchat/http/static/*.ttf
