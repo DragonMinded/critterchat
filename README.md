@@ -18,6 +18,7 @@ that can be enabled or disabled per-instance.
  - Preferences for most appearance settings and optional notification sounds.
  - Image attachment support so images can be sent with messages.
  - Various sign-up modes such as open registration, admin-approval and invite codes.
+ - Integration with Mastodon's OAuth for account creation and auth.
  - Collects absolutely no personal information, contains no tracking code.
 
 ## Wishlist
@@ -55,6 +56,7 @@ get in touch so we can work out the direction you plan to take.
  - SVGs for graphics for default avatar/room pictures, iconography on the frontend.
  - Documentation clarification or correction, both in code and related markdown files.
  - Support for more attachment backends.
+ - Support for more authentication provider flows.
  - Native clients for mobile or desktop operating systems.
  - Changes that make custom integrations easier.
 
