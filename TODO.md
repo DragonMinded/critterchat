@@ -1,8 +1,6 @@
 TODO Immediate
 ==============
 
- - Unify config files with new options.
- - Fix README section about not running migrations.
  - Don't look up user info for /static/ or /attachments/.
  - Fix not joining any rooms when logging back on and no settings.
  - Need a deauth command for a mastodon instance, can't delete or account links will fail.

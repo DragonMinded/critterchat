@@ -399,6 +399,7 @@ docker exec -it CritterChat /bin/sh
 which will drop you to a shell inside the container.
 
 ### Upgrading
+
 This has not been tested thoroughly, but should not cause any data loss since the database and attachments are kept in a bind mount. In theory it should be as simple as:
 ```
 docker compose down
@@ -407,4 +408,3 @@ docker image rm critterchat-docker-backend:latest
 docker compose up -d
 ```
 to pull the new code and relaunch it.
-NOTE! This does not currently take into account database migrations, which might need to be handled in the docker-entrypoint script.
