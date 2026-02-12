@@ -1,7 +1,6 @@
 TODO Immediate
 ==============
 
- - Don't look up user info for /static/ or /attachments/.
  - Fix not joining any rooms when logging back on and no settings.
  - Need a deauth command for a mastodon instance, can't delete or account links will fail.
  - Welcome message support.

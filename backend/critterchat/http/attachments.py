@@ -16,7 +16,8 @@ attachments = Blueprint(
 @attachments.route("/attachments/<attachment>")
 @cacheable(86400)
 def get_attachment(attachment: str) -> Response:
-    # Look up and return data for attachment.
+    # Look up and return data for attachment. Manually instantiate data here because
+    # we intentionally skipped that for static endpoints in app.py.
     data = Data(g.config)
     attachmentservice = AttachmentService(g.config, data)
 

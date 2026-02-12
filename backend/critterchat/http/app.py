@@ -99,7 +99,7 @@ def before_request() -> None:
     g.sessionID = None
     g.user = None
 
-    if request.endpoint in {"static"}:
+    if request.endpoint in {"static", "attachments.get_attachment"}:
         # This is just serving cached compiled frontends, skip loading from DB
         return
 
