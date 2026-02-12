@@ -910,6 +910,10 @@ div.menu > div.header {
     gap: var(--application-pane-padding);
 }
 
+div.menu div.header div.instance-title {
+    max-height: var(--conversation-panel-height);
+}
+
 div.menu div.header img.icon {
     width: var(--icon-width);
     height: var(--icon-height);

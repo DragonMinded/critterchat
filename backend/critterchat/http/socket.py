@@ -357,6 +357,7 @@ def serverinfo(json: Dict[str, object]) -> None:
         "name": config.name,
         "icon": attachmentservice.get_attachment_url(FaviconID),
         "administrator": config.administrator,
+        "source": config.source,
         "info": config.info,
     }), room=request.sid)
 
@@ -386,6 +387,7 @@ def motd(json: Dict[str, object]) -> None:
                 "name": config.name,
                 "icon": attachmentservice.get_attachment_url(FaviconID),
                 "administrator": config.administrator,
+                "source": config.source,
                 "message": extra,
                 "rooms": [room.to_dict() for room in rooms],
             }, room=request.sid)

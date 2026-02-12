@@ -218,6 +218,11 @@ export function manager(socket) {
             html += '</div>';
         });
 
+        var source = "";
+        if (msg.source) {
+            source = '<div class="info-subheader"><a target="_blank" href="' + msg.source + '">' + msg.source + '</a></div>';
+        }
+
         displayInfo(
             (
                 '<div class="info-header">' +
@@ -225,6 +230,7 @@ export function manager(socket) {
                 '    <div class="instance-title">Welcome to ' + msg.name + '!</div>' +
                 '</div>' +
                 '<div class="info-subheader">administered by ' + msg.administrator + '</div>' +
+                source +
                 '<div class="welcome-message">' + msg.message + '</div>' +
                 '<div class="results">' + html + '</div>'
             ),
@@ -237,6 +243,11 @@ export function manager(socket) {
 
     // Similar rationale as welcome, we just display the info in the info panel itself
     socket.on('info', (msg) => {
+        var source = "";
+        if (msg.source) {
+            source = '<div class="info-subheader"><a target="_blank" href="' + msg.source + '">' + msg.source + '</a></div>';
+        }
+
         displayInfo(
             (
                 '<div class="info-header">' +
@@ -244,6 +255,7 @@ export function manager(socket) {
                 '    <div class="instance-title">' + msg.name + '</div>' +
                 '</div>' +
                 '<div class="info-subheader">administered by ' + msg.administrator + '</div>' +
+                source +
                 '<div class="info-message">' + msg.info + '</div>'
             ),
             'okay!',

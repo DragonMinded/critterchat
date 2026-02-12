@@ -18,6 +18,11 @@ info: "docker-info.txt"
 # an email address since this isn't used to establish contact by CritterChat.
 administrator: "nobody"
 
+# Link to the source code for this instance. Can be left pointing at the main repository if you
+# are just running an unmodified instance, pointed at a fork if you've made modifications, or removed
+# if you want to opt out of displaying a link.
+source: "https://github.com/DragonMinded/critterchat"
+
 # The base URL that you've deployed this instance on.
 base_url: "http://localhost:5678/"
 

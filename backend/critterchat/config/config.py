@@ -199,6 +199,11 @@ class Config(dict[str, Any]):
         return str(self.get("administrator") or "nobody")
 
     @property
+    def source(self) -> Optional[str]:
+        src = self.get("source")
+        return str(src) if src else None
+
+    @property
     def info(self) -> str:
         info_file = self.get("info")
         info = None
