@@ -189,13 +189,8 @@ def background_thread_proc_impl() -> None:
                     for room in rooms:
                         if room.id not in info.fetchlimit:
                             includes.add(room.id)
+                            info.fetchlimit[room.id] = room.newest_action if room.newest_action is not None else NewActionID
                             updated = True
-
-                            lastaction = messageservice.get_last_room_action(room.id)
-                            if lastaction:
-                                info.fetchlimit[room.id] = lastaction.id
-                            else:
-                                info.fetchlimit[room.id] = NewActionID
 
                     # Calculate any badge updates that the client needs to know about, including
                     # badges on newly-joined rooms.
@@ -411,12 +406,7 @@ def roomlist(json: Dict[str, object]) -> None:
 
         # Pre-charge the delta fetches for all rooms this user is in.
         for room in rooms:
-            action = messageservice.get_last_room_action(room.id)
-            if action:
-                info.fetchlimit[room.id] = action.id
-            else:
-                info.fetchlimit[room.id] = NewActionID
-
+            info.fetchlimit[room.id] = room.newest_action if room.newest_action is not None else NewActionID
             info.lastseen[room.id] = lastseen.get(room.id, 0)
 
     socketio.emit('roomlist', hydrate_tag(json, {
@@ -918,11 +908,7 @@ def joinroom(json: Dict[str, object]) -> None:
 
             # Pre-charge the delta fetches for all rooms this user is in.
             for room in rooms:
-                action = messageservice.get_last_room_action(room.id)
-                if action:
-                    info.fetchlimit[room.id] = action.id
-                else:
-                    info.fetchlimit[room.id] = NewActionID
+                info.fetchlimit[room.id] = room.newest_action if room.newest_action is not None else NewActionID
 
     if actual_id:
         socketio.emit('roomlist', {

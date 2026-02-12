@@ -76,11 +76,6 @@ class MessageService:
     def get_last_action(self) -> Optional[ActionID]:
         return self.__data.room.get_last_action()
 
-    def get_last_room_action(self, roomid: RoomID) -> Optional[Action]:
-        history = self.__data.room.get_room_history(roomid, limit=1)
-        history = self._resolve_attachments(history)
-        return self.__attachments.resolve_action_icon(history[0]) if history else None
-
     def get_room_history(self, roomid: RoomID, before: Optional[ActionID] = None) -> List[Action]:
         room = self.__data.room.get_room(roomid)
         if not room:

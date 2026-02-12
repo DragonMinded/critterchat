@@ -109,8 +109,8 @@ class RoomData(BaseData):
         oldest_actions = self._get_oldest_action([r.id for r in rooms])
         newest_actions = self._get_newest_action([r.id for r in rooms])
         for room in rooms:
-            room.oldest_action = oldest_actions[room.id]
-            room.newest_action = newest_actions[room.id]
+            room.oldest_action = oldest_actions.get(room.id)
+            room.newest_action = newest_actions.get(room.id)
         return rooms
 
     def _get_purpose(self, purpose: str) -> RoomPurpose:
