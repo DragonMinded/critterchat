@@ -38,7 +38,6 @@ server {
         proxy_buffering off;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection "Upgrade";
-        include uwsgi_params;
 
         # This port should match the port you gave to the "LISTEN_PORT" section in your systemd service.
         proxy_pass http://127.0.0.1:12345/socket.io;
