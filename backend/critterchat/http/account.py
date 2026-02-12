@@ -1,4 +1,5 @@
 import logging
+import secrets
 import string
 from flask import Blueprint, Response, make_response, render_template, redirect
 
@@ -15,8 +16,8 @@ from .app import (
     info,
     g,
 )
-from .login import get_mastodon_providers
-from ..common import AESCipher, Time, get_emoji_unicode_dict, get_aliases_unicode_dict
+from .login import get_mastodon_providers, avatar_to_attachment, login_user_id
+from ..common import get_emoji_unicode_dict, get_aliases_unicode_dict
 from ..data import UserPermission, FaviconID
 from ..service import (
     AttachmentService,
@@ -37,6 +38,10 @@ account = Blueprint(
 
 
 logger = logging.getLogger(__name__)
+
+
+VALID_USERNAME_CHARACTERS = string.ascii_letters + string.digits + "_."
+VALID_RANDOM_PASWORD_CHARACTERS = string.ascii_letters + string.digits
 
 
 @account.route("/login", methods=["POST"])
@@ -101,17 +106,7 @@ def __login(username: str, password: str) -> Response:
         )
 
     if g.data.user.validate_password(user.id, password):
-        aes = AESCipher(g.config.cookie_key)
-        sessionID = g.data.user.create_session(user.id, expiration=90 * 86400)
-        response = make_response(redirect(absolute_url_for("chat.home", component="base")))
-        response.set_cookie(
-            "SessionID",
-            aes.encrypt(sessionID),
-            expires=Time.now() + (90 * Time.SECONDS_IN_DAY),
-            samesite="strict",
-            httponly=True,
-        )
-        return response
+        return login_user_id(user.id)
     else:
         error("Unrecognized username or password!")
         return Response(
@@ -288,9 +283,8 @@ def registerpost() -> Response:
             )
         )
 
-    valid_names = string.ascii_letters + string.digits + "_."
     for ch in username:
-        if ch not in valid_names:
+        if ch not in VALID_USERNAME_CHARACTERS:
             error("You cannot use non-alphanumeric characters in your username!")
             return Response(
                 render_template(
@@ -420,9 +414,8 @@ def invitepost(invite: str) -> Response:
             )
         )
 
-    valid_names = string.ascii_letters + string.digits + "_."
     for ch in username:
-        if ch not in valid_names:
+        if ch not in VALID_USERNAME_CHARACTERS:
             error("You cannot use non-alphanumeric characters in your username!")
             return Response(
                 render_template(
@@ -549,6 +542,7 @@ def invite(invite: str) -> Response:
 @loginprohibited
 def mastodonauth() -> Response:
     mastodonservice = MastodonService(g.config, g.data)
+    userservice = UserService(g.config, g.data)
 
     # First, grab the code, and use that to get a user token.
     code = request.args.get('code')
@@ -576,7 +570,56 @@ def mastodonauth() -> Response:
 
     # Now, grab the user's profile details so we can find the local account associated with this.
     profile = mastodonservice.get_user_profile(instance, token)
-    return make_response(redirect(absolute_url_for("welcome.home", component="base")))
+    if not profile:
+        error("Authorization code is invalid.")
+        return make_response(redirect(absolute_url_for("welcome.home", component="base")))
+
+    # Deauth this token, since we no longer need it.
+    mastodonservice.return_user_token(instance, token)
+
+    # Now, see if we can log in as this user, or must create an account.
+    existing_user = mastodonservice.get_user(instance, profile.username)
+    if existing_user:
+        # This user already exists, simply log them in!
+        return login_user_id(existing_user.id)
+
+    # User does not exist, so we must create a new user account. Arbitrarily choose the
+    # mastodon username as our username, and add underscores if there are already existing
+    # accounts that match what we chose.
+    sanitized_username = ""
+    for character in profile.username:
+        if character in VALID_USERNAME_CHARACTERS:
+            sanitized_username += character
+
+    if not sanitized_username:
+        error("Mastodon account does not have a valid username.")
+        return make_response(redirect(absolute_url_for("welcome.home", component="base")))
+
+    while True:
+        # See if our username already exists.
+        taken_user = userservice.find_user(sanitized_username)
+        if not taken_user:
+            break
+
+        sanitized_username = sanitized_username + "_"
+
+    # The sanitized username is what we'll use for our username. We will pick a completely
+    # random password since it does not matter what is used here.
+    password = ''.join(secrets.choice(VALID_RANDOM_PASWORD_CHARACTERS) for _ in range(32))
+    user = userservice.create_user(sanitized_username, password)
+    userservice.add_permission(user.id, UserPermission.ACTIVATED)
+
+    # Then, we will create a link between this new user and the mastodon credentials we grabbed.
+    mastodonservice.link_user(instance, profile.username, user.id)
+
+    # Finally, since we crated a new account, let's set the user's profile up for them.
+    avatar_id = None
+    if profile.avatar:
+        avatar_id = avatar_to_attachment(profile.avatar)
+    userservice.update_user(user.id, name=profile.nickname, about=profile.note, icon=avatar_id)
+
+    # And now, log them in!
+    return login_user_id(user.id)
 
 
 app.register_blueprint(account)

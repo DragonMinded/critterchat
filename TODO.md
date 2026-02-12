@@ -1,9 +1,6 @@
 TODO Immediate
 ==============
 
- - OAuth from mastodon support.
- - Need a separate table for mastodon account link.
- - Need to handle username collision.
  - Need a deauth command for a mastodon instance.
  - Welcome message support.
 

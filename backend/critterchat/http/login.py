@@ -1,8 +1,12 @@
 import logging
-from typing import List
+import requests
+from flask import Response, make_response, redirect
+from typing import List, Optional
 
-from .app import g
-from ..service import MastodonService, MastodonInstanceDetails
+from .app import g, absolute_url_for
+from ..common import AESCipher, Time
+from ..data import AttachmentID, MetadataType, UserID
+from ..service import AttachmentService, AttachmentServiceException, MastodonService, MastodonInstanceDetails
 
 
 logger = logging.getLogger(__name__)
@@ -62,3 +66,53 @@ def get_mastodon_providers() -> List[MastodonInstanceDetails]:
         retval.append(details)
 
     return retval
+
+
+def avatar_to_attachment(avatar: str) -> Optional[AttachmentID]:
+    # First, attempt to download the avatar itself.
+    try:
+        resp = requests.get(avatar)
+    except Exception as e:
+        logger.error(f"Failed to fetch user's avatar from {avatar}: {e}")
+        resp = None
+
+    if not resp or resp.status_code != 200:
+        return None
+
+    # Now, try to make sure this is a valid image.
+    attachmentservice = AttachmentService(g.config, g.data)
+    try:
+        icon, width, height, content_type = attachmentservice.prepare_attachment_image(
+            resp.content,
+            AttachmentService.MAX_ICON_WIDTH,
+            AttachmentService.MAX_ICON_HEIGHT,
+        )
+    except AttachmentServiceException:
+        # Unrecognized format, invalid size, etc.
+        return None
+
+    if width != height:
+        # Not square, ignore it.
+        return None
+
+    attachmentid = attachmentservice.create_attachment(content_type, None, {MetadataType.WIDTH: width, MetadataType.HEIGHT: height})
+    if attachmentid is None:
+        logger.error(f"Could not insert new attachment for {avatar}!")
+        return None
+
+    attachmentservice.put_attachment_data(attachmentid, icon)
+    return attachmentid
+
+
+def login_user_id(userid: UserID) -> Response:
+    aes = AESCipher(g.config.cookie_key)
+    sessionID = g.data.user.create_session(userid, expiration=90 * 86400)
+    response = make_response(redirect(absolute_url_for("chat.home", component="base")))
+    response.set_cookie(
+        "SessionID",
+        aes.encrypt(sessionID),
+        expires=Time.now() + (90 * Time.SECONDS_IN_DAY),
+        samesite="lax",
+        httponly=True,
+    )
+    return response

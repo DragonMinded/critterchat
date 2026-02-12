@@ -5,7 +5,8 @@ from html.parser import HTMLParser
 from typing import Dict, List, Optional, Tuple
 
 from ..config import Config
-from ..data import Data, MastodonProfile, MastodonInstance, NewMastodonInstanceID
+from ..data import Data, MastodonProfile, MastodonInstance, NewMastodonInstanceID, User, UserID
+from .user import UserService
 
 
 logger = logging.getLogger(__name__)
@@ -163,6 +164,7 @@ class MastodonService:
     def __init__(self, config: Config, data: Data) -> None:
         self.__config = config
         self.__data = data
+        self.__users = UserService(self.__config, self.__data)
 
     def _meth(self, base_url: str, path: str) -> str:
         while base_url[-1] == "/":
@@ -367,6 +369,17 @@ class MastodonService:
         self.__data.mastodon.store_instance(instance)
         return instance
 
+    def get_user(self, instance: MastodonInstance, username: str) -> Optional[User]:
+        # Note that the username is the mastodon username, not our own local username.
+        user_id = self.__data.mastodon.lookup_account_link(instance.base_url, username)
+        if not user_id:
+            return None
+
+        return self.__users.lookup_user(user_id)
+
+    def link_user(self, instance: MastodonInstance, username: str, userid: UserID) -> None:
+        self.__data.mastodon.store_account_link(instance.base_url, username, userid)
+
     def get_user_token(self, instance: MastodonInstance, code: str) -> Optional[str]:
         # First, attempt to look up and validate the instance itself.
         if not self._validate_instance(instance):
@@ -397,6 +410,29 @@ class MastodonService:
             return None
 
         return str(body.get("access_token"))
+
+    def return_user_token(self, instance: MastodonInstance, token: str) -> None:
+        # First, attempt to look up and validate the instance itself.
+        if not self._validate_instance(instance):
+            # Can't do anything
+            logger.error(f"Instance {instance.base_url} is not registered or is disconnected!")
+            return
+
+        try:
+            resp = requests.post(
+                self._meth(instance.base_url, "/oauth/revoke"),
+                json={
+                    "client_id": instance.client_id,
+                    "client_secret": instance.client_secret,
+                    "token": token,
+                },
+            )
+        except Exception as e:
+            logger.error(f"Failed to revoke user token for {instance.base_url}: {e}")
+            resp = None
+
+        if resp and resp.status_code != 200:
+            raise MastodonServiceException(f"Got {resp.status_code} from {instance.base_url} when revoking token!")
 
     def get_user_profile(self, instance: MastodonInstance, token: str) -> Optional[MastodonProfile]:
         # First, ensure our client connection to the instance is good.
