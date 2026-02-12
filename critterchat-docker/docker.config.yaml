@@ -1,0 +1,81 @@
+# Instance-wide secret key for cookie signing. Change this to something long and random. If you
+# change this on an existing instance all existing login sessions will be invalidated.
+cookie_key: "you_should_type_something_long_and_random_here"
+
+# Instance-wide pepper for hashing passwords. Change this to something long and random. If you
+# change this on an existing instance, all existing accounts will need their password reset.
+password_key: "you_should_also_change_this_to_something_long_and_random"
+
+# The name of the instance.
+name: "Critter Chat Instance"
+
+# The base URL that you've deployed this instance on.
+base_url: "http://localhost:5678/"
+
+# The upload base URL that you've deployed an instance specifically for processing upload on. If
+# you are processing uploads on the same subdomain as the base URL, feel free to leave this as-is.
+upload_url: ~
+
+database:
+  # IP or DNS entry for MySQL instance
+  address: "localhost"
+  # Database that will be used
+  database: "critterchat"
+  # User who has full credentials to the above DB
+  user: "critterchat"
+  # Password of said user
+  password: "critterchat"
+
+attachments:
+  # The URL prefix of the attachment store. This can be a full URL such as "https://attachments.example.com/"
+  # or a prefix directory if attachments are served on the same subdomain as the base URL.
+  prefix: "/attachments/"
+
+  # The attachment system that is used for attachment storage.
+  system: "local"
+
+  # The local directory where attachments are stored, if the system is "local".
+  directory: "/app/attachments"
+
+  # The key that will be used when hashing attachment names to ensure they are not enumerable.
+  attachment_key: "you_should_additionally_change_this_to_something_long_and_random"
+
+limits:
+  # The maximum number of unicode characters in a user's profile about section.
+  about_length: 64000
+
+  # The maximum number of unicode characters in a user's message as sent to a room.
+  message_length: 64000
+
+  # The maximum number of unicode characters in an attachment's alt text as sent to a room.
+  alt_text_length: 64000
+
+  # The maximum size in KB of user avatars or room custom icons.
+  icon_size: 128
+
+  # The maximum size in KB of user notification sounds.
+  notification_size: 128
+
+  # The maximum number of attachments that can be uploaded with one message.
+  attachment_max: 4
+
+  # The maximum size in KB of message attachments.
+  attachment_size: 2048
+
+account_registration:
+  # Whether new account registration is enabled at all. If this is enabled, users can follow
+  # the register new account flow and create an account. If this is disabled, accounts can
+  # only be created through enabled oauth flows, invites or directly by an administrator.
+  enabled: true
+
+  # Whether user-registered accounts are automatically activated or not. If this is enabled,
+  # users who register new accounts are automatically activated and can chat immediately.
+  # If this is disabled, an admin must activate the user's account before it is usable. Note
+  # that this only affects local account creation, not account creation through supported
+  # oauth flows or through invites.
+  auto_approve: false
+
+  # Whether users can generate invites for others or not. If this is enabled, users can generate
+  # an invite link which allows somebody with the link to sign up for an account that is then
+  # auto-approved. If this is not enabled, then only admins can generate such links.
+  invites: false
