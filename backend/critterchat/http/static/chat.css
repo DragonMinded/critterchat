@@ -907,6 +907,7 @@ div.menu > div.header {
     display: flex;
     flex-direction: row;
     align-items: center;
+    justify-content: center;
     gap: var(--application-pane-padding);
 }
 
