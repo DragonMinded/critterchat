@@ -61,9 +61,15 @@ class UserService:
         if settings:
             return settings
 
+        # For convenience/looks, look up the last room action for the rooms they're in
+        # and place them into the room with the latest action.
+        rooms = self.__data.room.get_joined_rooms(userid)
+        rooms = sorted(rooms, key=lambda room: room.last_action_timestamp, reverse=True)
+        roomid = rooms[0].id if rooms else None
+
         return UserSettings(
             userid=userid,
-            roomid=None,
+            roomid=roomid,
             info=None,
         )
 
