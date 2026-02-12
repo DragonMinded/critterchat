@@ -1,4 +1,5 @@
 import copy
+import os
 from sqlalchemy.engine import Engine
 from typing import Any, List, Dict, Optional
 
@@ -149,8 +150,12 @@ class Authentication:
 
 
 class Config(dict[str, Any]):
-    def __init__(self, existing_contents: Dict[str, Any] = {}) -> None:
+    def __init__(self, existing_contents: Dict[str, Any] = {}, filename: Optional[str] = None) -> None:
         super().__init__(existing_contents or {})
+
+        self.__path: Optional[str] = None
+        if filename:
+            self.__path = os.path.dirname(filename)
 
         self.database = Database(self)
         self.attachments = Attachments(self)
@@ -171,7 +176,11 @@ class Config(dict[str, Any]):
             self["database"]["engine"] = engine
             clone["database"]["engine"] = engine
 
+        clone.__path = self.__path
         return clone
+
+    def set_filename(self, filename: str) -> None:
+        self.__path = os.path.dirname(filename)
 
     @property
     def cookie_key(self) -> str:
@@ -184,6 +193,30 @@ class Config(dict[str, Any]):
     @property
     def name(self) -> str:
         return str(self.get("name") or "Critter Chat Instance")
+
+    @property
+    def administrator(self) -> str:
+        return str(self.get("administrator") or "nobody")
+
+    @property
+    def info(self) -> str:
+        info_file = self.get("info")
+        info = None
+
+        if info_file:
+            try:
+                if self.__path:
+                    info_file = os.path.normpath(os.path.join(self.__path, info_file))
+
+                with open(info_file, "r", encoding="utf-8") as fp:
+                    info = fp.read()
+            except FileNotFoundError:
+                pass
+
+        if not info:
+            return "The instance owner has not set any server info."
+        else:
+            return info
 
     @property
     def base_url(self) -> str:

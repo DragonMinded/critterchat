@@ -1,8 +1,6 @@
 TODO Immediate
 ==============
 
- - Welcome message support.
-
 TODO For Public Instance
 ========================
 

@@ -9,6 +9,15 @@ password_key: "you_should_also_change_this_to_something_long_and_random"
 # The name of the instance.
 name: "Critter Chat Instance"
 
+# Path to your server's information/rules/etc as a text file. Can contain html and will be displayed
+# in both the new user welcome popover as well as in the server info popover. Can be relative to
+# this config file, or an absolute path.
+info: "baremetal-info.txt"
+
+# Server administrator. Displayed in the server info popover, can be a username, online handle or
+# an email address since this isn't used to establish contact by CritterChat.
+administrator: "nobody"
+
 # The base URL that you've deployed this instance on.
 base_url: "http://localhost:5678/"
 

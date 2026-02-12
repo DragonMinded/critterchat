@@ -42,6 +42,13 @@ class Menu {
             this.inputState.setState("empty");
         });
 
+        $( 'div.menu > div.header img.icon' ).on( 'click', () => {
+            event.preventDefault();
+
+            this.inputState.setState("empty");
+            this.eventBus.emit('serverinfo');
+        });
+
         $( '#edit-profile' ).on( 'click', (event) => {
             event.preventDefault();
 

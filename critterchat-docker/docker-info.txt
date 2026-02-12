@@ -1,0 +1,1 @@
+This is where you would write server information, rules, etc. It is shown when a new user joins as well as when anyone clicks the   instance icon in the upper left corner.

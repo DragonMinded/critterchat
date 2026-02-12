@@ -903,6 +903,19 @@ div.container > div.menu {
     flex-direction: column;
 }
 
+div.menu > div.header {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: var(--application-pane-padding);
+}
+
+div.menu div.header img.icon {
+    width: var(--icon-width);
+    height: var(--icon-height);
+    cursor: pointer;
+}
+
 div.menu > div.rooms {
     flex-grow: 1;
     flex-direction: column;
@@ -1419,6 +1432,23 @@ div.invite-link-wrapper div.invite-link {
     border-radius: var(--button-border-radius);
     padding: var(--button-h-padding);
     border: 1px solid var(--input-button-border)
+}
+
+div.information div.info-header, div.information div.info-subheader {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: var(--application-pane-padding);
+}
+
+div.information div.info-subheader {
+    font-size: var(--application-text-size-14);
+}
+
+div.information div.info-header img.icon {
+    width: var(--icon-width);
+    height: var(--icon-height);
 }
 
 div.search > div.actions,

@@ -6,6 +6,7 @@ from typing import Any, Dict, Final, List, Literal, Optional, Set, cast
 from .app import socketio, config, request
 from ..common import AESCipher, Time, represents_real_text
 from ..service import (
+    AttachmentService,
     EmoteService,
     UserService,
     MessageService,
@@ -25,6 +26,7 @@ from ..data import (
     NewActionID,
     ActionID,
     AttachmentID,
+    FaviconID,
     RoomID,
     UserID,
 )
@@ -340,11 +342,31 @@ def disconnect() -> None:
     unregister_sid(request.sid)
 
 
+@socketio.on('info')  # type: ignore
+def serverinfo(json: Dict[str, object]) -> None:
+    data = Data(config)
+    attachmentservice = AttachmentService(config, data)
+
+    # Try to associate with a user if there is one.
+    userid = recover_userid(data, request.sid)
+    if userid is None:
+        return
+
+    # Look up any server info to display to the user here.
+    socketio.emit('info', hydrate_tag(json, {
+        "name": config.name,
+        "icon": attachmentservice.get_attachment_url(FaviconID),
+        "administrator": config.administrator,
+        "info": config.info,
+    }), room=request.sid)
+
+
 @socketio.on('motd')  # type: ignore
 def motd(json: Dict[str, object]) -> None:
     data = Data(config)
     userservice = UserService(config, data)
     messageservice = MessageService(config, data)
+    attachmentservice = AttachmentService(config, data)
 
     # Try to associate with a user if there is one.
     userid = recover_userid(data, request.sid)
@@ -354,14 +376,17 @@ def motd(json: Dict[str, object]) -> None:
     user = userservice.lookup_user(userid)
     if user:
         if UserPermission.WELCOMED not in user.permissions:
-            # TODO: Look up any welcome message to display to the user here.
-            extra = ""
+            # Look up any server info to display to the user here.
+            extra = config.info
             rooms = messageservice.get_autojoin_rooms(userid)
             if rooms:
-                extra += "You will be automatically added to the following rooms."
+                extra += "<p>You will be automatically added to the following rooms.</p>"
 
             socketio.emit('welcome', {
-                "message": f"Welcome to {config.name}! {extra}",
+                "name": config.name,
+                "icon": attachmentservice.get_attachment_url(FaviconID),
+                "administrator": config.administrator,
+                "message": extra,
                 "rooms": [room.to_dict() for room in rooms],
             }, room=request.sid)
 

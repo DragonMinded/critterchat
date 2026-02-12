@@ -219,11 +219,34 @@ export function manager(socket) {
         });
 
         displayInfo(
-            '<div class="welcome-message">' + msg.message + '</div><div class="results">' + html + '</div>',
+            (
+                '<div class="info-header">' +
+                '    <img class="icon" src="' + msg.icon + '" />' +
+                '    <div class="instance-title">Welcome to ' + msg.name + '!</div>' +
+                '</div>' +
+                '<div class="info-subheader">administered by ' + msg.administrator + '</div>' +
+                '<div class="welcome-message">' + msg.message + '</div>' +
+                '<div class="results">' + html + '</div>'
+            ),
             'okay!',
             () => {
                 socket.emit('welcomeaccept', {});
             }
+        );
+    });
+
+    // Similar rationale as welcome, we just display the info in the info panel itself
+    socket.on('info', (msg) => {
+        displayInfo(
+            (
+                '<div class="info-header">' +
+                '    <img class="icon" src="' + msg.icon + '" />' +
+                '    <div class="instance-title">' + msg.name + '</div>' +
+                '</div>' +
+                '<div class="info-subheader">administered by ' + msg.administrator + '</div>' +
+                '<div class="info-message">' + msg.info + '</div>'
+            ),
+            'okay!',
         );
     });
 
@@ -525,10 +548,14 @@ export function manager(socket) {
         socket.emit('updatesettings', settings);
     });
 
-
     eventBus.on('generateinvite', () => {
         // We were informed that the current user wants to generate an invite link. Do so.
         socket.emit('invite', {});
+    });
+
+    eventBus.on('serverinfo', () => {
+        // We were informed that the current user wants to look at the server's MOTD again.
+        socket.emit('info', {});
     });
 
     eventBus.on('updateprofile', (profile) => {
