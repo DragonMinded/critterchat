@@ -2,7 +2,6 @@ TODO Immediate
 ==============
 
  - Welcome message support.
- - Count of users in each heading for moderated rooms, show "chatters" and "ianctive" for unmoderated public rooms.
 
 TODO For Public Instance
 ========================

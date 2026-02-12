@@ -435,6 +435,17 @@ class Info {
         var lastType = undefined;
         const typeMap = ['moderators', 'chatters', 'inactive'];
 
+        // Calcualte number of users in each type.
+        const countMap = new Map();
+        typeMap.forEach((entry) => {
+            countMap.set(entry, 0);
+        });
+
+        this.occupants.forEach((occupant) => {
+            const curType = typeMap[this._computeSortOrder(occupant)];
+            countMap.set(curType, countMap.get(curType) + 1);
+        });
+
         this.occupants.forEach((occupant) => {
             // Now, draw it fresh since it's not an update.
             var cls = "item";
@@ -442,12 +453,12 @@ class Info {
                 cls += " faded";
             }
 
-            if (this.moderated) {
+            if (this.roomType == "room") {
                 const curType = typeMap[this._computeSortOrder(occupant)];
                 if (curType != lastType) {
                     lastType = curType;
 
-                    var header = '<div class="header">' + curType + '</div>';
+                    var header = '<div class="header">' + curType + ' \u2014 ' + countMap.get(curType) + '</div>';
                     occupantElement.append(header);
                 }
             }
