@@ -64,8 +64,15 @@ if __name__ == '__main__':
     root_logger = logging.getLogger()
     while root_logger.hasHandlers():
         root_logger.removeHandler(logger.handlers[0])
+    default_handler.setFormatter(
+        logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    )
     root_logger.addHandler(default_handler)
     root_logger.setLevel(logging.DEBUG if args.debug else logging.INFO)
+
+    # Gevent's logger has the wrong IP and is messy, shut it up.
+    gevent_logger = logging.getLogger("geventwebsocket.handler")
+    gevent_logger.setLevel(logging.WARNING)
 
     if args.sql_query_log:
         logging.getLogger("sqlalchemy.engine").setLevel(logging.INFO)

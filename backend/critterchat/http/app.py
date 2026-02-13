@@ -2,6 +2,7 @@ import hashlib
 import json
 import logging
 import os
+import time
 import traceback
 from functools import wraps
 from typing import Any, Callable, Dict, Optional, cast
@@ -77,6 +78,9 @@ request: CritterChatRequest = cast(CritterChatRequest, base_request)
 
 # A quick hack to teach mypy about our request global parameters.
 class CritterChatGlobal(_AppCtxGlobals):
+    # What time the request arrived.
+    timestamp: float
+
     # Our config global, always available.
     config: Config
 
@@ -94,6 +98,7 @@ g: CritterChatGlobal = cast(CritterChatGlobal, base_g)
 
 @app.before_request
 def before_request() -> None:
+    g.timestamp = time.time()
     g.config = config
     g.data = None  # type: ignore
     g.sessionID = None
@@ -132,6 +137,15 @@ def after_request(response: Response) -> Response:
         response.cache_control.no_cache = True
         response.cache_control.must_revalidate = True
         response.cache_control.private = True
+
+    if request.query_string:
+        path = f"{request.path}?{request.query_string.decode('utf-8')}"
+    else:
+        path = request.path
+    content_length = response.calculate_content_length() or 0
+    ts = int((time.time() - g.timestamp) * 10000) / 10.0
+    logger.info(f'{request.remote_addr} - {request.method} - {path} - {response.status} - {content_length} - {ts}ms')
+
     return response
 
 

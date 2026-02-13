@@ -334,12 +334,14 @@ def connect() -> None:
     # Make sure we track this client so we don't get a premature hang-up.
     data = Data(config)
     register_sid(data, request.sid, sessionID)
+    logger.info(f"Client connected from {request.remote_addr} with session {request.sid}")
 
 
 @socketio.on('disconnect')  # type: ignore
 def disconnect() -> None:
     # Explicitly kill the presence since we know they're gone.
     unregister_sid(request.sid)
+    logger.info(f"Client disconnected from {request.remote_addr} with session {request.sid}")
 
 
 @socketio.on('info')  # type: ignore
