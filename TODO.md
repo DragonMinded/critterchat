@@ -1,12 +1,14 @@
 TODO Immediate
 ==============
 
+ - Make instance name clickable.
+ - Another pass over PROTOCOL.md.
+
 TODO For Public Instance
 ========================
 
  - Stickers support in some form.
  - Emote/emoji reactions to messages.
- - Another pass over PROTOCOL.md.
  - Start on backend tests.
 
 TODO Low Priority
