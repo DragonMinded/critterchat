@@ -111,8 +111,8 @@ body.smallest {
     --error-button-text-size: 10px;
 
     --header-height: 36px;
-    --menu-pane-width: 225px;
-    --info-pane-width: 225px;
+    --menu-pane-width: 241px;
+    --info-pane-width: 241px;
     --pane-action-button-height: 36px;
     --pane-item-name-height: 28px;
 
@@ -201,8 +201,8 @@ body.smaller {
     --error-button-text-size: 10px;
 
     --header-height: 38px;
-    --menu-pane-width: 237px;
-    --info-pane-width: 237px;
+    --menu-pane-width: 255px;
+    --info-pane-width: 255px;
     --pane-action-button-height: 38px;
     --pane-item-name-height: 30px;
 
@@ -291,8 +291,8 @@ body:not(.smallest):not(.smaller):not(.larger):not(.largest) {
     --error-button-text-size: 10px;
 
     --header-height: 40px;
-    --menu-pane-width: 250px;
-    --info-pane-width: 250px;
+    --menu-pane-width: 270px;
+    --info-pane-width: 270px;
     --pane-action-button-height: 40px;
     --pane-item-name-height: 36px;
 
@@ -381,8 +381,8 @@ body.larger {
     --error-button-text-size: 10px;
 
     --header-height: 44px;
-    --menu-pane-width: 275px;
-    --info-pane-width: 275px;
+    --menu-pane-width: 295px;
+    --info-pane-width: 295px;
     --pane-action-button-height: 46px;
     --pane-item-name-height: 40px;
 
@@ -471,8 +471,8 @@ body.largest {
     --error-button-text-size: 10px;
 
     --header-height: 48px;
-    --menu-pane-width: 300px;
-    --info-pane-width: 300px;
+    --menu-pane-width: 320px;
+    --info-pane-width: 320px;
     --pane-action-button-height: 54px;
     --pane-item-name-height: 44px;
 
