@@ -1,7 +1,6 @@
 TODO Immediate
 ==============
 
- - Make instance name clickable.
  - Another pass over PROTOCOL.md.
 
 TODO For Public Instance

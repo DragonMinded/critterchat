@@ -4,6 +4,7 @@
     --application-icon-background: light-dark(#ffffff, #222222);
     --application-text: light-dark(#000000, #ffffff);
     --application-subtle-text: light-dark(#5f5f5f, #5f5f5f);
+    --application-separator: light-dark(#d0d0d0, #393939);
 
     --sidebar-background: light-dark(#dddddd, #222222);
     --sidebar-text: light-dark(#000000, #e1e1e1);
@@ -109,6 +110,7 @@ body.smallest {
     --error-flash-padding: 2px;
     --error-button-text-size: 10px;
 
+    --header-height: 36px;
     --menu-pane-width: 225px;
     --info-pane-width: 225px;
     --pane-action-button-height: 36px;
@@ -158,7 +160,7 @@ body.smallest {
     --nav-button-top-margin: 2px;
     --nav-button-bottom-margin: -2px;
 
-    --conversation-panel-height: 36px;
+    --conversation-panel-height: 34px;
     --conversation-topic-max-height: 26px;
     --conversation-newmessage-icon-padding: 56px;
     --conversation-newmessage-indicator-top: -35px;
@@ -198,6 +200,7 @@ body.smaller {
     --error-flash-padding: 2px;
     --error-button-text-size: 10px;
 
+    --header-height: 38px;
     --menu-pane-width: 237px;
     --info-pane-width: 237px;
     --pane-action-button-height: 38px;
@@ -287,6 +290,7 @@ body:not(.smallest):not(.smaller):not(.larger):not(.largest) {
     --error-flash-padding: 2px;
     --error-button-text-size: 10px;
 
+    --header-height: 40px;
     --menu-pane-width: 250px;
     --info-pane-width: 250px;
     --pane-action-button-height: 40px;
@@ -376,6 +380,7 @@ body.larger {
     --error-flash-padding: 2px;
     --error-button-text-size: 10px;
 
+    --header-height: 44px;
     --menu-pane-width: 275px;
     --info-pane-width: 275px;
     --pane-action-button-height: 46px;
@@ -465,6 +470,7 @@ body.largest {
     --error-flash-padding: 2px;
     --error-button-text-size: 10px;
 
+    --header-height: 48px;
     --menu-pane-width: 300px;
     --info-pane-width: 300px;
     --pane-action-button-height: 54px;
@@ -894,12 +900,10 @@ div.uploadpicker-container img {
 
 div.container > div.menu {
     width: var(--menu-pane-width);
-    border: var(--application-pane-padding) solid var(--sidebar-background);
     background: var(--sidebar-background);
     color: var(--sidebar-text);
     overflow: hidden;
     display: flex;
-    gap: var(--application-pane-padding);
     flex-direction: column;
 }
 
@@ -907,12 +911,15 @@ div.menu > div.header {
     display: flex;
     flex-direction: row;
     align-items: center;
-    justify-content: center;
     gap: var(--application-pane-padding);
-}
-
-div.menu div.header div.instance-title {
-    max-height: var(--conversation-panel-height);
+    min-height: var(--header-height);
+    max-height: var(--header-height);
+    overflow: hidden;
+    padding-top: var(--application-item-padding);
+    padding-left: var(--application-pane-padding);
+    padding-right: var(--application-pane-padding);
+    padding-bottom: var(--application-item-padding);
+    border-bottom: 1px solid var(--application-separator);
 }
 
 div.menu div.header img.icon {
@@ -921,11 +928,19 @@ div.menu div.header img.icon {
     cursor: pointer;
 }
 
+div.menu div.header div.instance-title {
+    cursor: pointer;
+}
+
 div.menu > div.rooms {
     flex-grow: 1;
     flex-direction: column;
     display: flex;
     gap: var(--application-item-padding);
+    padding-top: var(--application-pane-padding);
+    border-left: var(--application-pane-padding) solid var(--sidebar-background);
+    border-right: var(--application-pane-padding) solid var(--sidebar-background);
+    border-bottom: var(--application-pane-padding) solid var(--sidebar-background);
     overflow-y: auto;
 }
 
@@ -1057,6 +1072,9 @@ div.results div.item div.action {
 div.menu > div.actions, div.info > div.actions {
     display: flex;
     gap: var(--application-pane-padding);
+    border-left: var(--application-pane-padding) solid var(--sidebar-background);
+    border-right: var(--application-pane-padding) solid var(--sidebar-background);
+    border-bottom: var(--application-pane-padding) solid var(--sidebar-background);
 }
 
 div.actions div.item {
@@ -1095,14 +1113,19 @@ div.container > div.chat {
 
 div.chat > div.top-info {
     background: var(--sidebar-background);
-    border-top: var(--application-pane-padding) solid var(--sidebar-background);
-    border-bottom: var(--application-item-padding) solid var(--sidebar-background);
+    border-bottom: 1px solid var(--application-separator);
     color: var(--sidebar-text);
     display: flex;
     flex-direction: row;
+    align-items: center;
     gap: var(--application-pane-padding);
+    padding-top: var(--application-item-padding);
+    padding-bottom: var(--application-item-padding);
     padding-left: var(--application-pane-padding);
     padding-right: var(--application-pane-padding);
+    min-height: var(--header-height);
+    max-height: var(--header-height);
+    overflow: hidden;
 }
 
 div.top-info div.back, div.info div.back, div.top-info div.info {
@@ -1362,12 +1385,10 @@ div.new-messages-alert {
 
 div.container > div.info {
     width: var(--info-pane-width);
-    border: var(--application-pane-padding) solid var(--sidebar-background);
     background: var(--sidebar-background);
     color: var(--sidebar-text);
     overflow: hidden;
     display: flex;
-    gap: var(--application-pane-padding);
     flex-direction: column;
 }
 
@@ -1383,7 +1404,15 @@ div.info > div.header {
     display: flex;
     flex-direction: row;
     align-items: center;
+    min-height: var(--header-height);
+    max-height: var(--header-height);
+    overflow: hidden;
     gap: var(--application-pane-padding);
+    padding-top: var(--application-item-padding);
+    padding-left: var(--application-pane-padding);
+    padding-right: var(--application-pane-padding);
+    padding-bottom: var(--application-item-padding);
+    border-bottom: 1px solid var(--application-separator);
 }
 
 div.info > div.occupants {
@@ -1392,6 +1421,10 @@ div.info > div.occupants {
     display: flex;
     gap: var(--application-item-padding);
     overflow-y: auto;
+    padding-top: var(--application-pane-padding);
+    border-left: var(--application-pane-padding) solid var(--sidebar-background);
+    border-right: var(--application-pane-padding) solid var(--sidebar-background);
+    border-bottom: var(--application-pane-padding) solid var(--sidebar-background);
 }
 
 div.info > div.occupants.scroll {

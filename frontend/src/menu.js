@@ -42,7 +42,7 @@ class Menu {
             this.inputState.setState("empty");
         });
 
-        $( 'div.menu > div.header img.icon' ).on( 'click', () => {
+        $( 'div.menu > div.header img.icon, div.menu > div.header div.instance-title' ).on( 'click', () => {
             event.preventDefault();
 
             this.inputState.setState("empty");
