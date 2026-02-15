@@ -20,6 +20,7 @@ that can be enabled or disabled per-instance.
  - Various sign-up modes such as open registration, admin-approval and invite codes.
  - Integration with Mastodon's OAuth for account creation and auth.
  - Collects absolutely no personal information, contains no tracking code.
+ - Not built with, enabled by or integrated with any generative AI.
 
 ## Wishlist
 
