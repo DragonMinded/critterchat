@@ -9,6 +9,10 @@ export function displayAltTextEditor( image, existing, applyCallback ) {
     // First, close any existing modal, since there can be only one.
     $.modal.close();
 
+    // Unhook any previous dangling handlers that might exist from dismissing this previously.
+    $('#alt-text-confirm').off();
+    $('#alt-text-cancel').off();
+
     // Now, set the text up for the modal itself.
     $('#alt-text-image').attr('src', image);
     $('#alt-text-text').attr("maxlength", window.maxalttext);
@@ -17,6 +21,10 @@ export function displayAltTextEditor( image, existing, applyCallback ) {
     // Now, set up the callbacks for actions.
     $('#alt-text-confirm').on( 'click', (event) => {
         event.preventDefault();
+
+        // Unhook ourselves so we don't double-fire on second call.
+        $('#alt-text-confirm').off();
+        $('#alt-text-cancel').off();
 
         $.modal.close();
 
@@ -27,6 +35,10 @@ export function displayAltTextEditor( image, existing, applyCallback ) {
 
     $('#alt-text-cancel').on( 'click', (event) => {
         event.preventDefault();
+
+        // Unhook ourselves so we don't double-fire on second call.
+        $('#alt-text-confirm').off();
+        $('#alt-text-cancel').off();
 
         $.modal.close();
     });

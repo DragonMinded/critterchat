@@ -11,6 +11,10 @@ export function displayWarning( warningText, confirmText, cancelText, confirmCal
     // First, close any existing modal, since there can be only one.
     $.modal.close();
 
+    // Unhook previous instance hooks so we don't have dangling handlers if it was dismissed.
+    $('#warning-confirm').off();
+    $('#warning-cancel').off();
+
     // Now, set the text up for the modal itself.
     $('#warning-text').html(warningText);
     $('#warning-confirm').text(confirmText);
@@ -19,6 +23,10 @@ export function displayWarning( warningText, confirmText, cancelText, confirmCal
     // Now, set up the callbacks for actions.
     $('#warning-confirm').on( 'click', (event) => {
         event.preventDefault();
+
+        // Unhook our handlers so we don't fire old ones on the next display.
+        $('#warning-confirm').off();
+        $('#warning-cancel').off();
 
         $.modal.close();
         
@@ -29,6 +37,10 @@ export function displayWarning( warningText, confirmText, cancelText, confirmCal
 
     $('#warning-cancel').on( 'click', (event) => {
         event.preventDefault();
+
+        // Unhook our handlers so we don't fire old ones on the next display.
+        $('#warning-confirm').off();
+        $('#warning-cancel').off();
 
         $.modal.close();
         

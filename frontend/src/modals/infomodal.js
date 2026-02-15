@@ -10,6 +10,9 @@ export function displayInfo( infoText, confirmText, confirmCallback, sticky ) {
     // First, close any existing modal, since there can be only one.
     $.modal.close();
 
+    // Unhook any previous instance hooks that didn't get unhooked if we were closed by dismissing.
+    $( '#info-confirm').off();
+
     // Now, set the text up for the modal itself.
     $('#info-text').html(infoText);
     $('#info-confirm').text(confirmText);
@@ -17,6 +20,9 @@ export function displayInfo( infoText, confirmText, confirmCallback, sticky ) {
     // Now, set up the callbacks for actions.
     $( '#info-confirm').on( 'click', (event) => {
         event.preventDefault();
+
+        // Unhook ourselves so we don't have dangling callbacks.
+        $( '#info-confirm').off();
 
         $.modal.close();
 

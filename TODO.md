@@ -1,8 +1,6 @@
 TODO Immediate
 ==============
 
- - Attachment alt text wrong for multi-pictures, seems to copy the last picture's text.
-
 TODO For Public Instance
 ========================
 

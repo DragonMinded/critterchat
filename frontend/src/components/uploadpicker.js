@@ -50,6 +50,10 @@ class UploadPicker {
         }, true);
 
         $( 'input#message-files' ).on( 'change', (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            event.stopImmediatePropagation();
+
             const jqe = $(event.target);
             const files = [...event.target.files];
             const roomid = jqe.attr('roomid');
@@ -58,6 +62,10 @@ class UploadPicker {
         });
 
         $( this.textBox ).on( 'paste', (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            event.stopImmediatePropagation();
+
             const files = [...event.originalEvent.clipboardData.files];
             const roomid = this.room;
 
@@ -67,6 +75,69 @@ class UploadPicker {
                 event.preventDefault();
 
                 this._upload(roomid, files);
+            }
+        });
+
+        $( document ).on('click', 'div.uploadpicker div.delete-container', (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            event.stopImmediatePropagation();
+
+            const jqe = $(event.currentTarget);
+            const parts = jqe.attr('id').split('-');
+
+            if (this.rooms.has(parts[0])) {
+                const room = this.rooms.get(parts[0]);
+                const idx = parseInt(parts[2]);
+                room.files.splice(idx, 1);
+
+                this._drawRoom( parts[0] );
+            }
+        });
+
+        $( document ).on('click', 'div.uploadpicker div.alt-text-container', (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            event.stopImmediatePropagation();
+
+            const jqe = $(event.currentTarget);
+            const parts = jqe.attr('id').split('-');
+
+            if (this.rooms.has(parts[0])) {
+                const room = this.rooms.get(parts[0]);
+                const idx = parseInt(parts[2]);
+
+                displayAltTextEditor( room.files[idx].data, room.files[idx].alt_text, (event, alt_text) => {
+                    room.files[idx].alt_text = alt_text;
+
+                    if (alt_text) {
+                        jqe.addClass('present');
+                    } else {
+                        jqe.removeClass('present');
+                    }
+                });
+            }
+        });
+
+        $( document ).on('click', 'div.uploadpicker div.sensitive-container', (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            event.stopImmediatePropagation();
+
+            const jqe = $(event.currentTarget);
+            const parts = jqe.attr('id').split('-');
+
+            if (this.rooms.has(parts[0])) {
+                const room = this.rooms.get(parts[0]);
+                const idx = parseInt(parts[2]);
+
+                room.files[idx].sensitive = !room.files[idx].sensitive;
+
+                if (room.files[idx].sensitive) {
+                    jqe.find('div.attachment-visibility').addClass('attachment-sensitive').removeClass('attachment-visible');
+                } else {
+                    jqe.find('div.attachment-visibility').addClass('attachment-visible').removeClass('attachment-sensitive');
+                }
             }
         });
     }
@@ -190,57 +261,6 @@ class UploadPicker {
             $('<div />')
                 .attr('class', 'delete maskable')
                 .appendTo(delcontainer);
-        });
-
-        $('div.uploadpicker div.delete-container').on('click', (event) => {
-            const jqe = $(event.currentTarget);
-            const parts = jqe.attr('id').split('-');
-
-            if (this.rooms.has(parts[0])) {
-                const room = this.rooms.get(parts[0]);
-                const idx = parseInt(parts[2]);
-                room.files.splice(idx, 1);
-
-                this._drawRoom( parts[0] );
-            }
-        });
-
-        $('div.uploadpicker div.alt-text-container').on('click', (event) => {
-            const jqe = $(event.currentTarget);
-            const parts = jqe.attr('id').split('-');
-
-            if (this.rooms.has(parts[0])) {
-                const room = this.rooms.get(parts[0]);
-                const idx = parseInt(parts[2]);
-
-                displayAltTextEditor( room.files[idx].data, room.files[idx].alt_text, (event, alt_text) => {
-                    room.files[idx].alt_text = alt_text;
-
-                    if (alt_text) {
-                        jqe.addClass('present');
-                    } else {
-                        jqe.removeClass('present');
-                    }
-                });
-            }
-        });
-
-        $('div.uploadpicker div.sensitive-container').on('click', (event) => {
-            const jqe = $(event.currentTarget);
-            const parts = jqe.attr('id').split('-');
-
-            if (this.rooms.has(parts[0])) {
-                const room = this.rooms.get(parts[0]);
-                const idx = parseInt(parts[2]);
-
-                room.files[idx].sensitive = !room.files[idx].sensitive;
-
-                if (room.files[idx].sensitive) {
-                    jqe.find('div.attachment-visibility').addClass('attachment-sensitive').removeClass('attachment-visible');
-                } else {
-                    jqe.find('div.attachment-visibility').addClass('attachment-visible').removeClass('attachment-sensitive');
-                }
-            }
         });
 
         if (room.files.length > 0) {
