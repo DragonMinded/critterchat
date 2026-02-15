@@ -2,11 +2,11 @@
 
 This is an attempt to document the HTTP and websocket protocol provided by CritterChat's backend and used by CritterChat's frontend. This serves two purposes. First, it allows a high-level overview that hopefully sidesteps some new developer ramp-up time. Second, it hopefully aids in alternative clients being developed without them having to reverse-engineer everything from as-built code.
 
-At the high level, communcation between the existing web-based JS client and the backend server is done via [Socket.IO](https://socket.io/) which uses websockets under the hood. Socket.IO presents an event-driven interface which we view as named JSON packets. The various packets, whether they are server or client-originated, what they do, and when you should expect to send or receive them is all documented below. Bulk data transfers such as attachment uploads or downloads are handled using HTTP. This is partially to allow for a CDN or other simple system to handle attachments, and partially due to size limitations of websocket packets.
+At the high level, communcation between the existing web-based JS client and the backend server is done via [Socket.IO](https://socket.io/) which uses websockets under the hood. Socket.IO presents an event-driven interface which we view as named JSON packets. The various packets, whether they are server or client-originated, what they do, and when you should expect to send or receive them is all documented below. Bulk data transfers such as attachment uploads and downloads are handled using HTTP. This is partially to allow for a CDN or other simple system to handle attachments, and partially due to size limitations of websocket packets.
 
 ## Authentication
 
-Authentication is not handled by websockets in CritterChat. Instead, there is a POST method that lives at `/login` accepting browser form data which sets a `SessionID` cookie. In the future, I'd like this endpoint to be versatile enough to accept both form data in the post body for browser-based login and JSON in the post body for alternative clients. For now, the important part of this interaction is the `SessionID` cookie that is sent back to the client which should be present on the websocket connection itself. All websocket requests use this cookie to link the websocket session to a logged-in user. If a session is invalidated for any reason, the server will respond to any request with a `reload` packet instructing the client to reload and redo authentication to get a new `SessionID` cookie.
+Authentication is not handled by websockets in CritterChat. Instead, there is a POST method that lives at `/login` accepting browser form data which sets a `SessionID` cookie. In the future, I'd like this endpoint to be versatile enough to accept both form data in the post body for browser-based login and JSON in the post body for alternative clients. For now, the important part of this interaction is the `SessionID` cookie that is sent back to the client which should be present on the websocket connection itself. All websocket requests use this cookie to link the websocket session to a logged-in user. If a session is invalidated for any reason, the server will respond to any request with a `reload` packet instructing the client to redo authentication to get a new `SessionID` cookie.
 
 ## Upload Endpoints
 
@@ -42,6 +42,7 @@ An object representing a room. In CritterChat a room is an object that zero or m
  - `customname` - A string representing the custom name for this room. If a custom name has not been set, this will be an empty string. Clients should use this when allowing users to edit a room name instead of the `name` attribute above.
  - `topic` - A string representing the topic of the room. If a topic is not set, this will be an empty string.
  - `public` - A boolean representing whether this room is public or private. Public rooms are visible in search even when a user isn't joined to a room. Private rooms require an invite.
+ - `moderated` - A boolean representing whether this room is moderated or free-for-all. Moderated rooms require a moderator to update info, and allow moderators to mute users. Free-for-all rooms allow anyone to update room info, though an administrator can still mute users.
  - `oldest_action` - A string identifier pointing at the very first action in the room, referring to that action by its unique identifier. A client can infer that it has all actions in a room by checking to see if it has received the action identified by this string identifier. This is useful for determining if there is any additional scrollback to request.
  - `newest_action` - A string identifier pointing at the very last action in the room, referring to that action by its unique identifier. A client can infer that it has all actions in a room by checking to see if it has received the action identified by this string identifier. This is useful for determining if there are any newer messages that were missed during a disconnect.
  - `last_action_timestamp` - An integer unix timestamp representing the last action of this room. Rooms which have been modified more recently will have a larger integer than rooms which were modified further back in time. This will match the timestamp of the most recent action associated with a room.
@@ -58,6 +59,8 @@ An occupant who is or was joined to a room. In CritterChat, all rooms have zero 
  - `nickname` - A string representing the occupant's currently set nickname for this room. If the user has not customized a nickname for the room, this defaults to the user's nickname as found in their profile, and if that isn't set defaults to the user's username.
  - `icon` - A string URI pointing at the user's currently set icon for this room. If the user has not customized an icon for this room, this defaults to the user's configured icon for the instance. If that is not set, the default user avatar will be returned here instead.
  - `inactive` - A boolean representing whether this occupant has left the room (true) or if they are still in the room (false). This is useful because clients need to render names for users who have left when showing their actions in chat history, but need to show only active users in a room's user list.
+ - `moderator` - A boolean representing whether this occupant is a moderator (true) or not (false) in the room this occupant belongs to. Moderators can edit room info and mute users in rooms that are marked as moderated.
+ - `muted` - A boolean representing whether this occupant is muted (true) or unmuted (false) in the room this occupant belongs to. Muted users cannot edit room info or send messages to the room.
 
 ### attachment
 
@@ -75,8 +78,8 @@ An object representing an action in a particular room. In CritterChat, actions a
  - `timestamp` - An integer unix timestamp representing when the action occurred.
  - `order` - An opaque integer specifying the action ordering relative to other actions. Effectively this is a monotonically increasing number, so newer actions will have a larger number than older actions. Aside from ordering, clients should refrain from using this attribute.
  - `occupant` - An occupant object detailing the occupant which performed the action.
- - `action` - A string representing the action type which occurred. Valid values are currently "message" for messages, "join" for occupants joining the chat, "leave" for occupants leaving the chat, "change_info" when an occupant changes room information such as the topic or name, and "change_profile" when an occupant changes their own personal information.
- - `details` - A JSON object that contains different details about the action depending on the action string. For "message" actions, this is an object with the `message` attribute that contains the string message that was sent, and optionally the `sensitive` boolean attribute specifying the message is sensitive and should be spoilered by default. For "join" and "leave" actions, this is an empty object since the `occupant` object contains all relevant details. For "change_info" and "change_profile" messages, this is a JSON object containing details of the change. Currently the JS client does not make use of this info outside of the "message" action.
+ - `action` - A string representing the action type which occurred. Valid values are currently "message" for messages, "join" for occupants joining the chat, "leave" for occupants leaving the chat, "change_info" when an occupant changes room information such as the topic or name, "change_profile" when an occupant changes their own personal information, and "change_users" when one or more users changes attributes such as moderator or muted.
+ - `details` - A JSON object that contains different details about the action depending on the action string. For "message" actions, this is an object with the `message` attribute that contains the string message that was sent, and optionally the `sensitive` boolean attribute specifying the message is sensitive and should be spoilered by default. For "join" and "leave" actions, this is an empty object since the `occupant` object contains all relevant details. For "change_info" and "change_profile" messages, this is a JSON object containing details of the change. Currently the JS client does not make use of this info outside of the "message" action. For "change_users" msesages, this is a JSON object containing an `occupants` attribute which is a list of occupant objects fetched at the time this action is sent to a client.
  - `attachments` - A list of attachment objects representing any attachments that are associated with this action. Note that right now, only `message` actions can have attachments. This is usually an empty list as most messages do not contain any attachments.
 
 ### room count
@@ -99,8 +102,11 @@ The `profile` packet is sent from the client to load or refresh a user's profile
  - `nickname` - A string representing the user's currently set nickname. If the user has not set this, it will be defaulted to the same value as the `username`.
  - `about` - A string representing the user's about section. If the user has not set this, it will be defaulted to the empty string.
  - `icon` - A string URI pointing at the user's currently set icon. If the user has not set this, this will point at the instance default avatar.
-
-Currently, the JS client will request the profile for the logged-in user immediately after successfully connecting to the server.
+ - `occupantid` - A string occupant ID that should match the occupant ID used to request this profile. Only included when the profile is looked up via occupant ID and not via user ID.
+ - `moderator` - A boolean representing whether this user is a moderator in the room they belong to. Only included when the profile is looked up via occupant ID, and in that case the flag is relative to the room the occupant exists in.
+ - `muted` - A boolean representing whether this user is muted in the room they belong to. Only included when the profile is looke dup via occupant ID, and in that case the flag is relative to the room the occupant exists in.
+ - `full_username` - A string representing the user's username including the instance domain. Not currently used, but will be relevant once 1:1 message federation exists.
+ - `permissions` - A list of strings representing a permission that the user has granted to them. Only returned in the case that the currently logged in user making the request is an instance admin. That means if the currently logged in user is an instance admin, all profile lookups will include this.
 
 ### preferences
 
@@ -109,6 +115,9 @@ The `preferences` packet is sent from the client to load or refresh the current 
  - `rooms_on_top` - A boolean representing whether the user wants rooms to always be displayed above conversations (true) or whether rooms and conversations should be sorted by last update (false).
  - `combined_messages` - A boolean representing whether messages sent right after each other by the same user should be combined into one chat block (true) or left as individual messages (false).
  - `color_scheme` - A string representing the user's chosen color scheme. Valid values are "light" to force light mode, "dark" to force dark mode, and "system" to let the browser pick based on system settings.
+ - `desktop_size` - A string representing the chosen size of the client when in desktop mode. Valid values are "smallest", "smaller", "normal", "larger" and "largest", defaulting to "normal" if not changed.
+ - `mobile_size` - A string representing the chosen size of the client when in mobile mode. Valid values are "smallest", "smaller", "normal", "larger" and "largest", defaulting to "normal" if not changed.
+ - `admin_controls` A boolean representing whether an instance admin should see admin controls in various spots or not. Only relevant for instance admins. Setting this to true means additional buttons will be available on user profiles and additional settings will be available in the info panel. Setting this to false means additional, admin-only actions will be hidden from the interface.
  - `title_notifs` - A boolean representing whether the user wants notifications to show up in the tab title (true) or not (false).
  - `mobile_audio_notifs` - A boolean representing whether the user wants audio notifications on mobile (true) or whether mobile clients should be silent (false).
  - `audio_notifs` - A list of strings representing which audio notifications are enabled.
@@ -116,10 +125,10 @@ The `preferences` packet is sent from the client to load or refresh the current 
 
 ### lastsettings
 
-The `lastsettings` packet is sent from the client to load or refresh the current user's last settings for this instance of the client. It expects an empty request JSON and looks up the last settings of the logged in user. Note that settings are stored per-session, meaning if a user logs in on multiple devices, each device gets separate settings. When a user logs out on a device, the settings for that device are lost. When a user logs in on a new device, the last updated settings from any other device for the same user are used to seed the settings for the current session. The server will respond with a `lastsettings` packet with the user's per-session settings in the response JSON with the following attributes:
+The `lastsettings` packet is sent from the client to load or refresh the current user's last settings for this instance of the client. It expects an empty request JSON and looks up the last settings of the logged in user. Note that settings are stored per-session, meaning if a user logs in on multiple devices, each device gets separate settings. When a user logs out on a device, the settings for that device are lost. When a user logs in on a new device, the last updated settings from any other device for the same user are used to seed the settings for the current session. If no other devices are logged in, the server will create a new settings object with sane defaults. The server will respond with a `lastsettings` packet with the user's per-session settings in the response JSON with the following attributes:
 
- - `roomid` - A string representing the room that the user was last in, be it a public or private room or a 1:1 conversation.
- - `info` - A string representing whether the right side info panel is currently visible. Valid values are "shown" for currently visible, and "hidden" for currently hidden.
+ - `roomid` - A string representing the room that the user was last in, be it a public or private room or a 1:1 conversation. Clients should make a reasonable effort to place the user into this room upon starting up. Note that if a new settings object is sent to the client from the server, this will still point at a valid room as long as the user is in at least one room.
+ - `info` - A string representing whether the right side info panel is currently visible. Valid values are "shown" for currently visible, and "hidden" for currently hidden. Note that if a new settings object is sent to the client from the server, this will default to "hidden".
 
 ### motd
 
@@ -127,8 +136,22 @@ The `motd` packet is sent from the client to load or refresh the server message 
 
 The `welcome` packet contains the following attributes in the response JSON:
 
+ - `name` - A string representing the instance name.
+ - `icon` - A string URL pointing at the instance icon, usually used as a favicon but also displayed next to the instance name in the web client.
+ - `administrator` - A string representing the name, nickname or email of the instance administrator.
+ - `source` - A string URL pointing at the source code for the instance, or null if the instance does not have a source repo.
  - `message` - A string welcome message that should be displayed to the client.
  - `rooms` - A list of room objects that the user will be auto-joined to.
+
+### info
+
+The `info` packet is sent from the client to load or refresh the server info. This is usually performed to show the user the current details of the running instance. This expects an empty request JSON and looks up the server info before sending it to the client. The server will respond with an `info` packet with the following attributes:
+
+ - `name` - A string representing the instance name.
+ - `icon` - A string URL pointing at the instance icon, usually used as a favicon but also displayed next to the instance name in the web client.
+ - `administrator` - A string representing the name, nickname or email of the instance administrator.
+ - `source` - A string URL pointing at the source code for the instance, or null if the instance does not have a source repo.
+ - `info` - A HTML string that the instance owner configured which should be displayed to the user. This often includes server background, rules or other information.
 
 ### roomlist
 
@@ -189,6 +212,9 @@ The `updatepreferences` packet is sent from the client to request the user's pre
  - `rooms_on_top` - A boolean representing whether the user wants rooms to always be displayed above conversations (true) or whether rooms and conversations should be sorted by last update (false). If not present, the preference will not be updated. If present, the preference will be updated to the specified value.
  - `combined_messages` - A boolean representing whether messages sent right after each other by the same user should be combined into one chat block (true) or left as individual messages (false). If not present, the preference will not be updated. If present, the preference will be updated to the specified value.
  - `color_scheme` - A string representing the user's chosen color scheme. Valid values are "light" to force light mode, "dark" to force dark mode, and "system" to let the browser pick based on system settings. If not present, the preference will not be updated. If present, the preference will be updated to the specified value.
+ - `desktop_size` - A string representing the chosen size of the client when in desktop mode. Valid values are "smallest", "smaller", "normal", "larger" and "largest". If present, the preference will be updated to the specified value.
+ - `mobile_size` - A string representing the chosen size of the client when in mobile mode. Valid values are "smallest", "smaller", "normal", "larger" and "largest". If present, the preference will be updated to the specified value.
+ - `admin_controls` A boolean representing whether an instance admin should see admin controls in various spots or not. If present, the preference will be updated to the specified value.
  - `title_notifs` - A boolean representing whether the user wants notifications to show up in the tab title (true) or not (false). If not present, the preference will not be updated. If present, the preference will be updated to the specified value.
  - `mobile_audio_notifs` - A boolean representing whether the user wants audio notifications on mobile (true) or whether mobile clients should be silent (false). If not present, the preference will not be updated. If present, the preference will be updated to the specified value.
  - `audio_notifs` - A list of strings representing which audio notifications are enabled. If not present, individual audio notification enabled settings will be left as-is. If present, the user's audio notification enabled list is updated to match the specified list of notifications.
@@ -216,6 +242,7 @@ The `updateroom` packet is sent when the client requests to update the details o
 
  - `name` - A new custom room name to set. This can be empty to unset a custom room name and it can contain emoji. It must be 255 unicode code points or less in length. It cannot consist of solely unicode control characters or other non-printable characters. Note that the room name will always be set so clients should round-trip the existing custom room name if the user does not edit it.
  - `topic` - A new custom topic to set. Much like the above `name`, this can be empty to unset the topic, and it can contain emoji. It must also be 255 unicode code points or less and it cannot be only non-printable unicode characters. The topic will always be updated so clients should round-trip the existing topic if the user does not edit it.
+ - `moderated` - A boolean specifying whether the room should be set as a moderated room (true) or a free-for-all room (false). The room will be updated to the moderation type specified in this attribute when present, or left as-is if not provided. Note that only instance administrators can modify this setting. If a non-admin attempts to modify the setting it will be silently ignored and not updated.
  - `icon` - A string attachment ID that should be used to set the new custom room icon, obtained from the icon upload endpoint. If this is left empty, the room's icon will not be updated. The image must be square and currently cannot exceed 128kb in size.
  - `icon_delete` - An optional boolean specifying that the user wants to delete the custom room icon. If the client leaves this out or sets this to an empty string or `False` then the server will not attempt to delete the custom room icon. Setting this to `True` will cause the room's icon to revert to the instance's default icon.
 
