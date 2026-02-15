@@ -16,7 +16,7 @@ from .app import (
     info,
     g,
 )
-from .login import get_mastodon_providers, avatar_to_attachment, login_user_id
+from .login import get_mastodon_providers, avatar_to_attachment, copy_profile_enabled, login_user_id
 from ..common import get_emoji_unicode_dict, get_aliases_unicode_dict
 from ..data import UserPermission, FaviconID
 from ..service import (
@@ -581,6 +581,7 @@ def mastodonauth() -> Response:
     existing_user = mastodonservice.get_user(instance, profile.username)
     if existing_user:
         # This user already exists, simply log them in!
+        logger.info(f"Logging {profile.username!r} user in after successful auth against {base_url}.")
         return login_user_id(existing_user.id)
 
     # User does not exist, so we must create a new user account. Arbitrarily choose the
@@ -605,6 +606,9 @@ def mastodonauth() -> Response:
 
     # The sanitized username is what we'll use for our username. We will pick a completely
     # random password since it does not matter what is used here.
+    logger.info(
+        f"Creating new user {sanitized_username!r} based on {profile.username!r} user after successful auth against {base_url}."
+    )
     password = ''.join(secrets.choice(VALID_RANDOM_PASWORD_CHARACTERS) for _ in range(32))
     user = userservice.create_user(sanitized_username, password)
     userservice.add_permission(user.id, UserPermission.ACTIVATED)
@@ -613,10 +617,14 @@ def mastodonauth() -> Response:
     mastodonservice.link_user(instance, profile.username, user.id)
 
     # Finally, since we crated a new account, let's set the user's profile up for them.
-    avatar_id = None
-    if profile.avatar:
-        avatar_id = avatar_to_attachment(profile.avatar)
-    userservice.update_user(user.id, name=profile.nickname, about=profile.note, icon=avatar_id)
+    if copy_profile_enabled(base_url):
+        avatar_id = None
+        if profile.avatar:
+            avatar_id = avatar_to_attachment(profile.avatar)
+        userservice.update_user(user.id, name=profile.nickname, about=profile.note, icon=avatar_id)
+        logger.info(f"Copying {profile.username!r} user profile info from their {base_url} Mastodon profile.")
+    else:
+        logger.info(f"Skipped copying {profile.username!r} user profile info from their {base_url} Mastodon profile.")
 
     # And now, log them in!
     return login_user_id(user.id)

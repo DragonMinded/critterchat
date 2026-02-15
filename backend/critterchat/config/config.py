@@ -1,7 +1,7 @@
 import copy
 import os
 from sqlalchemy.engine import Engine
-from typing import Any, List, Dict, Optional
+from typing import Any, Dict, Final, List, Optional
 
 
 def _bool(val: Any, default: bool) -> bool:
@@ -117,8 +117,9 @@ class AccountRegistration:
 
 
 class MastodonConfig:
-    def __init__(self, base_url: str) -> None:
-        self.base_url = base_url
+    def __init__(self, base_url: str, copy_profile: bool) -> None:
+        self.base_url: Final[str] = base_url
+        self.copy_profile: Final[bool] = copy_profile
 
 
 class Authentication:
@@ -141,10 +142,11 @@ class Authentication:
                 continue
 
             base_url = instance.get("base_url")
+            copy_profile = instance.get("copy_profile")
             if not base_url:
                 continue
 
-            retval.append(MastodonConfig(base_url=base_url))
+            retval.append(MastodonConfig(base_url=base_url, copy_profile=True if copy_profile is None else bool(copy_profile)))
 
         return retval
 

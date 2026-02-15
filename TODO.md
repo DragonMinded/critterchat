@@ -1,7 +1,6 @@
 TODO Immediate
 ==============
 
- - Profile copy setting for Mastodon OAuth integration.
  - Attachment alt text wrong for multi-pictures, seems to copy the last picture's text.
  - Send base URL domain with set-cookie and update config to document upload domain should be a subdomain.
 

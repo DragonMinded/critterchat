@@ -104,6 +104,17 @@ def avatar_to_attachment(avatar: str) -> Optional[AttachmentID]:
     return attachmentid
 
 
+def copy_profile_enabled(base_url: str) -> bool:
+    for inst in g.config.authentication.mastodon:
+        if inst.base_url == base_url:
+            return inst.copy_profile
+
+    # The default for individual instances is true, but if we can't find the instance
+    # return false here. This should never happen, however, since we don't allow the
+    # process to get this far if we can't find a backing config.
+    return False
+
+
 def login_user_id(userid: UserID) -> Response:
     aes = AESCipher(g.config.cookie_key)
     sessionID = g.data.user.create_session(userid, expiration=90 * 86400)
