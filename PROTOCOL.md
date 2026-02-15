@@ -266,6 +266,42 @@ The `leaveroom` packet is sent when the client exits a room and wishes to inform
 
 The `lastaction` packet is sent from the client when the client catches up to a particular action in a particular room. It is used when the client wants to acknowledge receipt of actions that it previously marked as new and displayed an unread notification badge for. It expects a request JSON that contains a `roomid` attribute representing the room that the user has caught up to as well as an `actionid` representing the action that the client wishes to acknowledge read receipt of. This packet is how the client can influence the `lastseen` action ID attribute in a `chathistory` response packet. The server will not respond with any specific response to this packet, but other devices in use by the same user which are currently connected may receive an unsolicited `roomlist` response packet with an updated `counts` attribute for the room that was just updated. This is the way in which the server can communicate notifications clearing to all connected devices for the same user.
 
+### admin
+
+The `admin` packet is sent from the client when the client requests the server to perform an administrative action on behalf of the currently logged-in user. Note that the current user must be an administrator to call this command. If not, this command will refuse to perform the action requested. It expects a request JSON that contains an `action` attribute representing the action to be taken, and various other attributes depending on the action. The server will not respond with any specific response to the packet, but will send a socket.io acknowledgement back in the case of either failure or success. A client can use this to refresh information about a user that has had action taken on it by the command. Note also that in many cases, this will also return a `flash` unsolicited response packet that the client can use to display to the user. The various actions and their additional properties are documented below.
+
+#### activate
+
+ - `action` - Set to the string "activate" to request a particular user be activated. Activated accounts can log in and don't appear grayed out in rooms they've joined.
+ - `userid` - String user ID of the user that should be activated.
+
+#### deactivate
+
+ - `action` - Set to the string "deactivate" to request a particular user be deactivated. Deactivated accounts are immediately logged out of all active sessions, cannot log in and appear grayed out in rooms they've joined.
+ - `userid` - String user ID of the user that should be deactivated.
+
+#### mod
+ - `action` - Set to the string "mod" to request a particular occupant be granted the room moderator role. Room moderators can change info in moderated rooms, and can mute/unmute users.
+ - `occupantid` - String occupant ID of the room occupant that should be set as a moderator.
+
+#### demod
+ - `action` - Set to the string "demod" to request a particular occupant be have the room moderator role revoked.
+ - `occupantid` - String occupant ID of the room occupant that should be unset as a moderator.
+
+### mod
+
+The `mod` packet is sent from the client when the client requests the server to perform a moderator action on behalf of the currently logged-in uesr. Note that the current user must be a moderator in the room that they are taking action on. If not, this command will refuse to perform the action requested. It expects a request JSON that contains an `action` attribute representing the action to be taken, and various other attributes depending on the action. The server will not respond with any specific response to the packet, but will send a socket.  io acknowledgement back in the case of either failure or success. A client can use this to refresh information about a user that has had action taken on it by the command. Note also     that in many cases, this will also return a `flash` unsolicited response packet that the client can use to display to the user. The various actions and their additional properties are   documented below.
+
+#### mute
+
+ - `action` - Set to the string "mute" to mute a particular user in the room they are in. Muted users cannot change room information or send messages to the room and appear as inactive in the web client.
+ - `occupantid` - String occupant ID of the user that should be muted.
+
+#### unmute
+
+ - `action` - Set to the string "unmute" to unmute a particular user in the room they are in.
+ - `occupantid` - String occupant ID of the user that should be unmuted.
+
 ## Server-Initated Packets
 
 The following packets are server initiated. The server will send them to correctly connected clients so that a client does not have to poll for updates.
@@ -279,7 +315,11 @@ The `emotechanges` response packet will be sent to the client unsolicited whenev
 
 ### error
 
-The `error` response packet will be sent to the client under any circumstance where the client attempts to make an update which violates some parameters. Examples might be trying to change a nickname to something too long or trying to set a custom icon that is too large. The response packet JSON will contain an `error` attribute which is a string error. This can be directly displayed to the user in an error popup or similar modal. Currently there is no automated way for clients to determine the error returned and translate it for the user.
+The `error` response packet will be sent to the client under any circumstance where the server encounters an error in processing a request. Examples might be trying to change a nickname to something too long or trying to set a custom icon that is too large. The response packet JSON will contain an `error` attribute which is a string error. This can be directly displayed to the user in an error popup or similar modal. Currently there is no automated way for clients to determine the error returned and translate it for the user.
+
+### flash
+
+The `flash` response packet will be sent to the client under any circumstance where the server wishes to display a less-intrusive message to the user than an error packet. The response packet JSON will contain a `severity` attribute which is one of the following string values: "success", "info", "warning", "error". It will also contain a `message` attribute which is the string message to display to the user at the previously-mentioned severity. The web client uses this to place a dismissable message at the top of the screen. Currently there is no automated way for clients to translate this for the user.
 
 ### reload
 
