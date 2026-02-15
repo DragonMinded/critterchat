@@ -7,6 +7,7 @@ TODO For Public Instance
  - Stickers support in some form.
  - Emote/emoji reactions to messages.
  - Start on backend tests.
+ - Look up and display version in info.
 
 TODO Low Priority
 =================
