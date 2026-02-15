@@ -62,10 +62,6 @@ class UploadPicker {
         });
 
         $( this.textBox ).on( 'paste', (event) => {
-            event.preventDefault();
-            event.stopPropagation();
-            event.stopImmediatePropagation();
-
             const files = [...event.originalEvent.clipboardData.files];
             const roomid = this.room;
 
