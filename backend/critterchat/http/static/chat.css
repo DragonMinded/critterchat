@@ -4,7 +4,7 @@
     --application-icon-background: light-dark(#ffffff, #222222);
     --application-text: light-dark(#000000, #ffffff);
     --application-subtle-text: light-dark(#5f5f5f, #5f5f5f);
-    --application-separator: light-dark(#c0c0c0, #535353);
+    --application-separator: light-dark(#c0c0c0, #4f4f4f);
 
     --sidebar-background: light-dark(#dddddd, #222222);
     --sidebar-text: light-dark(#000000, #e1e1e1);
