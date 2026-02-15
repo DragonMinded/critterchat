@@ -130,3 +130,32 @@ def login_user_id(userid: UserID) -> Response:
         domain=domain,
     )
     return response
+
+
+def ensure_logged_out_all(response: Response) -> Response:
+    # Nuke any generic cookie and any specific site cookie.
+    domain = urlsplit(g.config.base_url).hostname
+    response.set_cookie(
+        "SessionID",
+        '',
+        expires=0,
+        samesite="lax",
+        httponly=True,
+        domain=domain,
+    )
+    response.set_cookie(
+        "SessionID",
+        '',
+        expires=0,
+        samesite="lax",
+        httponly=True,
+    )
+    return response
+
+
+def logout_all() -> Response:
+    # Should always be true on loginrequired endpoints, but let's be safe.
+    if g.sessionID:
+        g.data.user.destroy_session(g.sessionID)
+
+    return ensure_logged_out_all(make_response(redirect(absolute_url_for("welcome.home", component="base"))))

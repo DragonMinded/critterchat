@@ -16,7 +16,14 @@ from .app import (
     info,
     g,
 )
-from .login import get_mastodon_providers, avatar_to_attachment, copy_profile_enabled, login_user_id
+from .login import (
+    get_mastodon_providers,
+    avatar_to_attachment,
+    copy_profile_enabled,
+    login_user_id,
+    logout_all,
+    ensure_logged_out_all,
+)
 from ..common import get_emoji_unicode_dict, get_aliases_unicode_dict
 from ..data import UserPermission, FaviconID
 from ..service import (
@@ -129,12 +136,12 @@ def login() -> Response:
         error("Account login is disabled.")
         return make_response(redirect(absolute_url_for("welcome.home", component="base")))
 
-    return Response(render_template(
+    return ensure_logged_out_all(Response(render_template(
         "account/login.html",
         title="Log In",
         mastodon_providers=get_mastodon_providers(),
         favicon=attachmentservice.get_attachment_url(FaviconID),
-    ))
+    )))
 
 
 @account.route("/recover/<recovery>", methods=["POST"])
@@ -255,10 +262,7 @@ def recover(recovery: str) -> Response:
 @account.route("/logout")
 @loginrequired
 def logout() -> Response:
-    # Should always be true on loginrequired endpoints, but let's be safe.
-    if g.sessionID:
-        g.data.user.destroy_session(g.sessionID)
-    return redirect(absolute_url_for("welcome.home", component="base"))  # type: ignore
+    return logout_all()
 
 
 @account.route("/register", methods=["POST"])
