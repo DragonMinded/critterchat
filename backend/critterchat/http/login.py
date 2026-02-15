@@ -1,5 +1,6 @@
 import logging
 import requests
+from urllib.parse import urlsplit
 from flask import Response, make_response, redirect
 from typing import List, Optional
 
@@ -116,6 +117,7 @@ def copy_profile_enabled(base_url: str) -> bool:
 
 
 def login_user_id(userid: UserID) -> Response:
+    domain = urlsplit(g.config.base_url).hostname
     aes = AESCipher(g.config.cookie_key)
     sessionID = g.data.user.create_session(userid, expiration=90 * 86400)
     response = make_response(redirect(absolute_url_for("chat.home", component="base")))
@@ -125,5 +127,6 @@ def login_user_id(userid: UserID) -> Response:
         expires=Time.now() + (90 * Time.SECONDS_IN_DAY),
         samesite="lax",
         httponly=True,
+        domain=domain,
     )
     return response

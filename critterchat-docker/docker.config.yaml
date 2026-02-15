@@ -23,11 +23,14 @@ administrator: "nobody"
 # if you want to opt out of displaying a link.
 source: "https://github.com/DragonMinded/critterchat"
 
-# The base URL that you've deployed this instance on.
+# The base URL that you've deployed this instance on. Must start with http:// or https://
 base_url: "http://localhost:5678/"
 
 # The upload base URL that you've deployed an instance specifically for processing upload on. If
 # you are processing uploads on the same subdomain as the base URL, feel free to leave this as-is.
+# Note that when changing this, this needs to be a subdomain of the base URL due to the way cookies
+# work in the browser. So if your base URL's domain was chat.example.com this should be a subdomain
+# of that, such as upload.chat.example.com.
 upload_url: ~
 
 database:
