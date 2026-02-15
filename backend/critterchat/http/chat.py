@@ -5,6 +5,7 @@ from .app import (
     app,
     static_location,
     templates_location,
+    absolute_url_for,
     loginrequired,
     jsonify,
     uncacheable,
@@ -106,6 +107,11 @@ def config() -> Dict[str, object]:
         "defavi": attachmentservice.get_attachment_url(DefaultAvatarID),
         "defroom": attachmentservice.get_attachment_url(DefaultRoomID),
         "favicon": attachmentservice.get_attachment_url(FaviconID),
+        "uploadIcon": absolute_url_for('upload.icon_upload', component="upload"),
+        "uploadAvatar": absolute_url_for('upload.avatar_upload', component="upload"),
+        "uploadNotifications": absolute_url_for('upload.notifications_upload', component="upload"),
+        "uploadAttachments": absolute_url_for('upload.attachments_upload', component="upload"),
+
     }
 
 
