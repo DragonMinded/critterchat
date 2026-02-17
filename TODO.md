@@ -1,13 +1,17 @@
 TODO Immediate
 ==============
 
+ - Commonize theme metrics and use them on logged-out pages.
+ - Look up and display version in info.
+
 TODO For Public Instance
 ========================
 
  - Stickers support in some form.
  - Emote/emoji reactions to messages.
  - Start on backend tests.
- - Look up and display version in info.
+ - Private group chat creation UI.
+ - Private group chat invite UI.
 
 TODO Low Priority
 =================
