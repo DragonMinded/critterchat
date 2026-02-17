@@ -15,6 +15,7 @@ requests
 pycryptodome
 passlib
 sqlalchemy-stubs
+sql-fragments
 python-dateutil
 pydub
 types-emoji

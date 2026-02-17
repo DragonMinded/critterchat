@@ -1,5 +1,4 @@
 import contextlib
-import json
 from typing import Any, Dict, Iterator, List, Optional
 
 from sqlalchemy import Table, Column
@@ -7,7 +6,7 @@ from sqlalchemy.schema import UniqueConstraint
 from sqlalchemy.types import String, Integer, Boolean, JSON
 
 from ..common import Time
-from .base import BaseData, metadata
+from .base import BaseData, Fragment, fragment, statement, metadata
 from .types import (
     Action,
     ActionType,
@@ -83,10 +82,15 @@ class RoomData(BaseData):
         if not room_ids:
             return {}
 
-        sql = """
-            SELECT room_id, MIN(id) AS action_id FROM action WHERE room_id IN :room_ids GROUP BY room_id
-        """
-        cursor = self.execute(sql, {'room_ids': room_ids})
+        cursor = self.execute(statement(
+            """
+                SELECT room_id, MIN(id) AS action_id
+                FROM action
+                WHERE room_id IN %value:ids
+                GROUP BY room_id
+            """,
+            ids=room_ids,
+        ))
         retval: Dict[RoomID, Optional[ActionID]] = {rid: None for rid in room_ids}
         for result in cursor.mappings():
             retval[RoomID(result['room_id'])] = ActionID(result['action_id'])
@@ -96,10 +100,15 @@ class RoomData(BaseData):
         if not room_ids:
             return {}
 
-        sql = """
-            SELECT room_id, MAX(id) AS action_id FROM action WHERE room_id IN :room_ids GROUP BY room_id
-        """
-        cursor = self.execute(sql, {'room_ids': room_ids})
+        cursor = self.execute(statement(
+            """
+                SELECT room_id, MAX(id) AS action_id
+                FROM action
+                WHERE room_id IN %value:ids
+                GROUP BY room_id
+            """,
+            ids=room_ids,
+        ))
         retval: Dict[RoomID, Optional[ActionID]] = {rid: None for rid in room_ids}
         for result in cursor.mappings():
             retval[RoomID(result['room_id'])] = ActionID(result['action_id'])
@@ -136,17 +145,18 @@ class RoomData(BaseData):
         if userid == NewUserID:
             return []
 
+        filters: List[Fragment] = [fragment("user_id = %value", userid)]
         if include_left:
-            extra = ""
-        else:
-            extra = "AND inactive != TRUE"
+            filters.append(fragment("inactive != TRUE"))
 
-        sql = f"""
-            SELECT id, name, topic, icon, purpose, moderated, last_action FROM room WHERE id in (
-                SELECT room_id FROM occupant WHERE user_id = :userid {extra}
-            )
-        """
-        cursor = self.execute(sql, {"userid": userid})
+        cursor = self.execute(statement(
+            """
+                SELECT id, name, topic, icon, purpose, moderated, last_action
+                FROM room
+                WHERE id in (SELECT room_id FROM occupant WHERE %andlist)
+            """,
+            filters,
+        ))
         return self._hydrate_actions([
             Room(
                 roomid=RoomID(result['id']),
@@ -1005,7 +1015,7 @@ class RoomData(BaseData):
                 timestamp=x['timestamp'],
                 occupant=mapping[OccupantID(x['occupant_id'])] if x['occupant_id'] is not None else None,
                 action=x['action'],
-                details=json.loads(str(x['details'] or "{}")),
+                details=self.deserialize(str(x['details'] or "{}")),
             )
             for x in data
         ]
@@ -1084,7 +1094,7 @@ class RoomData(BaseData):
                 (:roomid, :ts, :oid, :action, :details)
         """
         cursor = self.execute(sql, {
-            "roomid": roomid, "ts": action.timestamp, "oid": occupant, "action": action.action, "details": json.dumps(action.details)
+            "roomid": roomid, "ts": action.timestamp, "oid": occupant, "action": action.action, "details": self.serialize(action.details)
         })
         if cursor.rowcount != 1:
             return

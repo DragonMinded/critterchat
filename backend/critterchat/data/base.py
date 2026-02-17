@@ -1,7 +1,9 @@
 import json
 import random
 from contextlib import contextmanager
-from typing import Dict, Iterator, List, Optional, cast
+from typing import Dict, Iterator, List, cast
+
+from sqlfragments import Statement, Fragment, statement, fragment
 
 from sqlalchemy import MetaData
 from sqlalchemy.orm import scoped_session
@@ -10,6 +12,15 @@ from sqlalchemy.sql import text
 
 from ..config import Config
 
+
+__all__ = [
+    "BaseData",
+    "Statement",
+    "Fragment",
+    "metadata",
+    "statement",
+    "fragment",
+]
 
 metadata = MetaData()
 
@@ -47,7 +58,7 @@ class BaseData:
         """
         return json.dumps(data, cls=_BytesEncoder)
 
-    def deserialize(self, data: Optional[str]) -> Dict[str, object]:
+    def deserialize(self, data: str | None) -> Dict[str, object]:
         """
         Given a string, deserialize it from JSON.
         """
@@ -91,17 +102,12 @@ class BaseData:
 
             self.__session.commit()
 
-    def execute(
-        self,
-        sql: str,
-        params: Optional[Dict[str, object]] = None,
-    ) -> CursorResult:
+    def execute(self, sql: Statement | str, params: Dict[str, object] | None = None) -> CursorResult:
         """
-        Given a SQL string and some parameters, execute the query and return the result.
+        Given a SQL statement, execute the query and return the result.
 
         Parameters:
             sql - The SQL statement to execute.
-            params - Dictionary of parameters which will be substituted into the sql string.
 
         Returns:
             A SQLAlchemy CursorResult object.
@@ -109,10 +115,20 @@ class BaseData:
         if self.__session is None:
             raise Exception("Logic error, our database connection was not created!")
 
-        result = self.__session.execute(
-            text(sql),
-            params if params is not None else {},
-        )
+        if isinstance(sql, Statement):
+            if params:
+                raise Exception("Logic error, cannot provide Statement and params!")
+
+            actual, params = sql.to_sqlalchemy()
+            result = self.__session.execute(
+                text(actual),
+                params or {},
+            )
+        else:
+            result = self.__session.execute(
+                text(sql),
+                params or {},
+            )
 
         if not self.__depth:
             self.__session.commit()
