@@ -1,13 +1,13 @@
 import emoji
 
-from typing import Any, Dict
+from typing import Any
 
 
-_EMOJI_UNICODE: Dict[str, Any] = {lang: None for lang in emoji.LANGUAGES}  # Cache for the language dicts
-_ALIASES_UNICODE: Dict[str, str] = {}  # Cache for the aliases dict
+_EMOJI_UNICODE: dict[str, Any] = {lang: None for lang in emoji.LANGUAGES}  # Cache for the language dicts
+_ALIASES_UNICODE: dict[str, str] = {}  # Cache for the aliases dict
 
 
-def get_emoji_unicode_dict(lang: str) -> Dict[str, Any]:
+def get_emoji_unicode_dict(lang: str) -> dict[str, Any]:
     """
     Generate dict containing all fully-qualified and component emoji name for a language
     The dict is only generated once per language and then cached in _EMOJI_UNICODE[lang]
@@ -20,7 +20,7 @@ def get_emoji_unicode_dict(lang: str) -> Dict[str, Any]:
     return _EMOJI_UNICODE[lang]  # type: ignore
 
 
-def get_aliases_unicode_dict() -> Dict[str, str]:
+def get_aliases_unicode_dict() -> dict[str, str]:
     """
     Generate dict containing all fully-qualified and component aliases
     The dict is only generated once and then cached in _ALIASES_UNICODE

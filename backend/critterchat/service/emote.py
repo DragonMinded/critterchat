@@ -1,4 +1,4 @@
-from typing import Dict, cast
+from typing import cast
 
 from ..config import Config
 from ..data import Data, Emote, MetadataType
@@ -15,9 +15,9 @@ class EmoteService:
         self.__data = data
         self.__attachments = AttachmentService(self.__config, self.__data)
 
-    def get_all_emotes(self) -> Dict[str, Emote]:
+    def get_all_emotes(self) -> dict[str, Emote]:
         emotes = self.__data.attachment.get_emotes()
-        results: Dict[str, Emote] = {}
+        results: dict[str, Emote] = {}
 
         for emote in emotes:
             url = self.__attachments.get_attachment_url(emote.attachmentid)

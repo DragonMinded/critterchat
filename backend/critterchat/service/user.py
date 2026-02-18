@@ -1,5 +1,3 @@
-from typing import Dict, Set
-
 from ..common import Time, represents_real_text
 from ..config import Config
 from ..data import (
@@ -97,9 +95,9 @@ class UserService:
         admin_controls: str | None = None,
         title_notifs: bool | None = None,
         mobile_audio_notifs: bool | None = None,
-        audio_notifs: Set[str] | None = None,
-        notif_sounds: Dict[str, AttachmentID] | None = None,
-        notif_sounds_delete: Set[str] | None = None,
+        audio_notifs: set[str] | None = None,
+        notif_sounds: dict[str, AttachmentID] | None = None,
+        notif_sounds_delete: set[str] | None = None,
     ) -> None:
         prefs = self.__data.user.get_preferences(userid)
         if not prefs:
@@ -163,7 +161,7 @@ class UserService:
         # Now, figure out what notifications should be enabled based on what
         # sounds are uploaded.
         notifs = self.__data.attachment.get_notifications(userid)
-        actual_set: Set[UserNotification] = set()
+        actual_set: set[UserNotification] = set()
         for alias in notifs:
             try:
                 actual_set.add(UserNotification[alias])
@@ -316,10 +314,10 @@ class UserService:
         # Finally, return that user.
         return user
 
-    def __notify_user_changed(self, userid: UserID, old_occupancy: Dict[RoomID, Occupant] | None = None) -> None:
+    def __notify_user_changed(self, userid: UserID, old_occupancy: dict[RoomID, Occupant] | None = None) -> None:
         old_occupancy = old_occupancy or {}
         new_occupancy = self.__data.room.get_joined_room_occupants(userid)
-        changes: Dict[RoomID, Occupant] = {}
+        changes: dict[RoomID, Occupant] = {}
 
         for roomid, occupant in new_occupancy.items():
             if roomid not in old_occupancy:
@@ -374,7 +372,7 @@ class UserService:
         leftrooms = [r for r in leftrooms if r.purpose == RoomPurpose.DIRECT_MESSAGE]
 
         # Shouldn't happen, but let's not double-notify.
-        seen: Set[RoomID] = set()
+        seen: set[RoomID] = set()
         for room in [*joinedrooms, *leftrooms]:
             if room.id in seen:
                 continue
@@ -397,10 +395,10 @@ class UserService:
     def mark_last_seen(self, userid: UserID, roomid: RoomID, actionid: ActionID) -> None:
         self.__data.user.mark_last_seen(userid, roomid, actionid)
 
-    def get_last_seen_counts(self, userid: UserID) -> Dict[RoomID, int]:
+    def get_last_seen_counts(self, userid: UserID) -> dict[RoomID, int]:
         lastseen = self.__data.user.get_last_seen_counts(userid)
         return {ls[0]: ls[1] for ls in lastseen}
 
-    def get_last_seen_actions(self, userid: UserID) -> Dict[RoomID, ActionID]:
+    def get_last_seen_actions(self, userid: UserID) -> dict[RoomID, ActionID]:
         lastseen = self.__data.user.get_last_seen_actions(userid)
         return {ls[0]: ls[1] for ls in lastseen}

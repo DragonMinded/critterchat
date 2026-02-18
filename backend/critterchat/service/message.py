@@ -1,5 +1,5 @@
 import emoji
-from typing import Dict, Final, List, Set
+from typing import Final
 
 from ..config import Config
 from ..common import Time
@@ -51,7 +51,7 @@ class MessageService:
         # Don't check for whether this migration ran, we want it to run every restart.
         pass
 
-    def _resolve_attachments(self, actions: List[Action]) -> List[Action]:
+    def _resolve_attachments(self, actions: list[Action]) -> list[Action]:
         ids = {a.id for a in actions}
         if not ids:
             return actions
@@ -60,7 +60,7 @@ class MessageService:
         for action in actions:
             actionattachments = actionmap[action.id]
 
-            attachments: List[Attachment] = []
+            attachments: list[Attachment] = []
             for actionattachment in actionattachments:
                 attachments.append(
                     Attachment(
@@ -76,7 +76,7 @@ class MessageService:
     def get_last_action(self) -> ActionID | None:
         return self.__data.room.get_last_action()
 
-    def get_room_history(self, roomid: RoomID, before: ActionID | None = None) -> List[Action]:
+    def get_room_history(self, roomid: RoomID, before: ActionID | None = None) -> list[Action]:
         room = self.__data.room.get_room(roomid)
         if not room:
             return []
@@ -95,7 +95,7 @@ class MessageService:
         ]
         return history
 
-    def get_room_updates(self, roomid: RoomID, after: ActionID) -> List[Action]:
+    def get_room_updates(self, roomid: RoomID, after: ActionID) -> list[Action]:
         history = self.__data.room.get_room_history(roomid, after=after)
         history = self._resolve_attachments(history)
         history = [
@@ -111,7 +111,7 @@ class MessageService:
         userid: UserID,
         message: str,
         sensitive: bool,
-        attachments: List[AttachmentID],
+        attachments: list[AttachmentID],
     ) -> Action | None:
         # Ensure we're not trying to send too much text.
         message = emoji.emojize(emoji.emojize(message, language="alias"), language="en")
@@ -141,7 +141,7 @@ class MessageService:
             userid=userid,
         )
 
-        messagedata: Dict[str, object] = {"message": message}
+        messagedata: dict[str, object] = {"message": message}
         if sensitive:
             messagedata["sensitive"] = True
 
@@ -153,8 +153,8 @@ class MessageService:
             details=messagedata,
         )
 
-        attachmentids: List[AttachmentID] = []
-        response_attachments: List[Attachment] = []
+        attachmentids: list[AttachmentID] = []
+        response_attachments: list[Attachment] = []
         for attachment in attachments:
             adata = self.__data.attachment.lookup_attachment(attachment)
             if adata is None:
@@ -575,7 +575,7 @@ class MessageService:
         if changed:
             self.__data.room.update_room(room, userid)
 
-    def get_joined_rooms(self, userid: UserID) -> List[Room]:
+    def get_joined_rooms(self, userid: UserID) -> list[Room]:
         rooms = self.__data.room.get_joined_rooms(userid)
 
         # Figure out any rooms that don't have a set name, and infer the name of the room.
@@ -584,7 +584,7 @@ class MessageService:
 
         return sorted(rooms, key=lambda r: r.last_action_timestamp, reverse=True)
 
-    def get_room_occupants(self, roomid: RoomID) -> List[Occupant]:
+    def get_room_occupants(self, roomid: RoomID) -> list[Occupant]:
         room = self.__data.room.get_room(roomid)
         if not room:
             return []
@@ -595,7 +595,7 @@ class MessageService:
         ]
         return sorted(occupants, key=lambda o: o.nickname)
 
-    def get_autojoin_rooms(self, userid: UserID) -> List[Room]:
+    def get_autojoin_rooms(self, userid: UserID) -> list[Room]:
         rooms = self.__data.room.get_autojoin_rooms()
 
         # Figure out any rooms that don't have a set name, and infer the name of the room.
@@ -609,13 +609,13 @@ class MessageService:
         for room in rooms:
             self.__data.room.join_room(room.id, userid)
 
-    def get_public_rooms(self, userid: UserID) -> List[Room]:
+    def get_public_rooms(self, userid: UserID) -> list[Room]:
         rooms = self.__data.room.get_public_rooms()
         for room in rooms:
             self.__infer_room_info(userid, room)
         return rooms
 
-    def get_matching_rooms(self, userid: UserID, *, name: str | None = None) -> List[RoomSearchResult]:
+    def get_matching_rooms(self, userid: UserID, *, name: str | None = None) -> list[RoomSearchResult]:
         # First get the list of rooms that we can see based on our user ID (joined rooms).
         inrooms = self.__data.room.get_matching_rooms(userid, name=name)
         memberof = {r.id for r in inrooms}
@@ -640,7 +640,7 @@ class MessageService:
         rooms = sorted(rooms, key=lambda r: r.name)
 
         # Now, figure out all of the private conversations that we shouldn't duplicate users for.
-        ignored: Set[UserID] = set()
+        ignored: set[UserID] = set()
         for room in rooms:
             if room.purpose != RoomPurpose.DIRECT_MESSAGE:
                 continue
@@ -664,7 +664,7 @@ class MessageService:
             self.__attachments.resolve_user_icon(user)
 
         # Finally, combined the two.
-        results: List[RoomSearchResult] = []
+        results: list[RoomSearchResult] = []
         for room in rooms:
             icon = room.icon
             handle: str | None = None

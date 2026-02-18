@@ -3,7 +3,7 @@ import json
 from sqlalchemy import Table, Column
 from sqlalchemy.schema import UniqueConstraint
 from sqlalchemy.types import String, Integer, JSON
-from typing import Dict, Iterable, Iterator, List
+from typing import Iterable, Iterator
 
 from .base import BaseData, metadata
 from .types import MetadataType, ActionID, AttachmentID, NewActionID, NewAttachmentID, UserID, NewUserID
@@ -69,7 +69,7 @@ class Attachment:
         system: str,
         content_type: str,
         original_filename: str | None,
-        metadata: Dict[MetadataType, object],
+        metadata: dict[MetadataType, object],
     ) -> None:
         self.id = attachmentid
         self.system = system
@@ -84,7 +84,7 @@ class Emote:
         attachmentid: AttachmentID,
         system: str,
         content_type: str,
-        metadata: Dict[MetadataType, object],
+        metadata: dict[MetadataType, object],
     ) -> None:
         self.alias = alias
         self.attachmentid = attachmentid
@@ -100,7 +100,7 @@ class ActionAttachment:
         attachmentid: AttachmentID,
         content_type: str,
         original_filename: str | None,
-        metadata: Dict[MetadataType, object],
+        metadata: dict[MetadataType, object],
     ) -> None:
         self.actionid = actionid
         self.attachmentid = attachmentid
@@ -115,7 +115,7 @@ class AttachmentData(BaseData):
         system: str,
         content_type: str,
         original_filename: str | None,
-        metadata: Dict[MetadataType, object],
+        metadata: dict[MetadataType, object],
     ) -> AttachmentID | None:
         """
         Given an attachment system and content type, insert a pointer to that attachment.
@@ -144,7 +144,7 @@ class AttachmentData(BaseData):
 
         return AttachmentID(cursor.lastrowid)
 
-    def overwrite_attachment_metadata(self, attachmentid: AttachmentID, metadata: Dict[MetadataType, object]) -> None:
+    def overwrite_attachment_metadata(self, attachmentid: AttachmentID, metadata: dict[MetadataType, object]) -> None:
         """
         Given an existing attachment, completely overwrite it's metadata. Normally
         never called, but can be necessary during migrations to backfill missing metadata.
@@ -159,7 +159,7 @@ class AttachmentData(BaseData):
         """
         self.execute(sql, {"id": attachmentid, "metadata": json.dumps(metadata)})
 
-    def update_attachment_metadata(self, attachmentid: AttachmentID, metadata: Dict[MetadataType, object]) -> None:
+    def update_attachment_metadata(self, attachmentid: AttachmentID, metadata: dict[MetadataType, object]) -> None:
         """
         Given an existing attachment, update it's metadata. Normally never called, but
         can be necessary during migrations to backfill missing metadata. Note that this
@@ -221,7 +221,7 @@ class AttachmentData(BaseData):
             json.loads(str(result["metadata"] or "{}")),
         )
 
-    def get_attachments(self) -> List[Attachment]:
+    def get_attachments(self) -> list[Attachment]:
         """
         Look up all known attachments in the system.
         """
@@ -241,7 +241,7 @@ class AttachmentData(BaseData):
             ) for result in cursor.mappings()
         ]
 
-    def get_emotes(self) -> List[Emote]:
+    def get_emotes(self) -> list[Emote]:
         """
         Look up all custom emotes in the DB.
         """
@@ -316,7 +316,7 @@ class AttachmentData(BaseData):
         """
         self.execute(sql, {"alias": alias})
 
-    def get_notifications(self, userid: UserID) -> Dict[str, Attachment]:
+    def get_notifications(self, userid: UserID) -> dict[str, Attachment]:
         """
         Look up all custom notifications for a user.
         """
@@ -418,14 +418,14 @@ class AttachmentData(BaseData):
             sql = "UNLOCK TABLES"
             self.execute(sql, {})
 
-    def get_action_attachments(self, actionid: ActionID | Iterable[ActionID]) -> Dict[ActionID, List[ActionAttachment]]:
+    def get_action_attachments(self, actionid: ActionID | Iterable[ActionID]) -> dict[ActionID, list[ActionAttachment]]:
         """
         Look up all action attachments for a given action or actions in the system.
         """
         if actionid == NewActionID:
             return {}
 
-        ids: List[ActionID] = []
+        ids: list[ActionID] = []
         try:
             ids = [x for x in actionid]  # type: ignore
         except TypeError:
@@ -447,7 +447,7 @@ class AttachmentData(BaseData):
         """
         cursor = self.execute(sql, {"ids": ids})
 
-        retval: Dict[ActionID, List[ActionAttachment]] = {}
+        retval: dict[ActionID, list[ActionAttachment]] = {}
         for aid in ids:
             retval[aid] = []
 

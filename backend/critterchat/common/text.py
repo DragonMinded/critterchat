@@ -1,7 +1,4 @@
-from typing import List
-
-
-KNOWN_SPACES: List[str] = [
+KNOWN_SPACES: list[str] = [
     "\u0020",
     "\u00A0",
     "\u2000",
@@ -22,7 +19,7 @@ KNOWN_SPACES: List[str] = [
 ]
 
 
-KNOWN_WHITE_SPACE: List[str] = [
+KNOWN_WHITE_SPACE: list[str] = [
     "\u115F",
     "\u1160",
     "\u0009",
@@ -44,7 +41,7 @@ KNOWN_WHITE_SPACE: List[str] = [
 ]
 
 
-KNOWN_CONTROL: List[str] = [
+KNOWN_CONTROL: list[str] = [
     "\u0000",
     "\u0001",
     "\u0002",

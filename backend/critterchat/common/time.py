@@ -2,7 +2,7 @@ import calendar
 import datetime
 from dateutil import tz
 
-from typing import Final, List
+from typing import Final
 
 
 class Time:
@@ -80,7 +80,7 @@ class Time:
         return calendar.timegm(this_month.timetuple())
 
     @staticmethod
-    def todays_date() -> List[int]:
+    def todays_date() -> list[int]:
         """
         Returns a [year, month, day] list representing today's date.
         """
@@ -88,7 +88,7 @@ class Time:
         return [now.year, now.month, now.day]
 
     @staticmethod
-    def yesterdays_date() -> List[int]:
+    def yesterdays_date() -> list[int]:
         """
         Returns a [year, month, day] list representing yesterday's date.
         """
@@ -112,7 +112,7 @@ class Time:
         return (week - datetime.date(1970, 1, 1)).days
 
     @staticmethod
-    def days_into_year(timestamp: int | None = None) -> List[int]:
+    def days_into_year(timestamp: int | None = None) -> list[int]:
         """
         Returns a [year, days] list representing the current year, and number
         of days into the current year. If a timestamp is provided, returns the
@@ -155,7 +155,7 @@ class Time:
         return calendar.timegm(date.timetuple())
 
     @staticmethod
-    def date_from_timestamp(timestamp: int) -> List[int]:
+    def date_from_timestamp(timestamp: int) -> list[int]:
         """
         Returns a [year, month, day] given a UTC unix timestamp.
         """

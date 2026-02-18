@@ -5,7 +5,7 @@ from sqlalchemy import Table, Column
 from sqlalchemy.schema import UniqueConstraint
 from sqlalchemy.types import Boolean, String, Integer
 from sqlalchemy.dialects.mysql import MEDIUMTEXT as MediumText
-from typing import Any, Final, List, Tuple
+from typing import Any, Final
 from passlib.hash import pbkdf2_sha512  # type: ignore
 
 from ..common import Time
@@ -135,7 +135,7 @@ class UserData(BaseData):
         except (ValueError, TypeError):
             return False
 
-    def __compute_password(self, *, password: str) -> Tuple[str, str]:
+    def __compute_password(self, *, password: str) -> tuple[str, str]:
         salt = ''.join(
             random.SystemRandom().choice(string.ascii_uppercase + string.ascii_lowercase + string.digits)
             for _ in range(self.PASSWORD_SALT_LENGTH)
@@ -736,7 +736,7 @@ class UserData(BaseData):
         """
         self.execute(sql, {"userid": user.id, "perms": permissions})
 
-    def get_users(self, name: str | None = None) -> List[User]:
+    def get_users(self, name: str | None = None) -> list[User]:
         """
         Return a list of all users on the network.
         """
@@ -759,7 +759,7 @@ class UserData(BaseData):
 
         return users
 
-    def get_visible_users(self, userid: UserID, name: str | None = None) -> List[User]:
+    def get_visible_users(self, userid: UserID, name: str | None = None) -> list[User]:
         """
         Given a user searching, return a list of visible users (users that haven't blocked the
         user, etc). If the name is specified, returns all users with that name.
@@ -820,7 +820,7 @@ class UserData(BaseData):
             """
             self.execute(sql, {"userid": userid, "roomid": roomid, "actionid": actionid})
 
-    def get_last_seen_counts(self, userid: UserID) -> List[Tuple[RoomID, int]]:
+    def get_last_seen_counts(self, userid: UserID) -> list[tuple[RoomID, int]]:
         """
         Given a user, grab all of the last seen room/action counts.
         """
@@ -895,7 +895,7 @@ class UserData(BaseData):
         computed_counts += [(c[0], hydrate_new_count(c[0], c[1])) for c in extra_rooms]
         return computed_counts
 
-    def get_last_seen_actions(self, userid: UserID) -> List[Tuple[RoomID, ActionID]]:
+    def get_last_seen_actions(self, userid: UserID) -> list[tuple[RoomID, ActionID]]:
         """
         Given a user, grab all of the last seen room/action IDs.
         """

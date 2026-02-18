@@ -1,5 +1,4 @@
 from flask import Blueprint, Response, render_template
-from typing import Dict
 
 from .app import (
     app,
@@ -74,7 +73,7 @@ def home() -> Response:
 @loginrequired
 @uncacheable
 @jsonify
-def config() -> Dict[str, object]:
+def config() -> dict[str, object]:
     attachmentservice = AttachmentService(g.config, g.data)
     emoteservice = EmoteService(g.config, g.data)
 
@@ -118,7 +117,7 @@ def config() -> Dict[str, object]:
 @chat.route("/chat/version.json")
 @uncacheable
 @jsonify
-def version() -> Dict[str, object]:
+def version() -> dict[str, object]:
     return {"js": get_frontend_version() + "-" + get_fingerprint_hash()}
 
 

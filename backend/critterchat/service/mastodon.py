@@ -2,7 +2,6 @@ import logging
 import requests
 import urllib
 from html.parser import HTMLParser
-from typing import Dict, List, Tuple
 
 from ..config import Config
 from ..data import Data, MastodonProfile, MastodonInstance, NewMastodonInstanceID, User, UserID
@@ -24,7 +23,7 @@ class MastodonInstanceDetails:
         connected: bool,
         domain: str | None,
         title: str | None,
-        icons: Dict[str, str],
+        icons: dict[str, str],
     ) -> None:
         self.base_url = base_url
         self.authorize_url = authorize_url
@@ -39,10 +38,10 @@ class MastodonParser(HTMLParser):
         super().__init__(convert_charrefs=True)
         self.text = ""
         self.predepth = 0
-        self.liststack: List[str] = []
-        self.listcount: List[int] = []
+        self.liststack: list[str] = []
+        self.listcount: list[int] = []
 
-    def handle_starttag(self, tag: str, attrs: List[Tuple[str, str | None]]) -> None:
+    def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
         if tag in {"p", "blockquote", "pre"}:
             needsNewline = bool(self.text) and self.text[-1] != "\n"
             newLine = "\n" if needsNewline else ""
@@ -174,16 +173,16 @@ class MastodonService:
 
         return f"{base_url}/{path}"
 
-    def get_all_instances(self) -> List[MastodonInstance]:
+    def get_all_instances(self) -> list[MastodonInstance]:
         # Just grab all known instances.
         return self.__data.mastodon.get_instances()
 
-    def get_configured_instances(self) -> List[MastodonInstance]:
+    def get_configured_instances(self) -> list[MastodonInstance]:
         # Grab all known instances that are also in our configuration. Note that if you do not
         # register an instance but put it in your config, it won't show up here. Note also that
         # if you register an instance but later remove it from your config, it will also not
         # show up here. Note that this does not get the instance details itself either.
-        retval: List[MastodonInstance] = []
+        retval: list[MastodonInstance] = []
         for instance in self.__config.authentication.mastodon:
             obj = self.__data.mastodon.lookup_instance(instance.base_url)
             if obj:
@@ -259,7 +258,7 @@ class MastodonService:
         title = str(body["title"])
         icons = body.get("icon", [])
 
-        actual_icons: Dict[str, str] = {}
+        actual_icons: dict[str, str] = {}
         if isinstance(icons, list):
             for icon in icons:
                 if isinstance(icon, dict):

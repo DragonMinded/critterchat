@@ -1,7 +1,6 @@
 from sqlalchemy import Table, Column
 from sqlalchemy.schema import UniqueConstraint
 from sqlalchemy.types import String, Integer, Boolean
-from typing import List
 
 from .base import BaseData, metadata
 from .types import MastodonInstance, MastodonInstanceID, NewMastodonInstanceID, UserID
@@ -37,7 +36,7 @@ mastodon_account_link = Table(
 
 
 class MastodonData(BaseData):
-    def get_instances(self) -> List[MastodonInstance]:
+    def get_instances(self) -> list[MastodonInstance]:
         """
         Return all known instances that we've registered with.
         """

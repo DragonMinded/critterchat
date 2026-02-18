@@ -1,7 +1,7 @@
 import copy
 import os
 from sqlalchemy.engine import Engine
-from typing import Any, Dict, Final, List
+from typing import Any, Final
 
 
 def _bool(val: Any, default: bool) -> bool:
@@ -131,12 +131,12 @@ class Authentication:
         return _bool(self.__config.get("authentication", {}).get("local"), True)
 
     @property
-    def mastodon(self) -> List[MastodonConfig]:
+    def mastodon(self) -> list[MastodonConfig]:
         instances = self.__config.get("authentication", {}).get("mastodon", [])
         if not isinstance(instances, list):
             return []
 
-        retval: List[MastodonConfig] = []
+        retval: list[MastodonConfig] = []
         for instance in instances:
             if not isinstance(instance, dict):
                 continue
@@ -152,7 +152,7 @@ class Authentication:
 
 
 class Config(dict[str, Any]):
-    def __init__(self, existing_contents: Dict[str, Any] = {}, filename: str | None = None) -> None:
+    def __init__(self, existing_contents: dict[str, Any] = {}, filename: str | None = None) -> None:
         super().__init__(existing_contents or {})
 
         self.__path: str | None = None

@@ -3,7 +3,7 @@ import hashlib
 import mimetypes
 import os
 from PIL import Image, ImageOps
-from typing import Dict, Final, Tuple, cast
+from typing import Final, cast
 
 from ..config import Config
 from ..data import (
@@ -40,8 +40,8 @@ class AttachmentServiceInvalidSizeException(AttachmentServiceException):
     pass
 
 
-_hash_to_id_lut: Dict[str, AttachmentID] = {}
-_id_to_hash_lut: Dict[AttachmentID, str] = {}
+_hash_to_id_lut: dict[str, AttachmentID] = {}
+_id_to_hash_lut: dict[AttachmentID, str] = {}
 _emotes_initialized: bool = False
 
 
@@ -261,7 +261,7 @@ class AttachmentService:
         self,
         content_type: str,
         original_filename: str | None,
-        metadata: Dict[MetadataType, object],
+        metadata: dict[MetadataType, object],
     ) -> AttachmentID | None:
         return self.__data.attachment.insert_attachment(
             self.__config.attachments.system,
@@ -274,7 +274,7 @@ class AttachmentService:
         self.delete_attachment_data(attachmentid)
         self.__data.attachment.remove_attachment(attachmentid)
 
-    def get_attachment_data(self, attachmentid: AttachmentID) -> Tuple[str, bytes] | None:
+    def get_attachment_data(self, attachmentid: AttachmentID) -> tuple[str, bytes] | None:
         # Check for default images which aren't stored in the DB.
         if attachmentid == DefaultAvatarID or attachmentid == DefaultRoomID or attachmentid == FaviconID:
             if self.__config.attachments.system == "local":
@@ -351,7 +351,7 @@ class AttachmentService:
             # Unknown backend, throw.
             raise AttachmentServiceException("Unrecognized backend system!")
 
-    def prepare_attachment_image(self, data: bytes, max_width: int | None = None, max_height: int | None = None) -> Tuple[bytes, int, int, str]:
+    def prepare_attachment_image(self, data: bytes, max_width: int | None = None, max_height: int | None = None) -> tuple[bytes, int, int, str]:
         try:
             img = Image.open(io.BytesIO(data))
         except Exception:

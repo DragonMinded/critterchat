@@ -1,7 +1,7 @@
 import json
 import random
 from contextlib import contextmanager
-from typing import Dict, Iterator, List, cast
+from typing import Iterator, cast
 
 from sqlfragments import Statement, Fragment, statement, fragment
 
@@ -46,19 +46,19 @@ class BaseData:
         """
         self.__config = config
         self.__session = session
-        self.__depth: List[int] = []
+        self.__depth: list[int] = []
 
     @property
     def config(self) -> Config:
         return self.__config
 
-    def serialize(self, data: Dict[str, object]) -> str:
+    def serialize(self, data: dict[str, object]) -> str:
         """
         Given an arbitrary dict, serialize it to JSON.
         """
         return json.dumps(data, cls=_BytesEncoder)
 
-    def deserialize(self, data: str | None) -> Dict[str, object]:
+    def deserialize(self, data: str | None) -> dict[str, object]:
         """
         Given a string, deserialize it from JSON.
         """
@@ -86,7 +86,7 @@ class BaseData:
             # Normal value, its deserialized version is itself.
             return jd
 
-        return cast(Dict[str, object], fix(json.loads(data)))
+        return cast(dict[str, object], fix(json.loads(data)))
 
     @contextmanager
     def transaction(self) -> Iterator[None]:
@@ -102,7 +102,7 @@ class BaseData:
 
             self.__session.commit()
 
-    def execute(self, sql: Statement | str, params: Dict[str, object] | None = None) -> CursorResult:
+    def execute(self, sql: Statement | str, params: dict[str, object] | None = None) -> CursorResult:
         """
         Given a SQL statement, execute the query and return the result.
 

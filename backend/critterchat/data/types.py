@@ -1,5 +1,5 @@
 from enum import IntEnum, StrEnum
-from typing import Dict, List, NewType, Set, Tuple
+from typing import NewType
 
 from ..config import Config
 
@@ -40,7 +40,7 @@ class User:
         self,
         userid: UserID,
         username: str,
-        permissions: Set[UserPermission],
+        permissions: set[UserPermission],
         nickname: str,
         about: str,
         iconid: AttachmentID | None,
@@ -58,8 +58,8 @@ class User:
         self.moderator: bool | None = None
         self.muted: bool | None = None
 
-    def to_dict(self, *, config: Config | None = None, admin: bool = False) -> Dict[str, object]:
-        retval: Dict[str, object] = {
+    def to_dict(self, *, config: Config | None = None, admin: bool = False) -> dict[str, object]:
+        retval: dict[str, object] = {
             "id": User.from_id(self.id),
             "username": self.username,
             "nickname": self.nickname,
@@ -103,14 +103,14 @@ class UserSettings:
         self.roomid = roomid
         self.info = info
 
-    def to_dict(self) -> Dict[str, object]:
+    def to_dict(self) -> dict[str, object]:
         return {
             "roomid": Room.from_id(self.roomid) if self.roomid is not None else None,
             "info": self.info if self.info else "hidden",
         }
 
     @staticmethod
-    def from_dict(userid: UserID, values: Dict[str, object]) -> "UserSettings":
+    def from_dict(userid: UserID, values: dict[str, object]) -> "UserSettings":
         room = values.get("roomid")
         roomid = Room.to_id(str(room)) if room is not None else None
         info: str = str(values['info']) if values.get("info") else "hidden"
@@ -145,7 +145,7 @@ class UserPreferences:
         admin_controls: str,
         title_notifs: bool,
         mobile_audio_notifs: bool,
-        audio_notifs: Set[UserNotification],
+        audio_notifs: set[UserNotification],
     ) -> None:
         self.userid = userid
         self.rooms_on_top = rooms_on_top
@@ -157,9 +157,9 @@ class UserPreferences:
         self.title_notifs = title_notifs
         self.mobile_audio_notifs = mobile_audio_notifs
         self.audio_notifs = audio_notifs
-        self.notif_sounds: Dict[str, str] = {}
+        self.notif_sounds: dict[str, str] = {}
 
-    def to_dict(self) -> Dict[str, object]:
+    def to_dict(self) -> dict[str, object]:
         return {
             "rooms_on_top": self.rooms_on_top,
             "combined_messages": self.combined_messages,
@@ -201,14 +201,14 @@ class Attachment:
         self, attachmentid: AttachmentID,
         uri: str,
         mimetype: str,
-        metadata: Dict[MetadataType, object],
+        metadata: dict[MetadataType, object],
     ) -> None:
         self.id = attachmentid
         self.uri = uri
         self.mimetype = mimetype
         self.metadata = metadata
 
-    def to_dict(self) -> Dict[str, object]:
+    def to_dict(self) -> dict[str, object]:
         return {
             # Intentionally don't include ID here because doing so along with the URI could allow
             # an attacker to reverse the URI hash and enumerate attachments by ID. This could
@@ -286,9 +286,9 @@ class Room:
         self.deficon: str | None = None
 
         # Resolved only after lookup by message/search system, not sent to clients.
-        self.occupants: List[Occupant] = []
+        self.occupants: list[Occupant] = []
 
-    def to_dict(self) -> Dict[str, object]:
+    def to_dict(self) -> dict[str, object]:
         return {
             "id": Room.from_id(self.id),
             "type": self.purpose,
@@ -341,7 +341,7 @@ class RoomSearchResult:
         # Resolved from room type.
         self.public = purpose == RoomPurpose.ROOM
 
-    def to_dict(self) -> Dict[str, object]:
+    def to_dict(self) -> dict[str, object]:
         return {
             "name": self.name,
             "handle": self.handle,
@@ -376,7 +376,7 @@ class Occupant:
         self.iconid = iconid
         self.icon: str | None = None
 
-    def to_dict(self) -> Dict[str, object]:
+    def to_dict(self) -> dict[str, object]:
         return {
             "id": Occupant.from_id(self.id),
             "userid": User.from_id(self.userid),
@@ -412,7 +412,7 @@ class ActionType(StrEnum):
     CHANGE_USERS = 'change_users'
 
     @staticmethod
-    def unread_types() -> Set["ActionType"]:
+    def unread_types() -> set["ActionType"]:
         # Type of actions that matter to unread counts and badges.
         return {
             ActionType.MESSAGE,
@@ -422,7 +422,7 @@ class ActionType(StrEnum):
         }
 
     @staticmethod
-    def unread_dm_types() -> Set["ActionType"]:
+    def unread_dm_types() -> set["ActionType"]:
         # Type of actions that matter specifically to DM unread counts and badges.
         return {
             ActionType.MESSAGE,
@@ -430,7 +430,7 @@ class ActionType(StrEnum):
         }
 
     @staticmethod
-    def update_types() -> Set["ActionType"]:
+    def update_types() -> set["ActionType"]:
         # Type of actions that matter for delivering update notifications to clients.
         return {
             ActionType.MESSAGE,
@@ -449,8 +449,8 @@ class Action:
         timestamp: int,
         occupant: Occupant | None,
         action: ActionType,
-        details: Dict[str, object],
-        attachments: List[Attachment] = [],
+        details: dict[str, object],
+        attachments: list[Attachment] = [],
     ) -> None:
         self.id = actionid
         self.timestamp = timestamp
@@ -464,7 +464,7 @@ class Action:
         # Only ever populated for message type.
         self.attachments = attachments
 
-    def to_dict(self) -> Dict[str, object]:
+    def to_dict(self) -> dict[str, object]:
         return {
             "id": Action.from_id(self.id),
             "order": self.id,
@@ -491,11 +491,11 @@ class Action:
 
 
 class Emote:
-    def __init__(self, uri: str, dimensions: Tuple[int, int]) -> None:
+    def __init__(self, uri: str, dimensions: tuple[int, int]) -> None:
         self.uri = uri
         self.dimensions = dimensions
 
-    def to_dict(self) -> Dict[str, object]:
+    def to_dict(self) -> dict[str, object]:
         return {
             "uri": self.uri,
             "dimensions": list(self.dimensions),

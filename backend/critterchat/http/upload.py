@@ -3,7 +3,6 @@ import urllib.request
 from flask import Blueprint, request
 from pydub import AudioSegment  # type: ignore
 from pydub.exceptions import CouldntDecodeError  # type: ignore
-from typing import Dict, List
 
 from .app import UserException, app, static_location, templates_location, loginrequired, jsonify, g
 from ..data import Attachment, UserNotification, MetadataType
@@ -21,18 +20,18 @@ upload = Blueprint(
 @upload.route("/upload/icon", methods=["POST"])
 @loginrequired
 @jsonify
-def icon_upload() -> Dict[str, object]:
+def icon_upload() -> dict[str, object]:
     return _icon_upload("room icon")
 
 
 @upload.route("/upload/avatar", methods=["POST"])
 @loginrequired
 @jsonify
-def avatar_upload() -> Dict[str, object]:
+def avatar_upload() -> dict[str, object]:
     return _icon_upload("avatar")
 
 
-def _icon_upload(uploadtype: str) -> Dict[str, object]:
+def _icon_upload(uploadtype: str) -> dict[str, object]:
     # Ensure that we only allow certain size uploads.
     request.max_content_length = (((g.config.limits.icon_size * 1024) * 4) // 3) + 1024
 
@@ -81,7 +80,7 @@ def _icon_upload(uploadtype: str) -> Dict[str, object]:
 @upload.route("/upload/notifications", methods=["POST"])
 @loginrequired
 @jsonify
-def notifications_upload() -> Dict[str, object]:
+def notifications_upload() -> dict[str, object]:
     # Ensure that we only allow certain size uploads.
     request.max_content_length = ((((g.config.limits.notification_size * 1024) * 4) // 3) + 1024) * len(UserNotification)
 
@@ -91,7 +90,7 @@ def notifications_upload() -> Dict[str, object]:
     if not isinstance(body, dict):
         raise Exception("Notification data corrupt or not provided in upload.")
 
-    new_notif_sounds: Dict[str, bytes] = {}
+    new_notif_sounds: dict[str, bytes] = {}
     notif_dict = body.get('notif_sounds', {}) or {}
 
     # First, load the data and attempt to validate it.
@@ -117,7 +116,7 @@ def notifications_upload() -> Dict[str, object]:
             new_notif_sounds[name] = notif_data
 
     # Now, convert to mp3 and attach as attachments.
-    response: Dict[str, str] = {}
+    response: dict[str, str] = {}
     for alias, data in new_notif_sounds.items():
         try:
             UserNotification[alias]
@@ -156,7 +155,7 @@ def notifications_upload() -> Dict[str, object]:
 @upload.route("/upload/attachments", methods=["POST"])
 @loginrequired
 @jsonify
-def attachments_upload() -> Dict[str, object]:
+def attachments_upload() -> dict[str, object]:
     # Ensure that we only allow certain size uploads.
     request.max_content_length = ((((g.config.limits.attachment_size * 1024) * 4) // 3) + 2048) * g.config.limits.attachment_max
 
@@ -170,7 +169,7 @@ def attachments_upload() -> Dict[str, object]:
     if not isinstance(atchlist, list):
         raise Exception("Attachment data corrupt or not provided in upload.")
 
-    attachmentids: List[str] = []
+    attachmentids: list[str] = []
     for atch in atchlist:
         if not isinstance(atch, dict):
             raise Exception("Attachment data corrupt or not provided in upload.")

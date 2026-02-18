@@ -1,6 +1,5 @@
 from sqlalchemy import Table, Column
 from sqlalchemy.types import String, Integer
-from typing import Set
 
 from .base import BaseData, metadata
 from .types import Migration
@@ -30,7 +29,7 @@ class MigrationData(BaseData):
         """
         self.execute(sql, {"name": migration})
 
-    def get_migrations(self) -> Set[Migration]:
+    def get_migrations(self) -> set[Migration]:
         """
         Look up all known migrations that were performed in the system.
         """

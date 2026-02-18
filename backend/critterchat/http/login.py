@@ -2,7 +2,6 @@ import logging
 import requests
 from urllib.parse import urlsplit
 from flask import Response, make_response, redirect
-from typing import List
 
 from .app import g, absolute_url_for
 from ..common import AESCipher, Time
@@ -13,14 +12,14 @@ from ..service import AttachmentService, AttachmentServiceException, MastodonSer
 logger = logging.getLogger(__name__)
 
 
-def get_mastodon_providers() -> List[MastodonInstanceDetails]:
+def get_mastodon_providers() -> list[MastodonInstanceDetails]:
     mastodonservice = MastodonService(g.config, g.data)
 
     # First, grab all of the known instances that we need to pull info for.
     instances = mastodonservice.get_configured_instances()
 
     # Now, look up all of the info about each one so we can display thumbnails and login.
-    retval: List[MastodonInstanceDetails] = []
+    retval: list[MastodonInstanceDetails] = []
     for instance in instances:
         details = mastodonservice.get_instance_details(instance)
         if not details.connected:

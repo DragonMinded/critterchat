@@ -5,7 +5,7 @@ import os
 import time
 import traceback
 from functools import wraps
-from typing import Any, Callable, Dict, cast
+from typing import Any, Callable, cast
 
 from flask import (
     Flask,
@@ -231,7 +231,7 @@ def get_frontend_version() -> str:
 
 
 @app.context_processor
-def extrafunctions() -> Dict[str, Any]:
+def extrafunctions() -> dict[str, Any]:
     cachebust = get_frontend_version() + "-" + get_fingerprint_hash()
 
     return {
@@ -263,7 +263,7 @@ def loginprohibited(func: Callable[..., Response]) -> Callable[..., Response]:
     return decoratedfunction
 
 
-def jsonify(func: Callable[..., Dict[str, Any]]) -> Callable[..., Response]:
+def jsonify(func: Callable[..., dict[str, Any]]) -> Callable[..., Response]:
     @wraps(func)
     def decoratedfunction(*args: Any, **kwargs: Any) -> Response:
         try:

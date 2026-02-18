@@ -1,7 +1,7 @@
 import logging
 import traceback
 from threading import Lock
-from typing import Any, Dict, Final, List, Literal, Set, cast
+from typing import Any, Final, Literal, cast
 
 from .app import socketio, config, request
 from ..common import AESCipher, Time, represents_real_text
@@ -37,8 +37,8 @@ class SocketInfo:
         self.sid = sid
         self.sessionid = sessionid
         self.userid = userid
-        self.fetchlimit: Dict[RoomID, ActionID | None] = {}
-        self.lastseen: Dict[RoomID, int] = {}
+        self.fetchlimit: dict[RoomID, ActionID | None] = {}
+        self.lastseen: dict[RoomID, int] = {}
         self.profilets: int | None = None
         self.prefsts: int | None = None
         self.lock: Lock = Lock()
@@ -54,7 +54,7 @@ MAX_ICON_HEIGHT: Final[int] = 256
 
 
 socket_lock: Lock = Lock()
-socket_to_info: Dict[Any, SocketInfo] = {}
+socket_to_info: dict[Any, SocketInfo] = {}
 background_thread: object | None = None
 logger = logging.getLogger(__name__)
 
@@ -92,8 +92,8 @@ def background_thread_proc_impl() -> None:
         # See if we need to update emotes on clients.
         if (Time.now() - last_emote_update) >= EMOJI_REFRESH_TICK_SECONDS:
             newemotes = emoteservice.get_all_emotes()
-            additions: Set[str] = set()
-            deletions: Set[str] = set()
+            additions: set[str] = set()
+            deletions: set[str] = set()
 
             for emote in newemotes:
                 if emote not in emotes:
@@ -139,10 +139,10 @@ def background_thread_proc_impl() -> None:
 
                 return
 
-            sockets: List[SocketInfo] = list(socket_to_info.values())
+            sockets: list[SocketInfo] = list(socket_to_info.values())
 
         # Keep a lookup of room occupants so we don't look this up repeatedly during CHANGE_USERS events.
-        occupantcache: Dict[RoomID, List[Occupant]] = {}
+        occupantcache: dict[RoomID, list[Occupant]] = {}
 
         for info in sockets:
             # Lock this so other communication with this client doesn't get out of order.
@@ -187,7 +187,7 @@ def background_thread_proc_impl() -> None:
                     # Figure out if rooms have changed, so we can start monitoring.
                     rooms = messageservice.get_joined_rooms(user.id)
 
-                    includes: Set[RoomID] = set()
+                    includes: set[RoomID] = set()
                     for room in rooms:
                         if room.id not in info.fetchlimit:
                             includes.add(room.id)
@@ -197,14 +197,14 @@ def background_thread_proc_impl() -> None:
                     # Calculate any badge updates that the client needs to know about, including
                     # badges on newly-joined rooms.
                     lastseen = userservice.get_last_seen_counts(user.id)
-                    counts: Dict[RoomID, int] = {}
+                    counts: dict[RoomID, int] = {}
                     for roomid, count in lastseen.items():
                         if roomid in includes or count < info.lastseen.get(roomid, 0):
                             counts[roomid] = count
                         info.lastseen[roomid] = count
 
                     if updated or counts:
-                        clientdata: Dict[str, object] = {}
+                        clientdata: dict[str, object] = {}
                         if updated:
                             clientdata['rooms'] = [room.to_dict() for room in rooms]
                         if counts:
@@ -302,7 +302,7 @@ def recover_userid(data: Data, sid: Any) -> UserID | None:
     return user.id
 
 
-def hydrate_tag(request: Dict[str, object], response: Dict[str, object]) -> Dict[str, object]:
+def hydrate_tag(request: dict[str, object], response: dict[str, object]) -> dict[str, object]:
     if 'tag' not in request:
         return response
 
@@ -345,7 +345,7 @@ def disconnect() -> None:
 
 
 @socketio.on('info')  # type: ignore
-def serverinfo(json: Dict[str, object]) -> None:
+def serverinfo(json: dict[str, object]) -> None:
     data = Data(config)
     attachmentservice = AttachmentService(config, data)
 
@@ -365,7 +365,7 @@ def serverinfo(json: Dict[str, object]) -> None:
 
 
 @socketio.on('motd')  # type: ignore
-def motd(json: Dict[str, object]) -> None:
+def motd(json: dict[str, object]) -> None:
     data = Data(config)
     userservice = UserService(config, data)
     messageservice = MessageService(config, data)
@@ -396,7 +396,7 @@ def motd(json: Dict[str, object]) -> None:
 
 
 @socketio.on('welcomeaccept')  # type: ignore
-def welcomeaccept(json: Dict[str, object]) -> None:
+def welcomeaccept(json: dict[str, object]) -> None:
     data = Data(config)
     userservice = UserService(config, data)
     messageservice = MessageService(config, data)
@@ -417,7 +417,7 @@ def welcomeaccept(json: Dict[str, object]) -> None:
 
 
 @socketio.on('roomlist')  # type: ignore
-def roomlist(json: Dict[str, object]) -> None:
+def roomlist(json: dict[str, object]) -> None:
     data = Data(config)
     messageservice = MessageService(config, data)
     userservice = UserService(config, data)
@@ -445,7 +445,7 @@ def roomlist(json: Dict[str, object]) -> None:
 
 
 @socketio.on('lastsettings')  # type: ignore
-def lastsettings(json: Dict[str, object]) -> None:
+def lastsettings(json: dict[str, object]) -> None:
     data = Data(config)
     userservice = UserService(config, data)
 
@@ -462,7 +462,7 @@ def lastsettings(json: Dict[str, object]) -> None:
 
 
 @socketio.on('profile')  # type: ignore
-def profile(json: Dict[str, object]) -> None:
+def profile(json: dict[str, object]) -> None:
     data = Data(config)
     userservice = UserService(config, data)
     messageservice = MessageService(config, data)
@@ -504,7 +504,7 @@ def profile(json: Dict[str, object]) -> None:
 
 
 @socketio.on('preferences')  # type: ignore
-def preferences(json: Dict[str, object]) -> None:
+def preferences(json: dict[str, object]) -> None:
     data = Data(config)
     userservice = UserService(config, data)
 
@@ -526,7 +526,7 @@ def preferences(json: Dict[str, object]) -> None:
 
 
 @socketio.on('updatesettings')  # type: ignore
-def updatesettings(json: Dict[str, object]) -> None:
+def updatesettings(json: dict[str, object]) -> None:
     data = Data(config)
     userservice = UserService(config, data)
 
@@ -543,7 +543,7 @@ def updatesettings(json: Dict[str, object]) -> None:
 
 
 @socketio.on('updateprofile')  # type: ignore
-def updateprofile(json: Dict[str, object]) -> None:
+def updateprofile(json: dict[str, object]) -> None:
     data = Data(config)
     userservice = UserService(config, data)
 
@@ -586,7 +586,7 @@ def updateprofile(json: Dict[str, object]) -> None:
 
 
 @socketio.on('updatepreferences')  # type: ignore
-def updatepreferences(json: Dict[str, object]) -> None:
+def updatepreferences(json: dict[str, object]) -> None:
     data = Data(config)
     userservice = UserService(config, data)
 
@@ -652,7 +652,7 @@ def updatepreferences(json: Dict[str, object]) -> None:
         else:
             notif_delete = None
 
-    new_notif_sounds: Dict[str, AttachmentID] = {}
+    new_notif_sounds: dict[str, AttachmentID] = {}
     notif_dict = json.get('notif_sounds', {}) or {}
     if isinstance(notif_dict, dict):
         for name, data in notif_dict.items():
@@ -684,7 +684,7 @@ def updatepreferences(json: Dict[str, object]) -> None:
 
 
 @socketio.on('chatactions')  # type: ignore
-def chatactions(json: Dict[str, object]) -> None:
+def chatactions(json: dict[str, object]) -> None:
     data = Data(config)
     messageservice = MessageService(config, data)
 
@@ -732,7 +732,7 @@ def chatactions(json: Dict[str, object]) -> None:
 
 
 @socketio.on('chathistory')  # type: ignore
-def chathistory(json: Dict[str, object]) -> None:
+def chathistory(json: dict[str, object]) -> None:
     data = Data(config)
     messageservice = MessageService(config, data)
     userservice = UserService(config, data)
@@ -787,7 +787,7 @@ def chathistory(json: Dict[str, object]) -> None:
 
 
 @socketio.on('invite')  # type: ignore
-def invite(json: Dict[str, object]) -> None:
+def invite(json: dict[str, object]) -> None:
     data = Data(config)
     userservice = UserService(config, data)
 
@@ -811,7 +811,7 @@ def invite(json: Dict[str, object]) -> None:
 
 
 @socketio.on('message')  # type: ignore
-def message(json: Dict[str, object]) -> Dict[str, object]:
+def message(json: dict[str, object]) -> dict[str, object]:
     data = Data(config)
     messageservice = MessageService(config, data)
 
@@ -832,7 +832,7 @@ def message(json: Dict[str, object]) -> Dict[str, object]:
             return {'status': 'failed'}
 
         # Add any attachments that came along with the data.
-        attachments: List[AttachmentID] = []
+        attachments: list[AttachmentID] = []
         atchlist = json.get('attachments', [])
         if isinstance(atchlist, list):
             for atch in atchlist:
@@ -862,7 +862,7 @@ def message(json: Dict[str, object]) -> Dict[str, object]:
 
 
 @socketio.on('leaveroom')  # type: ignore
-def leaveroom(json: Dict[str, object]) -> None:
+def leaveroom(json: dict[str, object]) -> None:
     data = Data(config)
     messageservice = MessageService(config, data)
 
@@ -883,7 +883,7 @@ def leaveroom(json: Dict[str, object]) -> None:
 
 
 @socketio.on('searchrooms')  # type: ignore
-def searchrooms(json: Dict[str, object]) -> None:
+def searchrooms(json: dict[str, object]) -> None:
     data = Data(config)
     messageservice = MessageService(config, data)
 
@@ -900,7 +900,7 @@ def searchrooms(json: Dict[str, object]) -> None:
 
 
 @socketio.on('joinroom')  # type: ignore
-def joinroom(json: Dict[str, object]) -> None:
+def joinroom(json: dict[str, object]) -> None:
     data = Data(config)
     messageservice = MessageService(config, data)
 
@@ -947,7 +947,7 @@ def joinroom(json: Dict[str, object]) -> None:
 
 
 @socketio.on('lastaction')  # type: ignore
-def lastaction(json: Dict[str, object]) -> None:
+def lastaction(json: dict[str, object]) -> None:
     data = Data(config)
     userservice = UserService(config, data)
 
@@ -964,7 +964,7 @@ def lastaction(json: Dict[str, object]) -> None:
 
 
 @socketio.on('updateroom')  # type: ignore
-def updateroom(json: Dict[str, object]) -> None:
+def updateroom(json: dict[str, object]) -> None:
     data = Data(config)
     messageservice = MessageService(config, data)
     userservice = UserService(config, data)
@@ -998,7 +998,7 @@ def updateroom(json: Dict[str, object]) -> None:
             # Nice try buck-o.
             return
 
-        details = cast(Dict[str, object], json.get('details', {}))
+        details = cast(dict[str, object], json.get('details', {}))
         newname = str(details.get('name', '')).strip()
         newtopic = str(details.get('topic', '')).strip()
         newicon = str(details.get('icon', '')).strip()
@@ -1032,7 +1032,7 @@ def updateroom(json: Dict[str, object]) -> None:
 
 
 @socketio.on('admin')  # type: ignore
-def adminaction(json: Dict[str, object]) -> Dict[str, object]:
+def adminaction(json: dict[str, object]) -> dict[str, object]:
     data = Data(config)
     userservice = UserService(config, data)
     messageservice = MessageService(config, data)
@@ -1110,7 +1110,7 @@ def adminaction(json: Dict[str, object]) -> Dict[str, object]:
 
 
 @socketio.on('mod')  # type: ignore
-def modaction(json: Dict[str, object]) -> Dict[str, object]:
+def modaction(json: dict[str, object]) -> dict[str, object]:
     data = Data(config)
     userservice = UserService(config, data)
     messageservice = MessageService(config, data)
