@@ -1,5 +1,5 @@
 from enum import IntEnum, StrEnum
-from typing import Dict, List, NewType, Optional, Set, Tuple
+from typing import Dict, List, NewType, Set, Tuple
 
 from ..config import Config
 
@@ -43,7 +43,7 @@ class User:
         permissions: Set[UserPermission],
         nickname: str,
         about: str,
-        iconid: Optional[AttachmentID],
+        iconid: AttachmentID | None,
     ) -> None:
         self.id = userid
         self.username = username
@@ -51,14 +51,14 @@ class User:
         self.permissions = permissions
         self.nickname = nickname
         self.iconid = iconid
-        self.icon: Optional[str] = None
+        self.icon: str | None = None
 
         # Only set when this user is looked up through message service based on an OID.
-        self.occupantid: Optional[OccupantID] = None
-        self.moderator: Optional[bool] = None
-        self.muted: Optional[bool] = None
+        self.occupantid: OccupantID | None = None
+        self.moderator: bool | None = None
+        self.muted: bool | None = None
 
-    def to_dict(self, *, config: Optional[Config] = None, admin: bool = False) -> Dict[str, object]:
+    def to_dict(self, *, config: Config | None = None, admin: bool = False) -> Dict[str, object]:
         retval: Dict[str, object] = {
             "id": User.from_id(self.id),
             "username": self.username,
@@ -87,7 +87,7 @@ class User:
         return f"u{userid}"
 
     @staticmethod
-    def to_id(idstr: str) -> Optional[UserID]:
+    def to_id(idstr: str) -> UserID | None:
         if idstr[0] != 'u':
             return None
 
@@ -98,7 +98,7 @@ class User:
 
 
 class UserSettings:
-    def __init__(self, userid: UserID, roomid: Optional[RoomID], info: Optional[str]) -> None:
+    def __init__(self, userid: UserID, roomid: RoomID | None, info: str | None) -> None:
         self.userid = userid
         self.roomid = roomid
         self.info = info
@@ -229,7 +229,7 @@ class Attachment:
         return f"d{attachmentid}"
 
     @staticmethod
-    def to_id(idstr: str) -> Optional[AttachmentID]:
+    def to_id(idstr: str) -> AttachmentID | None:
         if idstr == "defavi":
             return DefaultAvatarID
         if idstr == "defroom":
@@ -260,10 +260,10 @@ class Room:
         topic: str,
         purpose: RoomPurpose,
         moderated: bool,
-        iconid: Optional[AttachmentID],
-        deficonid: Optional[AttachmentID],
-        oldest_action: Optional[ActionID] = None,
-        newest_action: Optional[ActionID] = None,
+        iconid: AttachmentID | None,
+        deficonid: AttachmentID | None,
+        oldest_action: ActionID | None = None,
+        newest_action: ActionID | None = None,
         last_action_timestamp: int = 0,
     ) -> None:
         self.id = roomid
@@ -282,8 +282,8 @@ class Room:
         self.public = purpose == RoomPurpose.ROOM
 
         # Resolved only after lookup by attachment system.
-        self.icon: Optional[str] = None
-        self.deficon: Optional[str] = None
+        self.icon: str | None = None
+        self.deficon: str | None = None
 
         # Resolved only after lookup by message/search system, not sent to clients.
         self.occupants: List[Occupant] = []
@@ -309,7 +309,7 @@ class Room:
         return f"r{roomid}"
 
     @staticmethod
-    def to_id(idstr: str) -> Optional[RoomID]:
+    def to_id(idstr: str) -> RoomID | None:
         if idstr[0] != 'r':
             return None
 
@@ -323,11 +323,11 @@ class RoomSearchResult:
     def __init__(
         self,
         name: str,
-        handle: Optional[str],
+        handle: str | None,
         purpose: RoomPurpose,
         joined: bool,
-        roomid: Optional[RoomID],
-        userid: Optional[UserID],
+        roomid: RoomID | None,
+        userid: UserID | None,
         icon: str,
     ) -> None:
         self.name = name
@@ -361,7 +361,7 @@ class Occupant:
         userid: UserID,
         username: str = "",
         nickname: str = "",
-        iconid: Optional[AttachmentID] = None,
+        iconid: AttachmentID | None = None,
         inactive: bool = False,
         moderator: bool = False,
         muted: bool = False,
@@ -374,7 +374,7 @@ class Occupant:
         self.moderator = moderator
         self.muted = muted
         self.iconid = iconid
-        self.icon: Optional[str] = None
+        self.icon: str | None = None
 
     def to_dict(self) -> Dict[str, object]:
         return {
@@ -393,7 +393,7 @@ class Occupant:
         return f"o{occupantid}"
 
     @staticmethod
-    def to_id(idstr: str) -> Optional[OccupantID]:
+    def to_id(idstr: str) -> OccupantID | None:
         if idstr[0] != 'o':
             return None
 
@@ -447,7 +447,7 @@ class Action:
         self,
         actionid: ActionID,
         timestamp: int,
-        occupant: Optional[Occupant],
+        occupant: Occupant | None,
         action: ActionType,
         details: Dict[str, object],
         attachments: List[Attachment] = [],
@@ -480,7 +480,7 @@ class Action:
         return f"a{actionid}"
 
     @staticmethod
-    def to_id(idstr: str) -> Optional[ActionID]:
+    def to_id(idstr: str) -> ActionID | None:
         if idstr[0] != 'a':
             return None
 
@@ -508,7 +508,7 @@ class MastodonInstance:
         self.base_url = base_url
         self.client_id = client_id
         self.client_secret = client_secret
-        self.client_token: Optional[str] = None
+        self.client_token: str | None = None
 
 
 class MastodonProfile:

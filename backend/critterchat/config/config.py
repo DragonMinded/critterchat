@@ -1,7 +1,7 @@
 import copy
 import os
 from sqlalchemy.engine import Engine
-from typing import Any, Dict, Final, List, Optional
+from typing import Any, Dict, Final, List
 
 
 def _bool(val: Any, default: bool) -> bool:
@@ -53,7 +53,7 @@ class Attachments:
         return str(self.__config.get("attachments", {}).get("system") or "local")
 
     @property
-    def directory(self) -> Optional[str]:
+    def directory(self) -> str | None:
         directory = self.__config.get("attachments", {}).get("directory")
         return str(directory) if directory else None
 
@@ -152,10 +152,10 @@ class Authentication:
 
 
 class Config(dict[str, Any]):
-    def __init__(self, existing_contents: Dict[str, Any] = {}, filename: Optional[str] = None) -> None:
+    def __init__(self, existing_contents: Dict[str, Any] = {}, filename: str | None = None) -> None:
         super().__init__(existing_contents or {})
 
-        self.__path: Optional[str] = None
+        self.__path: str | None = None
         if filename:
             self.__path = os.path.dirname(filename)
 
@@ -201,7 +201,7 @@ class Config(dict[str, Any]):
         return str(self.get("administrator") or "nobody")
 
     @property
-    def source(self) -> Optional[str]:
+    def source(self) -> str | None:
         src = self.get("source")
         return str(src) if src else None
 

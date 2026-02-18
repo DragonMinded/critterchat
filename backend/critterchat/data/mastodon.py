@@ -1,7 +1,7 @@
 from sqlalchemy import Table, Column
 from sqlalchemy.schema import UniqueConstraint
 from sqlalchemy.types import String, Integer, Boolean
-from typing import List, Optional
+from typing import List
 
 from .base import BaseData, metadata
 from .types import MastodonInstance, MastodonInstanceID, NewMastodonInstanceID, UserID
@@ -53,7 +53,7 @@ class MastodonData(BaseData):
             ) for result in cursor.mappings()
         ]
 
-    def lookup_instance(self, base_url: str) -> Optional[MastodonInstance]:
+    def lookup_instance(self, base_url: str) -> MastodonInstance | None:
         """
         Given a base URL for an instance, look up any existing credentials we've
         obtained during registration.
@@ -119,7 +119,7 @@ class MastodonData(BaseData):
             """
             self.execute(sql, {"id": instance.id})
 
-    def lookup_account_link(self, base_url: str, username: str) -> Optional[UserID]:
+    def lookup_account_link(self, base_url: str, username: str) -> UserID | None:
         """
         Given a base URL of an instance and a username that was found on that
         instance, return the user ID of the local user that we have linked.

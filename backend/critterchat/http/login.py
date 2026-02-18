@@ -2,7 +2,7 @@ import logging
 import requests
 from urllib.parse import urlsplit
 from flask import Response, make_response, redirect
-from typing import List, Optional
+from typing import List
 
 from .app import g, absolute_url_for
 from ..common import AESCipher, Time
@@ -69,7 +69,7 @@ def get_mastodon_providers() -> List[MastodonInstanceDetails]:
     return retval
 
 
-def avatar_to_attachment(avatar: str) -> Optional[AttachmentID]:
+def avatar_to_attachment(avatar: str) -> AttachmentID | None:
     # First, attempt to download the avatar itself.
     try:
         resp = requests.get(avatar)

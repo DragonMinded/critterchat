@@ -3,7 +3,7 @@ import hashlib
 import mimetypes
 import os
 from PIL import Image, ImageOps
-from typing import Dict, Final, Optional, Tuple, cast
+from typing import Dict, Final, Tuple, cast
 
 from ..config import Config
 from ..data import (
@@ -83,7 +83,7 @@ class AttachmentService:
             "image/webp": ".webp",
         }.get(content_type, "")
 
-    def _get_hashed_attachment_name(self, aid: AttachmentID, content_type: str, original_filename: Optional[str]) -> str:
+    def _get_hashed_attachment_name(self, aid: AttachmentID, content_type: str, original_filename: str | None) -> str:
         # Default attachments don't get extensions.
         if aid in {DefaultAvatarID, DefaultRoomID, FaviconID}:
             return Attachment.from_id(aid)
@@ -100,7 +100,7 @@ class AttachmentService:
         hashval = hashlib.shake_256(inval.encode('utf-8')).hexdigest(20)
         return f"{hashval}{ext}"
 
-    def _get_local_attachment_path(self, aid: AttachmentID, content_type: str, original_filename: Optional[str]) -> str:
+    def _get_local_attachment_path(self, aid: AttachmentID, content_type: str, original_filename: str | None) -> str:
         directory = self.__config.attachments.directory
         if not directory:
             raise AttachmentServiceException("Cannot find directory for local attachment storage!")
@@ -236,7 +236,7 @@ class AttachmentService:
             # Unknown backend, throw since we have no known migrations.
             raise AttachmentServiceException("Unrecognized backend system!")
 
-    def id_from_path(self, path: str) -> Optional[AttachmentID]:
+    def id_from_path(self, path: str) -> AttachmentID | None:
         path = path.rsplit("/", 1)[-1]
 
         if path == Attachment.from_id(DefaultAvatarID):
@@ -260,9 +260,9 @@ class AttachmentService:
     def create_attachment(
         self,
         content_type: str,
-        original_filename: Optional[str],
+        original_filename: str | None,
         metadata: Dict[MetadataType, object],
-    ) -> Optional[AttachmentID]:
+    ) -> AttachmentID | None:
         return self.__data.attachment.insert_attachment(
             self.__config.attachments.system,
             content_type,
@@ -274,7 +274,7 @@ class AttachmentService:
         self.delete_attachment_data(attachmentid)
         self.__data.attachment.remove_attachment(attachmentid)
 
-    def get_attachment_data(self, attachmentid: AttachmentID) -> Optional[Tuple[str, bytes]]:
+    def get_attachment_data(self, attachmentid: AttachmentID) -> Tuple[str, bytes] | None:
         # Check for default images which aren't stored in the DB.
         if attachmentid == DefaultAvatarID or attachmentid == DefaultRoomID or attachmentid == FaviconID:
             if self.__config.attachments.system == "local":
@@ -351,7 +351,7 @@ class AttachmentService:
             # Unknown backend, throw.
             raise AttachmentServiceException("Unrecognized backend system!")
 
-    def prepare_attachment_image(self, data: bytes, max_width: Optional[int] = None, max_height: Optional[int] = None) -> Tuple[bytes, int, int, str]:
+    def prepare_attachment_image(self, data: bytes, max_width: int | None = None, max_height: int | None = None) -> Tuple[bytes, int, int, str]:
         try:
             img = Image.open(io.BytesIO(data))
         except Exception:

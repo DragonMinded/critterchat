@@ -1,4 +1,4 @@
-from typing import Dict, Optional, Set
+from typing import Dict, Set
 
 from ..common import Time, represents_real_text
 from ..config import Config
@@ -89,17 +89,17 @@ class UserService:
         self,
         userid: UserID,
         *,
-        rooms_on_top: Optional[bool] = None,
-        combined_messages: Optional[bool] = None,
-        color_scheme: Optional[str] = None,
-        desktop_size: Optional[str] = None,
-        mobile_size: Optional[str] = None,
-        admin_controls: Optional[str] = None,
-        title_notifs: Optional[bool] = None,
-        mobile_audio_notifs: Optional[bool] = None,
-        audio_notifs: Optional[Set[str]] = None,
-        notif_sounds: Optional[Dict[str, AttachmentID]] = None,
-        notif_sounds_delete: Optional[Set[str]] = None,
+        rooms_on_top: bool | None = None,
+        combined_messages: bool | None = None,
+        color_scheme: str | None = None,
+        desktop_size: str | None = None,
+        mobile_size: str | None = None,
+        admin_controls: str | None = None,
+        title_notifs: bool | None = None,
+        mobile_audio_notifs: bool | None = None,
+        audio_notifs: Set[str] | None = None,
+        notif_sounds: Dict[str, AttachmentID] | None = None,
+        notif_sounds_delete: Set[str] | None = None,
     ) -> None:
         prefs = self.__data.user.get_preferences(userid)
         if not prefs:
@@ -191,13 +191,13 @@ class UserService:
         # Finally, return the user that was just created.
         return user
 
-    def lookup_user(self, userid: UserID) -> Optional[User]:
+    def lookup_user(self, userid: UserID) -> User | None:
         user = self.__data.user.get_user(userid)
         if user:
             self.__attachments.resolve_user_icon(user)
         return user
 
-    def find_user(self, username: str) -> Optional[User]:
+    def find_user(self, username: str) -> User | None:
         # Just try to find the user by username, returning that.
         user = self.__data.user.from_username(username)
         if user:
@@ -207,9 +207,9 @@ class UserService:
     def update_user(
         self,
         userid: UserID,
-        name: Optional[str] = None,
-        about: Optional[str] = None,
-        icon: Optional[AttachmentID] = None,
+        name: str | None = None,
+        about: str | None = None,
+        icon: AttachmentID | None = None,
         icon_delete: bool = False,
     ) -> None:
         # Sanitize inputs.
@@ -316,7 +316,7 @@ class UserService:
         # Finally, return that user.
         return user
 
-    def __notify_user_changed(self, userid: UserID, old_occupancy: Optional[Dict[RoomID, Occupant]] = None) -> None:
+    def __notify_user_changed(self, userid: UserID, old_occupancy: Dict[RoomID, Occupant] | None = None) -> None:
         old_occupancy = old_occupancy or {}
         new_occupancy = self.__data.room.get_joined_room_occupants(userid)
         changes: Dict[RoomID, Occupant] = {}

@@ -1,5 +1,4 @@
 import os
-from typing import Optional
 
 import alembic.config
 from alembic.migration import MigrationContext
@@ -49,7 +48,7 @@ class Data:
             autoflush=True,
         )
         self.__config = config
-        self.__session: Optional[scoped_session] = scoped_session(session_factory)
+        self.__session: scoped_session | None = scoped_session(session_factory)
         self.__url = Data.sqlalchemy_url(config)
 
         self.user = UserData(config, self.__session)

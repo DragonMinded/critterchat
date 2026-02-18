@@ -5,7 +5,7 @@ import os
 import time
 import traceback
 from functools import wraps
-from typing import Any, Callable, Dict, Optional, cast
+from typing import Any, Callable, Dict, cast
 
 from flask import (
     Flask,
@@ -55,7 +55,7 @@ class UserException(Exception):
 
 class CritterChatFlask(Flask):
     # Makes develpment slightly less hell, since this will cache Twemoji stuff for us.
-    def get_send_file_max_age(self, name: Optional[str]) -> Optional[int]:
+    def get_send_file_max_age(self, name: str | None) -> int | None:
         if name and name.startswith("twemoji/"):
             return 86400
         return Flask.get_send_file_max_age(self, name)
@@ -89,8 +89,8 @@ class CritterChatGlobal(_AppCtxGlobals):
     data: Data
 
     # Optional parameters that could be set if the user is logged in.
-    sessionID: Optional[str]
-    user: Optional[User]
+    sessionID: str | None
+    user: User | None
 
 
 g: CritterChatGlobal = cast(CritterChatGlobal, base_g)
@@ -156,7 +156,7 @@ def teardown_request(exception: Any) -> None:
         data.close()
 
 
-def absolute_url_for(endpoint: str, *, component: str, filename: Optional[str] = None, **values: Any) -> str:
+def absolute_url_for(endpoint: str, *, component: str, filename: str | None = None, **values: Any) -> str:
     if endpoint == "static":
         if filename is None:
             raise Exception("Logic error, should always provide filename with static resource lookup!")

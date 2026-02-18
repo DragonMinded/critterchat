@@ -2,7 +2,7 @@ import logging
 import requests
 import urllib
 from html.parser import HTMLParser
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Tuple
 
 from ..config import Config
 from ..data import Data, MastodonProfile, MastodonInstance, NewMastodonInstanceID, User, UserID
@@ -20,10 +20,10 @@ class MastodonInstanceDetails:
     def __init__(
         self,
         base_url: str,
-        authorize_url: Optional[str],
+        authorize_url: str | None,
         connected: bool,
-        domain: Optional[str],
-        title: Optional[str],
+        domain: str | None,
+        title: str | None,
         icons: Dict[str, str],
     ) -> None:
         self.base_url = base_url
@@ -42,7 +42,7 @@ class MastodonParser(HTMLParser):
         self.liststack: List[str] = []
         self.listcount: List[int] = []
 
-    def handle_starttag(self, tag: str, attrs: List[Tuple[str, Optional[str]]]) -> None:
+    def handle_starttag(self, tag: str, attrs: List[Tuple[str, str | None]]) -> None:
         if tag in {"p", "blockquote", "pre"}:
             needsNewline = bool(self.text) and self.text[-1] != "\n"
             newLine = "\n" if needsNewline else ""
@@ -190,7 +190,7 @@ class MastodonService:
                 retval.append(obj)
         return retval
 
-    def lookup_instance(self, base_url: str) -> Optional[MastodonInstance]:
+    def lookup_instance(self, base_url: str) -> MastodonInstance | None:
         # Attempt to grab existing instance from the DB.
         return self.__data.mastodon.lookup_instance(base_url)
 
@@ -375,7 +375,7 @@ class MastodonService:
         if existing:
             self.__data.mastodon.deactivate_instance(existing)
 
-    def get_user(self, instance: MastodonInstance, username: str) -> Optional[User]:
+    def get_user(self, instance: MastodonInstance, username: str) -> User | None:
         # Note that the username is the mastodon username, not our own local username.
         user_id = self.__data.mastodon.lookup_account_link(instance.base_url, username)
         if not user_id:
@@ -386,7 +386,7 @@ class MastodonService:
     def link_user(self, instance: MastodonInstance, username: str, userid: UserID) -> None:
         self.__data.mastodon.store_account_link(instance.base_url, username, userid)
 
-    def get_user_token(self, instance: MastodonInstance, code: str) -> Optional[str]:
+    def get_user_token(self, instance: MastodonInstance, code: str) -> str | None:
         # First, attempt to look up and validate the instance itself.
         if not self._validate_instance(instance):
             logger.error(f"Instance {instance.base_url} is not registered or is disconnected!")
@@ -440,7 +440,7 @@ class MastodonService:
         if resp and resp.status_code != 200:
             raise MastodonServiceException(f"Got {resp.status_code} from {instance.base_url} when revoking token!")
 
-    def get_user_profile(self, instance: MastodonInstance, token: str) -> Optional[MastodonProfile]:
+    def get_user_profile(self, instance: MastodonInstance, token: str) -> MastodonProfile | None:
         # First, ensure our client connection to the instance is good.
         if not self._validate_instance(instance):
             logger.error(f"Instance {instance.base_url} is not registered or is disconnected!")

@@ -3,7 +3,7 @@ import json
 from sqlalchemy import Table, Column
 from sqlalchemy.schema import UniqueConstraint
 from sqlalchemy.types import String, Integer, JSON
-from typing import Dict, Iterable, Iterator, List, Optional, Union
+from typing import Dict, Iterable, Iterator, List
 
 from .base import BaseData, metadata
 from .types import MetadataType, ActionID, AttachmentID, NewActionID, NewAttachmentID, UserID, NewUserID
@@ -68,7 +68,7 @@ class Attachment:
         attachmentid: AttachmentID,
         system: str,
         content_type: str,
-        original_filename: Optional[str],
+        original_filename: str | None,
         metadata: Dict[MetadataType, object],
     ) -> None:
         self.id = attachmentid
@@ -99,7 +99,7 @@ class ActionAttachment:
         actionid: ActionID,
         attachmentid: AttachmentID,
         content_type: str,
-        original_filename: Optional[str],
+        original_filename: str | None,
         metadata: Dict[MetadataType, object],
     ) -> None:
         self.actionid = actionid
@@ -114,9 +114,9 @@ class AttachmentData(BaseData):
         self,
         system: str,
         content_type: str,
-        original_filename: Optional[str],
+        original_filename: str | None,
         metadata: Dict[MetadataType, object],
-    ) -> Optional[AttachmentID]:
+    ) -> AttachmentID | None:
         """
         Given an attachment system and content type, insert a pointer to that attachment.
 
@@ -194,7 +194,7 @@ class AttachmentData(BaseData):
         """
         self.execute(sql, {"attachmentid": attachmentid})
 
-    def lookup_attachment(self, attachmentid: AttachmentID) -> Optional[Attachment]:
+    def lookup_attachment(self, attachmentid: AttachmentID) -> Attachment | None:
         """
         Given an attachment ID, return that attachment's system and content type.
 
@@ -267,7 +267,7 @@ class AttachmentData(BaseData):
             ) for result in cursor.mappings()
         ]
 
-    def get_emote(self, alias: str) -> Optional[Emote]:
+    def get_emote(self, alias: str) -> Emote | None:
         """
         Look up a custom emote by alias in the DB.
         """
@@ -346,7 +346,7 @@ class AttachmentData(BaseData):
             ) for result in cursor.mappings()
         }
 
-    def get_notification(self, userid: UserID, notificationtype: str) -> Optional[Attachment]:
+    def get_notification(self, userid: UserID, notificationtype: str) -> Attachment | None:
         """
         Look up a custom notification for a user based on type.
         """
@@ -418,7 +418,7 @@ class AttachmentData(BaseData):
             sql = "UNLOCK TABLES"
             self.execute(sql, {})
 
-    def get_action_attachments(self, actionid: Union[ActionID, Iterable[ActionID]]) -> Dict[ActionID, List[ActionAttachment]]:
+    def get_action_attachments(self, actionid: ActionID | Iterable[ActionID]) -> Dict[ActionID, List[ActionAttachment]]:
         """
         Look up all action attachments for a given action or actions in the system.
         """

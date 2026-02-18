@@ -1,7 +1,7 @@
 import logging
 import traceback
 from threading import Lock
-from typing import Any, Dict, Final, List, Literal, Optional, Set, cast
+from typing import Any, Dict, Final, List, Literal, Set, cast
 
 from .app import socketio, config, request
 from ..common import AESCipher, Time, represents_real_text
@@ -33,14 +33,14 @@ from ..data import (
 
 
 class SocketInfo:
-    def __init__(self, sid: Any, sessionid: Optional[str], userid: Optional[UserID]) -> None:
+    def __init__(self, sid: Any, sessionid: str | None, userid: UserID | None) -> None:
         self.sid = sid
         self.sessionid = sessionid
         self.userid = userid
-        self.fetchlimit: Dict[RoomID, Optional[ActionID]] = {}
+        self.fetchlimit: Dict[RoomID, ActionID | None] = {}
         self.lastseen: Dict[RoomID, int] = {}
-        self.profilets: Optional[int] = None
-        self.prefsts: Optional[int] = None
+        self.profilets: int | None = None
+        self.prefsts: int | None = None
         self.lock: Lock = Lock()
 
 
@@ -55,7 +55,7 @@ MAX_ICON_HEIGHT: Final[int] = 256
 
 socket_lock: Lock = Lock()
 socket_to_info: Dict[Any, SocketInfo] = {}
-background_thread: Optional[object] = None
+background_thread: object | None = None
 logger = logging.getLogger(__name__)
 
 
@@ -83,7 +83,7 @@ def background_thread_proc_impl() -> None:
     emotes = {k for k in emoteservice.get_all_emotes()}
     last_emote_update = Time.now()
     last_user_update = Time.now()
-    last_action: Optional[ActionID] = None
+    last_action: ActionID | None = None
 
     while True:
         # Just yield to the async system.
@@ -241,7 +241,7 @@ def background_thread_proc_impl() -> None:
                     info.lock.release()
 
 
-def register_sid(data: Data, sid: Any, sessionid: Optional[str]) -> None:
+def register_sid(data: Data, sid: Any, sessionid: str | None) -> None:
     with socket_lock:
         global background_thread
         if background_thread is None:
@@ -266,7 +266,7 @@ def recover_info(sid: Any) -> SocketInfo:
         return socket_to_info[sid]
 
 
-def recover_sessionid(data: Data, sid: Any) -> Optional[str]:
+def recover_sessionid(data: Data, sid: Any) -> str | None:
     info = recover_info(sid)
     if info.sessionid is None:
         # Session was de-authed, tell the client to refresh.
@@ -276,7 +276,7 @@ def recover_sessionid(data: Data, sid: Any) -> Optional[str]:
     return info.sessionid
 
 
-def recover_userid(data: Data, sid: Any) -> Optional[UserID]:
+def recover_userid(data: Data, sid: Any) -> UserID | None:
     info = recover_info(sid)
     if info.sessionid is None:
         # Session was de-authed, tell the client to refresh.
@@ -569,7 +569,7 @@ def updateprofile(json: Dict[str, object]) -> None:
         flash('warning', 'Your about section is too long!', room=request.sid)
         return
 
-    icon: Optional[AttachmentID] = None
+    icon: AttachmentID | None = None
     if newicon:
         icon = Attachment.to_id(newicon)
 
@@ -911,7 +911,7 @@ def joinroom(json: Dict[str, object]) -> None:
         return
 
     # Locking our socket info so we can add this chat to our monitoring.
-    actual_id: Optional[RoomID] = None
+    actual_id: RoomID | None = None
     with info.lock:
         roomid = Room.to_id(str(json.get('roomid')))
         if roomid:
@@ -1004,7 +1004,7 @@ def updateroom(json: Dict[str, object]) -> None:
         newicon = str(details.get('icon', '')).strip()
         icondelete = bool(details.get('icon_delete', ''))
 
-        newmoderated: Optional[bool] = None
+        newmoderated: bool | None = None
         if UserPermission.ADMINISTRATOR in user.permissions:
             newmoderated = bool(details.get('moderated', ''))
 
@@ -1013,7 +1013,7 @@ def updateroom(json: Dict[str, object]) -> None:
         if not represents_real_text(newtopic):
             newtopic = ""
 
-        icon: Optional[AttachmentID] = None
+        icon: AttachmentID | None = None
         if newicon:
             icon = Attachment.to_id(newicon)
 

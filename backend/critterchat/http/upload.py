@@ -3,7 +3,7 @@ import urllib.request
 from flask import Blueprint, request
 from pydub import AudioSegment  # type: ignore
 from pydub.exceptions import CouldntDecodeError  # type: ignore
-from typing import Dict, List, Optional
+from typing import Dict, List
 
 from .app import UserException, app, static_location, templates_location, loginrequired, jsonify, g
 from ..data import Attachment, UserNotification, MetadataType
@@ -38,7 +38,7 @@ def _icon_upload(uploadtype: str) -> Dict[str, object]:
 
     attachmentservice = AttachmentService(g.config, g.data)
     body = request.get_data(as_text=True)
-    icon: Optional[bytes] = None
+    icon: bytes | None = None
 
     if body and "," in body:
         # Verify that it's a reasonable icon.

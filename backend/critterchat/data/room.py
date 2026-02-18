@@ -1,5 +1,5 @@
 import contextlib
-from typing import Any, Dict, Iterator, List, Optional
+from typing import Any, Dict, Iterator, List
 
 from sqlalchemy import Table, Column
 from sqlalchemy.schema import UniqueConstraint
@@ -78,7 +78,7 @@ action = Table(
 
 
 class RoomData(BaseData):
-    def _get_oldest_action(self, room_ids: List[RoomID]) -> Dict[RoomID, Optional[ActionID]]:
+    def _get_oldest_action(self, room_ids: List[RoomID]) -> Dict[RoomID, ActionID | None]:
         if not room_ids:
             return {}
 
@@ -91,12 +91,12 @@ class RoomData(BaseData):
             """,
             ids=room_ids,
         ))
-        retval: Dict[RoomID, Optional[ActionID]] = {rid: None for rid in room_ids}
+        retval: Dict[RoomID, ActionID | None] = {rid: None for rid in room_ids}
         for result in cursor.mappings():
             retval[RoomID(result['room_id'])] = ActionID(result['action_id'])
         return retval
 
-    def _get_newest_action(self, room_ids: List[RoomID]) -> Dict[RoomID, Optional[ActionID]]:
+    def _get_newest_action(self, room_ids: List[RoomID]) -> Dict[RoomID, ActionID | None]:
         if not room_ids:
             return {}
 
@@ -109,7 +109,7 @@ class RoomData(BaseData):
             """,
             ids=room_ids,
         ))
-        retval: Dict[RoomID, Optional[ActionID]] = {rid: None for rid in room_ids}
+        retval: Dict[RoomID, ActionID | None] = {rid: None for rid in room_ids}
         for result in cursor.mappings():
             retval[RoomID(result['room_id'])] = ActionID(result['action_id'])
         return retval
@@ -236,7 +236,7 @@ class RoomData(BaseData):
         cursor = self.execute(sql, {"userid": userid})
         return {RoomID(o['room_id']): self.__to_occupant(o) for o in cursor.mappings()}
 
-    def get_matching_rooms(self, userid: UserID, name: Optional[str] = None) -> List[Room]:
+    def get_matching_rooms(self, userid: UserID, name: str | None = None) -> List[Room]:
         """
         Given a user ID, look up the rooms that user is in that match the search criteria.
         Note that this will also return rooms with unset names if you specify the name,
@@ -275,7 +275,7 @@ class RoomData(BaseData):
             for result in cursor.mappings()
         ])
 
-    def get_rooms(self, name: Optional[str] = None) -> List[Room]:
+    def get_rooms(self, name: str | None = None) -> List[Room]:
         """
         Look up all existing rooms, potentially matching any that match the name.
 
@@ -306,7 +306,7 @@ class RoomData(BaseData):
             for result in cursor.mappings()
         ])
 
-    def get_public_rooms(self, name: Optional[str] = None) -> List[Room]:
+    def get_public_rooms(self, name: str | None = None) -> List[Room]:
         """
         Look up all public rooms, potentially matching any that match the name.
 
@@ -337,7 +337,7 @@ class RoomData(BaseData):
             for result in cursor.mappings()
         ])
 
-    def get_visible_rooms(self, userid: UserID, name: Optional[str] = None) -> List[Room]:
+    def get_visible_rooms(self, userid: UserID, name: str | None = None) -> List[Room]:
         """
         Given a user ID, look up the rooms that user can see that match the search criteria.
         Note that this will also return rooms with unset names if you specify the name,
@@ -416,7 +416,7 @@ class RoomData(BaseData):
         """
         self.execute(sql, {'roomid': roomid, 'autojoin': autojoin})
 
-    def get_room(self, roomid: RoomID) -> Optional[Room]:
+    def get_room(self, roomid: RoomID) -> Room | None:
         """
         Given a room ID, get that room.
 
@@ -451,7 +451,7 @@ class RoomData(BaseData):
             deficonid=None,
         )
 
-    def get_occupant_room(self, occupantid: OccupantID) -> Optional[Room]:
+    def get_occupant_room(self, occupantid: OccupantID) -> Room | None:
         """
         Given an occupant ID, get the room that occupant is in.
 
@@ -886,7 +886,7 @@ class RoomData(BaseData):
         cursor = self.execute(sql, {"roomid": roomid})
         return [self.__to_occupant(o) for o in cursor.mappings()]
 
-    def get_room_occupant(self, occupantid: OccupantID) -> Optional[Occupant]:
+    def get_room_occupant(self, occupantid: OccupantID) -> Occupant | None:
         """
         Given an occupant ID, look up that occupant. Note that this will return occupants
         that have left, which is necessary for linking names/nicknames in chat history.
@@ -922,7 +922,7 @@ class RoomData(BaseData):
         result = cursor.mappings().fetchone()
         return self.__to_occupant(result)
 
-    def get_last_action(self) -> Optional[ActionID]:
+    def get_last_action(self) -> ActionID | None:
         """
         Gets the last action that was performed for this entire application.
         """
@@ -940,9 +940,9 @@ class RoomData(BaseData):
     def get_room_history(
         self,
         roomid: RoomID,
-        before: Optional[ActionID] = None,
-        after: Optional[ActionID] = None,
-        limit: Optional[int] = None,
+        before: ActionID | None = None,
+        after: ActionID | None = None,
+        limit: int | None = None,
     ) -> List[Action]:
         """
         Given a room ID, and possibly a pagination offset, fetch recent room history.

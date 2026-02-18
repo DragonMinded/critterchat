@@ -3,7 +3,6 @@ import getpass
 import os
 import string
 import sys
-from typing import Optional
 
 from critterchat.data import (
     Data,
@@ -90,7 +89,7 @@ def generate_migration(config: Config, message: str, allow_empty: bool) -> None:
     data.close()
 
 
-def mastodon_register_all(config: Config, filter_url: Optional[str] = None) -> None:
+def mastodon_register_all(config: Config, filter_url: str | None = None) -> None:
     """
     Given configured Mastodon instances in our config, ensure that all of them are registered so that
     we can perform OAuth and network lookups against it.
@@ -119,7 +118,7 @@ def mastodon_register_all(config: Config, filter_url: Optional[str] = None) -> N
         data.close()
 
 
-def mastodon_list_all(config: Config, filter_url: Optional[str] = None) -> None:
+def mastodon_list_all(config: Config, filter_url: str | None = None) -> None:
     """
     List all registered instances in the DB and pull information from those instances to ensure they
     are working.
@@ -192,7 +191,7 @@ def list_users(config: Config) -> None:
         print("")
 
 
-def create_user(config: Config, username: str, password: Optional[str]) -> None:
+def create_user(config: Config, username: str, password: str | None) -> None:
     """
     Create a new user that logs in with username, and uses password to login. If the password is
     not provided at the CLI, instead prompts for a password interactively.
@@ -224,7 +223,7 @@ def create_user(config: Config, username: str, password: Optional[str]) -> None:
         data.close()
 
 
-def change_user_password(config: Config, username: str, password: Optional[str]) -> None:
+def change_user_password(config: Config, username: str, password: str | None) -> None:
     """
     Given an existing user that logs in with username, update their password to the provded password.
     If the password is not provided at the CLI, instead prompts for a password interactively.
@@ -405,7 +404,7 @@ def list_emotes(config: Config, only_broken: bool) -> None:
         print(f"{name}")
 
 
-def add_emote(config: Config, alias: Optional[str], filename_or_directory: str) -> None:
+def add_emote(config: Config, alias: str | None, filename_or_directory: str) -> None:
     """
     Given a filename or a directory, and optionally an alias, add emotes to the system.
     """
@@ -544,9 +543,9 @@ def list_public_rooms(config: Config) -> None:
 
 def create_public_room(
     config: Config,
-    name: Optional[str],
-    topic: Optional[str],
-    icon: Optional[str],
+    name: str | None,
+    topic: str | None,
+    icon: str | None,
     autojoin: str,
     moderated: str,
 ) -> None:
@@ -557,7 +556,7 @@ def create_public_room(
 
     data = Data(config)
     try:
-        attachmentid: Optional[AttachmentID] = None
+        attachmentid: AttachmentID | None = None
         if icon:
             with open(icon, "rb") as bfp:
                 icondata = bfp.read()
@@ -600,7 +599,7 @@ def create_public_room(
         data.close()
 
 
-def modify_public_room_info(config: Config, roomid: str, name: Optional[str], topic: Optional[str], icon: Optional[str]) -> None:
+def modify_public_room_info(config: Config, roomid: str, name: str | None, topic: str | None, icon: str | None) -> None:
     """
     Modify an existing room by ID, optionally setting a new name, title, or icon (or sometimes multiple).
     """
@@ -617,7 +616,7 @@ def modify_public_room_info(config: Config, roomid: str, name: Optional[str], to
         if room.purpose != RoomPurpose.ROOM:
             raise CommandException("Room is not public!")
 
-        attachmentid: Optional[AttachmentID] = None
+        attachmentid: AttachmentID | None = None
         icon_delete = False
         if icon and icon != "default":
             with open(icon, "rb") as bfp:

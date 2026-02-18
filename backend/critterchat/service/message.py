@@ -1,5 +1,5 @@
 import emoji
-from typing import Dict, Final, List, Optional, Set
+from typing import Dict, Final, List, Set
 
 from ..config import Config
 from ..common import Time
@@ -73,10 +73,10 @@ class MessageService:
             action.attachments = attachments
         return actions
 
-    def get_last_action(self) -> Optional[ActionID]:
+    def get_last_action(self) -> ActionID | None:
         return self.__data.room.get_last_action()
 
-    def get_room_history(self, roomid: RoomID, before: Optional[ActionID] = None) -> List[Action]:
+    def get_room_history(self, roomid: RoomID, before: ActionID | None = None) -> List[Action]:
         room = self.__data.room.get_room(roomid)
         if not room:
             return []
@@ -112,7 +112,7 @@ class MessageService:
         message: str,
         sensitive: bool,
         attachments: List[AttachmentID],
-    ) -> Optional[Action]:
+    ) -> Action | None:
         # Ensure we're not trying to send too much text.
         message = emoji.emojize(emoji.emojize(message, language="alias"), language="en")
         if len(message) > self.__config.limits.message_length:
@@ -194,7 +194,7 @@ class MessageService:
             return self.__attachments.resolve_action_icon(action)
         return None
 
-    def lookup_occupant(self, occupantid: OccupantID) -> Optional[User]:
+    def lookup_occupant(self, occupantid: OccupantID) -> User | None:
         occupant = self.__data.room.get_room_occupant(occupantid)
         if not occupant:
             return None
@@ -373,7 +373,7 @@ class MessageService:
         self,
         name: str,
         topic: str,
-        icon: Optional[AttachmentID],
+        icon: AttachmentID | None,
         autojoin: bool = False,
         moderated: bool = False,
     ) -> Room:
@@ -396,13 +396,13 @@ class MessageService:
         # Finally, return the room.
         return room
 
-    def lookup_room(self, roomid: RoomID, userid: UserID) -> Optional[Room]:
+    def lookup_room(self, roomid: RoomID, userid: UserID) -> Room | None:
         room = self.__data.room.get_room(roomid)
         if room:
             self.__infer_room_info(userid, room)
         return room
 
-    def get_occupant_room(self, occupantid: OccupantID) -> Optional[Room]:
+    def get_occupant_room(self, occupantid: OccupantID) -> Room | None:
         occupant = self.__data.room.get_room_occupant(occupantid)
         if not occupant:
             return None
@@ -512,10 +512,10 @@ class MessageService:
         self,
         roomid: RoomID,
         userid: UserID,
-        name: Optional[str] = None,
-        topic: Optional[str] = None,
-        moderated: Optional[bool] = None,
-        icon: Optional[AttachmentID] = None,
+        name: str | None = None,
+        topic: str | None = None,
+        moderated: bool | None = None,
+        icon: AttachmentID | None = None,
         icon_delete: bool = False,
     ) -> None:
         # First, make sure the room is valid.
@@ -615,7 +615,7 @@ class MessageService:
             self.__infer_room_info(userid, room)
         return rooms
 
-    def get_matching_rooms(self, userid: UserID, *, name: Optional[str] = None) -> List[RoomSearchResult]:
+    def get_matching_rooms(self, userid: UserID, *, name: str | None = None) -> List[RoomSearchResult]:
         # First get the list of rooms that we can see based on our user ID (joined rooms).
         inrooms = self.__data.room.get_matching_rooms(userid, name=name)
         memberof = {r.id for r in inrooms}
@@ -667,7 +667,7 @@ class MessageService:
         results: List[RoomSearchResult] = []
         for room in rooms:
             icon = room.icon
-            handle: Optional[str] = None
+            handle: str | None = None
             if room.purpose == RoomPurpose.DIRECT_MESSAGE:
                 if len(room.occupants) == 1:
                     handle = "@" + room.occupants[0].username
