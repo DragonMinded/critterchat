@@ -1,7 +1,6 @@
 TODO Immediate
 ==============
 
- - Commonize theme metrics and use them on logged-out pages.
  - Look up and display version in info.
 
 TODO For Public Instance

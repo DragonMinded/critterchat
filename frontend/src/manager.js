@@ -344,6 +344,9 @@ export function manager(socket) {
             $( "body" ).removeClass("light").removeClass("dark");
         }
 
+        // Set a preference cookie so even logged-out pages respect the light/dark theme.
+        document.cookie = "ColorScheme=" + msg.color_scheme;
+
         desktopSize = msg.desktop_size;
         mobileSize = msg.mobile_size;
 

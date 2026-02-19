@@ -233,11 +233,13 @@ def get_frontend_version() -> str:
 @app.context_processor
 def extrafunctions() -> dict[str, Any]:
     cachebust = get_frontend_version() + "-" + get_fingerprint_hash()
+    colorscheme = request.cookies.get("ColorScheme", "system")
 
     return {
         "absolute_url_for": absolute_url_for,
         "config": config,
         "cachebust": f"cachebust={cachebust}",
+        "colorscheme": colorscheme,
     }
 
 

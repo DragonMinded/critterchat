@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% block includes %}
+  <link href="{{ absolute_url_for('static', component='base', filename='theme.css') }}?{{ cachebust }}" rel="stylesheet" />
   <link href="{{ absolute_url_for('static', component='base', filename='home.css') }}?{{ cachebust }}" rel="stylesheet" />
 {% endblock %}
 {% block content %}

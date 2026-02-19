@@ -2,6 +2,7 @@
 {% block includes %}
   <script src="{{ absolute_url_for('static', component="base", filename=jsname) }}"></script>
   <script src="{{ absolute_url_for('static', component="base", filename='twemoji-16.0.1.min.js') }}"></script>
+  <link href="{{ absolute_url_for('static', component="base", filename='theme.css') }}?{{ cachebust }}" rel="stylesheet" />
   <link href="{{ absolute_url_for('static', component="base", filename='chat.css') }}?{{ cachebust }}" rel="stylesheet" />
   <link href="{{ absolute_url_for('static', component="base", filename='autocomplete.css') }}?{{ cachebust }}" rel="stylesheet" />
   <link href="{{ absolute_url_for('static', component="base", filename='emojisearch.css') }}?{{ cachebust }}" rel="stylesheet" />

@@ -18,7 +18,13 @@
         {% endif %}
         {% block includes %}{% endblock %}
     </head>
+    {% if colorscheme == "light" %}
+    <body class="light">
+    {% elif colorscheme == "dark" %}
+    <body class="dark">
+    {% else %}
     <body>
+    {% endif %}
         <div class="errors">
             <ul class="errors">
                 {% with messages = get_flashed_messages(with_categories=true) %}
