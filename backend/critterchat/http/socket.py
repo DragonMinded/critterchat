@@ -1,9 +1,11 @@
 import logging
+import os
 import traceback
+from importlib.metadata import PackageNotFoundError, version
 from threading import Lock
 from typing import Any, Final, Literal, cast
 
-from .app import socketio, config, request
+from .app import app, socketio, config, request
 from ..common import AESCipher, Time, represents_real_text
 from ..service import (
     AttachmentService,
@@ -354,12 +356,23 @@ def serverinfo(json: dict[str, object]) -> None:
     if userid is None:
         return
 
+    # Figure out if we're running in development mode or production mode.
+    try:
+        ver = version('critterchat')
+        ver = f"v{ver}" if ver else "development"
+    except PackageNotFoundError:
+        ver = "development"
+
+    if app.config.get("DEBUG"):
+        ver += "+debug"
+
     # Look up any server info to display to the user here.
     socketio.emit('info', hydrate_tag(json, {
         "name": config.name,
         "icon": attachmentservice.get_attachment_url(FaviconID),
         "administrator": config.administrator,
         "source": config.source,
+        "version": "CritterChat " + ver,
         "info": config.info,
     }), room=request.sid)
 

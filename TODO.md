@@ -1,8 +1,6 @@
 TODO Immediate
 ==============
 
- - Look up and display version in info.
-
 TODO For Public Instance
 ========================
 

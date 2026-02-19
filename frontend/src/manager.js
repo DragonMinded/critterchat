@@ -256,6 +256,7 @@ export function manager(socket) {
                 '    <div class="instance-title">' + msg.name + '</div>' +
                 '</div>' +
                 '<div class="info-subheader">administered by ' + msg.administrator + '</div>' +
+                '<div class="info-subheader">' + msg.version + '</div>' +
                 source +
                 '<div class="info-message">' + msg.info + '</div>'
             ),
