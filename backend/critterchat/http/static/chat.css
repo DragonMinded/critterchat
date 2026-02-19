@@ -705,7 +705,11 @@ div.maskable.attachment-sensitive {
     mask-image: url('sensitive.svg');
 }
 
-div.attachment-picker:hover {
+div.attachment-picker.disabled {
+    color: var(--input-button-disabled-text);
+}
+
+div.attachment-picker:hover:not(.disabled) {
     color: var(--attachment-picker-hover);
 }
 

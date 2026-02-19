@@ -174,11 +174,16 @@ class Messages {
             }
         });
 
-        $( 'div.attachment-picker' ).on( 'click', () => {
-            if (this.roomid && this.rooms.has(this.roomid)) {
-                this.uploadPicker.selectFiles(this.roomid, "image/*");
-            }
-        });
+        // Don't allow attachments if they're disabled.
+        if (window.maxattachments <= 0) {
+            $( 'div.attachment-picker' ).addClass( 'disabled' );
+        } else {
+            $( 'div.attachment-picker' ).on( 'click', () => {
+                if (this.roomid && this.rooms.has(this.roomid)) {
+                    this.uploadPicker.selectFiles(this.roomid, "image/*");
+                }
+            });
+        }
 
         $( 'div.message-visibility' ).on( 'click', () => {
             event.preventDefault();

@@ -1,5 +1,4 @@
 import logging
-import os
 import traceback
 from importlib.metadata import PackageNotFoundError, version
 from threading import Lock
@@ -856,7 +855,10 @@ def message(json: dict[str, object]) -> dict[str, object]:
                 attachments.append(aid)
 
         if len(attachments) > config.limits.attachment_max:
-            flash('warning', 'Too many attachments!', room=request.sid)
+            if config.limits.attachment_max:
+                flash('warning', 'Too many attachments!', room=request.sid)
+            else:
+                flash('warning', 'Attachments are disabled!', room=request.sid)
             return {'status': 'failed'}
 
         # Add any sensitivity tag.

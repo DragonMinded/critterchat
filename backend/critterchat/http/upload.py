@@ -157,7 +157,12 @@ def notifications_upload() -> dict[str, object]:
 @jsonify
 def attachments_upload() -> dict[str, object]:
     # Ensure that we only allow certain size uploads.
-    request.max_content_length = ((((g.config.limits.attachment_size * 1024) * 4) // 3) + 2048) * g.config.limits.attachment_max
+    if g.config.limits.attachment_max:
+        request.max_content_length = (
+            ((((g.config.limits.attachment_size * 1024) * 4) // 3) + 2048) * g.config.limits.attachment_max
+        )
+    else:
+        raise UserException("Attachments are disabled!")
 
     attachmentservice = AttachmentService(g.config, g.data)
     body = request.json or {}
@@ -168,6 +173,9 @@ def attachments_upload() -> dict[str, object]:
     atchlist = body.get('attachments', [])
     if not isinstance(atchlist, list):
         raise Exception("Attachment data corrupt or not provided in upload.")
+
+    if len(atchlist) > g.config.limits.attachment_max:
+        raise UserException("Too many attachments!")
 
     attachmentids: list[str] = []
     for atch in atchlist:
