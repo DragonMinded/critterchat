@@ -1412,7 +1412,7 @@ div.warning div.warning-text, div.information div.information-text {
     overflow-y: auto;
 }
 
-div.search > div.actions div.searchbox {
+div.search > div.actions input.search {
     flex-grow: 1;
 }
 
@@ -1423,7 +1423,6 @@ div.searchbox input {
 div.search > div.results {
     display: flex;
     flex-direction: column;
-    width: 100%;
     flex-grow: 1;
     overflow-y: scroll;
     padding-right: var(--modal-item-padding);
