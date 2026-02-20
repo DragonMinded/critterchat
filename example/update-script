@@ -1,0 +1,31 @@
+#! /bin/bash
+#
+# Example update script for bare metal installations, automates the "Upgrading Production" steps from the README file. Note that you need to edit a few details about your own installation below. Meant to be run out of the root of this repository.
+
+set -e
+
+SERVICE=critterchat
+CONFIG=/path/to/config.yaml
+VENV=/path/to/venv
+
+# First, make sure we're up to date.
+git pull
+
+# Now, make sure the frontend is compiled.
+cd frontend/
+npm run clean
+npm run build
+
+# Now, stop the running service.
+sudo systemctl stop "${SERVICE}"
+
+# Now, make sure the backend is installed into the venv.
+cd ../backend/
+source "${VENV}/bin/activate"
+python3 -m pip install --upgrade .
+python3 -m critterchat.manage --config "${CONFIG}" database upgrade
+deactivate
+
+# Now, restart the service.
+sudo systemctl start "${SERVICE}"
+echo "Done!"

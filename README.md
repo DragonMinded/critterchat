@@ -379,6 +379,9 @@ Finally, once all those steps are done, re-start the backend service with
 new version running on your instance. Users that are currently logged in should get
 a new update notification banner, and you can refresh the page to load the new version.
 
+An example script that automates the entire upgrade process is available for you to
+modify under `example/update-script`.
+
 ## Docker Hosting
 
 ### Getting Started
