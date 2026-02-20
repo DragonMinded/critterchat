@@ -1,14 +1,5 @@
 import $ from "jquery";
 
-function getCursorPosition(element) {
-    var el = $(element).get(0);
-    if ('selectionStart' in el) {
-        return el.selectionStart;
-    }
-
-    return null;
-}
-
 export function autocomplete(state, selector, items) {
     var displayed = false;
     var handled = false;
@@ -40,7 +31,7 @@ export function autocomplete(state, selector, items) {
             return;
         }
 
-        const pos = getCursorPosition(this);
+        const pos = $(selector).getCursorPosition();
         if (pos === null) {
             return;
         }
@@ -90,7 +81,7 @@ export function autocomplete(state, selector, items) {
             return;
         }
 
-        const pos = getCursorPosition(this);
+        const pos = $(selector).getCursorPosition();
         if (pos === null) {
             hide();
             return;
@@ -171,7 +162,7 @@ export function autocomplete(state, selector, items) {
     });
 
     function selectOption(choice) {
-        const pos = getCursorPosition(selector);
+        const pos = $(selector).getCursorPosition();
         if (pos === null) {
             return;
         }

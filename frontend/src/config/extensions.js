@@ -21,6 +21,18 @@ export function hook() {
         return this;
     };
 
+    $.fn.getCursorPosition = function() {
+        var start = null;
+        this.each(function(index, elem) {
+            if ('selectionStart' in elem) {
+                start = elem.selectionStart;
+            }
+        });
+
+        return start;
+    }
+
+
     $.fn.hasScrollBar = function() {
         return this.get(0).scrollHeight > this.get(0).clientHeight;
     }
