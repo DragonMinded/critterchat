@@ -447,8 +447,13 @@ export function manager(socket) {
 
     socket.on('emotechanges', (msg) => {
         // Handles notifying various systems about any newly added or newly removed custom server emotes.
+        menuInst.addEmotes(msg.additions);
         messagesInst.addEmotes(msg.additions);
+        infoInst.addEmotes(msg.additions);
+
+        menuInst.deleteEmotes(msg.deletions);
         messagesInst.deleteEmotes(msg.deletions);
+        infoInst.deleteEmotes(msg.deletions);
     });
 
     socket.on('invite', (msg) => {

@@ -1,5 +1,6 @@
 import $ from "jquery";
 import { flash } from "../utils.js";
+import { autocomplete } from "../components/autocomplete.js";
 
 /**
  * Handles the user profile popover which is summoned and managed by the menu panel.
@@ -66,6 +67,59 @@ class EditProfile {
                     'Chosen avatar file size is too large. Avatars cannot be larger than ' + window.maxiconsize + 'kb.'
                 );
             }
+        });
+
+        // Set up emoji/emote autocomplete popover.
+        this.autocompleteOptions = [];
+        for (const [key, value] of Object.entries(window.emojis)) {
+            this.autocompleteOptions.push(
+                {text: key, type: "emoji", preview: twemoji.parse(value, twemojiOptions)}
+            );
+        }
+        for (const [key, value] of Object.entries(window.emotes)) {
+            const src = "src=\"" + value.uri + "\"";
+            const dims = "width=\"" + value.dimensions[0] + "\" height=\"" + value.dimensions[1] + "\"";
+
+            this.autocompleteOptions.push(
+                {text: key, type: "emote", preview: "<img class=\"emoji-preview\" " + src + " " + dims + " />"}
+            );
+        }
+        this.autocompleteUpdate = [];
+        this.autocompleteUpdate.push(autocomplete(this.inputState, '#editprofile-name', this.autocompleteOptions));
+        this.autocompleteUpdate.push(autocomplete(this.inputState, '#editprofile-about', this.autocompleteOptions));
+    }
+
+    /**
+     * Called whenever the manager is notified of new custom emotes that were added to the server. Whenever
+     * an emote is live-added, update the autocomplete typeahead.
+     */
+    addEmotes( mapping ) {
+        for (const [alias, details] of Object.entries(mapping)) {
+            const src = "src=\"" + details.uri + "\"";
+            const dims = "width=\"" + details.dimensions[0] + "\" height=\"" + details.dimensions[1] + "\"";
+
+            this.autocompleteOptions.push(
+                {text: alias, type: "emote", preview: "<img class=\"emoji-preview\" " + src + " " + dims + " />"}
+            );
+        }
+
+        this.autocompleteUpdate.forEach((fun) => {
+            fun(this.autocompleteOptions);
+        });
+    }
+
+    /**
+     * Called whenever the manager is notified of custom emotes that were removed from the server. Whenever
+     * an emote is live-removed, update the autocomplete typeahead.
+     * emote.
+     */
+    deleteEmotes( aliases ) {
+        aliases.forEach((alias) => {
+            this.autocompleteOptions = this.autocompleteOptions.filter((option) => !(option.type == "emote" && option.text ==       alias));
+        });
+
+        this.autocompleteUpdate.forEach((fun) => {
+            fun(this.autocompleteOptions);
         });
     }
 

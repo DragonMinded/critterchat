@@ -282,6 +282,23 @@ class Menu {
     }
 
     /**
+      * Called whenever the manager is notified of new custom emotes that were added to the server. Whenever
+      * an emote is live-added, update the autocomplete typeahead.
+      */
+    addEmotes( mapping ) {
+        this.editProfile.addEmotes( mapping );
+    }
+
+    /**
+     * Called whenever the manager is notified of custom emotes that were removed from the server. Whenever
+     * an emote is live-removed, update the autocomplete typeahead.
+     * emote.
+     */
+    deleteEmotes( aliases ) {
+        this.editProfile.deleteEmotes( aliases );
+    }
+
+    /**
      * Called every time the server has updated search results which we pass onto the search instance
      * that we manage.
      */

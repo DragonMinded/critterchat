@@ -14,7 +14,6 @@ TODO Low Priority
 =================
 
  - Generate a unique URI for all chats and rooms, allow editing for public rooms.
- - Chat info name and topic should support emoji autocomplete and emoji search.
  - Mentioning typeahead should allow searching by display nick as well as username.
  - Support editing your nickname and avatar per-chat (limit to non-DMs).
  - Support arbitrary info fields in profile for links to other services, etc.

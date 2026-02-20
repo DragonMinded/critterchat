@@ -192,6 +192,23 @@ class Info {
     }
 
     /**
+      * Called whenever the manager is notified of new custom emotes that were added to the server. Whenever
+      * an emote is live-added, update the autocomplete typeahead.
+      */
+    addEmotes( mapping ) {
+        this.chatdetails.addEmotes( mapping );
+    }
+
+    /**
+     * Called whenever the manager is notified of custom emotes that were removed from the server. Whenever
+     * an emote is live-removed, update the autocomplete typeahead.
+     * emote.
+     */
+    deleteEmotes( aliases ) {
+        this.chatdetails.deleteEmotes( aliases );
+    }
+
+    /**
      * Called whenever the manager informs us of an updated room list from the server. The room list
      * is always absolute and includes all relevant rooms that we're in, ordered by last update newest
      * to oldest. We don't really care much about most of the info, but we do use this to keep a map
