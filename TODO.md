@@ -26,4 +26,3 @@ TODO Low Priority
  - Unlink existing local account from an OAuth provider.
  - Better integration with Mastodon OAuth that saves client token and only revalidates when needed.
  - Attachment thumbnails so larger images don't get downloaded on slow connections on display.
- - Better logging around who uploaded an attachment.

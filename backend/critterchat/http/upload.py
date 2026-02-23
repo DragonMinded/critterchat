@@ -1,3 +1,4 @@
+import logging
 import tempfile
 import urllib.request
 from flask import Blueprint, request
@@ -15,6 +16,9 @@ upload = Blueprint(
     template_folder=templates_location,
     static_folder=static_location,
 )
+
+
+logger = logging.getLogger(__name__)
 
 
 @upload.route("/upload/icon", methods=["POST"])
@@ -74,6 +78,10 @@ def _icon_upload(uploadtype: str) -> dict[str, object]:
         raise Exception(f"Could not insert new {uploadtype} icon.")
     attachmentservice.put_attachment_data(attachmentid, icon)
 
+    username = g.user.username if g.user else "(anonymous)"
+    name = attachmentservice.get_attachment_name(attachmentid)
+    logger.info(f"Client {username} uploaded attachment with ID {attachmentid} and public name {name}")
+
     return {'attachmentid': Attachment.from_id(attachmentid)}
 
 
@@ -84,6 +92,7 @@ def notifications_upload() -> dict[str, object]:
     # Ensure that we only allow certain size uploads.
     request.max_content_length = ((((g.config.limits.notification_size * 1024) * 4) // 3) + 1024) * len(UserNotification)
 
+    username = g.user.username if g.user else "(anonymous)"
     attachmentservice = AttachmentService(g.config, g.data)
     body = request.json or {}
 
@@ -143,6 +152,9 @@ def notifications_upload() -> dict[str, object]:
                             raise Exception("Could not insert new user notification sound!")
                         attachmentservice.put_attachment_data(attachmentid, actual_data)
 
+                        name = attachmentservice.get_attachment_name(attachmentid)
+                        logger.info(f"Client {username} uploaded attachment with ID {attachmentid} and public name {name}")
+
                         response[alias] = Attachment.from_id(attachmentid)
 
         except CouldntDecodeError:
@@ -164,6 +176,7 @@ def attachments_upload() -> dict[str, object]:
     else:
         raise UserException("Attachments are disabled!")
 
+    username = g.user.username if g.user else "(anonymous)"
     attachmentservice = AttachmentService(g.config, g.data)
     body = request.json or {}
 
@@ -240,6 +253,9 @@ def attachments_upload() -> dict[str, object]:
             raise Exception("Could not insert message attachment!")
         attachmentservice.put_attachment_data(attachmentid, attachmentdata)
         attachmentids.append(Attachment.from_id(attachmentid))
+
+        name = attachmentservice.get_attachment_name(attachmentid)
+        logger.info(f"Client {username} uploaded attachment with ID {attachmentid} and public name {name}")
 
     return {"attachments": attachmentids}
 

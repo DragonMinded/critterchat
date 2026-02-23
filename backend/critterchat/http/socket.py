@@ -277,7 +277,7 @@ def recover_sessionid(data: Data, sid: Any) -> str | None:
     return info.sessionid
 
 
-def recover_userid(data: Data, sid: Any) -> UserID | None:
+def recover_user(data: Data, sid: Any) -> User | None:
     info = recover_info(sid)
     if info.sessionid is None:
         # Session was de-authed, tell the client to refresh.
@@ -300,7 +300,7 @@ def recover_userid(data: Data, sid: Any) -> UserID | None:
         socketio.emit('reload', {}, room=sid)
         return None
 
-    return user.id
+    return user
 
 
 def hydrate_tag(request: dict[str, object], response: dict[str, object]) -> dict[str, object]:
@@ -335,14 +335,22 @@ def connect() -> None:
     # Make sure we track this client so we don't get a premature hang-up.
     data = Data(config)
     register_sid(data, request.sid, sessionID)
-    logger.info(f"Client connected from {request.remote_addr} with session {request.sid}")
+    user = recover_user(data, request.sid)
+    username = user.username if user else "(anonymous)"
+
+    logger.info(f"Client {username} connected from {request.remote_addr} with session {request.sid}")
 
 
 @socketio.on('disconnect')  # type: ignore
 def disconnect() -> None:
+    # Grab the person's information for logging purposes.
+    data = Data(config)
+    user = recover_user(data, request.sid)
+    username = user.username if user else "(anonymous)"
+
     # Explicitly kill the presence since we know they're gone.
     unregister_sid(request.sid)
-    logger.info(f"Client disconnected from {request.remote_addr} with session {request.sid}")
+    logger.info(f"Client {username} disconnected from {request.remote_addr} with session {request.sid}")
 
 
 @socketio.on('info')  # type: ignore
@@ -351,8 +359,8 @@ def serverinfo(json: dict[str, object]) -> None:
     attachmentservice = AttachmentService(config, data)
 
     # Try to associate with a user if there is one.
-    userid = recover_userid(data, request.sid)
-    if userid is None:
+    user = recover_user(data, request.sid)
+    if user is None:
         return
 
     # Figure out if we're running in development mode or production mode.
@@ -379,32 +387,29 @@ def serverinfo(json: dict[str, object]) -> None:
 @socketio.on('motd')  # type: ignore
 def motd(json: dict[str, object]) -> None:
     data = Data(config)
-    userservice = UserService(config, data)
     messageservice = MessageService(config, data)
     attachmentservice = AttachmentService(config, data)
 
     # Try to associate with a user if there is one.
-    userid = recover_userid(data, request.sid)
-    if userid is None:
+    user = recover_user(data, request.sid)
+    if user is None:
         return
 
-    user = userservice.lookup_user(userid)
-    if user:
-        if UserPermission.WELCOMED not in user.permissions:
-            # Look up any server info to display to the user here.
-            extra = config.info
-            rooms = messageservice.get_autojoin_rooms(userid)
-            if rooms:
-                extra += "<p>You will be automatically added to the following rooms.</p>"
+    if UserPermission.WELCOMED not in user.permissions:
+        # Look up any server info to display to the user here.
+        extra = config.info
+        rooms = messageservice.get_autojoin_rooms(user.id)
+        if rooms:
+            extra += "<p>You will be automatically added to the following rooms.</p>"
 
-            socketio.emit('welcome', {
-                "name": config.name,
-                "icon": attachmentservice.get_attachment_url(FaviconID),
-                "administrator": config.administrator,
-                "source": config.source,
-                "message": extra,
-                "rooms": [room.to_dict() for room in rooms],
-            }, room=request.sid)
+        socketio.emit('welcome', {
+            "name": config.name,
+            "icon": attachmentservice.get_attachment_url(FaviconID),
+            "administrator": config.administrator,
+            "source": config.source,
+            "message": extra,
+            "rooms": [room.to_dict() for room in rooms],
+        }, room=request.sid)
 
 
 @socketio.on('welcomeaccept')  # type: ignore
@@ -414,13 +419,13 @@ def welcomeaccept(json: dict[str, object]) -> None:
     messageservice = MessageService(config, data)
 
     # Try to associate with a user if there is one.
-    userid = recover_userid(data, request.sid)
-    if userid is None:
+    user = recover_user(data, request.sid)
+    if user is None:
         return
 
-    messageservice.join_autojoin_rooms(userid)
-    userservice.add_permission(userid, UserPermission.WELCOMED)
-    rooms = messageservice.get_joined_rooms(userid)
+    messageservice.join_autojoin_rooms(user.id)
+    userservice.add_permission(user.id, UserPermission.WELCOMED)
+    rooms = messageservice.get_joined_rooms(user.id)
     if rooms:
         socketio.emit('roomlist', {
             'rooms': [room.to_dict() for room in rooms],
@@ -435,15 +440,15 @@ def roomlist(json: dict[str, object]) -> None:
     userservice = UserService(config, data)
 
     # Try to associate with a user if there is one.
-    userid = recover_userid(data, request.sid)
+    user = recover_user(data, request.sid)
     info = recover_info(request.sid)
-    if userid is None or info is None:
+    if user is None or info is None:
         return
 
     with info.lock:
         # Grab all rooms that the user is in, based on their user ID.
-        rooms = messageservice.get_joined_rooms(userid)
-        lastseen = userservice.get_last_seen_counts(userid)
+        rooms = messageservice.get_joined_rooms(user.id)
+        lastseen = userservice.get_last_seen_counts(user.id)
 
         # Pre-charge the delta fetches for all rooms this user is in.
         for room in rooms:
@@ -462,15 +467,15 @@ def lastsettings(json: dict[str, object]) -> None:
     userservice = UserService(config, data)
 
     # Try to associate with a user and login session if there is one.
-    userid = recover_userid(data, request.sid)
-    if userid is None:
+    user = recover_user(data, request.sid)
+    if user is None:
         return
     sessionid = recover_sessionid(data, request.sid)
     if sessionid is None:
         return
 
     # Look up last settings for this user.
-    socketio.emit('lastsettings', hydrate_tag(json, userservice.get_settings(sessionid, userid).to_dict()), room=request.sid)
+    socketio.emit('lastsettings', hydrate_tag(json, userservice.get_settings(sessionid, user.id).to_dict()), room=request.sid)
 
 
 @socketio.on('profile')  # type: ignore
@@ -480,12 +485,11 @@ def profile(json: dict[str, object]) -> None:
     messageservice = MessageService(config, data)
 
     # Try to associate with a user if there is one.
-    userid = recover_userid(data, request.sid)
+    user = recover_user(data, request.sid)
     info = recover_info(request.sid)
-    if userid is None or info is None:
+    if user is None or info is None:
         return
 
-    user = userservice.lookup_user(userid)
     admin = user is not None and UserPermission.ADMINISTRATOR in user.permissions
 
     otheruserid = User.to_id(str(json.get('userid')))
@@ -509,7 +513,7 @@ def profile(json: dict[str, object]) -> None:
     with info.lock:
         # Look up last settings for this user.
         ts = Time.now()
-        userprofile = userservice.lookup_user(userid)
+        userprofile = userservice.lookup_user(user.id)
         if userprofile:
             info.profilets = ts
             socketio.emit('profile', hydrate_tag(json, userprofile.to_dict(config=config, admin=admin)), room=request.sid)
@@ -521,9 +525,9 @@ def preferences(json: dict[str, object]) -> None:
     userservice = UserService(config, data)
 
     # Try to associate with a user if there is one.
-    userid = recover_userid(data, request.sid)
+    user = recover_user(data, request.sid)
     info = recover_info(request.sid)
-    if userid is None or info is None:
+    if user is None or info is None:
         return
 
     # Locking our socket info so we can keep track of profiles sent to all sessions.
@@ -531,7 +535,7 @@ def preferences(json: dict[str, object]) -> None:
     with info.lock:
         # Look up last settings for this user.
         ts = Time.now()
-        userpreferences = userservice.get_preferences(userid)
+        userpreferences = userservice.get_preferences(user.id)
         if userpreferences:
             info.prefsts = ts
             socketio.emit('preferences', hydrate_tag(json, userpreferences.to_dict()), room=request.sid)
@@ -543,15 +547,15 @@ def updatesettings(json: dict[str, object]) -> None:
     userservice = UserService(config, data)
 
     # Try to associate with a user and login session if there is one.
-    userid = recover_userid(data, request.sid)
-    if userid is None:
+    user = recover_user(data, request.sid)
+    if user is None:
         return
     sessionid = recover_sessionid(data, request.sid)
     if sessionid is None:
         return
 
     # Save last settings for this user.
-    userservice.update_settings(sessionid, UserSettings.from_dict(userid, json))
+    userservice.update_settings(sessionid, UserSettings.from_dict(user.id, json))
 
 
 @socketio.on('updateprofile')  # type: ignore
@@ -560,8 +564,8 @@ def updateprofile(json: dict[str, object]) -> None:
     userservice = UserService(config, data)
 
     # Try to associate with a user if there is one.
-    userid = recover_userid(data, request.sid)
-    if userid is None:
+    user = recover_user(data, request.sid)
+    if user is None:
         return
 
     # Save last settings for this user.
@@ -586,8 +590,8 @@ def updateprofile(json: dict[str, object]) -> None:
         icon = Attachment.to_id(newicon)
 
     try:
-        userservice.update_user(userid, name=newname, about=newabout, icon=icon, icon_delete=icondelete)
-        userprofile = userservice.lookup_user(userid)
+        userservice.update_user(user.id, name=newname, about=newabout, icon=icon, icon_delete=icondelete)
+        userprofile = userservice.lookup_user(user.id)
         admin = userprofile is not None and UserPermission.ADMINISTRATOR in userprofile.permissions
 
         if userprofile:
@@ -603,8 +607,8 @@ def updatepreferences(json: dict[str, object]) -> None:
     userservice = UserService(config, data)
 
     # Try to associate with a user and login session if there is one.
-    userid = recover_userid(data, request.sid)
-    if userid is None:
+    user = recover_user(data, request.sid)
+    if user is None:
         return
 
     # Save preferences for this user.
@@ -677,7 +681,7 @@ def updatepreferences(json: dict[str, object]) -> None:
 
     try:
         userservice.update_preferences(
-            userid,
+            user.id,
             rooms_on_top=new_rooms_on_top,
             combined_messages=new_combined_messages,
             color_scheme=new_color_scheme,
@@ -701,9 +705,9 @@ def chatactions(json: dict[str, object]) -> None:
     messageservice = MessageService(config, data)
 
     # Try to associate with a user if there is one.
-    userid = recover_userid(data, request.sid)
+    user = recover_user(data, request.sid)
     info = recover_info(request.sid)
-    if userid is None or info is None:
+    if user is None or info is None:
         return
 
     # Locking our socket info so we can keep track of what history we've seen,
@@ -713,7 +717,7 @@ def chatactions(json: dict[str, object]) -> None:
         if roomid:
             # Grab the current room in our joined rooms list. There's a way more performant
             # way to do this but we can fix that later.
-            rooms = messageservice.get_joined_rooms(userid)
+            rooms = messageservice.get_joined_rooms(user.id)
             rooms = [r for r in rooms if r.id == roomid]
             room = rooms[0] if rooms else None
 
@@ -750,9 +754,9 @@ def chathistory(json: dict[str, object]) -> None:
     userservice = UserService(config, data)
 
     # Try to associate with a user if there is one.
-    userid = recover_userid(data, request.sid)
+    user = recover_user(data, request.sid)
     info = recover_info(request.sid)
-    if userid is None or info is None:
+    if user is None or info is None:
         return
 
     # Locking our socket info so we can keep track of what history we've seen,
@@ -760,7 +764,7 @@ def chathistory(json: dict[str, object]) -> None:
     with info.lock:
         roomid = Room.to_id(str(json.get('roomid')))
         if roomid:
-            rooms = messageservice.get_joined_rooms(userid)
+            rooms = messageservice.get_joined_rooms(user.id)
             joinedrooms = {room.id for room in rooms}
             if roomid not in joinedrooms:
                 # Trying to grab chat for a room we're not in!
@@ -777,7 +781,7 @@ def chathistory(json: dict[str, object]) -> None:
                 }), room=request.sid)
 
             else:
-                lastseen = userservice.get_last_seen_actions(userid)
+                lastseen = userservice.get_last_seen_actions(user.id)
                 actions = messageservice.get_room_history(roomid)
                 occupants = messageservice.get_room_occupants(roomid)
 
@@ -805,15 +809,11 @@ def invite(json: dict[str, object]) -> None:
 
     # Only allow generating invites if the server allows it or the user is
     # an administrator.
-    userid = recover_userid(data, request.sid)
-    if userid is None:
-        return
-
-    # Ensure that the user is actually an admin.
-    user = userservice.lookup_user(userid)
+    user = recover_user(data, request.sid)
     if user is None:
         return
 
+    # Ensure that the user is actually an admin.
     is_admin = UserPermission.ADMINISTRATOR in user.permissions
     if is_admin or config.account_registration.invites:
         url = userservice.create_user_invite(user.id)
@@ -828,8 +828,8 @@ def message(json: dict[str, object]) -> dict[str, object]:
     messageservice = MessageService(config, data)
 
     # Try to associate with a user if there is one.
-    userid = recover_userid(data, request.sid)
-    if userid is None:
+    user = recover_user(data, request.sid)
+    if user is None:
         return {'status': 'failed'}
 
     roomid = Room.to_id(str(json.get('roomid')))
@@ -837,7 +837,7 @@ def message(json: dict[str, object]) -> dict[str, object]:
     # While we allow funny formatting and spaces, we don't allow space-only messages.
     message = str(json.get('message')).strip()
     if roomid:
-        rooms = messageservice.get_joined_rooms(userid)
+        rooms = messageservice.get_joined_rooms(user.id)
         joinedrooms = {room.id for room in rooms}
         if roomid not in joinedrooms:
             # Trying to insert a chat for a room we're not in!
@@ -867,7 +867,7 @@ def message(json: dict[str, object]) -> dict[str, object]:
         if represents_real_text(message) or attachments:
             try:
                 # Now, send the message itself.
-                messageservice.add_message(roomid, userid, message, sensitive, attachments)
+                messageservice.add_message(roomid, user.id, message, sensitive, attachments)
                 return {'status': 'success'}
             except MessageServiceException as e:
                 error(str(e), room=request.sid)
@@ -882,9 +882,9 @@ def leaveroom(json: dict[str, object]) -> None:
     messageservice = MessageService(config, data)
 
     # Try to associate with a user if there is one.
-    userid = recover_userid(data, request.sid)
+    user = recover_user(data, request.sid)
     info = recover_info(request.sid)
-    if userid is None or info is None:
+    if user is None or info is None:
         return
 
     # Locking our socket info so we can remove this chat from our monitoring.
@@ -894,7 +894,7 @@ def leaveroom(json: dict[str, object]) -> None:
             if roomid in info.fetchlimit:
                 del info.fetchlimit[roomid]
 
-            messageservice.leave_room(roomid, userid)
+            messageservice.leave_room(roomid, user.id)
 
 
 @socketio.on('searchrooms')  # type: ignore
@@ -903,12 +903,12 @@ def searchrooms(json: dict[str, object]) -> None:
     messageservice = MessageService(config, data)
 
     # Try to associate with a user if there is one.
-    userid = recover_userid(data, request.sid)
-    if userid is None:
+    user = recover_user(data, request.sid)
+    if user is None:
         return
 
     # Grab all rooms that match this search result
-    rooms = messageservice.get_matching_rooms(userid, name=str(json.get('name')))
+    rooms = messageservice.get_matching_rooms(user.id, name=str(json.get('name')))
     socketio.emit('searchrooms', hydrate_tag(json, {
         'rooms': [room.to_dict() for room in rooms],
     }), room=request.sid)
@@ -920,9 +920,9 @@ def joinroom(json: dict[str, object]) -> None:
     messageservice = MessageService(config, data)
 
     # Try to associate with a user if there is one.
-    userid = recover_userid(data, request.sid)
+    user = recover_user(data, request.sid)
     info = recover_info(request.sid)
-    if userid is None or info is None:
+    if user is None or info is None:
         return
 
     # Locking our socket info so we can add this chat to our monitoring.
@@ -931,7 +931,7 @@ def joinroom(json: dict[str, object]) -> None:
         roomid = Room.to_id(str(json.get('roomid')))
         if roomid:
             try:
-                messageservice.join_room(roomid, userid)
+                messageservice.join_room(roomid, user.id)
                 actual_id = roomid
             except MessageServiceException as e:
                 error(str(e), room=request.sid)
@@ -940,7 +940,7 @@ def joinroom(json: dict[str, object]) -> None:
         otherid = User.to_id(str(json.get('roomid')))
         if otherid:
             try:
-                room = messageservice.create_direct_message(userid, otherid)
+                room = messageservice.create_direct_message(user.id, otherid)
                 actual_id = room.id
             except MessageServiceException as e:
                 error(str(e), room=request.sid)
@@ -948,7 +948,7 @@ def joinroom(json: dict[str, object]) -> None:
 
         if actual_id:
             # Grab all rooms that the user is in, based on their user ID.
-            rooms = messageservice.get_joined_rooms(userid)
+            rooms = messageservice.get_joined_rooms(user.id)
 
             # Pre-charge the delta fetches for all rooms this user is in.
             for room in rooms:
@@ -967,30 +967,24 @@ def lastaction(json: dict[str, object]) -> None:
     userservice = UserService(config, data)
 
     # Try to associate with a user if there is one.
-    userid = recover_userid(data, request.sid)
-    if userid is None:
+    user = recover_user(data, request.sid)
+    if user is None:
         return
 
     # Grab all rooms that match this search result
     roomid = Room.to_id(str(json.get('roomid')))
     actionid = Action.to_id(str(json.get('actionid')))
     if roomid is not None and actionid is not None:
-        userservice.mark_last_seen(userid, roomid, actionid)
+        userservice.mark_last_seen(user.id, roomid, actionid)
 
 
 @socketio.on('updateroom')  # type: ignore
 def updateroom(json: dict[str, object]) -> None:
     data = Data(config)
     messageservice = MessageService(config, data)
-    userservice = UserService(config, data)
 
     # Try to associate with a user if there is one.
-    userid = recover_userid(data, request.sid)
-    if userid is None:
-        return
-
-    # Figure out if the user is an admin or not.
-    user = userservice.lookup_user(userid)
+    user = recover_user(data, request.sid)
     if user is None:
         return
 
@@ -1035,7 +1029,7 @@ def updateroom(json: dict[str, object]) -> None:
         try:
             messageservice.update_room(
                 roomid,
-                userid,
+                user.id,
                 name=newname,
                 topic=newtopic,
                 moderated=newmoderated,
@@ -1053,15 +1047,11 @@ def adminaction(json: dict[str, object]) -> dict[str, object]:
     messageservice = MessageService(config, data)
 
     # Try to associate with a user if there is one.
-    userid = recover_userid(data, request.sid)
-    if userid is None:
-        return {'status': 'failed'}
-
-    # Ensure that the user is actually an admin.
-    user = userservice.lookup_user(userid)
+    user = recover_user(data, request.sid)
     if user is None:
         return {'status': 'failed'}
 
+    # Ensure that the user is actually an admin.
     if UserPermission.ADMINISTRATOR not in user.permissions:
         return {'status': 'failed'}
 
@@ -1127,20 +1117,15 @@ def adminaction(json: dict[str, object]) -> dict[str, object]:
 @socketio.on('mod')  # type: ignore
 def modaction(json: dict[str, object]) -> dict[str, object]:
     data = Data(config)
-    userservice = UserService(config, data)
     messageservice = MessageService(config, data)
 
     # Try to associate with a user if there is one.
-    userid = recover_userid(data, request.sid)
-    if userid is None:
+    user = recover_user(data, request.sid)
+    if user is None:
         return {'status': 'failed'}
 
     # Figure out if the user is actually an admin, because there's some mod actions that
     # an admin can take (such as muting/unmuting in free-for-all public rooms).
-    user = userservice.lookup_user(userid)
-    if user is None:
-        return {'status': 'failed'}
-
     is_admin = UserPermission.ADMINISTRATOR in user.permissions
 
     # Grab the action and delegate.

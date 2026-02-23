@@ -455,7 +455,7 @@ class AttachmentService:
             room.deficon = self.get_attachment_url(room.deficonid)
         return room
 
-    def _get_attachment_name(self, attachmentid: AttachmentID) -> str:
+    def get_attachment_name(self, attachmentid: AttachmentID) -> str:
         if attachmentid in _id_to_hash_lut:
             return _id_to_hash_lut[attachmentid]
 
@@ -477,7 +477,7 @@ class AttachmentService:
         while prefix and (prefix[-1] == "/"):
             prefix = prefix[:-1]
 
-        possibly_relative = f"{prefix}/{self._get_attachment_name(attachmentid)}"
+        possibly_relative = f"{prefix}/{self.get_attachment_name(attachmentid)}"
         if possibly_relative.startswith("http://") or possibly_relative.startswith("https://"):
             return possibly_relative
 
