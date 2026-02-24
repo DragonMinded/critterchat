@@ -13,6 +13,7 @@ import {
 import { emojisearch } from "./components/emojisearch.js";
 import { autocomplete } from "./components/autocomplete.js";
 import { UploadPicker } from "./components/uploadpicker.js";
+import { Reactions } from "./components/reactions.js";
 import { displayInfo } from "./modals/infomodal.js";
 
 const linkifyOptions = { defaultProtocol: "http", target: "_blank", validate: { email: () => false } };
@@ -119,6 +120,30 @@ class Messages {
             if (this.autoscroll) {
                 $( 'div.new-messages-alert' ).css( 'display', 'none' );
             }
+        });
+
+        $( document ).on("mouseenter", "div.item div.message", (event) => {
+            const jqe = $(event.target);
+            const id = this._getMessageID(jqe);
+            this._hoverEnter(id);
+        });
+
+        $( document ).on("mouseenter", "div.item div.attachments", (event) => {
+            const jqe = $(event.target);
+            const id = this._getMessageID(jqe);
+            this._hoverEnter(id);
+        });
+
+        $( document ).on("mouseleave", "div.item div.message", (event) => {
+            const jqe = $(event.target);
+            const id = this._getMessageID(jqe);
+            this._hoverExit(id);
+        });
+
+        $( document ).on("mouseleave", "div.item div.attachments", (event) => {
+            const jqe = $(event.target);
+            const id = this._getMessageID(jqe);
+            this._hoverExit(id);
         });
 
         $( document ).on( 'keydown', (evt) => {
@@ -257,6 +282,11 @@ class Messages {
         // Set up the upload picker popover.
         this.uploadPicker = new UploadPicker( eventBus, screenState, '#message' );
 
+        // Set up our reactions popover.
+        this.reactions = new Reactions( eventBus, screenState, (id, evt, data) => {
+            // TODO: Send the reaction to the server.
+        });
+
         // Set up custom emotes, as well as normal emoji typeahead.
         this.autocompleteOptions = [];
         this.emojiSearchOptions = [];
@@ -289,6 +319,26 @@ class Messages {
 
         // Ensure that the input box itself doesn't allow messages to be too long.
         $('#message').attr("maxlength", window.maxmessage);
+    }
+
+    /**
+     * Helper to get the message ID from a given element in an event handler. If it can't be found on the
+     * current element, walks the parent until it's found.
+     */
+    _getMessageID( elem ) {
+        while (true) {
+            const id = $(elem).attr('id');
+            if (id) {
+                return id;
+            }
+
+            const tag = $(elem).prop("tagName");
+            if (tag.toLowerCase() == "html") {
+                return undefined;
+            }
+
+            elem = $(elem).parent();
+        }
     }
 
     /**
@@ -1001,10 +1051,10 @@ class Messages {
                 if (message.attachments.length) {
                     const desiredHeight = message.attachments.length == 1 ? 300 : 100;
 
-                    html += '    <div class="attachments">';
+                    html += '    <div class="attachments" id="' + message.id + '">';
                     message.attachments.forEach((attachment) => {
                         var attachImg = $(
-                            '<img src="' + attachment.uri + '"' + this._getDims(attachment, desiredHeight) + '/>'
+                            '<img class="attachment" src="' + attachment.uri + '"' + this._getDims(attachment, desiredHeight) + '/>'
                         ).attr('alt', attachment.metadata.alt_text || "message attachment");
 
                         if (attachment.metadata.sensitive) {
@@ -1309,6 +1359,22 @@ class Messages {
         }
 
         return msg;
+    }
+
+    /**
+     * Called when the user hovers over message text or attachments, but not over any other
+     * type of action. Used for showing per-message actions that can be taken.
+     */
+    _hoverEnter( id ) {
+        this.reactions.show( id );
+    }
+
+    /**
+     * Called when the user hovers over message text or attachments, but not over any other
+     * type of action. Used for showing per-message actions that can be taken.
+     */
+    _hoverExit( id ) {
+        this.reactions.hide( id );
     }
 }
 

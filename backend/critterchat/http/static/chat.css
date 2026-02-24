@@ -1175,6 +1175,7 @@ div.conversation div.item div.message {
     font-size: var(--application-text-size-14);
     overflow-wrap: break-word;
     word-break: break-word;
+    position: relative;
 }
 
 div.conversation div.item div.message.sensitive {
@@ -1229,14 +1230,15 @@ div.conversation div.item.combined div.attachments {
     margin-left: var(--message-combined-left-margin);
 }
 
-div.conversation div.attachments {
+div.conversation div.item div.attachments {
     display: flex;
     gap: var(--message-attachment-padding);
     flex-wrap: wrap;
     margin-top: var(--message-combined-attachment-top-margin);
+    position: relative;
 }
 
-div.conversation div.attachments img {
+div.conversation div.attachments img.attachment {
     display: block;
     max-width: 100%;
     height: auto;
@@ -1248,6 +1250,24 @@ div.message.highlighted {
     padding-bottom: var(--message-highlighted-v-padding);
     padding-left: var(--message-highlighted-h-padding);
     border-left: 2px solid orange;
+}
+
+div.message div.reactions, div.attachments div.reactions {
+    font-size: var(--application-text-size-16);
+    position: absolute;
+    z-index: 1000000;
+    right: 0px;
+}
+
+div.reactions div.reactions-controls {
+    display: flex;
+    flex-direction: row;
+    gap: 5px;
+    border: 1px solid var(--input-button-border);
+    background: var(--input-button-background);
+    border-radius: var(--input-border-radius);
+    padding: var(--application-item-padding);
+    margin-left: 50px;
 }
 
 div.chat div.item div.icon img {
