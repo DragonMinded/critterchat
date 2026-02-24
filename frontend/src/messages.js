@@ -123,28 +123,20 @@ class Messages {
             }
         });
 
-        $( document ).on("mouseenter", "div.item div.message", (event) => {
+        $( document ).on("mouseenter", "div.item div.message, div.item div.attachments, div.item div.reactions", (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            event.stopImmediatePropagation();
+
             const jqe = $(event.target);
             const id = this._getMessageID(jqe);
-            this._hoverEnter(id);
+            if (id) {
+                this.reactions.show( id );
+            }
         });
 
-        $( document ).on("mouseenter", "div.item div.attachments", (event) => {
-            const jqe = $(event.target);
-            const id = this._getMessageID(jqe);
-            this._hoverEnter(id);
-        });
-
-        $( document ).on("mouseleave", "div.item div.message", (event) => {
-            const jqe = $(event.target);
-            const id = this._getMessageID(jqe);
-            this._hoverExit(id);
-        });
-
-        $( document ).on("mouseleave", "div.item div.attachments", (event) => {
-            const jqe = $(event.target);
-            const id = this._getMessageID(jqe);
-            this._hoverExit(id);
+        $( "div" ).on("mouseenter", () => {
+            this.reactions.hide();
         });
 
         $( document ).on("click", "div.reactions button.reaction", (event) => {
@@ -1434,22 +1426,6 @@ class Messages {
         }
 
         return msg;
-    }
-
-    /**
-     * Called when the user hovers over message text or attachments, but not over any other
-     * type of action. Used for showing per-message actions that can be taken.
-     */
-    _hoverEnter( id ) {
-        this.reactions.show( id );
-    }
-
-    /**
-     * Called when the user hovers over message text or attachments, but not over any other
-     * type of action. Used for showing per-message actions that can be taken.
-     */
-    _hoverExit( id ) {
-        this.reactions.hide( id );
     }
 }
 

@@ -93,17 +93,15 @@ class Reactions {
         });
     }
 
-    hide( id ) {
-        if (id == this.id) {
-            if (!this.hovering) {
-                // Kill any visible reaction box.
-                $("div.reactions-popover").off();
-                $("div.reactions-popover").remove();
-            }
-
-            // Stop tracking what message we're paying attention to.
-            this.id = undefined;
+    hide() {
+        if (!this.hovering) {
+            // Kill any visible reaction box.
+            $("div.reactions-popover").off();
+            $("div.reactions-popover").remove();
         }
+
+        // Stop tracking what message we're paying attention to.
+        this.id = undefined;
     }
 }
 
