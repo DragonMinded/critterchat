@@ -16,7 +16,11 @@ class Reactions {
         this.hovering = false;
         this.id = undefined;
 
-        $( document ).on( 'click', 'div.reactions-popover div.reaction', (event) => {
+        $( document ).on( 'click', 'div.reactions-popover button.reaction', (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            event.stopImmediatePropagation();
+
             var value = undefined;
             var target = $(event.target);
 
@@ -49,12 +53,16 @@ class Reactions {
         const controls = $('<div class="reactions-controls"></div>').appendTo(container);
 
         // Add the defaults.
-        defaults.forEach((value) => {
+        defaults.forEach((value, idx) => {
             const html = escapeHtml(value);
-            $('<div class="reaction"></div>')
+            $('<button class="reaction"></button>')
                 .html(html)
                 .attr('data', value)
                 .appendTo(controls);
+
+            if (idx < defaults.length - 1) {
+                $('<div class="separator" />').appendTo(controls);
+            }
         });
 
         // Attach it to the message itself.

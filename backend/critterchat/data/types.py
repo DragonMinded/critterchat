@@ -1,5 +1,5 @@
 from enum import IntEnum, StrEnum
-from typing import NewType
+from typing import NewType, cast
 
 from ..config import Config
 
@@ -473,9 +473,28 @@ class Action:
             "timestamp": self.timestamp,
             "occupant": self.occupant.to_dict() if self.occupant else None,
             "action": self.action,
-            "details": self.details,
+            "details": self._get_details(),
             "attachments": [a.to_dict() for a in self.attachments],
         }
+
+    def _get_details(self) -> dict[str, object]:
+        if self.action == ActionType.CHANGE_MESSAGE:
+            details = {**self.details}
+            details["actionid"] = Action.from_id(cast(ActionID, details["actionid"]))
+            return details
+
+        if self.action == ActionType.MESSAGE:
+            details = {**self.details}
+            reactions = cast(dict[str, list[OccupantID]], details.get("reactions", {}))
+            converted = {}
+
+            for reaction, occupants in reactions.items():
+                converted[reaction] = [Occupant.from_id(o) for o in occupants]
+            details["reactions"] = converted
+
+            return details
+
+        return self.details
 
     @staticmethod
     def from_id(actionid: ActionID) -> str:

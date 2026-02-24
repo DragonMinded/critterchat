@@ -45,6 +45,7 @@ class Messages {
         this.connected = false;
         this.messages = [];
         this.occupants = [];
+        this.myself = undefined;
         this.rooms = new Map();
         this.pending = new Map();
         this.pendingroomid = "";
@@ -349,8 +350,6 @@ class Messages {
      * happen when moving between a muted and unmuted room, or when disconnecting or reconnecting.
      */
     _recalculateSendEnabled() {
-        const me = this._getSelf();
-
         // Start with the assumption we're unmuted, and only disable if we're disconnected.
         var disabled = !this.connected;
 
@@ -359,8 +358,8 @@ class Messages {
             disabled = true;
         }
 
-        if (me) {
-            if (me.muted) {
+        if (this.myself) {
+            if (this.myself.muted) {
                 // Always be disabled in this chat, even if we're connected.
                 disabled = true;
             }
@@ -452,15 +451,16 @@ class Messages {
             this.occupants = occupants.filter((_occupant) => true);
             this.occupants.sort((a, b) => { return a.username.localeCompare(b.username); });
             this.occupantsLoaded = true;
+            this._recalculateSelf();
             this._updateUsers();
             this._recalculateSendEnabled();
         }
     }
 
     /**
-     * Called to grab our own occupant object when needed.
+     * Called to re-calculate our own occupant object when needed.
      */
-    _getSelf() {
+    _recalculateSelf() {
         if (this.occupantsLoaded) {
             var occupant = undefined;
             this.occupants.forEach((potential) => {
@@ -469,9 +469,9 @@ class Messages {
                 }
             });
 
-            return occupant;
+            this.myself = occupant;
         } else {
-            return undefined;
+            this.myself = undefined;
         }
     }
 
@@ -542,6 +542,7 @@ class Messages {
                     this.lastAction = {};
                     this.autoscroll = true;
                     this.occupants = [];
+                    this.myself = undefined;
                     this.occupantsLoaded = false;
                     this.lastActionPending = false;
                     this.roomType = this.rooms.get(roomid).type;
@@ -576,6 +577,7 @@ class Messages {
             this.lastAction = {};
             this.autoscroll = true;
             this.occupants = [];
+            this.myself = undefined;
             this.occupantsLoaded = false;
             this.lastActionPending = false;
             this._updateUsers();
@@ -729,6 +731,7 @@ class Messages {
                         changed = true;
                     } else if (message.action == "leave") {
                         this.occupants = this.occupants.filter((occupant) => occupant.id != message.occupant.id);
+                        this._recalculateSelf();
                         changed = true;
                     }
                 }
@@ -1021,11 +1024,16 @@ class Messages {
                 if (window.emojis[reaction] || window.emotes[reaction]) {
                     const image = escapeHtml(reaction);
                     const count = occupants.length;
+                    var classes = "reaction";
 
-                    html += '<div class="reaction">';
+                    if (this.myself && occupants.includes(this.myself.id)) {
+                        classes += " chosen";
+                    }
+
+                    html += '<button class="' + classes + '">';
                     html += image;
                     html += count;
-                    html += '</div>';
+                    html += '</button>';
                 }
             }
 
@@ -1199,7 +1207,7 @@ class Messages {
                         this.inputState.setState("empty");
 
                         var id = $(event.currentTarget).attr('id')
-                        this.eventBus.emit('displayprofile', {userid: id, room: this.rooms.get(this.roomid), actor: this._getSelf()});
+                        this.eventBus.emit('displayprofile', {userid: id, room: this.rooms.get(this.roomid), actor: this.myself});
                     });
                 }
 
@@ -1209,7 +1217,7 @@ class Messages {
                     event.stopImmediatePropagation();
 
                     var id = $(event.currentTarget).attr('id')
-                    this.eventBus.emit('displayprofile', {userid: id, room: this.rooms.get(this.roomid), actor: this._getSelf()});
+                    this.eventBus.emit('displayprofile', {userid: id, room: this.rooms.get(this.roomid), actor: this.myself});
                 });
 
                 // Allow un-spoilering sensitive messages.

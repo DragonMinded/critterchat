@@ -1,8 +1,6 @@
 TODO Immediate
 ==============
 
- - Better visual display of reactions below messages.
- - Show which reactions you've selected.
  - Allow un-selecting reactions that you've previously selected.
  - Preserve order of reactions being added for extra silliness potential.
  - Look into why we are still getting updates about messges when we acknowledged them.
@@ -21,6 +19,7 @@ TODO For Public Instance
  - Start on backend tests.
  - Private group chat creation UI.
  - Private group chat invite UI.
+ - Role groups, for moderators and public room visibility, including auto-join on add to group.
 
 TODO Low Priority
 =================

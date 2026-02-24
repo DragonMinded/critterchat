@@ -1249,12 +1249,28 @@ div.conversation div.reactions {
     flex-wrap: wrap;
     padding-top: 0.25em;
     gap: var(--application-item-padding);
+}
+
+div.reactions button.reaction {
+    cursor: pointer;
+    display: flex;
+    gap: var(--application-item-padding);
+    border: 1px solid var(--input-button-border);
+    background: var(--input-button-background);
+    border-radius: var(--input-border-radius);
+    color: var(--input-button-text);
+    padding: var(--application-item-padding);
     font-size: var(--application-text-size-12);
 }
 
-div.reactions div.reaction {
-    display: flex;
-    gap: var(--application-item-padding);
+div.reactions button.reaction.chosen {
+    background: var(--conversation-selected-reaction-background);
+}
+
+div.reactions button.reaction:hover {
+    border: 1px solid var(--input-button-hover-border);
+    background: var(--input-button-hover-background);
+    color: var(--input-button-hover-text);
 }
 
 div.message.highlighted {
@@ -1281,6 +1297,19 @@ div.reactions-popover div.reactions-controls {
     border-radius: var(--input-border-radius);
     padding: var(--application-item-padding);
     margin-left: 50px;
+}
+
+div.reactions-controls button.reaction {
+    border: none;
+}
+
+div.reactions-controls div.separator {
+    width: 1px;
+    border-right: 1px solid var(--input-button-border);
+}
+
+div.reactions-controls button.reaction:not(:last-child) {
+    padding-right: var(--application-item-padding);
 }
 
 div.chat div.item div.icon img {

@@ -18,6 +18,7 @@
     --conversation-topic: light-dark(#707070, #707070);
     --conversation-timestamp: light-dark(#666666, #848484);
     --conversation-highlighted-background: light-dark(#e0e0e0, #242424);
+    --conversation-selected-reaction-background: light-dark(#ffffff, #1c1c1c);
 
     --edit-icon-background: light-dark(#dddddd, #333333);
     --edit-icon-text: light-dark(#000000, #ffffff);
