@@ -238,11 +238,17 @@ class MessageService:
             # reacted to that message with that reaction. That way, clients can show who reacted
             # with what and you can remove reactions that you'd added previously.
             reactions = cast(dict[str, list[OccupantID]], action.details.get("reactions", {}))
+            ordering = cast(list[str], action.details.get("reactions_order", []))
+            for er in reactions:
+                if er not in ordering:
+                    ordering.append(er)
+
             modified = False
             if reaction not in reactions:
                 if delta == "add":
                     # We're adding, so that's easy.
                     reactions[reaction] = [myself.id]
+                    ordering.append(reaction)
                     modified = True
 
             else:
@@ -264,10 +270,14 @@ class MessageService:
                 else:
                     del reactions[reaction]
 
+            # Always make sure the ordering doesn't include reactions that don't exist.
+            ordering = [o for o in ordering if o in reactions]
+
             if modified:
                 # Finally, if we actually modified a reaction, then save it and generate an
                 # action for updating clients.
                 action.details["reactions"] = reactions
+                action.details["reactions_order"] = ordering
                 self.__data.room.update_action(action)
 
                 # Generate the action that says we modified a message.

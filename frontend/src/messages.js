@@ -1038,27 +1038,30 @@ class Messages {
     /**
      * Draws the reactions for a given message.
      */
-    _drawReactions( reactions ) {
-        if (reactions) {
+    _drawReactions( reactions, ordering ) {
+        if (reactions && ordering) {
             var html = "";
 
-            for (const [reaction, occupants] of Object.entries( reactions )) {
+            ordering.forEach((reaction) => {
                 if (window.emojis[reaction] || window.emotes[reaction]) {
-                    const image = escapeHtml(reaction);
-                    const count = occupants.length;
-                    var classes = "reaction";
+                    const occupants = reactions[reaction];
+                    if (occupants) {
+                        const image = escapeHtml(reaction);
+                        const count = occupants.length;
+                        var classes = "reaction";
 
-                    if (this.myself && occupants.includes(this.myself.id)) {
-                        classes += " chosen";
+                        if (this.myself && occupants.includes(this.myself.id)) {
+                            classes += " chosen";
+                        }
+
+                        html += $('<button />')
+                            .addClass(classes)
+                            .html(image + count)
+                            .attr('data', reaction)
+                            .prop('outerHTML');
                     }
-
-                    html += $('<button />')
-                        .addClass(classes)
-                        .html(image + count)
-                        .attr('data', reaction)
-                        .prop('outerHTML');
                 }
-            }
+            });
 
             return html;
         }
@@ -1092,7 +1095,7 @@ class Messages {
                 // TODO: Need to update attachments here once we can edit messages.
 
                 const drawnReactions = messages.find('div.reactions#' + message.id);
-                drawnReactions.html(this._drawReactions(message.details.reactions));
+                drawnReactions.html(this._drawReactions(message.details.reactions, message.details.reactions_order));
             }
         } else {
             // Now, draw it fresh since it's not an update.
@@ -1141,7 +1144,7 @@ class Messages {
                     html += '    </div>';
                 }
                 html += '    <div class="reactions" id="' + message.id + '">';
-                html += this._drawReactions(message.details.reactions);
+                html += this._drawReactions(message.details.reactions, message.details.reactions_order);
                 html += '    </div>';
                 html += '  </div>';
                 html += '</div>';
