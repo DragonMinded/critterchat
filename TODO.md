@@ -1,7 +1,6 @@
 TODO Immediate
 ==============
 
- - Allow un-selecting reactions that you've previously selected.
  - Preserve order of reactions being added for extra silliness potential.
  - Look into why we are still getting updates about messges when we acknowledged them.
  - Don't allow invalid reactions to be updated.

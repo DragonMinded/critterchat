@@ -259,7 +259,10 @@ class MessageService:
                         existing = [e for e in existing if e != occupant.id]
                         modified = True
 
-                reactions[reaction] = existing
+                if existing:
+                    reactions[reaction] = existing
+                else:
+                    del reactions[reaction]
 
             if modified:
                 # Finally, if we actually modified a reaction, then save it and generate an

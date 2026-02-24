@@ -147,6 +147,36 @@ class Messages {
             this._hoverExit(id);
         });
 
+        $( document ).on("click", "div.reactions button.reaction", (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            event.stopImmediatePropagation();
+
+            var jqe = $(event.target);
+            const id = this._getMessageID(jqe);
+            var reaction = undefined;
+            var selected = false;
+
+            while (jqe.prop("tagName").toLowerCase() != "html") {
+                reaction = jqe.attr('data');
+                selected = jqe.hasClass('chosen');
+                if (reaction) {
+                    break;
+                }
+
+                jqe = jqe.parent();
+            }
+
+            if (id && reaction) {
+                if (selected) {
+                    this.eventBus.emit("reaction", {"actionid": id, "reaction": reaction, "type": "remove"});
+                } else {
+                    this.eventBus.emit("reaction", {"actionid": id, "reaction": reaction, "type": "add"});
+                }
+            }
+
+        });
+
         $( document ).on( 'keydown', (evt) => {
             // Figure out if the user started typing, so we can redirect to the input control.
             const key = evt.key;
@@ -1030,10 +1060,11 @@ class Messages {
                         classes += " chosen";
                     }
 
-                    html += '<button class="' + classes + '">';
-                    html += image;
-                    html += count;
-                    html += '</button>';
+                    html += $('<button />')
+                        .addClass(classes)
+                        .html(image + count)
+                        .attr('data', reaction)
+                        .prop('outerHTML');
                 }
             }
 
