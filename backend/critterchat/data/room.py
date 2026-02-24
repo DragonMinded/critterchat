@@ -1,5 +1,5 @@
 import contextlib
-from typing import Any, Iterator
+from typing import Any, Iterable, Iterator
 
 from sqlalchemy import Table, Column
 from sqlalchemy.schema import UniqueConstraint
@@ -942,6 +942,7 @@ class RoomData(BaseData):
         roomid: RoomID,
         before: ActionID | None = None,
         after: ActionID | None = None,
+        types: Iterable[ActionType] | None = None,
         limit: int | None = None,
     ) -> list[Action]:
         """
@@ -958,23 +959,28 @@ class RoomData(BaseData):
             return []
 
         # First, grab all the actions we can.
-        limitclauses = ""
-        if before:
-            limitclauses += " AND id < :before"
-        if after:
-            limitclauses += " AND id > :after"
+        filters: list[Fragment] = [fragment("room_id = %value", roomid)]
+        if before is not None:
+            filters.append(fragment("id < %value", before))
+        if after is not None:
+            filters.append(fragment("id > %value", after))
+        if types is not None:
+            filters.append(fragment("action IN %inlist", [str(t) for t in types]))
 
-        querylimit = ""
-        if limit:
-            querylimit = " LIMIT :limit"
+        querylimit: Fragment | None = None
+        if limit is not None:
+            querylimit = fragment("LIMIT %value", limit)
 
-        sql = f"""
-            SELECT id, timestamp, occupant_id, action, details
-            FROM action
-            WHERE room_id = :roomid {limitclauses}
-            ORDER BY id DESC {querylimit}
-        """
-        cursor = self.execute(sql, {"roomid": roomid, "limit": limit, "before": before, "after": after})
+        cursor = self.execute(statement(
+            """
+                SELECT id, timestamp, occupant_id, action, details
+                FROM action
+                WHERE %andlist:filters
+                ORDER BY id DESC %fragment:limit
+            """,
+            filters=filters,
+            limit=querylimit,
+        ))
         data = [x for x in cursor.mappings()]
 
         if not data:

@@ -81,28 +81,25 @@ class MessageService:
         if not room:
             return []
 
-        history = self.__data.room.get_room_history(room.id, before=before, limit=self.MAX_HISTORY)
+        # We intentionally over-fetch joins/leaves for DMs here, because the "load more history"
+        # component needs to know if there's any more history, and it does that by comparing
+        # its own list of events to the oldest event to see if there's anything more to load. If
+        # we filter out the first events (a join in every case) for DMs, it never knows to stop
+        # showing the load more indicator.
+        history = self.__data.room.get_room_history(
+            room.id,
+            before=before,
+            types=ActionType.unread_types(),
+            limit=self.MAX_HISTORY,
+        )
         history = self._resolve_attachments(history)
-        history = [
-            self.__attachments.resolve_action_icon(e)
-            for e in history
-            # We intentionally over-fetch joins/leaves for DMs here, because the "load more history"
-            # component needs to know if there's any more history, and it does that by comparing
-            # its own list of events to the oldest event to see if there's anything more to load. If
-            # we filter out the first events (a join in every case) for DMs, it never knows to stop
-            # showing the load more indicator.
-            if e.action in ActionType.unread_types()
-        ]
+        history = [self.__attachments.resolve_action_icon(e) for e in history]
         return history
 
     def get_room_updates(self, roomid: RoomID, after: ActionID) -> list[Action]:
-        history = self.__data.room.get_room_history(roomid, after=after)
+        history = self.__data.room.get_room_history(roomid, after=after, types=ActionType.update_types())
         history = self._resolve_attachments(history)
-        history = [
-            self.__attachments.resolve_action_icon(e)
-            for e in history
-            if e.action in ActionType.update_types()
-        ]
+        history = [self.__attachments.resolve_action_icon(e) for e in history]
         return history
 
     def add_message(

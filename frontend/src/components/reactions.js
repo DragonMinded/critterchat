@@ -6,6 +6,9 @@ const defaults = [
     ":thumbs_up:",
     ":thumbs_down:",
     ":heart:",
+    ":laughing:",
+    ":cry:",
+    ":angry:",
 ];
 
 class Reactions {
