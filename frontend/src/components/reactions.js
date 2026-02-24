@@ -16,7 +16,7 @@ class Reactions {
         this.hovering = false;
         this.id = undefined;
 
-        $( document ).on( 'click', 'div.reactions div.reaction', (event) => {
+        $( document ).on( 'click', 'div.reactions-popover div.reaction', (event) => {
             var value = undefined;
             var target = $(event.target);
 
@@ -38,14 +38,14 @@ class Reactions {
     show( id ) {
         if (this.id) {
             // Kill any visible reaction box.
-            $("div.reactions").off();
-            $("div.reactions").remove();
+            $("div.reactions-popover").off();
+            $("div.reactions-popover").remove();
         }
 
         this.id = id;
 
         // Create a container.
-        const container = $('<div class="reactions"></div>');
+        const container = $('<div class="reactions-popover"></div>');
         const controls = $('<div class="reactions-controls"></div>').appendTo(container);
 
         // Add the defaults.
@@ -77,8 +77,8 @@ class Reactions {
         container.on("mouseleave", () => {
             if (this.hovering && !this.id) {
                 // We should have closed, so do that now.
-                $("div.reactions").off();
-                $("div.reactions").remove();
+                $("div.reactions-popover").off();
+                $("div.reactions-popover").remove();
             }
 
             this.hovering = false;
@@ -89,8 +89,8 @@ class Reactions {
         if (id == this.id) {
             if (!this.hovering) {
                 // Kill any visible reaction box.
-                $("div.reactions").off();
-                $("div.reactions").remove();
+                $("div.reactions-popover").off();
+                $("div.reactions-popover").remove();
             }
 
             // Stop tracking what message we're paying attention to.

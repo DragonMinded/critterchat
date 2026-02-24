@@ -401,15 +401,17 @@ export function manager(socket) {
                 } else if (message.action == "leave") {
                     eventBus.emit("notification", {"action": "leave", "type": roomType});
                 } else if (message.action == "message") {
-                    if (message.occupant.username == window.username) {
-                        eventBus.emit("notification", {"action": "messageSend", "type": roomType})
-                    } else {
-                        const escaped = escapeHtml(message.details.message);
-                        const actualuser = '@' + window.username;
-                        if (containsStandaloneText(escaped, actualuser)) {
-                            eventBus.emit("notification", {"action": "mention", "type": roomType});
+                    if (!message.details.modified) {
+                        if (message.occupant.username == window.username) {
+                            eventBus.emit("notification", {"action": "messageSend", "type": roomType})
                         } else {
-                            eventBus.emit("notification", {"action": "messageReceive", "type": roomType});
+                            const escaped = escapeHtml(message.details.message);
+                            const actualuser = '@' + window.username;
+                            if (containsStandaloneText(escaped, actualuser)) {
+                                eventBus.emit("notification", {"action": "mention", "type": roomType});
+                            } else {
+                                eventBus.emit("notification", {"action": "messageReceive", "type": roomType});
+                            }
                         }
                     }
                 }
@@ -559,6 +561,10 @@ export function manager(socket) {
 
     eventBus.on('loadactions', (info) => {
         socket.emit('chatactions', {roomid: info.roomid, after: info.after});
+    });
+
+    eventBus.on('reaction', (info) => {
+        socket.emit('reaction', info)
     });
 
     eventBus.on('updateinfo', (info) => {

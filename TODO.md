@@ -1,11 +1,23 @@
 TODO Immediate
 ==============
 
+ - Better visual display of reactions below messages.
+ - Show which reactions you've selected.
+ - Allow un-selecting reactions that you've previously selected.
+ - Preserve order of reactions being added for extra silliness potential.
+ - Look into why we are still getting updates about messges when we acknowledged them.
+ - Don't allow invalid reactions to be updated.
+ - Notification sound setting for reacting to your message.
+ - Fix hover issue with messages that have existing reactions (don't show it).
+ - Display a custom reaction chooser in both the hover and on reaction list below messages.
+ - Look up default reactions from config instead of hardcoding.
+ - Long-press to pull up hover menu on mobile.
+ - Fix overdrawing popover, also close popover when choosing a reaction.
+
 TODO For Public Instance
 ========================
 
  - Stickers support in some form.
- - Emote/emoji reactions to messages.
  - Start on backend tests.
  - Private group chat creation UI.
  - Private group chat invite UI.

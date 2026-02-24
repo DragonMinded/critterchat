@@ -410,6 +410,7 @@ class ActionType(StrEnum):
     CHANGE_INFO = 'change_info'
     CHANGE_PROFILE = 'change_profile'
     CHANGE_USERS = 'change_users'
+    CHANGE_MESSAGE = 'change_message'
 
     @staticmethod
     def unread_types() -> set["ActionType"]:
@@ -439,6 +440,7 @@ class ActionType(StrEnum):
             ActionType.CHANGE_INFO,
             ActionType.CHANGE_PROFILE,
             ActionType.CHANGE_USERS,
+            ActionType.CHANGE_MESSAGE,
         }
 
 

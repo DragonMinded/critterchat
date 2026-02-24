@@ -1034,6 +1034,64 @@ class RoomData(BaseData):
             sql = "UNLOCK TABLES"
             self.execute(sql, {})
 
+    def get_action(self, actionid: ActionID) -> Action | None:
+        """
+        Given an action ID, look up that action and return it.
+
+        Returns:
+            Action object representing action looked up or None if the action doesn't exist.
+        """
+        if actionid == NewActionID:
+            return None
+
+        sql = """
+            SELECT id, timestamp, occupant_id, action, details
+            FROM action
+            WHERE id = :actionid
+        """
+        cursor = self.execute(sql, {"actionid": actionid})
+        if cursor.rowcount != 1:
+            # This action doesn't exist.
+            return None
+
+        result = cursor.mappings().fetchone()
+
+        # Now, scoop up the occupant that goes with this action.
+        occupantid = result['occupant_id']
+        if occupantid:
+            sql = """
+                SELECT
+                    occupant.id AS id,
+                    occupant.user_id AS user_id,
+                    occupant.nickname AS onick,
+                    occupant.inactive AS inactive,
+                    occupant.moderator AS moderator,
+                    occupant.muted AS muted,
+                    occupant.icon AS oicon,
+                    profile.nickname AS pnick,
+                    profile.icon AS picon,
+                    user.username AS unick,
+                    user.permissions AS permissions
+                FROM occupant
+                LEFT JOIN profile ON occupant.user_id = profile.user_id
+                LEFT JOIN user ON occupant.user_id = user.id
+                WHERE occupant.id = :occupantid
+            """
+            cursor = self.execute(sql, {"occupantid": occupantid})
+            occupants = [self.__to_occupant(o) for o in cursor.mappings()]
+        else:
+            occupants = []
+        mapping = {oc.id: oc for oc in occupants}
+
+        # Now, combine them all.
+        return Action(
+            actionid=ActionID(result['id']),
+            timestamp=result['timestamp'],
+            occupant=mapping[OccupantID(result['occupant_id'])] if result['occupant_id'] is not None else None,
+            action=result['action'],
+            details=self.deserialize(str(result['details'] or "{}")),
+        )
+
     def insert_action(self, roomid: RoomID, action: Action) -> None:
         """
         Given a room ID and an action, insert that action into the room's history.
@@ -1122,3 +1180,17 @@ class RoomData(BaseData):
                 UPDATE room SET `last_action` = :ts WHERE `id` = :roomid AND `last_action` < :ts
             """
             self.execute(sql, {"roomid": roomid, "ts": action.timestamp})
+
+    def update_action(self, action: Action) -> None:
+        """
+        Given an action, update the values that are allowed to change in the DB.
+        """
+        if action.id == NewActionID:
+            return
+
+        # Right now, only the details can be updated. In the future, this should allow updating
+        # the attachment list as well once we support editing messages.
+        sql = """
+            UPDATE action SET details = :details WHERE id = :id LIMIT 1
+        """
+        self.execute(sql, {"id": action.id, "details": self.serialize(action.details)})

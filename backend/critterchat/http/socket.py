@@ -145,6 +145,9 @@ def background_thread_proc_impl() -> None:
         # Keep a lookup of room occupants so we don't look this up repeatedly during CHANGE_USERS events.
         occupantcache: dict[RoomID, list[Occupant]] = {}
 
+        # Keep a lookup of actions so we don't look this up repeatedly during CHANGE_MESSAGE events.
+        actioncache: dict[ActionID, Action | None] = {}
+
         for info in sockets:
             # Lock this so other communication with this client doesn't get out of order.
             locked = info.lock.acquire(blocking=False)
@@ -163,8 +166,12 @@ def background_thread_proc_impl() -> None:
                             actions = messageservice.get_room_updates(roomid, after=fetchlimit)
 
                             if actions:
+                                filtered: list[Action] = []
+                                seen: set[ActionID] = set()
+
                                 for action in actions:
                                     fetchlimit = action.id if fetchlimit is None else max(fetchlimit, action.id)
+
                                     if action.action == ActionType.CHANGE_USERS:
                                         if roomid not in occupantcache:
                                             room = messageservice.lookup_room(roomid, user.id)
@@ -176,11 +183,27 @@ def background_thread_proc_impl() -> None:
                                                 "occupants": [o.to_dict() for o in occupantcache[roomid]],
                                             }
 
+                                    elif action.action == ActionType.CHANGE_MESSAGE:
+                                        original = cast(ActionID, action.details["actionid"])
+                                        if original not in seen:
+                                            seen.add(original)
+                                            if original not in actioncache:
+                                                actioncache[original] = messageservice.lookup_action(original)
+
+                                            # Swap out the change message for the original updated message.
+                                            grabbed = actioncache[original]
+                                            if grabbed:
+                                                grabbed.details['modified'] = True
+                                                filtered.append(grabbed)
+
+                                    # This should go to the client.
+                                    filtered.append(action)
+
                                 info.fetchlimit[roomid] = fetchlimit or NewActionID
 
                                 socketio.emit('chatactions', {
                                     'roomid': Room.from_id(roomid),
-                                    'actions': [action.to_dict() for action in actions],
+                                    'actions': [action.to_dict() for action in filtered],
                                 }, room=info.sid)
                                 updated = True
 
@@ -727,23 +750,40 @@ def chatactions(json: dict[str, object]) -> None:
 
             if (after := json.get('after', None)) and (afterid := Action.to_id(str(after))):
                 actions = messageservice.get_room_updates(roomid, after=afterid)
+                seen: set[ActionID] = set()
 
                 # Starting from the known last seen action ID here, since this is a client
                 # catch-up message after reconnecting. With this pre-charged, we won't end
                 # up re-sending the messages again in the message pump thread above.
                 fetchlimit = afterid
+                filtered: list[Action] = []
+
                 for action in actions:
                     fetchlimit = max(fetchlimit, action.id)
+
                     if action.action == ActionType.CHANGE_USERS:
                         action.details = {
                             "occupants": [o.to_dict() for o in room.occupants],
                         }
 
+                    elif action.action == ActionType.CHANGE_MESSAGE:
+                        original = cast(ActionID, action.details["actionid"])
+                        if original not in seen:
+                            # Swap out the change message for the original updated message.
+                            seen.add(original)
+                            grabbed = messageservice.lookup_action(original)
+                            if grabbed:
+                                grabbed.details['modified'] = True
+                                filtered.append(grabbed)
+
+                    # This should go to the client as-is.
+                    filtered.append(action)
+
                 info.fetchlimit[roomid] = fetchlimit
 
                 socketio.emit('chatactions', hydrate_tag(json, {
                     'roomid': Room.from_id(roomid),
-                    'actions': [action.to_dict() for action in actions],
+                    'actions': [action.to_dict() for action in filtered],
                 }), room=request.sid)
 
 
@@ -1189,3 +1229,31 @@ def modaction(json: dict[str, object]) -> dict[str, object]:
     except UserServiceException as e:
         flash('error', str(e), room=request.sid)
         return {'status': 'failed'}
+
+
+@socketio.on('reaction')  # type: ignore
+def reaction(json: dict[str, object]) -> None:
+    data = Data(config)
+    messageservice = MessageService(config, data)
+
+    # Try to associate with a user if there is one.
+    user = recover_user(data, request.sid)
+    if user is None:
+        return
+
+    # Grab the action ID of the action being reacted to, the reaction emoji and
+    # the type of reaction (add or remove).
+    actionid = Action.to_id(str(json.get('actionid')))
+    if not actionid:
+        return
+
+    reaction = str(json.get('reaction'))
+    reactiontype = str(json.get('type'))
+
+    try:
+        if reactiontype == "add":
+            messageservice.add_reaction(user.id, actionid, reaction)
+        elif reactiontype == "remove":
+            messageservice.remove_reaction(user.id, actionid, reaction)
+    except MessageServiceException as e:
+        error(str(e), room=request.sid)

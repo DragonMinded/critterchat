@@ -1226,7 +1226,7 @@ div.conversation div.item.combined div.message {
     margin-top: var(--message-combined-text-top-margin)
 }
 
-div.conversation div.item.combined div.attachments {
+div.conversation div.item.combined div.attachments, div.conversation div.item.combined div.reactions {
     margin-left: var(--message-combined-left-margin);
 }
 
@@ -1244,6 +1244,19 @@ div.conversation div.attachments img.attachment {
     height: auto;
 }
 
+div.conversation div.reactions {
+    display: flex;
+    flex-wrap: wrap;
+    padding-top: 0.25em;
+    gap: var(--application-item-padding);
+    font-size: var(--application-text-size-12);
+}
+
+div.reactions div.reaction {
+    display: flex;
+    gap: var(--application-item-padding);
+}
+
 div.message.highlighted {
     background: var(--conversation-highlighted-background);
     padding-top: var(--message-highlighted-v-padding);
@@ -1252,14 +1265,14 @@ div.message.highlighted {
     border-left: 2px solid orange;
 }
 
-div.message div.reactions, div.attachments div.reactions {
+div.message div.reactions-popover, div.attachments div.reactions-popover {
     font-size: var(--application-text-size-16);
     position: absolute;
     z-index: 1000000;
     right: 0px;
 }
 
-div.reactions div.reactions-controls {
+div.reactions-popover div.reactions-controls {
     display: flex;
     flex-direction: row;
     gap: 5px;

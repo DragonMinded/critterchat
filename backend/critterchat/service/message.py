@@ -1,5 +1,5 @@
 import emoji
-from typing import Final
+from typing import Final, Literal, cast
 
 from ..config import Config
 from ..common import Time
@@ -141,7 +141,7 @@ class MessageService:
             userid=userid,
         )
 
-        messagedata: dict[str, object] = {"message": message}
+        messagedata: dict[str, object] = {"message": message, "reactions": {}}
         if sensitive:
             messagedata["sensitive"] = True
 
@@ -193,6 +193,91 @@ class MessageService:
         if action.id is not NewActionID:
             return self.__attachments.resolve_action_icon(action)
         return None
+
+    def lookup_action(self, actionid: ActionID) -> Action | None:
+        return self.__data.room.get_action(actionid)
+
+    def add_reaction(self, userid: UserID, actionid: ActionID, reaction: str) -> None:
+        self._modify_reaction(userid, actionid, reaction, "add")
+
+    def remove_reaction(self, userid: UserID, actionid: ActionID, reaction: str) -> None:
+        self._modify_reaction(userid, actionid, reaction, "remove")
+
+    def _modify_reaction(self, userid: UserID, actionid: ActionID, reaction: str, delta: Literal["add", "remove"]) -> None:
+        # TODO: Verify that the reaction is a valid emote or emoji that we recognize.
+
+        with self.__data.room.lock_actions():
+            # Grab the action that we're about to modify.
+            action = self.__data.room.get_action(actionid)
+            if not action:
+                raise MessageServiceException("You cannot react to a nonexistent message!")
+
+            # Make sure we're allowed to add a reaction to the message.
+            if action.action not in {ActionType.MESSAGE} or not action.occupant:
+                raise MessageServiceException("You cannot react to something that isn't a message!")
+
+            # Now, make sure the room is valid.
+            room = self.__data.room.get_occupant_room(action.occupant.id)
+            if not room:
+                raise MessageServiceException("You cannot react to a message in a nonexistent room!")
+
+            # And, make sure the user adding to the room is here and not muted.
+            occupants = self.__data.room.get_room_occupants(room.id)
+            myself: Occupant
+            for occupant in occupants:
+                if occupant.userid == userid:
+                    myself = occupant
+                    if occupant.muted:
+                        raise MessageServiceException("You are muted!")
+                    break
+            else:
+                raise MessageServiceException("You cannot react to a message in a room that you are not a member of!")
+
+            # Alright. Now, let's actually modify the reaction table. We store reactions keyed by
+            # the reaction itself, and instead of just a count the value is the list of occupants that
+            # reacted to that message with that reaction. That way, clients can show who reacted
+            # with what and you can remove reactions that you'd added previously.
+            reactions = cast(dict[str, list[OccupantID]], action.details.get("reactions", {}))
+            modified = False
+            if reaction not in reactions:
+                if delta == "add":
+                    # We're adding, so that's easy.
+                    reactions[reaction] = [myself.id]
+                    modified = True
+
+            else:
+                existing = reactions[reaction]
+                if delta == "add":
+                    # Only modify if we don't already have this reaction.
+                    if occupant.id not in existing:
+                        existing.append(occupant.id)
+                        modified = True
+
+                else:
+                    # Only modify if we already have this reaction.
+                    if occupant.id in existing:
+                        existing = [e for e in existing if e != occupant.id]
+                        modified = True
+
+                reactions[reaction] = existing
+
+            if modified:
+                # Finally, if we actually modified a reaction, then save it and generate an
+                # action for updating clients.
+                action.details["reactions"] = reactions
+                self.__data.room.update_action(action)
+
+                # Generate the action that says we modified a message.
+                action = Action(
+                    actionid=NewActionID,
+                    timestamp=Time.now(),
+                    occupant=myself,
+                    action=ActionType.CHANGE_MESSAGE,
+                    # For this action, the details will be filled in at look-up time.
+                    details={"actionid": action.id, "edited": ["reactions"]},
+                )
+
+                self.__data.room.insert_action(room.id, action)
 
     def lookup_occupant(self, occupantid: OccupantID) -> User | None:
         occupant = self.__data.room.get_room_occupant(occupantid)

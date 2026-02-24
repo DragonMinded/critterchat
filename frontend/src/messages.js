@@ -284,7 +284,10 @@ class Messages {
 
         // Set up our reactions popover.
         this.reactions = new Reactions( eventBus, screenState, (id, evt, data) => {
-            // TODO: Send the reaction to the server.
+            // Send the reaction to the server.
+            if (evt == "reaction") {
+                this.eventBus.emit("reaction", {"actionid": id, "reaction": data, "type": "add"})
+            }
         });
 
         // Set up custom emotes, as well as normal emoji typeahead.
@@ -1008,6 +1011,31 @@ class Messages {
     }
 
     /**
+     * Draws the reactions for a given message.
+     */
+    _drawReactions( reactions ) {
+        if (reactions) {
+            var html = "";
+
+            for (const [reaction, occupants] of Object.entries( reactions )) {
+                if (window.emojis[reaction] || window.emotes[reaction]) {
+                    const image = escapeHtml(reaction);
+                    const count = occupants.length;
+
+                    html += '<div class="reaction">';
+                    html += image;
+                    html += count;
+                    html += '</div>';
+                }
+            }
+
+            return html;
+        }
+
+        return "";
+    }
+
+    /**
      * The actual function that handles DOM manipulation for rendering a new or updated action.
      * Note that right now while the server CAN send us old actions that have been edited in some
      * manner, it currently does not. However, this function handles that and will continue to be
@@ -1016,8 +1044,8 @@ class Messages {
      */
     _drawMessage( message, loc ) {
         // First, see if this is an update.
-        var messages = $('div.chat > div.conversation-wrapper > div.conversation');
-        var drawnMessage = messages.find('div.message#' + message.id);
+        const messages = $('div.chat > div.conversation-wrapper > div.conversation');
+        const drawnMessage = messages.find('div.message#' + message.id);
         if (drawnMessage.length > 0) {
             if (message.action == "message") {
                 let content = this._formatMessage(message.details.message);
@@ -1029,6 +1057,11 @@ class Messages {
                 } else {
                     drawnMessage.removeClass("highlighted");
                 }
+
+                // TODO: Need to update attachments here once we can edit messages.
+
+                const drawnReactions = messages.find('div.reactions#' + message.id);
+                drawnReactions.html(this._drawReactions(message.details.reactions));
             }
         } else {
             // Now, draw it fresh since it's not an update.
@@ -1076,6 +1109,9 @@ class Messages {
                     });
                     html += '    </div>';
                 }
+                html += '    <div class="reactions" id="' + message.id + '">';
+                html += this._drawReactions(message.details.reactions);
+                html += '    </div>';
                 html += '  </div>';
                 html += '</div>';
             } else if (this.roomType != "dm" && message.action == "join") {
@@ -1153,49 +1189,49 @@ class Messages {
                 } else {
                     messages.prepend(html);
                 }
-            }
 
-            if (message.occupant) {
-                // Allow clicking a username in a message to view the person's profile.
-                $('div.item#' + message.id + ' span.name#' + message.occupant.id).on('click', (event) => {
+                if (message.occupant) {
+                    // Allow clicking a username in a message to view the person's profile.
+                    $('div.item#' + message.id + ' span.name#' + message.occupant.id).on('click', (event) => {
+                        event.stopPropagation();
+                        event.stopImmediatePropagation();
+
+                        this.inputState.setState("empty");
+
+                        var id = $(event.currentTarget).attr('id')
+                        this.eventBus.emit('displayprofile', {userid: id, room: this.rooms.get(this.roomid), actor: this._getSelf()});
+                    });
+                }
+
+                // Allow clicking on a username in the message itself.
+                $('div.item#' + message.id + ' span.name-link').on('click', (event) => {
                     event.stopPropagation();
                     event.stopImmediatePropagation();
-
-                    this.inputState.setState("empty");
 
                     var id = $(event.currentTarget).attr('id')
                     this.eventBus.emit('displayprofile', {userid: id, room: this.rooms.get(this.roomid), actor: this._getSelf()});
                 });
+
+                // Allow un-spoilering sensitive messages.
+                $('div.message.sensitive').on('click', (event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    event.stopImmediatePropagation();
+
+                    const elem = $(event.currentTarget);
+                    elem.removeClass('sensitive');
+                    elem.off();
+                });
+                $('div.attachments div.blurred').on('click', (event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    event.stopImmediatePropagation();
+
+                    const elem = $(event.currentTarget);
+                    elem.parent().find('img.blurred').removeClass('blurred');
+                    elem.remove();
+                });
             }
-
-            // Allow clicking on a username in the message itself.
-            $('div.item#' + message.id + ' span.name-link').on('click', (event) => {
-                event.stopPropagation();
-                event.stopImmediatePropagation();
-
-                var id = $(event.currentTarget).attr('id')
-                this.eventBus.emit('displayprofile', {userid: id, room: this.rooms.get(this.roomid), actor: this._getSelf()});
-            });
-
-            // Allow un-spoilering sensitive messages.
-            $('div.message.sensitive').on('click', (event) => {
-                event.preventDefault();
-                event.stopPropagation();
-                event.stopImmediatePropagation();
-
-                const elem = $(event.currentTarget);
-                elem.removeClass('sensitive');
-                elem.off();
-            });
-            $('div.attachments div.blurred').on('click', (event) => {
-                event.preventDefault();
-                event.stopPropagation();
-                event.stopImmediatePropagation();
-
-                const elem = $(event.currentTarget);
-                elem.parent().find('img.blurred').removeClass('blurred');
-                elem.remove();
-            });
         }
 
         this._updateLastAction(message);
