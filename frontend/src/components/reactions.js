@@ -100,14 +100,19 @@ class Reactions {
     }
 
     show( id ) {
+        if (this.id == id) {
+            // Ignore this.
+            return;
+        }
+
         if (this.id) {
             // Kill any visible reaction box.
             $("div.reactions-popover").off();
             $("div.reactions-popover").remove();
         }
-        if (this.id != id) {
-            this.search.hide();
-        }
+
+        // Hide any search, including any from a hover-save.
+        this.search.hide();
 
         this.id = id;
         this.hovering = false;
@@ -149,24 +154,37 @@ class Reactions {
         // Stop the reactions box from disappearing when we're hovering over it
         // in any capacity.
         container.on("mouseenter", () => {
+            event.preventDefault();
+            event.stopPropagation();
+            event.stopImmediatePropagation();
+
             this.hovering = true;
         });
 
         container.on("mouseleave", () => {
+            event.preventDefault();
+            event.stopPropagation();
+            event.stopImmediatePropagation();
+
             if (this.hovering && !this.id) {
                 // We should have closed, so do that now.
-                this.hovering = false;
                 this.hide();
             }
+
+            this.hovering = false;
         });
     }
 
-    hide() {
+    hide( suppressTracking ) {
         if (!this.hovering) {
             // Kill any visible reaction box.
             $("div.reactions-popover").off();
             $("div.reactions-popover").remove();
             this.search.hide();
+        }
+
+        if ( suppressTracking ) {
+            return;
         }
 
         // Stop tracking what message we're paying attention to.

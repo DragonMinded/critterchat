@@ -140,6 +140,10 @@ class Messages {
                 this.reactions.hide();
             });
 
+            $( "div.container" ).on("click", () => {
+                this.reactions.hide( true );
+            });
+
             $( document ).on("click", "div.reactions button.reaction", (event) => {
                 event.preventDefault();
                 event.stopPropagation();
