@@ -2,7 +2,7 @@
 {% block includes %}
   {% if jsname %}
     <script src="{{ absolute_url_for('static', component="base", filename=jsname) }}"></script>
-    <script src="{{ absolute_url_for('static', component="base", filename='twemoji-16.0.1.min.js') }}"></script>
+    <script src="{{ absolute_url_for('static', component="base", filename='twemoji-17.0.2.min.js') }}"></script>
     <script>
       window.twemojiOptions = {
         base: "{{ absolute_url_for('static', component="base", filename='twemoji/') }}",
