@@ -1288,7 +1288,6 @@ div.message.highlighted {
 div.message div.reactions-popover, div.attachments div.reactions-popover {
     font-size: var(--application-text-size-14);
     position: absolute;
-    z-index: 199;
     right: 0px;
 }
 

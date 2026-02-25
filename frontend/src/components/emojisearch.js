@@ -202,6 +202,9 @@ export function emojisearch(state, button, control, items, callback) {
             return;
         }
 
+        // First, close any other search elements.
+        state.setState("empty");
+
         // Construct element
         displayed = true;
         container.show();
@@ -244,7 +247,7 @@ export function emojisearch(state, button, control, items, callback) {
     }
 
     function hide() {
-        if (!container) {
+        if (!container || !displayed) {
             return;
         }
 

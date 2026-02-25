@@ -1,7 +1,6 @@
 TODO Immediate
 ==============
 
- - Don't make hovering disappear the emoji search that's visible.
  - Long-press to pull up hover menu on mobile.
  - Verify reactions work fine on mobile.
  - Better polling thread loop with less CPU usage, need to stop waking up once a second.
