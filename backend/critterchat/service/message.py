@@ -306,7 +306,7 @@ class MessageService:
                     occupant=myself,
                     action=ActionType.CHANGE_MESSAGE,
                     # For this action, the details will be filled in at look-up time.
-                    details={"actionid": action.id, "edited": ["reactions"]},
+                    details={"actionid": action.id, "edited": ["reactions"], delta: reaction},
                 )
 
                 self.__data.room.insert_action(room.id, action)

@@ -1,7 +1,6 @@
 TODO Immediate
 ==============
 
- - Notification sound setting for reacting to your message.
  - Display a custom reaction chooser in both the hover and on reaction list below messages.
  - Long-press to pull up hover menu on mobile.
  - Verify reactions work fine on mobile.

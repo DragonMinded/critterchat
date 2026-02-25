@@ -123,13 +123,24 @@ class UserSettings:
 
 
 class UserNotification(IntEnum):
-    CHAT_SENT = 0x1
-    CHAT_RECEIVED = 0x2
-    MESSAGE_SENT = 0x4
-    MESSAGE_RECEIVED = 0x8
-    MENTIONED = 0x10
-    USER_JOINED = 0x20
-    USER_LEFT = 0x40
+    # You sent a chat to a public room.
+    CHAT_SENT = 0x001
+    # You received a chat in a public room.
+    CHAT_RECEIVED = 0x002
+    # You sent a message in a private room.
+    MESSAGE_SENT = 0x004
+    # You received a message in a private room.
+    MESSAGE_RECEIVED = 0x008
+    # You were mentioned by username in a public/private room.
+    MENTIONED = 0x010
+    # A user joined a room you're in.
+    USER_JOINED = 0x020
+    # A user left a room you're in.
+    USER_LEFT = 0x040
+    # A user reacted to a message in a room you're in.
+    USER_REACTED = 0x080
+    # A user reacted to a message you wrote in a room you're in.
+    REACTION_RECEIVED = 0x100
 
 
 class UserPreferences:

@@ -1,6 +1,17 @@
 import { flash } from "../utils.js";
 
-import { CHAT_SENT, MESSAGE_SENT, CHAT_RECEIVED, MESSAGE_RECEIVED, MENTIONED, USER_JOINED, USER_LEFT, AUDIO_PREFS } from "../common.js";
+import {
+    CHAT_SENT,
+    MESSAGE_SENT,
+    CHAT_RECEIVED,
+    MESSAGE_RECEIVED,
+    MENTIONED,
+    USER_JOINED,
+    USER_LEFT,
+    USER_REACTED,
+    REACTION_RECEIVED,
+    AUDIO_PREFS
+} from "../common.js";
 
 /**
  * Audio notification handling component. This is responsible for listening for
@@ -50,6 +61,15 @@ class AudioNotifications {
             } else if (notif.action == "leave") {
                 if (notif.type != "dm") {
                     sound = this.sounds[USER_LEFT];
+                }
+            } else if (notif.action == "reaction") {
+                if (notif.me) {
+                    sound = this.sounds[REACTION_RECEIVED];
+                    if (!sound) {
+                        sound = this.sounds[USER_REACTED];
+                    }
+                } else {
+                    sound = this.sounds[USER_REACTED];
                 }
             }
 

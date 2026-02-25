@@ -50,6 +50,9 @@ export function manager(socket) {
     // request missing actions that were sent while we were disconnected upon reconnect.
     var rooms = new Map();
 
+    // Tracks known actions to determine whether that action is our own or not.
+    var actions = new Map();
+
     // Tracks the user's last settings, such as what room they are in and the info panel visibility.
     var settings = {};
 
@@ -377,6 +380,11 @@ export function manager(socket) {
             infoInst.setOccupants(msg.roomid, msg.occupants);
         }
 
+        // Make sure we know which actions are our actions and not.
+        msg.history.forEach((action) => {
+            actions.set(action.id, action.occupant);
+        })
+
         // Notify systems that are concerned with history that we got a new chunk of history. This
         // happens on first load as well as when the user scrolls up to the top of the currently loaded
         // history and we request more history.
@@ -393,6 +401,11 @@ export function manager(socket) {
         if (rooms.has(msg.roomid)) {
             roomType = rooms.get(msg.roomid).type;
         }
+
+        // Make sure we know which actions are our actions and not.
+        msg.actions.forEach((action) => {
+            actions.set(action.id, action.occupant);
+        })
 
         if (roomType) {
             msg.actions.forEach((message) => {
@@ -412,6 +425,20 @@ export function manager(socket) {
                             } else {
                                 eventBus.emit("notification", {"action": "messageReceive", "type": roomType});
                             }
+                        }
+                    }
+                } else if (message.action == "change_message") {
+                    if (message.occupant.username != window.username) {
+                        const edited = message.details.edited || [];
+                        if (edited.includes("reactions") && message.details.add) {
+                            // This is a reaction add, we need to look up the original message.
+                            const reactedOwner = actions.get(message.details.actionid);
+                            var reactingToMe = false;
+                            if (reactedOwner) {
+                                reactingToMe = reactedOwner.username == window.username;
+                            }
+
+                            eventBus.emit("notification", {"action": "reaction", "me": reactingToMe});
                         }
                     }
                 }
