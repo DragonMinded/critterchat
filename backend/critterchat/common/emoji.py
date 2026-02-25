@@ -33,4 +33,8 @@ def get_aliases_unicode_dict() -> dict[str, str]:
                 for alias in data['alias']:
                     _ALIASES_UNICODE[alias] = emj
 
+        for off, val in enumerate(range(0x1F1E6, 0x1F200)):
+            ascval = chr(off + ord('a'))
+            _ALIASES_UNICODE[f":regional_indicator_{ascval}:"] = chr(val) + chr(0x200B)
+
     return _ALIASES_UNICODE

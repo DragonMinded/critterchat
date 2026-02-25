@@ -1415,13 +1415,17 @@ class Messages {
         var domentry = $('<span class="wrapperelement">' + msg + '</span>');
         var text = domentry.text().trim();
         var variationCount = 0;
+        var spaceCount = 0;
         for (var i = 0; i < text.length; i++) {
             var code = text.charCodeAt(i);
             if (code >= 0xFE00 && code <= 0xFE0F) {
                 variationCount ++;
             }
+            if (code == 0x200B || code == 0x20 || code == 0xA0) {
+                spaceCount ++;
+            }
         }
-        if ((text.length - variationCount) == 0 && msg.length > 0) {
+        if ((text.length - variationCount - spaceCount) == 0 && msg.length > 0) {
             // Emoji only, embiggen the pictures.
             domentry.find('.emoji').addClass('emoji-big').removeClass('emoji');
             domentry.find('.emote').addClass('emote-big').removeClass('emote');
