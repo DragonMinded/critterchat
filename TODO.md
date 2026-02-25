@@ -1,11 +1,13 @@
 TODO Immediate
 ==============
 
+ - Move emoji categories to backend, send on chat load.
+ - Look up default reactions from config instead of hardcoding.
  - Don't allow invalid reactions to be updated.
  - Notification sound setting for reacting to your message.
  - Display a custom reaction chooser in both the hover and on reaction list below messages.
- - Look up default reactions from config instead of hardcoding.
  - Long-press to pull up hover menu on mobile.
+ - Verify reactions work fine on mobile.
 
 TODO For Public Instance
 ========================
