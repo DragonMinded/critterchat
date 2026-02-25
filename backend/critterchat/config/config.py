@@ -151,6 +151,40 @@ class Authentication:
         return retval
 
 
+class Reactions:
+    def __init__(self, parent_config: "Config") -> None:
+        self.__config = parent_config
+
+    @property
+    def enabled(self) -> bool:
+        return _bool(self.__config.get("reactions", {}).get("enabled"), True)
+
+    @property
+    def defaults(self) -> list[str]:
+        defaults = ["thumbs_up", "thumbs_down", "heart", "laughing", "cry", "angry"]
+
+        vals = self.__config.get("reactions", {}).get("defaults", [])
+        if not isinstance(vals, list):
+            return defaults
+
+        listvals = [str(v) for v in vals]
+        listvals = [v for v in vals if v]
+        if not listvals:
+            return defaults
+
+        # For convenience, let them specify emojis with the typed name.
+        def fix_colons(string: str) -> str:
+            if string[0] == ":" and string[-1] == ":":
+                return string[1:-1]
+            return string
+
+        listvals = [fix_colons(s) for s in listvals]
+        listvals = [v for v in vals if v]
+        if not listvals:
+            return defaults
+        return listvals
+
+
 class Config(dict[str, Any]):
     def __init__(self, existing_contents: dict[str, Any] = {}, filename: str | None = None) -> None:
         super().__init__(existing_contents or {})
@@ -164,6 +198,7 @@ class Config(dict[str, Any]):
         self.limits = Limits(self)
         self.account_registration = AccountRegistration(self)
         self.authentication = Authentication(self)
+        self.reactions = Reactions(self)
 
     def clone(self) -> "Config":
         # Somehow its not possible to clone this object if an instantiated Engine is present,

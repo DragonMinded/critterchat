@@ -64,6 +64,8 @@ def home() -> Response:
         maxnotificationsize=g.config.limits.notification_size,
         maxattachments=g.config.limits.attachment_max,
         maxattachmentsize=g.config.limits.attachment_size,
+        reactionsenabled=g.config.reactions.enabled,
+        reactionsdefaults=g.config.reactions.defaults,
         defavi=attachmentservice.get_attachment_url(DefaultAvatarID),
         defroom=attachmentservice.get_attachment_url(DefaultRoomID),
         favicon=attachmentservice.get_attachment_url(FaviconID),
@@ -105,14 +107,15 @@ def config() -> dict[str, object]:
         "maxnotificationsize": g.config.limits.notification_size,
         "maxattachments": g.config.limits.attachment_max,
         "maxattachmentsize": g.config.limits.attachment_size,
+        "reactionsenabled": g.config.reactions.enabled,
+        "reactionsdefaults": g.config.reactions.defaults,
         "defavi": attachmentservice.get_attachment_url(DefaultAvatarID),
         "defroom": attachmentservice.get_attachment_url(DefaultRoomID),
         "favicon": attachmentservice.get_attachment_url(FaviconID),
-        "uploadIcon": absolute_url_for('upload.icon_upload', component="upload"),
-        "uploadAvatar": absolute_url_for('upload.avatar_upload', component="upload"),
-        "uploadNotifications": absolute_url_for('upload.notifications_upload', component="upload"),
-        "uploadAttachments": absolute_url_for('upload.attachments_upload', component="upload"),
-
+        "uploadicon": absolute_url_for('upload.icon_upload', component="upload"),
+        "uploadavatar": absolute_url_for('upload.avatar_upload', component="upload"),
+        "uploadnotifications": absolute_url_for('upload.notifications_upload', component="upload"),
+        "uploadattachments": absolute_url_for('upload.attachments_upload', component="upload"),
     }
 
 

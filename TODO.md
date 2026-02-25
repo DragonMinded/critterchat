@@ -1,7 +1,6 @@
 TODO Immediate
 ==============
 
- - Look up default reactions from config instead of hardcoding.
  - Don't allow invalid reactions to be updated.
  - Notification sound setting for reacting to your message.
  - Display a custom reaction chooser in both the hover and on reaction list below messages.

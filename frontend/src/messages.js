@@ -123,51 +123,53 @@ class Messages {
             }
         });
 
-        $( document ).on("mouseenter", "div.item div.message, div.item div.attachments, div.item div.reactions", (event) => {
-            event.preventDefault();
-            event.stopPropagation();
-            event.stopImmediatePropagation();
+        if (window.reactionsenabled) {
+            $( document ).on("mouseenter", "div.item div.message, div.item div.attachments, div.item div.reactions", (event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                event.stopImmediatePropagation();
 
-            const jqe = $(event.target);
-            const id = this._getMessageID(jqe);
-            if (id) {
-                this.reactions.show( id );
-            }
-        });
+                const jqe = $(event.target);
+                const id = this._getMessageID(jqe);
+                if (id) {
+                    this.reactions.show( id );
+                }
+            });
 
-        $( "div" ).on("mouseenter", () => {
-            this.reactions.hide();
-        });
+            $( "div" ).on("mouseenter", () => {
+                this.reactions.hide();
+            });
 
-        $( document ).on("click", "div.reactions button.reaction", (event) => {
-            event.preventDefault();
-            event.stopPropagation();
-            event.stopImmediatePropagation();
+            $( document ).on("click", "div.reactions button.reaction", (event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                event.stopImmediatePropagation();
 
-            var jqe = $(event.target);
-            const id = this._getMessageID(jqe);
-            var reaction = undefined;
-            var selected = false;
+                var jqe = $(event.target);
+                const id = this._getMessageID(jqe);
+                var reaction = undefined;
+                var selected = false;
 
-            while (jqe.prop("tagName").toLowerCase() != "html") {
-                reaction = jqe.attr('data');
-                selected = jqe.hasClass('chosen');
-                if (reaction) {
-                    break;
+                while (jqe.prop("tagName").toLowerCase() != "html") {
+                    reaction = jqe.attr('data');
+                    selected = jqe.hasClass('chosen');
+                    if (reaction) {
+                        break;
+                    }
+
+                    jqe = jqe.parent();
                 }
 
-                jqe = jqe.parent();
-            }
-
-            if (id && reaction) {
-                if (selected) {
-                    this.eventBus.emit("reaction", {"actionid": id, "reaction": reaction, "type": "remove"});
-                } else {
-                    this.eventBus.emit("reaction", {"actionid": id, "reaction": reaction, "type": "add"});
+                if (id && reaction) {
+                    if (selected) {
+                        this.eventBus.emit("reaction", {"actionid": id, "reaction": reaction, "type": "remove"});
+                    } else {
+                        this.eventBus.emit("reaction", {"actionid": id, "reaction": reaction, "type": "add"});
+                    }
                 }
-            }
 
-        });
+            });
+        }
 
         $( document ).on( 'keydown', (evt) => {
             // Figure out if the user started typing, so we can redirect to the input control.
@@ -305,13 +307,15 @@ class Messages {
         // Set up the upload picker popover.
         this.uploadPicker = new UploadPicker( eventBus, screenState, '#message' );
 
-        // Set up our reactions popover.
-        this.reactions = new Reactions( eventBus, screenState, (id, evt, data) => {
-            // Send the reaction to the server.
-            if (evt == "reaction") {
-                this.eventBus.emit("reaction", {"actionid": id, "reaction": data, "type": "add"})
-            }
-        });
+        if (window.reactionsenabled) {
+            // Set up our reactions popover.
+            this.reactions = new Reactions( eventBus, screenState, (id, evt, data) => {
+                // Send the reaction to the server.
+                if (evt == "reaction") {
+                    this.eventBus.emit("reaction", {"actionid": id, "reaction": data, "type": "add"})
+                }
+            });
+        }
 
         // Set up custom emotes, as well as normal emoji typeahead.
         this.autocompleteOptions = [];
@@ -1039,6 +1043,10 @@ class Messages {
      * Draws the reactions for a given message.
      */
     _drawReactions( reactions, ordering ) {
+        if (!window.reactionsenabled) {
+            return "";
+        }
+
         if (reactions && ordering) {
             var html = "";
 
@@ -1143,9 +1151,7 @@ class Messages {
                     });
                     html += '    </div>';
                 }
-                html += '    <div class="reactions" id="' + message.id + '">';
-                html += this._drawReactions(message.details.reactions, message.details.reactions_order);
-                html += '    </div>';
+                html += '    <div class="reactions" id="' + message.id + '">' + this._drawReactions(message.details.reactions, message.details.reactions_order) + '</div>';
                 html += '  </div>';
                 html += '</div>';
             } else if (this.roomType != "dm" && message.action == "join") {

@@ -114,3 +114,17 @@ authentication:
       # Whether to copy the profile information of users when creating accounts based on the above
       # instance. Note that profile info is never copied over on subsequent logins.
       copy_profile: true
+
+reactions:
+  # Whether reactions are enabled or not on this instance.
+  enabled: true
+
+  # This is the list of default reactions for this instance. It's ordered, so you can control
+  # which ones show up and in what order. Each must be a valid emoji or custom emote.
+  defaults:
+    - "thumbs_up"
+    - "thumbs_down"
+    - "heart"
+    - "laughing"
+    - "cry"
+    - "angry"

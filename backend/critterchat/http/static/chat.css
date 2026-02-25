@@ -1251,6 +1251,10 @@ div.conversation div.reactions {
     gap: var(--application-item-padding);
 }
 
+div.conversation div.reactions:empty {
+    display: none;
+}
+
 div.reactions button.reaction {
     cursor: pointer;
     display: flex;

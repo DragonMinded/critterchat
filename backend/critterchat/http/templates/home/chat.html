@@ -38,6 +38,8 @@
     window.maxnotificationsize = {{ maxnotificationsize|tojson|safe }};
     window.maxattachmentsize = {{ maxattachmentsize|tojson|safe }};
     window.maxattachments = {{ maxattachments|tojson|safe }};
+    window.reactionsenabled = {{ reactionsenabled|tojson|safe }};
+    window.reactionsdefaults = {{ reactionsdefaults|tojson|safe }};
     window.defavi = {{ defavi|tojson|safe }};
     window.defroom = {{ defroom|tojson|safe }};
     window.silence = {{ absolute_url_for('static', component="base", filename='silence.mp3')|tojson|safe }};

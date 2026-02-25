@@ -1,16 +1,6 @@
 import $ from "jquery";
 import { escapeHtml } from "../utils.js";
 
-// TODO: Move this to backend config file.
-const defaults = [
-    ":thumbs_up:",
-    ":thumbs_down:",
-    ":heart:",
-    ":laughing:",
-    ":cry:",
-    ":angry:",
-];
-
 class Reactions {
     constructor( eventBus, screenState, callback ) {
         this.eventBus = eventBus;
@@ -56,14 +46,15 @@ class Reactions {
         const controls = $('<div class="reactions-controls"></div>').appendTo(container);
 
         // Add the defaults.
-        defaults.forEach((value, idx) => {
-            const html = escapeHtml(value);
+        window.reactionsdefaults.forEach((value, idx) => {
+            const real = ":" + value + ":";
+            const html = escapeHtml(real);
             $('<button class="reaction"></button>')
                 .html(html)
-                .attr('data', value)
+                .attr('data', real)
                 .appendTo(controls);
 
-            if (idx < defaults.length - 1) {
+            if (idx < window.reactionsdefaults.length - 1) {
                 $('<div class="separator" />').appendTo(controls);
             }
         });
