@@ -214,6 +214,7 @@ export function emojisearch(state, button, control, items, callback) {
         var width = $(control).outerWidth() - 2;
         const height = container.height();
         var left = offset.left;
+        var start = offset.top - (height + 2);
 
         const minWidth = 250;
         if (callback && (width < minWidth)) {
@@ -224,7 +225,12 @@ export function emojisearch(state, button, control, items, callback) {
             left -= delta;
         }
 
-        container.offset({top: offset.top - (height + 2), left:left});
+        if (callback && start < 0) {
+            // We're popping over a reactin picker and the top is cut off.
+            start = offset.top + $(control).outerHeight();
+        }
+
+        container.offset({top: start, left:left});
         container.width(width);
 
         // Make sure search typeahead is focused.

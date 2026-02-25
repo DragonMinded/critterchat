@@ -1,10 +1,10 @@
 TODO Immediate
 ==============
 
- - Make popover show up under controls if there is not enough room for it above the controls.
  - Update reaction search when emoji added/removed.
  - Long-press to pull up hover menu on mobile.
  - Verify reactions work fine on mobile.
+ - Better polling thread loop with less CPU usage, need to stop waking up once a second.
 
 TODO For Public Instance
 ========================
