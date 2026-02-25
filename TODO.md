@@ -1,7 +1,6 @@
 TODO Immediate
 ==============
 
- - Look into why we are still getting updates about messges when we acknowledged them.
  - Don't allow invalid reactions to be updated.
  - Notification sound setting for reacting to your message.
  - Display a custom reaction chooser in both the hover and on reaction list below messages.

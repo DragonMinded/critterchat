@@ -805,7 +805,7 @@ def chathistory(json: dict[str, object]) -> None:
         roomid = Room.to_id(str(json.get('roomid')))
         if roomid:
             rooms = messageservice.get_joined_rooms(user.id)
-            joinedrooms = {room.id for room in rooms}
+            joinedrooms = {room.id: room for room in rooms}
             if roomid not in joinedrooms:
                 # Trying to grab chat for a room we're not in!
                 return
@@ -825,8 +825,11 @@ def chathistory(json: dict[str, object]) -> None:
                 actions = messageservice.get_room_history(roomid)
                 occupants = messageservice.get_room_occupants(roomid)
 
-                # Starting from scratch here since this messages clears the chat pane on the client.
-                fetchlimit = None
+                # Starting from the point where we read here, and only updating if new events
+                # somehow came in after we read the list of joined rooms. This stops us from
+                # accidentally re-sending events that aren't looked up in get_room_history such
+                # as CHANGE_MESSAGE actions.
+                fetchlimit = joinedrooms[roomid].newest_action
                 for action in actions:
                     fetchlimit = action.id if fetchlimit is None else max(fetchlimit, action.id)
                 info.fetchlimit[roomid] = fetchlimit or NewActionID
@@ -990,9 +993,11 @@ def joinroom(json: dict[str, object]) -> None:
             # Grab all rooms that the user is in, based on their user ID.
             rooms = messageservice.get_joined_rooms(user.id)
 
-            # Pre-charge the delta fetches for all rooms this user is in.
+            # Pre-charge the delta fetches for all rooms this user is in that
+            # they weren't in beforehand.
             for room in rooms:
-                info.fetchlimit[room.id] = room.newest_action if room.newest_action is not None else NewActionID
+                if room.id not in info.fetchlimit:
+                    info.fetchlimit[room.id] = room.newest_action if room.newest_action is not None else NewActionID
 
     if actual_id:
         socketio.emit('roomlist', {
