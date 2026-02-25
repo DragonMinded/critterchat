@@ -1,7 +1,6 @@
 TODO Immediate
 ==============
 
- - Minimum size for emoji reaction search popover.
  - Make popover show up under controls if there is not enough room for it above the controls.
  - Update reaction search when emoji added/removed.
  - Long-press to pull up hover menu on mobile.

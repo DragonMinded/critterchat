@@ -211,11 +211,21 @@ export function emojisearch(state, button, control, items, callback) {
 
         // Position ourselves!
         const offset = $(control).offset();
-        const width = $(control).outerWidth();
+        var width = $(control).outerWidth() - 2;
         const height = container.height();
+        var left = offset.left;
 
-        container.offset({top: offset.top - (height + 2), left:offset.left});
-        container.width(width - 2);
+        const minWidth = 250;
+        if (callback && (width < minWidth)) {
+            // We're popping over a custom reaction picker, don't be too small.
+            const delta = minWidth - width;
+
+            width += delta;
+            left -= delta;
+        }
+
+        container.offset({top: offset.top - (height + 2), left:left});
+        container.width(width);
 
         // Make sure search typeahead is focused.
         container.find('#emojisearch-text').val("");
