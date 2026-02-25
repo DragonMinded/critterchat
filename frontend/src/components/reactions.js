@@ -73,10 +73,13 @@ class Reactions {
             // Kill any visible reaction box.
             $("div.reactions-popover").off();
             $("div.reactions-popover").remove();
+        }
+        if (this.id != id) {
             this.search.hide();
         }
 
         this.id = id;
+        this.hovering = false;
 
         // Create a container.
         const container = $('<div class="reactions-popover"></div>');
