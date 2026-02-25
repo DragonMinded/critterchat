@@ -5,7 +5,7 @@ import { modal } from "./jquery-modal/jquery.modal.js";
 modal();
 
 import { manager } from "./manager.js";
-import { hook } from "./config/extensions.js";
+import { hook } from "./extensions.js";
 import { Socket } from "./components/socket.js";
 
 // Importing this enables linkify.

@@ -1,5 +1,5 @@
 import $ from "jquery";
-import { hook } from "./config/extensions.js";
+import { hook } from "./extensions.js";
 
 // Importing this enables linkify.
 import * as linkify from "linkifyjs"; // eslint-disable-line no-unused-vars
