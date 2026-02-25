@@ -1,7 +1,6 @@
 TODO Immediate
 ==============
 
- - Move emoji categories to backend, send on chat load.
  - Look up default reactions from config instead of hardcoding.
  - Don't allow invalid reactions to be updated.
  - Notification sound setting for reacting to your message.

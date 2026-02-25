@@ -1,28 +1,32 @@
-// Used from https://github.com/iamcal/emoji-data
-//
-// The MIT License (MIT)
-//
-// Copyright (c) 2013 Cal Henderson
-//
-// Permission is hereby granted, free of charge, to any person obtaining a copy
-// of this software and associated documentation files (the "Software"), to deal
-// in the Software without restriction, including without limitation the rights
-// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-// copies of the Software, and to permit persons to whom the Software is
-// furnished to do so, subject to the following conditions:
-//
-// The above copyright notice and this permission notice shall be included in all
-// copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-// SOFTWARE.
+# Used from https://github.com/iamcal/emoji-data
+#
+# The MIT License (MIT)
+#
+# Copyright (c) 2013 Cal Henderson
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
 
-export const emojicategories = {
+
+from typing import Final
+
+
+EMOJI_CATEGORIES: Final[dict[str, dict[str, list[str]]]] = {
     "Smileys & Emotion": {
         "face-smiling": [
             "grinning",
@@ -1049,7 +1053,7 @@ export const emojicategories = {
             "roller_skate",
             "busstop",
             "motorway",
-          "railway_track",
+            "railway_track",
             "oil_drum",
             "fuelpump",
             "wheel",
@@ -1620,7 +1624,7 @@ export const emojicategories = {
             "pager",
             "fax"
         ],
-       "computer": [
+        "computer": [
             "battery",
             "low_battery",
             "electric_plug",
@@ -1762,7 +1766,7 @@ export const emojicategories = {
             "compression",
             "scales",
             "probing_cane",
-           "link",
+            "link",
             "broken_chain",
             "chains",
             "hook",
@@ -1908,7 +1912,7 @@ export const emojicategories = {
             "capricorn",
             "aquarius",
             "pisces",
-          "ophiuchus"
+            "ophiuchus"
         ],
         "av-symbol": [
             "twisted_rightwards_arrows",
@@ -2106,4 +2110,4 @@ export const emojicategories = {
             "black_square_button"
         ]
     }
-};
+}

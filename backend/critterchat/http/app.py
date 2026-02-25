@@ -230,6 +230,11 @@ def get_frontend_version() -> str:
     return get_frontend_filename().replace('.js', '').replace('chat.', '')
 
 
+@app.template_filter('toorderedjson')
+def toorderedjson(val: object) -> str:
+    return json.dumps(val)
+
+
 @app.context_processor
 def extrafunctions() -> dict[str, Any]:
     cachebust = get_frontend_version() + "-" + get_fingerprint_hash()

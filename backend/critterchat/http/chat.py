@@ -13,7 +13,7 @@ from .app import (
     get_fingerprint_hash,
     g,
 )
-from ..common import get_emoji_unicode_dict, get_aliases_unicode_dict
+from ..common import get_emoji_unicode_dict, get_aliases_unicode_dict, EMOJI_CATEGORIES
 from ..data import DefaultAvatarID, DefaultRoomID, FaviconID, User, UserPermission
 from ..service import AttachmentService, EmoteService
 
@@ -52,6 +52,7 @@ def home() -> Response:
         version=cachebust,
         emojis=emojis,
         emotes=emotes,
+        emojicategories=EMOJI_CATEGORIES,
         userid=userid,
         username=username,
         admin=UserPermission.ADMINISTRATOR in permissions,
@@ -92,6 +93,7 @@ def config() -> dict[str, object]:
         "title": g.config.name,
         "emojis": emojis,
         "emotes": emotes,
+        "emojicategories": EMOJI_CATEGORIES,
         "userid": userid,
         "username": username,
         "admin": UserPermission.ADMINISTRATOR in permissions,
