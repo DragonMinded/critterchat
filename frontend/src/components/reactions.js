@@ -36,7 +36,7 @@ class Reactions {
             var value = undefined;
             var target = $(event.target);
 
-            while (target.prop("tagName").toLowerCase() != "html") {
+            while (target.prop("tagName") && target.prop("tagName").toLowerCase() != "html") {
                 value = target.attr('data');
                 if (value) {
                     break;

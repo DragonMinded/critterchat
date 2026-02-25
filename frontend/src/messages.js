@@ -136,6 +136,13 @@ class Messages {
                 }
             });
 
+            $( document ).onHold("div.item div.message, div.item div.attachments, div.item div.reactions", 750, (elem) => {
+                const id = this._getMessageID(elem);
+                if (id) {
+                    this.reactions.show( id );
+                }
+            });
+
             $( "div" ).on("mouseenter", () => {
                 this.reactions.hide();
             });
@@ -154,7 +161,7 @@ class Messages {
                 var reaction = undefined;
                 var selected = false;
 
-                while (jqe.prop("tagName").toLowerCase() != "html") {
+                while (jqe.prop("tagName") && jqe.prop("tagName").toLowerCase() != "html") {
                     reaction = jqe.attr('data');
                     selected = jqe.hasClass('chosen');
                     if (reaction) {
@@ -174,7 +181,7 @@ class Messages {
 
             });
         }
-
+        
         $( document ).on( 'keydown', (evt) => {
             // Figure out if the user started typing, so we can redirect to the input control.
             const key = evt.key;
@@ -369,7 +376,7 @@ class Messages {
             }
 
             const tag = $(elem).prop("tagName");
-            if (tag.toLowerCase() == "html") {
+            if (!tag || tag.toLowerCase() == "html") {
                 return undefined;
             }
 
