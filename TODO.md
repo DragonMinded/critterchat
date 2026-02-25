@@ -1,8 +1,7 @@
 TODO Immediate
 ==============
 
- - Long-press to pull up hover menu on mobile.
- - Verify reactions work fine on mobile.
+ - Reaction tap and hold does not always work on mobile.
  - Better polling thread loop with less CPU usage, need to stop waking up once a second.
 
 TODO For Public Instance
