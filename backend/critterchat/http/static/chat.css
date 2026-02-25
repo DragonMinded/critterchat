@@ -1288,7 +1288,7 @@ div.message.highlighted {
 div.message div.reactions-popover, div.attachments div.reactions-popover {
     font-size: var(--application-text-size-14);
     position: absolute;
-    z-index: 1000000;
+    z-index: 199;
     right: 0px;
 }
 
@@ -1303,7 +1303,7 @@ div.reactions-popover div.reactions-controls {
     margin-left: 50px;
 }
 
-div.reactions-controls button.reaction {
+div.reactions-controls button.reaction, div.reactions-controls button.custom-reaction {
     font-size: var(--application-text-size-14);
     border: none;
 }

@@ -309,7 +309,7 @@ class Messages {
 
         if (window.reactionsenabled) {
             // Set up our reactions popover.
-            this.reactions = new Reactions( eventBus, screenState, (id, evt, data) => {
+            this.reactions = new Reactions( eventBus, screenState, inputState, (id, evt, data) => {
                 // Send the reaction to the server.
                 if (evt == "reaction") {
                     this.eventBus.emit("reaction", {"actionid": id, "reaction": data, "type": "add"})
@@ -1005,7 +1005,7 @@ class Messages {
             );
         }
 
-        this.emojisearchUpdate(this.emojiSearchOptions);
+        this.emojisearchUpdate.update(this.emojiSearchOptions);
         this._updateUsers();
     }
 
@@ -1020,7 +1020,7 @@ class Messages {
             this.autocompleteOptions = this.autocompleteOptions.filter((option) => !(option.type == "emote" && option.text == alias));
             this.emojiSearchOptions = this.emojiSearchOptions.filter((option) => !(option.type == "emote" && option.text == alias));
         });
-        this.emojisearchUpdate(this.emojiSearchOptions);
+        this.emojisearchUpdate.update(this.emojiSearchOptions);
         this._updateUsers();
     }
 

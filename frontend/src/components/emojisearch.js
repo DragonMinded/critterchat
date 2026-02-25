@@ -18,26 +18,31 @@ function getCursorEnd(element) {
     return null;
 }
 
-export function emojisearch(state, button, textbox, items) {
+export function emojisearch(state, button, control, items, callback) {
     var displayed = false;
     var lastCategory = "";
+    var container = undefined;
 
     function create() {
         // Create our picker, hide it.
-        $('<div class="emojisearch"></div>')
+        container = $('<div class="emojisearch"></div>')
             .attr("style", "display:none;")
             .appendTo('body');
-        $('<div class="emojisearch-container"></div>').appendTo('div.emojisearch');
+        const inner = $('<div class="emojisearch-container"></div>').appendTo(container);
         $('<div class="emojisearch-typeahead"></div>')
             .html('<input type="text" id="emojisearch-text" placeholder="search" />')
-            .appendTo('div.emojisearch-container');
+            .appendTo(inner);
         $('<div class="emojisearch-categories"></div>')
-            .appendTo('div.emojisearch-container');
+            .appendTo(inner);
         $('<div class="emojisearch-content"></div>')
-            .appendTo('div.emojisearch-container');
+            .appendTo(inner);
     }
 
     function populate(entries) {
+        if (!container) {
+            return;
+        }
+
         // Filter out categories.
         var categories = {};
         Object.keys(window.emojicategories).forEach(function(category) {
@@ -82,11 +87,11 @@ export function emojisearch(state, button, textbox, items) {
         });
 
         // Nuke any existing categories we had.
-        $("div.emojisearch-category").remove();
-        $("div.emojisearch-element").remove();
+        container.find("div.emojisearch-category").remove();
+        container.find("div.emojisearch-element").remove();
 
-        var emojisearchCategories = $('div.emojisearch-categories');
-        var emojisearchContent = $('div.emojisearch-content');
+        var emojisearchCategories = container.find('div.emojisearch-categories');
+        var emojisearchContent = container.find('div.emojisearch-content');
 
         // Actually render the categories.
         Object.keys(categories).forEach(function(category) {
@@ -122,10 +127,14 @@ export function emojisearch(state, button, textbox, items) {
     }
 
     function hook() {
+        if (!container) {
+            return;
+        }
+
         // Set up category selection.
-        $("div.emojisearch-category").click(function() {
+        container.find("div.emojisearch-category").click(function() {
             // Don't allow selection when search is happening.
-            var searchInput = $("#emojisearch-text").val();
+            var searchInput = container.find("#emojisearch-text").val();
 
             if (searchInput != "") {
                 return;
@@ -134,7 +143,7 @@ export function emojisearch(state, button, textbox, items) {
             var category = $(this).attr("category");
             lastCategory = category;
 
-            $("div.emojisearch-category").each(function(i, elem) {
+            container.find("div.emojisearch-category").each(function(i, elem) {
                 var elemCat = $(elem).attr("category");
                 $(elem).removeClass("selected");
                 if (elemCat == category) {
@@ -142,7 +151,7 @@ export function emojisearch(state, button, textbox, items) {
                 }
             });
 
-            $("div.emojisearch-element").each(function(i, elem) {
+            container.find("div.emojisearch-element").each(function(i, elem) {
                 var elemCat = $(elem).attr("category");
                 if (elemCat == category) {
                     $(elem).show();
@@ -152,55 +161,65 @@ export function emojisearch(state, button, textbox, items) {
             });
 
             // Make sure to scroll to the top of the visible list.
-            $("div.emojisearch-content").scrollTop(0);
+            container.find("div.emojisearch-content").scrollTop(0);
         });
 
         // Select first emoji category.
-        $("div.emojisearch-category")[0].click();
+        container.find("div.emojisearch-category")[0].click();
 
         // Handle selecting an emoji.
-        $(".emojisearch-element").click(function() {
+        container.find(".emojisearch-element").click(function() {
             var emoji = $(this).attr("text");
-            var textcontrol = $(textbox);
 
-            var start = getCursorStart(textcontrol);
-            var end = getCursorEnd(textcontrol);
-            if (end === null) {
-                end = start;
+            if (callback) {
+                hide();
+                callback(emoji);
+            } else {
+                var textcontrol = $(control);
+
+                var start = getCursorStart(textcontrol);
+                var end = getCursorEnd(textcontrol);
+                if (end === null) {
+                    end = start;
+                }
+
+                if (start !== null && end !== null) {
+                    var val = textcontrol.val();
+
+                    const newval = val.slice(0, start) + emoji + val.slice(end);
+                    textcontrol.val(newval);
+                    textcontrol.setCursorPosition(start + emoji.length);
+                }
+
+                hide();
+                textcontrol.focus();
             }
-
-            if (start !== null && end !== null) {
-                var val = textcontrol.val();
-
-                const newval = val.slice(0, start) + emoji + val.slice(end);
-                textcontrol.val(newval);
-                textcontrol.setCursorPosition(start + emoji.length);
-            }
-
-            hide();
-            textcontrol.focus();
         });
     }
 
     function show() {
+        if (!container) {
+            return;
+        }
+
         // Construct element
         displayed = true;
-        $('div.emojisearch').show();
+        container.show();
 
         // Broadcast that we're open.
         state.setState("search");
 
         // Position ourselves!
-        const offset = $(textbox).offset();
-        const width = $(textbox).outerWidth();
-        const height = $('div.emojisearch').height();
+        const offset = $(control).offset();
+        const width = $(control).outerWidth();
+        const height = container.height();
 
-        $('div.emojisearch').offset({top: offset.top - (height + 2), left:offset.left});
-        $('div.emojisearch').width(width - 2);
+        container.offset({top: offset.top - (height + 2), left:offset.left});
+        container.width(width - 2);
 
         // Make sure search typeahead is focused.
-        $('#emojisearch-text').val("");
-        $('#emojisearch-text').focus();
+        container.find('#emojisearch-text').val("");
+        container.find('#emojisearch-text').focus();
 
         // Make sure the emoji button stays highlighted.
         if (!$(button).hasClass("opened")) {
@@ -209,6 +228,10 @@ export function emojisearch(state, button, textbox, items) {
     }
 
     function hide() {
+        if (!container) {
+            return;
+        }
+
         displayed = false;
 
         // Broadcast that we're closed.
@@ -217,15 +240,15 @@ export function emojisearch(state, button, textbox, items) {
         }
 
         // Hide our top level.
-        $('div.emojisearch').hide();
+        container.hide();
 
         // Also make sure search is cleared.
-        var searchVal = $("#emojisearch-text").val();
+        var searchVal = container.find("#emojisearch-text").val();
         if (searchVal != "") {
-            $("#emojisearch-text").val("");
+            container.find("#emojisearch-text").val("");
 
             // Erased search, put us back to normal.
-            $("div.emojisearch-category").each(function(i, elem) {
+            container.find("div.emojisearch-category").each(function(i, elem) {
                 var elemCat = $(elem).attr("category");
                 if (elemCat == lastCategory) {
                     $(elem).click();
@@ -255,12 +278,12 @@ export function emojisearch(state, button, textbox, items) {
     });
 
     // Handle searching for an emoji.
-    $("#emojisearch-text").on('input', function() {
+    container.find("#emojisearch-text").on('input', function() {
         var searchInput = $(this).val().toLowerCase();
 
         if (searchInput == "") {
             // Erased search, put us back to normal.
-            $("div.emojisearch-category").each(function(i, elem) {
+            container.find("div.emojisearch-category").each(function(i, elem) {
                 var elemCat = $(elem).attr("category");
                 if (elemCat == lastCategory) {
                     $(elem).click();
@@ -270,13 +293,13 @@ export function emojisearch(state, button, textbox, items) {
         }
 
         // Make sure all categories are highlighted.
-        $("div.emojisearch-category").each(function(i, elem) {
+        container.find("div.emojisearch-category").each(function(i, elem) {
             if (!$(elem).hasClass("selected")) {
                 $(elem).addClass("selected");
             }
         });
 
-        $("div.emojisearch-element").each(function(i, elem) {
+        container.find("div.emojisearch-element").each(function(i, elem) {
             var elemText = $(elem).attr("text").toLowerCase();
             if (elemText.includes(searchInput)) {
                 $(elem).show();
@@ -287,7 +310,11 @@ export function emojisearch(state, button, textbox, items) {
     });
 
     // Handle toggling the search open or closed.
-    $(button).click(function () {
+    $(button).on('click', (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        event.stopImmediatePropagation();
+
         if (displayed) {
             hide();
         } else {
@@ -295,11 +322,11 @@ export function emojisearch(state, button, textbox, items) {
         }
     });
 
-    $("#emojisearch-text").on('keydown', function(event) {
+    container.find("#emojisearch-text").on('keydown', function(event) {
         // Are we closing the search?
         if(event.key == "Escape") {
             hide();
-            $(textbox).focus();
+            $(control).focus();
         }
     });
 
@@ -312,9 +339,44 @@ export function emojisearch(state, button, textbox, items) {
 
     // Provide a callback so that our caller can inform us of new emoji.
     function update(newitems) {
+        if (!container) {
+            return;
+        }
+
         populate(newitems);
         hook();
     }
 
-    return update;
+    // Provide a way to kill this control.
+    function destroy() {
+        hide();
+
+        if (container) {
+            container.remove();
+            container = undefined;
+        }
+    }
+
+    // Provide a way to reparent this control.
+    function reparent(newcontrol) {
+        control = newcontrol;
+        if (displayed) {
+            show();
+        }
+
+        $(button).off();
+        $(button).on('click', (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            event.stopImmediatePropagation();
+
+            if (displayed) {
+                hide();
+            } else {
+                show();
+            }
+        });
+    }
+
+    return {'reparent': reparent, 'update': update, 'hide': hide, 'destroy': destroy};
 }
