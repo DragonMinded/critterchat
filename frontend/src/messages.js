@@ -315,6 +315,8 @@ class Messages {
                     this.eventBus.emit("reaction", {"actionid": id, "reaction": data, "type": "add"})
                 }
             });
+        } else {
+            this.reactions = undefined;
         }
 
         // Set up custom emotes, as well as normal emoji typeahead.
@@ -1007,6 +1009,10 @@ class Messages {
 
         this.emojisearchUpdate.update(this.emojiSearchOptions);
         this._updateUsers();
+
+        if (this.reactions) {
+            this.reactions.addEmotes( mapping );
+        }
     }
 
     /**
@@ -1016,12 +1022,16 @@ class Messages {
      */
     deleteEmotes( aliases ) {
         aliases.forEach((alias) => {
-            delete emotes[alias];
+            delete window.emotes[alias];
             this.autocompleteOptions = this.autocompleteOptions.filter((option) => !(option.type == "emote" && option.text == alias));
             this.emojiSearchOptions = this.emojiSearchOptions.filter((option) => !(option.type == "emote" && option.text == alias));
         });
         this.emojisearchUpdate.update(this.emojiSearchOptions);
         this._updateUsers();
+
+        if (this.reactions) {
+            this.reactions.deleteEmotes( aliases );
+        }
     }
 
     /**

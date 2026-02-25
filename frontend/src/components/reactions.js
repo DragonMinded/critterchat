@@ -20,7 +20,9 @@ class Reactions {
         this.callback = callback;
         this.hovering = false;
         this.id = undefined;
-        this.search = emojisearch(this.inputState, '.custom-reaction', $('<div />'), this._getEmojiSearchOptions(), (value) => {
+
+        this.emojiSearchOptions = this._getEmojiSearchOptions();
+        this.search = emojisearch(this.inputState, '.custom-reaction', $('<div />'), this.emojiSearchOptions, (value) => {
             if (this.id && value) {
                 this.callback(this.id, 'reaction', value);
             }
@@ -66,6 +68,35 @@ class Reactions {
         }
 
         return emojiSearchOptions;
+    }
+
+    /**
+     * Called whenever the manager is notified of new custom emotes that were added to the server. Whenever
+     * an emote is live-added, update the autocomplete typeahead and emoji search popover for that emote.
+     */
+    addEmotes( mapping ) {
+        for (const [alias, details] of Object.entries(mapping)) {
+            const src = "src=\"" + details.uri + "\"";
+            const dims = "width=\"" + details.dimensions[0] + "\" height=\"" + details.dimensions[1] + "\"";
+
+            this.emojiSearchOptions.push(
+                {text: alias, type: "emote", preview: "<img class=\"emoji-preview\" " + src + " " + dims + " loading=\"lazy\" />"}
+            );
+        }
+
+        this.search.update(this.emojiSearchOptions);
+    }
+
+    /**
+     * Called whenever the manager is notified of custom emotes that were removed from the server. Whenever
+     * an emote is live-removed, update the autocomplete typeahead and emoji search popover to remove that
+     * emote.
+     */
+    deleteEmotes( aliases ) {
+        aliases.forEach((alias) => {
+            this.emojiSearchOptions = this.emojiSearchOptions.filter((option) => !(option.type == "emote" && option.text == alias));
+        });
+        this.search.update(this.emojiSearchOptions);
     }
 
     show( id ) {
