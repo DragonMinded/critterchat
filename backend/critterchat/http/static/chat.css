@@ -1299,7 +1299,7 @@ div.reactions-popover div.reactions-controls {
     background: var(--input-button-background);
     border-radius: var(--input-border-radius);
     padding: var(--application-item-padding);
-    margin-left: 50px;
+    margin-left: 75px;
 }
 
 div.reactions-controls button.reaction, div.reactions-controls button.custom-reaction {
