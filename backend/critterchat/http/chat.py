@@ -15,7 +15,7 @@ from .app import (
 )
 from ..common import get_emoji_unicode_dict, get_aliases_unicode_dict, EMOJI_CATEGORIES
 from ..data import DefaultAvatarID, DefaultRoomID, FaviconID, User, UserPermission
-from ..service import AttachmentService, EmoteService
+from ..service import AttachmentService, EmoteService, MessageService
 
 
 chat = Blueprint(
@@ -31,6 +31,7 @@ chat = Blueprint(
 def home() -> Response:
     attachmentservice = AttachmentService(g.config, g.data)
     emoteservice = EmoteService(g.config, g.data)
+    messageservice = MessageService(g.config, g.data)
 
     emojis = {
         **get_emoji_unicode_dict('en'),
@@ -44,6 +45,7 @@ def home() -> Response:
     permissions = set() if (not g.user) else g.user.permissions
     jsname = get_frontend_filename()
     cachebust = get_frontend_version() + "-" + get_fingerprint_hash()
+    defaultreactions = [r for r in g.config.reactions.defaults if messageservice.validate_reaction(f":{r}:")]
 
     return Response(render_template(
         "home/chat.html",
@@ -65,7 +67,7 @@ def home() -> Response:
         maxattachments=g.config.limits.attachment_max,
         maxattachmentsize=g.config.limits.attachment_size,
         reactionsenabled=g.config.reactions.enabled,
-        reactionsdefaults=g.config.reactions.defaults,
+        reactionsdefaults=defaultreactions,
         defavi=attachmentservice.get_attachment_url(DefaultAvatarID),
         defroom=attachmentservice.get_attachment_url(DefaultRoomID),
         favicon=attachmentservice.get_attachment_url(FaviconID),
@@ -79,6 +81,7 @@ def home() -> Response:
 def config() -> dict[str, object]:
     attachmentservice = AttachmentService(g.config, g.data)
     emoteservice = EmoteService(g.config, g.data)
+    messageservice = MessageService(g.config, g.data)
 
     emojis = {
         **get_emoji_unicode_dict('en'),
@@ -90,6 +93,7 @@ def config() -> dict[str, object]:
     userid = None if (not g.user) else User.from_id(g.user.id)
     username = None if (not g.user) else g.user.username
     permissions = set() if (not g.user) else g.user.permissions
+    defaultreactions = [r for r in g.config.reactions.defaults if messageservice.validate_reaction(f":{r}:")]
 
     return {
         "title": g.config.name,
@@ -108,7 +112,7 @@ def config() -> dict[str, object]:
         "maxattachments": g.config.limits.attachment_max,
         "maxattachmentsize": g.config.limits.attachment_size,
         "reactionsenabled": g.config.reactions.enabled,
-        "reactionsdefaults": g.config.reactions.defaults,
+        "reactionsdefaults": defaultreactions,
         "defavi": attachmentservice.get_attachment_url(DefaultAvatarID),
         "defroom": attachmentservice.get_attachment_url(DefaultRoomID),
         "favicon": attachmentservice.get_attachment_url(FaviconID),

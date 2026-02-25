@@ -398,7 +398,7 @@ def list_emotes(config: Config, only_broken: bool) -> None:
     names = sorted([e for e in emotes])
     for name in names:
         if only_broken:
-            if emoteservice.validate_emote(name):
+            if emoteservice.validate_emote(name, check_data=True):
                 continue
 
         print(f"{name}")

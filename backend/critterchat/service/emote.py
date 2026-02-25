@@ -1,5 +1,6 @@
 from typing import cast
 
+from ..common import get_emoji_unicode_dict, get_aliases_unicode_dict
 from ..config import Config
 from ..data import Data, Emote, MetadataType
 from .attachment import AttachmentService, AttachmentServiceUnsupportedImageException, AttachmentServiceException
@@ -9,11 +10,34 @@ class EmoteServiceException(Exception):
     pass
 
 
+_valid_emojis: set[str] | None = None
+
+
 class EmoteService:
     def __init__(self, config: Config, data: Data) -> None:
         self.__config = config
         self.__data = data
         self.__attachments = AttachmentService(self.__config, self.__data)
+
+    def get_all_emojis(self) -> set[str]:
+        # Returns all valid emojis we know about, given our categories. Not used for much, but
+        # used when validating reactions for example.
+        global _valid_emojis
+        if _valid_emojis:
+            return _valid_emojis
+
+        emojis = {
+            **get_emoji_unicode_dict('en'),
+            **get_aliases_unicode_dict(),
+        }
+
+        def strip_colons(string: str) -> str:
+            if string and string[0] == ":" and string[-1] == ":":
+                return string[1:-1]
+            return string
+
+        _valid_emojis = set(strip_colons(s) for s in emojis.keys())
+        return _valid_emojis
 
     def get_all_emotes(self) -> dict[str, Emote]:
         emotes = self.__data.attachment.get_emotes()
@@ -27,7 +51,7 @@ class EmoteService:
             )
         return results
 
-    def validate_emote(self, alias: str) -> bool:
+    def validate_emote(self, alias: str, check_data: bool = False) -> bool:
         # First, sanitize the name of the emote.
         alias = alias.lower()
         for c in alias:
@@ -38,6 +62,10 @@ class EmoteService:
         if not emote:
             return False
 
+        if not check_data:
+            return True
+
+        # This can be expensive depending on the backend, so only do it when necessary.
         attachment = self.__attachments.get_attachment_data(emote.attachmentid)
         return attachment is not None
 

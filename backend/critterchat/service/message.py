@@ -28,6 +28,7 @@ from ..data import (
     UserID,
 )
 from .attachment import AttachmentService
+from .emote import EmoteService
 
 
 class MessageServiceException(Exception):
@@ -41,6 +42,7 @@ class MessageService:
         self.__config = config
         self.__data = data
         self.__attachments = AttachmentService(self.__config, self.__data)
+        self.__emotes = EmoteService(self.__config, self.__data)
 
     def migrate_legacy_names(self) -> None:
         # TODO: Once the implementation for per-room nicknames is done, this will need to
@@ -194,6 +196,24 @@ class MessageService:
     def lookup_action(self, actionid: ActionID) -> Action | None:
         return self.__data.room.get_action(actionid)
 
+    def validate_reaction(self, reaction: str) -> bool:
+        if not reaction:
+            return False
+        if reaction[0] != ":" or reaction[-1] != ":":
+            return False
+        actual = reaction[1:-1]
+
+        # First, see if it is one of the valid emojis we have in our category list.
+        if actual in self.__emotes.get_all_emojis():
+            return True
+
+        # Now, see if it is a custom emote.
+        if self.__emotes.validate_emote(actual):
+            return True
+
+        # Wasn't a custom emote, nor one of our emojis. Reject it.
+        return False
+
     def add_reaction(self, userid: UserID, actionid: ActionID, reaction: str) -> None:
         self._modify_reaction(userid, actionid, reaction, "add")
 
@@ -201,7 +221,9 @@ class MessageService:
         self._modify_reaction(userid, actionid, reaction, "remove")
 
     def _modify_reaction(self, userid: UserID, actionid: ActionID, reaction: str, delta: Literal["add", "remove"]) -> None:
-        # TODO: Verify that the reaction is a valid emote or emoji that we recognize.
+        # Verify that the reaction is a valid emote or emoji that we recognize.
+        if not self.validate_reaction(reaction):
+            return
 
         with self.__data.room.lock_actions():
             # Grab the action that we're about to modify.
