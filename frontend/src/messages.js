@@ -181,7 +181,7 @@ class Messages {
 
             });
         }
-        
+
         $( document ).on( 'keydown', (evt) => {
             // Figure out if the user started typing, so we can redirect to the input control.
             const key = evt.key;
@@ -310,7 +310,7 @@ class Messages {
         this.screenState.registerStateChangeCallback(() => {
             this._updateSize();
             this._sendPendingUpdates();
-            this._ensureScrolled();
+            this._ensureScrolled(false);
         });
 
         this._updateSize();
@@ -1075,10 +1075,27 @@ class Messages {
                 if (window.emojis[reaction] || window.emotes[reaction]) {
                     const occupants = reactions[reaction];
                     if (occupants) {
-                        const image = escapeHtml(reaction);
-                        const count = occupants.length;
-                        var classes = "reaction";
+                        var reacted = "";
+                        if (this.occupantsLoaded) {
+                            occupants.forEach((occupant) => {
+                                this.occupants.forEach((possible) => {
+                                    if (possible.id == occupant) {
+                                        if (reacted) {
+                                            reacted += ", ";
+                                        }
+                                        reacted += "@" + possible.username;
+                                    }
+                                });
+                            });
+                        }
 
+                        const image = escapeHtml(reaction);
+                        const count = $('<span />')
+                            .text(occupants.length)
+                            .attr('title', reacted)
+                            .prop('outerHTML');
+
+                        var classes = "reaction";
                         if (this.myself && occupants.includes(this.myself.id)) {
                             classes += " chosen";
                         }
@@ -1125,6 +1142,10 @@ class Messages {
 
                 const drawnReactions = messages.find('div.reactions#' + message.id);
                 drawnReactions.html(this._drawReactions(message.details.reactions, message.details.reactions_order));
+
+                // Make sure reactions on the last message are visible, but don't badge new
+                // messages if we're scrolled up.
+                this._ensureScrolled(false);
             }
         } else {
             // Now, draw it fresh since it's not an update.

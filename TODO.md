@@ -2,8 +2,6 @@ TODO Immediate
 ==============
 
  - Reaction tap and hold does not always work on mobile.
- - Need to scroll down after modifying a message with new reactions.
- - Need a way to see who reacted what on a message.
 
 TODO For Public Instance
 ========================
