@@ -2,6 +2,7 @@ TODO Immediate
 ==============
 
  - Reaction tap and hold does not always work on mobile.
+ - Need to scroll down after modifying a message with new reactions.
 
 TODO For Public Instance
 ========================
