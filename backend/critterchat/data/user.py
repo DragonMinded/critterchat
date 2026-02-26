@@ -711,20 +711,24 @@ class UserData(BaseData):
         return False
 
     def get_last_user_update(self) -> int | None:
-        sql = """
-            SELECT timestamp FROM profile ORDER BY timestamp DESC LIMIT 1
-        """
         last_update: int | None = None
 
-        cursor = self.execute(sql)
+        cursor = self.execute("SELECT timestamp FROM profile ORDER BY timestamp DESC LIMIT 1")
         if cursor.rowcount == 1:
             result = cursor.mappings().fetchone()
             last_update = int(result['timestamp']) if result['timestamp'] else None
 
-        sql = """
-            SELECT timestamp FROM user ORDER BY timestamp DESC LIMIT 1
-        """
-        cursor = self.execute(sql)
+        cursor = self.execute("SELECT timestamp FROM user ORDER BY timestamp DESC LIMIT 1")
+        if cursor.rowcount == 1:
+            result = cursor.mappings().fetchone()
+            newer_update = int(result['timestamp']) if result['timestamp'] else None
+
+            if last_update is None:
+                last_update = newer_update
+            elif last_update is not None and newer_update is not None:
+                last_update = max(last_update, newer_update)
+
+        cursor = self.execute("SELECT timestamp FROM preferences ORDER BY timestamp DESC LIMIT 1")
         if cursor.rowcount == 1:
             result = cursor.mappings().fetchone()
             newer_update = int(result['timestamp']) if result['timestamp'] else None
