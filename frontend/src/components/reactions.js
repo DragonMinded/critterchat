@@ -90,8 +90,8 @@ class Reactions {
         this.search.update(this.emojiSearchOptions);
     }
 
-    show( id ) {
-        if (this.id == id) {
+    show( id, force ) {
+        if (this.id == id && !force) {
             // Ignore this.
             return;
         }

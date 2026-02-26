@@ -1,8 +1,6 @@
 TODO Immediate
 ==============
 
- - Reaction tap and hold does not always work on mobile.
-
 TODO For Public Instance
 ========================
 

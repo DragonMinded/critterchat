@@ -137,12 +137,19 @@ class Messages {
                 }
             });
 
-            $( document ).onHold("div.item div.message, div.item div.attachments, div.item div.reactions", 750, (elem) => {
-                const id = this._getMessageID(elem);
-                if (id) {
-                    this.reactions.show( id );
-                }
-            });
+            const touchCapable = ('ontouchstart' in window);
+            if (touchCapable) {
+                $( document ).on("contextmenu", "div.item div.message, div.item div.attachments", (event) => {
+                    const id = this._getMessageID(event.target);
+                    if (id) {
+                        event.preventDefault();
+                        event.stopPropagation();
+                        event.stopImmediatePropagation();
+
+                        this.reactions.show( id, true );
+                    }
+                });
+            }
 
             $( "div" ).on("mouseenter", () => {
                 this.reactions.hide();
