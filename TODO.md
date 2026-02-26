@@ -26,3 +26,4 @@ TODO Low Priority
  - Better integration with Mastodon OAuth that saves client token and only revalidates when needed.
  - Attachment thumbnails so larger images don't get downloaded on slow connections on display.
  - Role groups, for moderators and public room visibility, including auto-join on add to group.
+ - Better autocomplete that lets you scroll down past the first 10 entries.
