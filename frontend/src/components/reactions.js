@@ -1,6 +1,6 @@
 import $ from "jquery";
-import { escapeHtml } from "../utils.js";
-import { emojisearch } from "../components/emojisearch.js";
+import { escapeHtml, findElement } from "../utils.js";
+import { EmojiSearch } from "../components/emojisearch.js";
 
 const searchOptions = {
     attributes: function( _icon, _variant ) {
@@ -22,7 +22,7 @@ class Reactions {
         this.id = undefined;
 
         this.emojiSearchOptions = this._getEmojiSearchOptions();
-        this.search = emojisearch(this.inputState, '.custom-reaction', $('<div />'), this.emojiSearchOptions, (value) => {
+        this.search = new EmojiSearch(this.inputState, '.custom-reaction', $('<div />'), this.emojiSearchOptions, (value) => {
             if (this.id && value) {
                 this.callback(this.id, 'reaction', value);
             }
@@ -33,17 +33,8 @@ class Reactions {
             event.stopPropagation();
             event.stopImmediatePropagation();
 
-            var value = undefined;
-            var target = $(event.target);
-
-            while (target.prop("tagName") && target.prop("tagName").toLowerCase() != "html") {
-                value = target.attr('data');
-                if (value) {
-                    break;
-                }
-
-                target = target.parent();
-            }
+            const target = findElement(event.target, "button", "data", "reaction");
+            const value = target ? target.attr("data") : undefined;
 
             if (this.id && value) {
                 this.callback(this.id, 'reaction', value);

@@ -9,8 +9,9 @@ import {
     isInViewport,
     containsStandaloneText,
     highlightStandaloneText,
+    findElement,
 } from "./utils.js";
-import { emojisearch } from "./components/emojisearch.js";
+import { EmojiSearch } from "./components/emojisearch.js";
 import { autocomplete } from "./components/autocomplete.js";
 import { UploadPicker } from "./components/uploadpicker.js";
 import { Reactions } from "./components/reactions.js";
@@ -156,20 +157,11 @@ class Messages {
                 event.stopPropagation();
                 event.stopImmediatePropagation();
 
-                var jqe = $(event.target);
-                const id = this._getMessageID(jqe);
-                var reaction = undefined;
-                var selected = false;
+                const id = this._getMessageID(event.target);
+                const jqe = findElement(event.target, "button", "data");
 
-                while (jqe.prop("tagName") && jqe.prop("tagName").toLowerCase() != "html") {
-                    reaction = jqe.attr('data');
-                    selected = jqe.hasClass('chosen');
-                    if (reaction) {
-                        break;
-                    }
-
-                    jqe = jqe.parent();
-                }
+                var reaction = jqe ? jqe.attr('data') : undefined;
+                var selected = jqe ? jqe.hasClass('chosen') : false;
 
                 if (id && reaction) {
                     if (selected) {
@@ -178,7 +170,18 @@ class Messages {
                         this.eventBus.emit("reaction", {"actionid": id, "reaction": reaction, "type": "add"});
                     }
                 }
+            });
 
+            $( document ).on("click", "div.reactions button.add-reaction", (event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                event.stopImmediatePropagation();
+
+                const jqe = findElement(event.target, "button", null, "add-reaction");
+                if (!this.reactionSearchUpdate.bound(jqe)) {
+                    this.reactions.hide( true );
+                    this.reactionSearchUpdate.show(jqe, jqe);
+                }
             });
         }
 
@@ -352,7 +355,24 @@ class Messages {
                 {text: key, type: "emote", preview: "<img class=\"emoji-preview\" " + src + " " + dims + " loading=\"lazy\" />"}
             );
         }
-        this.emojisearchUpdate = emojisearch(this.inputState, '.emoji-search', '#message', this.emojiSearchOptions);
+        this.emojisearchUpdate = new EmojiSearch(this.inputState, '.emoji-search', '#message', this.emojiSearchOptions);
+
+        if (window.reactionsenabled) {
+            this.reactionSearchUpdate = new EmojiSearch(
+                this.inputState,
+                $('<div />'),
+                $('<div />'),
+                this.emojiSearchOptions,
+                (value, control) => {
+                    const id = this._getMessageID(control);
+                    if (id && value) {
+                        this.eventBus.emit("reaction", {"actionid": id, "reaction": value, "type": "add"});
+                    }
+                },
+            );
+        } else {
+            this.reactionSearchUpdate = undefined;
+        }
 
         // Support tab-completing users as well.
         this.autocompleteUpdate = autocomplete(this.inputState, '#message', this.autocompleteOptions);
@@ -369,19 +389,12 @@ class Messages {
      * current element, walks the parent until it's found.
      */
     _getMessageID( elem ) {
-        while (true) {
-            const id = $(elem).attr('id');
-            if (id) {
-                return id;
-            }
-
-            const tag = $(elem).prop("tagName");
-            if (!tag || tag.toLowerCase() == "html") {
-                return undefined;
-            }
-
-            elem = $(elem).parent();
+        const jqe = findElement(elem, "div", "id");
+        if (!jqe) {
+            return undefined;
         }
+
+        return jqe.attr('id');
     }
 
     /**
@@ -1024,6 +1037,9 @@ class Messages {
         if (this.reactions) {
             this.reactions.addEmotes( mapping );
         }
+        if (this.reactionSearchUpdate) {
+            this.reactionSearchUpdate.update(this.emojiSearchOptions);
+        }
     }
 
     /**
@@ -1042,6 +1058,9 @@ class Messages {
 
         if (this.reactions) {
             this.reactions.deleteEmotes( aliases );
+        }
+        if (this.reactionSearchUpdate) {
+            this.reactionSearchUpdate.update(this.emojiSearchOptions);
         }
     }
 
@@ -1108,6 +1127,13 @@ class Messages {
                     }
                 }
             });
+
+            if (html) {
+                const search = $('<button class="add-reaction"></button>');
+                $('<div class="maskable search-svg"></div>').appendTo(search);
+                $('<span />').text('+').appendTo(search);
+                html += search.prop('outerHTML');
+            }
 
             return html;
         }

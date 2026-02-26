@@ -1255,7 +1255,7 @@ div.conversation div.reactions:empty {
     display: none;
 }
 
-div.reactions button.reaction {
+div.reactions button.reaction, div.reactions button.add-reaction {
     cursor: pointer;
     display: flex;
     gap: var(--application-item-padding);
@@ -1265,6 +1265,10 @@ div.reactions button.reaction {
     color: var(--input-button-text);
     padding: var(--application-item-padding);
     font-size: var(--application-text-size-12);
+}
+
+div.reactions button.add-reaction div.search-svg {
+    margin-right: -0.2em;
 }
 
 div.reactions button.reaction.chosen {

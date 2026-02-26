@@ -297,6 +297,49 @@ const highlightStandaloneText = function( haystack, needle, before, after ) {
     return haystack;
 }
 
+/**
+ * Search through a control and all its parents, trying to find a parent that matches
+ * these properties. Note that any of these properties can be undefined, but not all.
+ */
+const findElement = function( elem, tag, prop, hasClass ) {
+    var jqe = $(elem);
+    tag = tag.toLowerCase();
+
+    while (true) {
+        // If the element doesn't even have a tag name, we've exhausted our search.
+        const tagName = jqe.prop('tagName');
+        if (!tagName) {
+            return undefined;
+        }
+
+        // If we ran into a html tag we've exhausted our search.
+        const lowerTagName = tagName.toLowerCase();
+        if (lowerTagName == "html") {
+            return undefined;
+        }
+
+        // Now, if the tag doesn't match, this isn't our element.
+        if (tag != lowerTagName) {
+            jqe = jqe.parent();
+            continue;
+        }
+
+        // Now, if the prop is set and we don't have this prop, it isn't our element.
+        if (prop && !jqe.attr(prop)) {
+            jqe = jqe.parent();
+            continue;
+        }
+
+        // Now, if the class is set and we don't have this class, it isn't our element.
+        if (hasClass && !jqe.hasClass(hasClass)) {
+            jqe = jqe.parent();
+            continue;
+        }
+
+        // We found our match!
+        return jqe;
+    }
+}
 
 export {
     escapeHtml,
@@ -311,4 +354,5 @@ export {
     getSelectionText,
     containsStandaloneText,
     highlightStandaloneText,
+    findElement,
 };
