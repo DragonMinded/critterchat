@@ -3,6 +3,7 @@ TODO Immediate
 
  - Reaction tap and hold does not always work on mobile.
  - Need to scroll down after modifying a message with new reactions.
+ - Need a way to see who reacted what on a message.
 
 TODO For Public Instance
 ========================
@@ -11,7 +12,6 @@ TODO For Public Instance
  - Start on backend tests.
  - Private group chat creation UI.
  - Private group chat invite UI.
- - Role groups, for moderators and public room visibility, including auto-join on add to group.
 
 TODO Low Priority
 =================
@@ -29,3 +29,4 @@ TODO Low Priority
  - Unlink existing local account from an OAuth provider.
  - Better integration with Mastodon OAuth that saves client token and only revalidates when needed.
  - Attachment thumbnails so larger images don't get downloaded on slow connections on display.
+ - Role groups, for moderators and public room visibility, including auto-join on add to group.
