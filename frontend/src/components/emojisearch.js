@@ -19,6 +19,8 @@ function getCursorEnd(element) {
     return null;
 }
 
+window.EmojiSearch_lastCategory = "";
+
 export class EmojiSearch {
     constructor(state, button, control, items, callback) {
         this.state = state;
@@ -27,7 +29,6 @@ export class EmojiSearch {
         this.callback = callback;
 
         this.displayed = false;
-        this._lastCategory = "";
 
         // Create our picker, hide it.
         this._container = $('<div class="emojisearch"></div>')
@@ -64,7 +65,7 @@ export class EmojiSearch {
                 // Erased search, put us back to normal.
                 this._container.find("div.emojisearch-category").each((i, elem) => {
                     var elemCat = $(elem).attr("category");
-                    if (elemCat == this._lastCategory) {
+                    if (elemCat == window.EmojiSearch_lastCategory) {
                         $(elem).click();
                     }
                 });
@@ -222,7 +223,7 @@ export class EmojiSearch {
 
             const target = findElement(event.target, "div", "category", "emojisearch-category");
             const category = target.attr("category");
-            this._lastCategory = category;
+            window.EmojiSearch_lastCategory = category;
 
             this._container.find("div.emojisearch-category").each((i, elem) => {
                 var elemCat = $(elem).attr("category");
@@ -324,6 +325,14 @@ export class EmojiSearch {
         this._container.offset({top: start, left: left});
         this._container.width(width);
 
+        // Make sure the last chosen emoji category globally is selected.
+        this._container.find("div.emojisearch-category").each((i, elem) => {
+            var elemCat = $(elem).attr("category");
+            if (elemCat == window.EmojiSearch_lastCategory) {
+                $(elem).click();
+            }
+        });
+
         // Make sure search typeahead is focused.
         this._container.find('#emojisearch-text').val("");
         this._container.find('#emojisearch-text').focus();
@@ -357,7 +366,7 @@ export class EmojiSearch {
             // Erased search, put us back to normal.
             this._container.find("div.emojisearch-category").each((i, elem) => {
                 var elemCat = $(elem).attr("category");
-                if (elemCat == this._lastCategory) {
+                if (elemCat == window.EmojiSearch_lastCategory) {
                     $(elem).click();
                 }
             });
