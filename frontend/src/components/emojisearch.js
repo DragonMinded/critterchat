@@ -302,6 +302,7 @@ export class EmojiSearch {
         var start = offset.top - (height + 2);
 
         const minWidth = 250;
+        const minPadding = 5;
         if (this.callback && (width < minWidth)) {
             // We're popping over a custom reaction picker, don't be too small.
             const delta = minWidth - width;
@@ -310,12 +311,17 @@ export class EmojiSearch {
             left -= delta;
         }
 
-        if (this.callback && start < 0) {
-            // We're popping over a reactin picker and the top is cut off.
+        if (this.callback && start < minPadding) {
+            // We're popping over a reaction picker and the top is cut off.
             start = offset.top + $(this.control).outerHeight();
         }
 
-        this._container.offset({top: start, left:left});
+        if (this.callback && left < minPadding) {
+            // We're popping over a reaction picker and the left is cut off.
+            left += (minPadding - left);
+        }
+
+        this._container.offset({top: start, left: left});
         this._container.width(width);
 
         // Make sure search typeahead is focused.
