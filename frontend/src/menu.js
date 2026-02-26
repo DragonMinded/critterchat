@@ -452,6 +452,11 @@ class Menu {
                 (roomType != "dm" && action.action == "leave") ||
                 action.action == "change_info"
             ) {
+                if (action.action == "message" && action.details.modified) {
+                    // Ignore this, this is a reaction.
+                    return;
+                }
+
                 count += 1;
                 if (action.occupant) {
                     if (action.occupant.username != window.username) {
