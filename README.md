@@ -9,17 +9,18 @@ that can be enabled or disabled per-instance.
 
 ## Feature List
 
- - Web frontend with basic mobile and desktop support.
+ - Web frontend with both mobile and desktop support.
  - Public rooms with optional auto-join for new members.
- - Direct messages between users on the instance.
+ - Direct messages between members on the instance.
  - Direct messages and public rooms have an editable name and topic.
- - User profile support with ability to view other chatters' profiles.
+ - Member profile support with ability to view other chatters' profiles.
  - Custom emoji support controlled by the instance administrator.
  - Message reactions, with custom emoji support and multiple reactions per message.
  - Preferences for most appearance settings and optional notification sounds.
  - Image attachment support so images can be sent with messages.
+ - Ability to spoiler a message or an attachment, alt text for attachments.
  - Various sign-up modes such as open registration, admin-approval and invite codes.
- - Integration with Mastodon's OAuth for account creation and auth.
+ - Integration with Mastodon's OAuth for account creation and member authentication.
  - Collects absolutely no personal information, contains no tracking code.
  - Not built with, enabled by or integrated with any generative AI.
 
@@ -42,7 +43,8 @@ that can be enabled or disabled per-instance.
  - Port Myno's Pictochat over from PyStreaming, allow drawing and remixing.
  - Link auto-sanitization to remove tracking info.
  - Multi-account support.
- - Inter-instance direct message and room support.
+ - Inter-instance direct messages, inter-instance OIDC-based authentication.
+ - REST API for bot integration.
 
 ## Needed Help
 
@@ -64,11 +66,12 @@ get in touch so we can work out the direction you plan to take.
 ## Prerequisites
 
 At minimum, you will need a MySQL database or compatible (MariaDB that is recent)
-that is at least 5.7 due to using the JSON column type. You will also need a modern
-version of Python. Recommended version is 3.12 or higher due to being tested only
-on this version. Finally, you will need ffmpeg installed for notification conversion.
-It is heavily recommended to use a production-ready webserver for SSL termination
-and static resources. Something such as nginx should be sufficient.
+that supports at least MySQL 5.7 features due to using the JSON column type. You will
+also need a modern version of Python. Recommended version is 3.12 or higher due to
+being tested only on this version. Finally, you will need ffmpeg installed for
+notification conversion. It is heavily recommended to use a production-ready
+webserver for SSL termination and static resources. Something such as nginx should
+be sufficient.
 
 ## Developing
 
@@ -124,10 +127,9 @@ feature. That means that when you save a python file or a dependency the server
 will auto-reload for you so that you don't have to kill and restart it. Note that
 when doing so, you may get `gevent` exception ignored errors under some circumstances.
 This appears to be a minor incompatibility between the latest gevent and Flask
-when using hot-reloading. This does not seem to affect the server when in production
-mode.
+when using hot-reloading. This does not affect the server when in production mode.
 
-The backend attempts to remain free of lint issues or type checking issues. To
+The backend attempts to remain free of lint issues and type checking issues. To
 verify that you haven't broken anything, you can run `mypy .` and `flake8 .` in
 the `backend/` directory. CritterChat provides configuration for both so you don't
 need to provide any other arguments. Make sure before submitting any PR that you
@@ -181,20 +183,22 @@ npm run debug
 ```
 
 This will compile everything into one file and place it in the correct spot in the
-backend directory so that it can be served. It will also stamp its build hash for
+backend directory so that it can be served. It will also stamp a build hash for
 automatic cache-busting. To see the effects of a new build, refresh the browser
 window that you navigated to in the above backend section when you started the
 debug server. As a reminder, the default is `http://localhost:5678/`.
 
 CritterChat attempts to stay clean of any lint errors. To verify that you haven't
 introduced any issues, you can run `npm run lint` in the `frontend/` directory.
-Make sure to run this before submitting any PR, and ensure that you've cleaned
+It also attempts to keep all tests passing. To verify you haven't broken anything
+under test, you can similarly run `npm run test` in the `frontend/` directory.
+Make sure to run both before submitting any PR and ensure that you've cleaned
 up any warnings or errors that are called out. Note that every time you build
 a new build, the resulting artifacts will be copied to the
 `backend/critterchat/http/static/` directory. This can start getting messy after
 awhile due to the build hash changing every time you make an update. You can
 clean this up by running `npm run clean` in the `frontend/` directory. Note that
-this will delete all builds, including the last one, so you will often want to
+this will delete all builds including the last one, so you will often want to
 follow up by rebuilding for debug or production.
 
 When you're ready to deploy to a production instance, you will obviously want a
@@ -207,17 +211,29 @@ same `frontend/` directory.
 ### Submitting a PR
 
 CritterChat welcomes contributors! Open source software would not work if each
-project only had one maintainer. Make sure that you've tested your changes,
-ensure that the backend is typing and lint clean, and ensure the frontend is
-lint clean. Then, submit a PR to this repo with a description of what you're
+project only had one maintainer. Make sure that you've tested your changes, ensure
+that the backend is typing and lint clean, and ensure the frontend is lint and
+test clean. Then, submit a PR to this repo with a description of what you're
 modifying, how you tested it, and what you wanted to accomplish with this PR.
 If you are adding new UX or changing something around visually it can help to
 include before and after screenshots. It can also help to describe the intended
 user interactions with your new feature.
 
+If you are going to take a stab at a larger feature, please open a discussion as
+a GitHub issue first. There's nothing worse than finding out after the fact that
+your hard work can't be merged for whatever reason. Please be collaborative with
+the maintainers from the beginning to ensure the greatest chance of success with
+the least amount of wasted effort.
+
+Note that this repository does not accept generative AI contributions. If you are
+not going to do the work yourself, please do not attempt to open a PR. Not only
+is this highly unethical and can not be copyrighted but there's a high chance
+you didn't actually review the code, leading to an additional burden on the
+maintainers of CritterChat.
+
 ## Running in Production
 
-CritterChat uses nginx for SSL termination as well as static resources server
+CritterChat uses nginx for SSL termination as well as a static resources server
 for production instances. While it is possible to run an instance without nginx,
 it is not recommended. Offloading static assets takes load off of the server
 itself so that it can concentrate on dynamic requests from clients. Additionally,
@@ -227,7 +243,7 @@ public internet.
 
 In the `example/` directory you'll find a systemd service file for the backend
 as well as an nginx configuration file for the nginx proxy portion. Both are meant
-to be customized for your domain and certs, as well as where you ultimately decide
+to be customized for your domain and certs as well as where you ultimately decide
 to deploy CritterChat for a production instance. For SSL certificates, I recommend
 using `certbot` which is a CLI interface to the Let's Encrypt project. If you want
 to purchase certificates and use them in your nginx config instead you can.
@@ -246,7 +262,7 @@ user.
 Review your config.yaml to ensure that you've modified everything you need to.
 Ensure that the `database` section points at your production database. Make sure
 that the `cookie_key`, `password_key` and `attachment_key` are all set to a
-random string of sufficient length. I recommend keeping them different and using
+random string of sufficient length. I recommend keeping them all different and using
 a random generator that can give you a string of at least 48 characters. Note that
 it is important to select good random values now and not change them in the future.
 Changing these values in a production instance can have undesirable effects. If
@@ -255,14 +271,15 @@ out. If you change `password_key` in production, all passwords will be invalidat
 and you will have to manually change all of them. If you change `attachment_key`
 in a production instance, all existing attachments will 404. So, choose good values
 when setting up your instance and do not modify them. Make sure you rename your
-instance to what you want to call it. Finally, configure the attachment system.
-Right now, only local storage is supported, so leave it set to local, and leave
+instance to what you want to call it and edit the instance info text file to
+include any rules or code of conduct. Finally, configure the attachment system.
+Right now, only local storage is supported, so leave it set to local and leave
 the prefix as-is. Update the directory to the absolute path of the attachment
 directory you created above.
 
 Now that your config is updated, create a Python virtual environment for the
 production installation. I recommend sticking it in the deployed folder under a
-directory called `venv` or similar. It doesn't matter where it is, but you'll
+directory called `venv` or similar. It doesn't matter where it is but you'll
 want to keep organized. Once you've created that virtual environment you'll
 be activating it every time you want to install updates. For now, activate it
 and install the initial production instance by going into the `backend/`
@@ -301,12 +318,12 @@ use `journalctl -u critterchat` to see logs and verify that it started successfu
 Finally, we will set up the nginx proxy which will actually serve the production
 traffic. Make a copy of the `example/critterchat-nginx-conf` file and place it
 into `/etc/nginx/sites-available`. Edit the `server_name` line everywhere it appears
-and change it to the domain that you are running this under. Don't forget to edit
-the `return` line in the top portion of the file to auto-promote non-SSL traffic
-to SSL. Update the SSL certificate lines near the top and in the location directives
-to point at your SSL certificates you obtained through `certbot` or through
-purchasing certificates. Update all `proxy_pass` lines and ensure that the port
-listed there is the same one that you chose in your systemd service configuration
+and change it to the domain or subdomain that you are running this under. Don't
+forget to edit the `return` line in the top portion of the file to auto-promote
+non-SSL traffic to SSL. Update the SSL certificate lines near the top and in the
+location directives to point at your SSL certificates you obtained through `certbot`
+or through purchasing certificates. Update all `proxy_pass` lines and ensure that
+the port listed there is the same one that you chose in your systemd service configuration
 above. Update the `alias` line under the `/attachments` location to point to the
 same absolute path you configured for your attachments in your config.yaml. Update
 the `alias` line under the `/static` location prefix to the same absolute path
@@ -315,26 +332,30 @@ you created for your venv. Take careful note to only edit the portion before the
 static resources.
 
 Now, once this is done, symlink the file you just created into `/etc/nginx/sites-enabled`
-to activate this and restart nginx using `systemctl restart nginx`. Once
-the restart is complete, you should have a production instance of CritterChat running
-on the domain you've chosen!
+to activate this and restart nginx using `systemctl restart nginx`. Once the restart
+is complete you should have a production instance of CritterChat running on the
+domain you've chosen!
 
 ### Administration
 
 Most of the administration for the server can be done in the CLI. At some point
-I would like to be able to administer through the web interface as well but this
-has not been implemented yet. The main administration interface can be found by
-activating the production virtual environment and then running the following:
+I would like to be able to administer through the web interface as well but outside
+of some basics this has not been implemented yet. The main administration interface
+can be found by activating the production virtual environment and then running the
+following command:
 
 ```
 python3 -m critterchat.manage --help
 ```
 
 This includes a bunch of stuff for adding and removing custom emojis, adding users,
-activating and deactivating existing users, changing a user's password, creating
-public rooms, and managing the auto-join setting for public rooms. In the future
-it will include a host of other helpful utilities. At the moment the software is
-hardcoded to allow open signups but leave users not activated. You can find users
+activating and deactivating existing users, changing a user's password, generating
+a password reset link for a user, creating an invite link to the instance, creating
+public rooms, and managing the auto-join setting for public rooms. If you are using
+one or more Mastodon instances as authentication providers it also provides commands
+for registering against those instances and verifying things work. In the future
+it will include a host of other helpful utilities. At the moment the software defaults
+to allowing open signups but leaves users waiting to be activated. You can find users
 to activate by running the following command:
 
 ```
@@ -348,10 +369,14 @@ python3 -m critterchat.manage --config <path to your production config> user act
 ```
 
 Right now there are virtually no moderator tools. If somebody gets too unruly or
-spicy, you can deactivate their account using the following command. This will log
-them out of all interfaces they're logged in on and prevent them from logging back
-in again.
-
+spicy, you can deactivate their account using the following command. Note that if you
+have set your account as an administrator you can deactivate their account by clicking
+their profile and clicking the "deactivate user" button. Additionally, if you designate
+a room as moderated and one or more moderators for a given public room they can mute
+the user by clicking their profile and clicking the "mute user" button. Muting a user
+will mark them as inactive in the room and stop them from messaging or reacting to messages.
+Deactivating a user will log them out of all interfaces they're logged in on and prevent
+them from logging back in again while also marking them inactive in all rooms they are in.
 
 ```
 python3 -m critterchat.manage --config <path to your production config> user deactivate -u <username>
@@ -360,15 +385,15 @@ python3 -m critterchat.manage --config <path to your production config> user dea
 ### Upgrading Production
 
 Once you've got everything installed, if you want to apply updates that you've
-pulled from anything checked in, you can do so with the following steps. First,
+pulled from this repository, you can do so with the following steps. First,
 actually pull the changes by refreshing your git repository. Go into the `frontend/`
 directory and make sure you've built a new production bundle by running
 `npm run clean && npm run build`. Then, activate the virtual environment you
 created for the production instance. Now, stop the running server by executing
 `systemctl stop critterchat`. Now, in the `backend/` directory, run
 `python3 -m pip install --upgrade .` to upgrade dependencies and install the new
-version of CritterChat. Then run to following command to upgrade your database
-schema to match the new code:
+version of CritterChat. Then run to following command to perform any schema migrations
+that are present in the newly installed code:
 
 ```
 python3 -m critterchat.manage --config <path to your production config> database upgrade
@@ -377,40 +402,52 @@ python3 -m critterchat.manage --config <path to your production config> database
 Finally, once all those steps are done, re-start the backend service with
 `systemctl start critterchat`. If all went according to plan you should have the
 new version running on your instance. Users that are currently logged in should get
-a new update notification banner, and you can refresh the page to load the new version.
+a new update notification banner and you can refresh the page to load the new version.
+Note that it is safe to run this while chatters are connected. While the upgrade is in
+progress they will be blocked from sending new messages and will automatically reconnect
+once the upgrade is successful. As a reminder, you can check the server logs for the
+upgraded instance by running `journalctl -u critterchat`.
 
 An example script that automates the entire upgrade process is available for you to
-modify under `example/update-script`.
+modify under `example/update-script`. Be sure to customize it to your installation.
 
 ## Docker Hosting
 
 ### Getting Started
 
 To launch the default settings, simply clone the repo and navigate to `./critterchat-docker`, then run:
+
 ```
 docker compose up -d
 ```
+
 to launch the app. This uses the config in the `critterchat-docker` folder called `docker.config.yaml` and provides bind mounts for the mysql database as well as the attachments folder. After making a change to the configuration, run:
+
 ```
 docker compose restart
 ```
+
 to reload the instance and load the new settings.
 
 ### Administration
 
 Administration tools and other CLI interfaces can be accessed using:
+
 ```
 docker exec -it CritterChat /bin/sh
 ```
+
 which will drop you to a shell inside the container.
 
 ### Upgrading
 
 This has not been tested thoroughly, but should not cause any data loss since the database and attachments are kept in a bind mount. In theory it should be as simple as:
+
 ```
 docker compose down
 git pull
 docker image rm critterchat-docker-backend:latest
 docker compose up -d
 ```
+
 to pull the new code and relaunch it.
