@@ -50,6 +50,9 @@ class UserService:
                 self.__data.user.update_user(user)
                 self.__notify_user_changed(user.id)
 
+    def get_last_user_update(self) -> int | None:
+        return self.__data.user.get_last_user_update()
+
     def get_settings(self, session: str, userid: UserID) -> UserSettings:
         settings = self.__data.user.get_settings(session)
         if settings:

@@ -46,7 +46,6 @@ class SocketInfo:
 
 
 MESSAGE_PUMP_TICK_SECONDS: Final[float] = 0.05
-MESSAGE_PUMP_ALWAYS_TICK_SECONDS: Final[int] = 1
 EMOJI_REFRESH_TICK_SECONDS: Final[int] = 5
 
 
@@ -83,7 +82,7 @@ def background_thread_proc_impl() -> None:
     # Make sure we can send emote additions and subtractions to the connected clients.
     emotes = {k for k in emoteservice.get_all_emotes()}
     last_emote_update = Time.now()
-    last_user_update = Time.now()
+    last_user_update: int | None = None
     last_action: ActionID | None = None
 
     while True:
@@ -121,21 +120,29 @@ def background_thread_proc_impl() -> None:
 
         # Look for any new actions that should be relayed.
         current_action = messageservice.get_last_action()
-        if current_action == last_action:
-            if (Time.now() - last_user_update) < MESSAGE_PUMP_ALWAYS_TICK_SECONDS:
-                # Nothing to do, skip the expensive part below.
-                continue
+        current_update = userservice.get_last_user_update()
+
+        # Shut down early if we have nothing to poll.
+        global background_thread
+        with socket_lock:
+            if not socket_to_info:
+                logger.info("Shutting down message pump thread due to no more client sockets.")
+                background_thread = None
+
+                return
+
+        if current_action == last_action and current_update == last_user_update:
+            # Nothing to do, skip the expensive part below.
+            continue
 
         last_action = current_action
-        last_user_update = Time.now()
+        last_user_update = current_update
 
         # If we have actual actions, grab who we need to act on and then individually lock.
         # This prevents a misbehaving client from locking the whole network.
         with socket_lock:
             if not socket_to_info:
                 logger.info("Shutting down message pump thread due to no more client sockets.")
-
-                global background_thread
                 background_thread = None
 
                 return

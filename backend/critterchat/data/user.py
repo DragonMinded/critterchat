@@ -38,6 +38,7 @@ user = Table(
     Column("password", String(1024)),
     Column("salt", String(64)),
     Column("permissions", Integer),
+    Column("timestamp", Integer, index=True),
     mysql_charset="utf8mb4",
 )
 
@@ -64,7 +65,7 @@ profile = Table(
     Column("nickname", String(255)),
     Column("about", MediumText),
     Column("icon", Integer),
-    Column("timestamp", Integer),
+    Column("timestamp", Integer, index=True),
     mysql_charset="utf8mb4",
 )
 
@@ -84,7 +85,7 @@ preferences = Table(
     Column("title_notifs", Boolean),
     Column("mobile_audio_notifs", Boolean),
     Column("audio_notifs", Integer),
-    Column("timestamp", Integer),
+    Column("timestamp", Integer, index=True),
     mysql_charset="utf8mb4",
 )
 
@@ -98,7 +99,7 @@ settings = Table(
     Column("user_id", Integer, nullable=False, index=True),
     Column("last_room", Integer),
     Column("info", String(8)),
-    Column("timestamp", Integer),
+    Column("timestamp", Integer, index=True),
     mysql_charset="utf8mb4",
 )
 
@@ -190,8 +191,10 @@ class UserData(BaseData):
             raise Exception("Logic error, should not try to update password for a new user ID!")
 
         passhash, salt = self.__compute_password(password=password)
-        sql = "UPDATE user SET password = :hash, salt = :salt WHERE id = :userid"
-        self.execute(sql, {"hash": passhash, "salt": salt, "userid": userid})
+        now = Time.now()
+
+        sql = "UPDATE user SET password = :hash, salt = :salt, timestamp = :ts WHERE id = :userid"
+        self.execute(sql, {"hash": passhash, "salt": salt, "userid": userid, "ts": now})
 
         # Also nuke any active recovery strings for the user.
         sql = "DELETE FROM session WHERE id = :userid AND type = :optype"
@@ -695,7 +698,43 @@ class UserData(BaseData):
             SELECT user_id FROM profile WHERE user_id = :userid AND timestamp >= :ts
         """
         cursor = self.execute(sql, {"userid": userid, "ts": last_checked})
-        return bool(cursor.rowcount == 1)
+        if cursor.rowcount == 1:
+            return True
+
+        sql = """
+            SELECT id FROM user WHERE id = :userid AND timestamp >= :ts
+        """
+        cursor = self.execute(sql, {"userid": userid, "ts": last_checked})
+        if cursor.rowcount == 1:
+            return True
+
+        return False
+
+    def get_last_user_update(self) -> int | None:
+        sql = """
+            SELECT timestamp FROM profile ORDER BY timestamp DESC LIMIT 1
+        """
+        last_update: int | None = None
+
+        cursor = self.execute(sql)
+        if cursor.rowcount == 1:
+            result = cursor.mappings().fetchone()
+            last_update = int(result['timestamp']) if result['timestamp'] else None
+
+        sql = """
+            SELECT timestamp FROM user ORDER BY timestamp DESC LIMIT 1
+        """
+        cursor = self.execute(sql)
+        if cursor.rowcount == 1:
+            result = cursor.mappings().fetchone()
+            newer_update = int(result['timestamp']) if result['timestamp'] else None
+
+            if last_update is None:
+                last_update = newer_update
+            elif last_update is not None and newer_update is not None:
+                last_update = max(last_update, newer_update)
+
+        return last_update
 
     def update_user(self, user: User) -> None:
         """
@@ -717,6 +756,7 @@ class UserData(BaseData):
         else:
             nickname = user.nickname
 
+        now = Time.now()
         sql = """
             INSERT INTO `profile`
                 (`user_id`, `nickname`, `about`, `icon`, `timestamp`)
@@ -725,16 +765,16 @@ class UserData(BaseData):
             ON DUPLICATE KEY UPDATE
             `nickname` = :name, `about` = :about, `icon` = :iconid, `timestamp` = :ts
         """
-        self.execute(sql, {"userid": user.id, "name": nickname, "about": user.about, "iconid": iconid, "ts": Time.now()})
+        self.execute(sql, {"userid": user.id, "name": nickname, "about": user.about, "iconid": iconid, "ts": now})
 
         permissions: int = 0
         for perm in user.permissions:
             permissions |= perm
 
         sql = """
-            UPDATE `user` SET `permissions` = :perms WHERE `id` = :userid
+            UPDATE `user` SET `permissions` = :perms, timestamp = :ts WHERE `id` = :userid
         """
-        self.execute(sql, {"userid": user.id, "perms": permissions})
+        self.execute(sql, {"userid": user.id, "perms": permissions, "ts": now})
 
     def get_users(self, name: str | None = None) -> list[User]:
         """
