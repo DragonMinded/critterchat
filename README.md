@@ -15,6 +15,7 @@ that can be enabled or disabled per-instance.
  - Direct messages and public rooms have an editable name and topic.
  - User profile support with ability to view other chatters' profiles.
  - Custom emoji support controlled by the instance administrator.
+ - Message reactions, with custom emoji support and multiple reactions per message.
  - Preferences for most appearance settings and optional notification sounds.
  - Image attachment support so images can be sent with messages.
  - Various sign-up modes such as open registration, admin-approval and invite codes.
@@ -26,7 +27,6 @@ that can be enabled or disabled per-instance.
 
  - Message editing.
  - Message deleting.
- - Message reactions.
  - Reply to message.
  - Now typing indicators.
  - Read receipts.
