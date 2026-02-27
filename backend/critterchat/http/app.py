@@ -7,6 +7,7 @@ import traceback
 from functools import wraps
 from typing import Any, Callable, cast
 
+from engineio.payload import Payload  # type: ignore
 from flask import (
     Flask,
     Request,
@@ -59,6 +60,10 @@ class CritterChatFlask(Flask):
         if name and name.startswith("twemoji/"):
             return 86400
         return Flask.get_send_file_max_age(self, name)
+
+
+# Ensure that clients reconnecting after an update don't cause exceptions with too many packets.
+Payload.max_decode_packets = 100
 
 
 logger = logging.getLogger(__name__)
