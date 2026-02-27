@@ -163,7 +163,7 @@ def send_chat_deltas(
         ts = Time.now()
         if userservice.has_updated_user(user.id, profilets):
             userprofile = userservice.lookup_user(user.id)
-            admin = userprofile is not None and UserPermission.ADMINISTRATOR in userprofile.permissions
+            admin = UserPermission.ADMINISTRATOR in user.permissions
             if userprofile:
                 info.profilets = ts
                 socketio.emit('profile', userprofile.to_dict(config=config, admin=admin), room=info.sid)
