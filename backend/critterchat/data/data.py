@@ -1,4 +1,5 @@
 import os
+from typing import Final
 
 import alembic.config
 from alembic.migration import MigrationContext
@@ -16,6 +17,7 @@ from .room import RoomData
 from .attachment import AttachmentData
 from .migration import MigrationData
 from .mastodon import MastodonData
+from .types import ActionID, RoomID, Action, Occupant
 
 
 __all__ = [
@@ -29,13 +31,19 @@ class DBCreateException(Exception):
     pass
 
 
+class RequestCache:
+    def __init__(self) -> None:
+        self.actions: Final[dict[ActionID, Action | None]] = {}
+        self.occupants: Final[dict[RoomID, list[Occupant] | None]] = {}
+
+
 class Data:
     """
     An object that is meant to be used as a singleton, in order to hold DB configuration
     info and provide a set of functions for querying and storing data.
     """
 
-    def __init__(self, config: Config) -> None:
+    def __init__(self, config: Config, session: scoped_session | None = None) -> None:
         """
         Initializes the data object.
 
@@ -43,12 +51,16 @@ class Data:
             config - A config structure with a 'database' section which is used
                      to initialize an internal DB connection.
         """
-        session_factory = sessionmaker(
-            bind=config.database.engine,
-            autoflush=True,
-        )
+        if session is None:
+            session_factory = sessionmaker(
+                bind=config.database.engine,
+                autoflush=True,
+            )
+            self.__session: scoped_session | None = scoped_session(session_factory)
+        else:
+            self.__session = session
+
         self.__config = config
-        self.__session: scoped_session | None = scoped_session(session_factory)
         self.__url = Data.sqlalchemy_url(config)
 
         self.user = UserData(config, self.__session)
@@ -56,6 +68,13 @@ class Data:
         self.attachment = AttachmentData(config, self.__session)
         self.migration = MigrationData(config, self.__session)
         self.mastodon = MastodonData(config, self.__session)
+        self.requestcache = RequestCache()
+
+    def clone(self) -> "Data":
+        if self.__session is None:
+            raise Exception("Logic error, our database connection was not created or we were cloned after closing!")
+
+        return Data(self.__config, self.__session)
 
     @classmethod
     def sqlalchemy_url(cls, config: Config) -> str:

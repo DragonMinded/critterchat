@@ -194,7 +194,9 @@ class MessageService:
         return None
 
     def lookup_action(self, actionid: ActionID) -> Action | None:
-        return self.__data.room.get_action(actionid)
+        if actionid not in self.__data.requestcache.actions:
+            self.__data.requestcache.actions[actionid] = self.__data.room.get_action(actionid)
+        return self.__data.requestcache.actions[actionid]
 
     def validate_reaction(self, reaction: str) -> bool:
         if not reaction:
@@ -517,7 +519,21 @@ class MessageService:
         room = self.__data.room.get_room(roomid)
         if room:
             self.__infer_room_info(userid, room)
+            self.__data.requestcache.occupants[roomid] = room.occupants
+        else:
+            self.__data.requestcache.occupants[roomid] = None
+
         return room
+
+    def lookup_room_occupants(self, roomid: RoomID, userid: UserID) -> list[Occupant] | None:
+        if roomid not in self.__data.requestcache.occupants:
+            room = self.lookup_room(roomid, userid)
+            if room:
+                self.__data.requestcache.occupants[roomid] = room.occupants
+            else:
+                self.__data.requestcache.occupants[roomid] = None
+
+        return self.__data.requestcache.occupants[roomid]
 
     def get_occupant_room(self, occupantid: OccupantID) -> Room | None:
         occupant = self.__data.room.get_room_occupant(occupantid)

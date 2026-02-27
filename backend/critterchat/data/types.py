@@ -209,7 +209,8 @@ class MetadataType(StrEnum):
 
 class Attachment:
     def __init__(
-        self, attachmentid: AttachmentID,
+        self,
+        attachmentid: AttachmentID,
         uri: str,
         mimetype: str,
         metadata: dict[MetadataType, object],
@@ -218,6 +219,14 @@ class Attachment:
         self.uri = uri
         self.mimetype = mimetype
         self.metadata = metadata
+
+    def clone(self) -> "Attachment":
+        return Attachment(
+            self.id,
+            self.uri,
+            self.mimetype,
+            {**self.metadata},
+        )
 
     def to_dict(self) -> dict[str, object]:
         return {
@@ -476,6 +485,16 @@ class Action:
 
         # Only ever populated for message type.
         self.attachments = attachments
+
+    def clone(self) -> "Action":
+        return Action(
+            self.id,
+            self.timestamp,
+            self.occupant,
+            self.action,
+            {**self.details},
+            [a.clone() for a in self.attachments],
+        )
 
     def to_dict(self) -> dict[str, object]:
         return {

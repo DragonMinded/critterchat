@@ -113,11 +113,8 @@ def background_thread_proc_impl() -> None:
 
             sockets: list[SocketInfo] = list(socket_to_info.values())
 
-        # Keep a lookup of room occupants so we don't look this up repeatedly during CHANGE_USERS events.
-        occupantcache: dict[RoomID, list[Occupant]] = {}
-
-        # Keep a lookup of actions so we don't look this up repeatedly during CHANGE_MESSAGE events.
-        actioncache: dict[ActionID, Action | None] = {}
+        # Get a fresh data so that the per-request cache only takes effect for the for loop below.
+        deltadata = data.clone()
 
         for info in sockets:
             # Lock this so other communication with this client doesn't get out of order.
@@ -131,7 +128,7 @@ def background_thread_proc_impl() -> None:
                         continue
 
                     # TODO: We need a cache object on data instead of constructing and passing these caches manually.
-                    send_chat_deltas(config, data, socketio, info, user, occupantcache, actioncache)
+                    send_chat_deltas(config, deltadata, socketio, info, user)
 
                 finally:
                     info.lock.release()

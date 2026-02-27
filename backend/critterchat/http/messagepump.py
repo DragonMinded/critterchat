@@ -12,7 +12,6 @@ from ..data import (
     RoomID,
     Action,
     ActionType,
-    Occupant,
     Room,
     User,
     UserPermission,
@@ -75,8 +74,6 @@ def send_chat_deltas(
     socketio: SupportsSocketIO,
     info: SocketInfo,
     user: User,
-    occupantcache: dict[RoomID, list[Occupant]],
-    actioncache: dict[ActionID, Action | None],
 ) -> None:
     messageservice = MessageService(config, data)
     userservice = UserService(config, data)
@@ -95,27 +92,23 @@ def send_chat_deltas(
                     fetchlimit = action.id if fetchlimit is None else max(fetchlimit, action.id)
 
                     if action.action == ActionType.CHANGE_USERS:
-                        if roomid not in occupantcache:
-                            room = messageservice.lookup_room(roomid, user.id)
-                            if room:
-                                occupantcache[roomid] = room.occupants
-
-                        if roomid in occupantcache:
+                        occupants = messageservice.lookup_room_occupants(roomid, user.id)
+                        if occupants is not None:
                             action.details = {
-                                "occupants": [o.to_dict() for o in occupantcache[roomid]],
+                                "occupants": [o.to_dict() for o in occupants],
                             }
 
                     elif action.action == ActionType.CHANGE_MESSAGE:
                         original = cast(ActionID, action.details["actionid"])
                         if original not in seen:
                             seen.add(original)
-                            if original not in actioncache:
-                                actioncache[original] = messageservice.lookup_action(original)
 
                             # Swap out the change message for the original updated message.
-                            grabbed = actioncache[original]
+                            grabbed = messageservice.lookup_action(original)
                             if grabbed:
+                                grabbed = grabbed.clone()
                                 grabbed.details['modified'] = True
+
                                 filtered.append(grabbed)
 
                     # This should go to the client.
