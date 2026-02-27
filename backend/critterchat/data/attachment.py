@@ -80,7 +80,8 @@ class Attachment:
 
 class Emote:
     def __init__(
-        self, alias: str,
+        self,
+        alias: str,
         attachmentid: AttachmentID,
         system: str,
         content_type: str,

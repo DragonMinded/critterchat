@@ -5,7 +5,6 @@ TODO For Public Instance
 ========================
 
  - Stickers support in some form.
- - Start on backend tests.
  - Private group chat creation UI.
  - Private group chat invite UI.
 

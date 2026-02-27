@@ -18,11 +18,14 @@ sqlalchemy-stubs
 sql-fragments
 python-dateutil
 pydub
+
 types-emoji
 types-gevent
 types-pyyaml
 types-requests
 types-python-dateutil
 types-setuptools
+
 mypy
 flake8
+pytest

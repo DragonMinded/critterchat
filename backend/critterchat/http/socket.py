@@ -5,6 +5,7 @@ from threading import Lock
 from typing import Any, Final, Literal, cast
 
 from .app import app, socketio, config, request
+from .messagepump import send_emote_deltas
 from ..common import AESCipher, Time, represents_real_text
 from ..service import (
     AttachmentService,
@@ -91,31 +92,7 @@ def background_thread_proc_impl() -> None:
 
         # See if we need to update emotes on clients.
         if (Time.now() - last_emote_update) >= EMOJI_REFRESH_TICK_SECONDS:
-            newemotes = emoteservice.get_all_emotes()
-            additions: set[str] = set()
-            deletions: set[str] = set()
-
-            for emote in newemotes:
-                if emote not in emotes:
-                    # This was an addition.
-                    additions.add(emote)
-
-            for emote in emotes:
-                if emote not in newemotes:
-                    # This was a deletion.
-                    deletions.add(emote)
-
-            # Send the delta to the clients, intentionally not choosing a room here.
-            if additions or deletions:
-                if additions:
-                    logger.info("Detected the following added emotes: " + ", ".join(additions))
-                if deletions:
-                    logger.info("Detected the following removed emotes: " + ", ".join(deletions))
-                socketio.emit('emotechanges', {
-                    'additions': {f":{alias}:": newemotes[alias].to_dict() for alias in additions},
-                    'deletions': [f":{d}:" for d in deletions],
-                })
-                emotes = {k for k in newemotes}
+            emotes = send_emote_deltas(config, data, socketio, emotes)
             last_emote_update = Time.now()
 
         # Look for any new actions that should be relayed.
