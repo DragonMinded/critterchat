@@ -38,5 +38,5 @@ class MigrationData(BaseData):
             SELECT `name`
             FROM migration
         """
-        cursor = self.execute(sql, {})
+        cursor = self.execute(sql)
         return {Migration(str(result['name'])) for result in cursor.mappings()}

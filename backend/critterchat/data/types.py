@@ -396,6 +396,20 @@ class Occupant:
         self.iconid = iconid
         self.icon: str | None = None
 
+    def clone(self) -> "Occupant":
+        o = Occupant(
+            occupantid=self.id,
+            userid=self.userid,
+            username=self.username,
+            nickname=self.nickname,
+            iconid=self.iconid,
+            inactive=self.inactive,
+            moderator=self.moderator,
+            muted=self.muted,
+        )
+        o.icon = self.icon
+        return o
+
     def to_dict(self) -> dict[str, object]:
         return {
             "id": Occupant.from_id(self.id),
@@ -490,7 +504,7 @@ class Action:
         return Action(
             self.id,
             self.timestamp,
-            self.occupant,
+            self.occupant.clone() if self.occupant else None,
             self.action,
             {**self.details},
             [a.clone() for a in self.attachments],

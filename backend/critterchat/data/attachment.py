@@ -231,7 +231,7 @@ class AttachmentData(BaseData):
             SELECT `id`, `system`, `content_type`, `original_filename`, `metadata`
             FROM attachment
         """
-        cursor = self.execute(sql, {})
+        cursor = self.execute(sql)
         return [
             Attachment(
                 AttachmentID(result['id']),
@@ -257,7 +257,7 @@ class AttachmentData(BaseData):
             FROM emote
             JOIN attachment ON attachment.id = emote.attachment_id
         """
-        cursor = self.execute(sql, {})
+        cursor = self.execute(sql)
         return [
             Emote(
                 result['alias'],
@@ -411,13 +411,11 @@ class AttachmentData(BaseData):
         Locks the action attachments table for exclusive write, when needing to attach data to a new
         attachment without other clients polling incomplete actions. Use in a with block.
         """
-        sql = "LOCK TABLES attachment WRITE, action_attachment WRITE"
-        self.execute(sql, {})
+        self.execute("LOCK TABLES attachment WRITE, action_attachment WRITE")
         try:
             yield
         finally:
-            sql = "UNLOCK TABLES"
-            self.execute(sql, {})
+            self.execute("UNLOCK TABLES")
 
     def get_action_attachments(self, actionid: ActionID | Iterable[ActionID]) -> dict[ActionID, list[ActionAttachment]]:
         """

@@ -42,7 +42,7 @@ class MastodonData(BaseData):
         """
 
         sql = "SELECT * FROM mastodon_instance WHERE inactive != TRUE"
-        cursor = self.execute(sql, {})
+        cursor = self.execute(sql)
         return [
             MastodonInstance(
                 instanceid=MastodonInstanceID(result['id']),

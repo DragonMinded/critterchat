@@ -385,7 +385,7 @@ class RoomData(BaseData):
             SELECT id, name, topic, icon, purpose, moderated, last_action FROM room WHERE autojoin = TRUE
         """
 
-        cursor = self.execute(sql, {})
+        cursor = self.execute(sql)
         return self._hydrate_actions([
             Room(
                 roomid=RoomID(result['id']),
@@ -930,7 +930,7 @@ class RoomData(BaseData):
         sql = """
             SELECT id FROM action ORDER BY id DESC LIMIT 1
         """
-        cursor = self.execute(sql, {})
+        cursor = self.execute(sql)
         if cursor.rowcount != 1:
             return None
 
@@ -1033,12 +1033,12 @@ class RoomData(BaseData):
         attachment without other clients polling incomplete actions. Use in a with block.
         """
         sql = "LOCK TABLES room WRITE, action WRITE, occupant READ, profile READ, user READ"
-        self.execute(sql, {})
+        self.execute(sql)
         try:
             yield
         finally:
             sql = "UNLOCK TABLES"
-            self.execute(sql, {})
+            self.execute(sql)
 
     def get_action(self, actionid: ActionID) -> Action | None:
         """
