@@ -22,14 +22,14 @@ class Time:
         """
         Returns the current unix timestamp in the UTC timezone.
         """
-        return calendar.timegm(datetime.datetime.utcnow().timetuple())
+        return calendar.timegm(datetime.datetime.now(datetime.UTC).timetuple())
 
     @staticmethod
     def end_of_today() -> int:
         """
         Returns the unix timestamp for the end of today in UTC timezone.
         """
-        now = datetime.datetime.utcnow().date()
+        now = datetime.datetime.now(datetime.UTC).date()
         beginning_of_day = datetime.datetime(now.year, now.month, now.day, tzinfo=tz.tzutc())
         end_of_day = beginning_of_day + datetime.timedelta(days=1)
         return calendar.timegm(end_of_day.timetuple())
@@ -39,7 +39,7 @@ class Time:
         """
         Returns the unix timestamp for the beginning of today in UTC timezone.
         """
-        now = datetime.datetime.utcnow().date()
+        now = datetime.datetime.now(datetime.UTC).date()
         beginning_of_day = datetime.datetime(now.year, now.month, now.day, tzinfo=tz.tzutc())
         return calendar.timegm(beginning_of_day.timetuple())
 
@@ -48,7 +48,7 @@ class Time:
         """
         Returns the unix timestamp for the end of this week in UTC timezone.
         """
-        now = datetime.datetime.utcnow().date()
+        now = datetime.datetime.now(datetime.UTC).date()
         this_week = now - datetime.timedelta(days=now.timetuple().tm_wday)
         next_week = this_week + datetime.timedelta(days=7)
         return calendar.timegm(next_week.timetuple())
@@ -58,7 +58,7 @@ class Time:
         """
         Returns the unix timestamp for the beginning of this week in UTC timezone.
         """
-        now = datetime.datetime.utcnow().date()
+        now = datetime.datetime.now(datetime.UTC).date()
         this_week = now - datetime.timedelta(days=now.timetuple().tm_wday)
         return calendar.timegm(this_week.timetuple())
 
@@ -67,7 +67,7 @@ class Time:
         """
         Returns the unix timestamp for the end of this month in UTC timezone.
         """
-        now = datetime.datetime.utcnow().date()
+        now = datetime.datetime.now(datetime.UTC).date()
         return Time.timestamp_from_date(now.year, now.month + 1, 1)
 
     @staticmethod
@@ -75,7 +75,7 @@ class Time:
         """
         Returns the unix timestamp for the beginning of this month in UTC timezone.
         """
-        now = datetime.datetime.utcnow().date()
+        now = datetime.datetime.now(datetime.UTC).date()
         this_month = datetime.date(now.year, now.month, 1)
         return calendar.timegm(this_month.timetuple())
 
@@ -84,7 +84,7 @@ class Time:
         """
         Returns a [year, month, day] list representing today's date.
         """
-        now = datetime.datetime.utcnow().date()
+        now = datetime.datetime.now(datetime.UTC).date()
         return [now.year, now.month, now.day]
 
     @staticmethod
@@ -92,7 +92,7 @@ class Time:
         """
         Returns a [year, month, day] list representing yesterday's date.
         """
-        now = datetime.datetime.utcnow().date()
+        now = datetime.datetime.now(datetime.UTC).date()
         yesterday = now - datetime.timedelta(days=1)
         return [yesterday.year, yesterday.month, yesterday.day]
 
@@ -105,7 +105,7 @@ class Time:
         point instead of now.
         """
         if timestamp is None:
-            date = datetime.datetime.utcnow().date()
+            date = datetime.datetime.now(datetime.UTC).date()
         else:
             date = datetime.datetime.utcfromtimestamp(timestamp).date()
         week = date - datetime.timedelta(days=date.timetuple().tm_wday)
@@ -119,7 +119,7 @@ class Time:
         same value from that reverence point instead of now.
         """
         if timestamp is None:
-            date = datetime.datetime.utcnow().date().timetuple()
+            date = datetime.datetime.now(datetime.UTC).date().timetuple()
         else:
             date = datetime.datetime.utcfromtimestamp(timestamp).date().timetuple()
         return [date.tm_year, date.tm_yday]
@@ -132,7 +132,7 @@ class Time:
         returns the same value from that reverence point instead of now.
         """
         if timestamp is None:
-            date = datetime.datetime.utcnow().date().timetuple()
+            date = datetime.datetime.now(datetime.UTC).date().timetuple()
         else:
             date = datetime.datetime.utcfromtimestamp(timestamp).date().timetuple()
         return date.tm_wday
