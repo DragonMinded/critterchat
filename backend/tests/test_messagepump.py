@@ -5,7 +5,7 @@ from critterchat.data.attachment import Attachment, Emote
 from .mocks import MockConfig, MockData, MockSocketIO, Message, set_return, set_lambda
 
 
-class TestMessagePump:
+class TestMessagePumpEmotes:
     def test_send_emote_deltas_empty(self) -> None:
         config = MockConfig()
         data = MockData()

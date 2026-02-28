@@ -13,7 +13,6 @@ from ..data import (
     Action,
     ActionType,
     Room,
-    User,
     UserPermission,
 )
 from ..service import EmoteService, MessageService, UserService
@@ -68,15 +67,16 @@ def send_emote_deltas(config: Config, data: Data, socketio: SupportsSocketIO, em
     return emotes
 
 
-def send_chat_deltas(
+def send_action_deltas(
     config: Config,
     data: Data,
     socketio: SupportsSocketIO,
     info: SocketInfo,
-    user: User,
-) -> None:
+) -> bool:
+    if not info.userid:
+        raise Exception("Logic error, should only call this with valid users!")
+
     messageservice = MessageService(config, data)
-    userservice = UserService(config, data)
 
     updated = False
     for roomid, fetchlimit in info.fetchlimit.items():
@@ -92,7 +92,7 @@ def send_chat_deltas(
                     fetchlimit = action.id if fetchlimit is None else max(fetchlimit, action.id)
 
                     if action.action == ActionType.CHANGE_USERS:
-                        occupants = messageservice.lookup_room_occupants(roomid, user.id)
+                        occupants = messageservice.lookup_room_occupants(roomid, info.userid)
                         if occupants is not None:
                             action.details = {
                                 "occupants": [o.to_dict() for o in occupants],
@@ -122,9 +122,26 @@ def send_chat_deltas(
                 }, room=info.sid)
                 updated = True
 
-    # Figure out if this user has been joined to a new chat.
-    # Figure out if rooms have changed, so we can start monitoring.
-    rooms = messageservice.get_joined_rooms(user.id)
+    return updated
+
+
+def send_chat_deltas(
+    config: Config,
+    data: Data,
+    socketio: SupportsSocketIO,
+    info: SocketInfo,
+) -> None:
+    if not info.userid:
+        raise Exception("Logic error, should only call this with valid users!")
+
+    messageservice = MessageService(config, data)
+    userservice = UserService(config, data)
+
+    # First, send any new actions to any rooms that the client has already joined and is monitoring.
+    updated = send_action_deltas(config, data, socketio, info)
+
+    # Now, figure out if this user has been joined to a new chat by another user or the server.
+    rooms = messageservice.get_joined_rooms(info.userid)
 
     includes: set[RoomID] = set()
     for room in rooms:
@@ -135,7 +152,7 @@ def send_chat_deltas(
 
     # Calculate any badge updates that the client needs to know about, including
     # badges on newly-joined rooms.
-    lastseen = userservice.get_last_seen_counts(user.id)
+    lastseen = userservice.get_last_seen_counts(info.userid)
     counts: dict[RoomID, int] = {}
     for roomid, count in lastseen.items():
         if roomid in includes or count < info.lastseen.get(roomid, 0):
@@ -152,6 +169,18 @@ def send_chat_deltas(
         # Notify the client of any room rearranges, or any new rooms.
         socketio.emit('roomlist', clientdata, room=info.sid)
 
+
+def send_profile_deltas(
+    config: Config,
+    data: Data,
+    socketio: SupportsSocketIO,
+    info: SocketInfo,
+) -> None:
+    if not info.userid:
+        raise Exception("Logic error, should only call this with valid users!")
+
+    userservice = UserService(config, data)
+
     # Figure out if preferences or profile changed since our last poll,
     # and send an updated "preferences" or "profile" response to said
     # client if it has. This should keep prefs and profiles in sync
@@ -161,17 +190,17 @@ def send_chat_deltas(
 
     if profilets is not None:
         ts = Time.now()
-        if userservice.has_updated_user(user.id, profilets):
-            userprofile = userservice.lookup_user(user.id)
-            admin = UserPermission.ADMINISTRATOR in user.permissions
+        if userservice.has_updated_user(info.userid, profilets):
+            userprofile = userservice.lookup_user(info.userid)
+            admin = userprofile is not None and UserPermission.ADMINISTRATOR in userprofile.permissions
             if userprofile:
                 info.profilets = ts
                 socketio.emit('profile', userprofile.to_dict(config=config, admin=admin), room=info.sid)
 
     if prefsts is not None:
         ts = Time.now()
-        if userservice.has_updated_preferences(user.id, prefsts):
-            userpreferences = userservice.get_preferences(user.id)
+        if userservice.has_updated_preferences(info.userid, prefsts):
+            userpreferences = userservice.get_preferences(info.userid)
             if userpreferences:
                 info.prefsts = ts
                 socketio.emit('preferences', userpreferences.to_dict(), room=info.sid)

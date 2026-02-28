@@ -5,7 +5,7 @@ from threading import Lock
 from typing import Any, Final, Literal, cast
 
 from .app import app, socketio, config, request
-from .messagepump import SocketInfo, send_emote_deltas, send_chat_deltas
+from .messagepump import SocketInfo, send_emote_deltas, send_chat_deltas, send_profile_deltas
 from ..common import AESCipher, Time, represents_real_text
 from ..service import (
     AttachmentService,
@@ -127,8 +127,10 @@ def background_thread_proc_impl() -> None:
                         socketio.emit('reload', {}, room=info.sid)
                         continue
 
-                    # TODO: We need a cache object on data instead of constructing and passing these caches manually.
-                    send_chat_deltas(config, deltadata, socketio, info, user)
+                    # Now, send this connected client any updates both in terms of actions and details
+                    # of their account that might have been changed.
+                    send_chat_deltas(config, deltadata, socketio, info)
+                    send_profile_deltas(config, deltadata, socketio, info)
 
                 finally:
                     info.lock.release()
