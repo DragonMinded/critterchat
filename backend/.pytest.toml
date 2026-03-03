@@ -1,3 +1,7 @@
 [pytest]
 testpaths = ["tests"]
 addopts = ["-ra", "-vv"]
+markers = [
+    "unit: test with all external dependencies mocked",
+    "integration: test with one ore more external dependency, such as a test DB",
+]

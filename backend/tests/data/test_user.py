@@ -1,3 +1,4 @@
+import pytest
 from sqlalchemy.orm import Session
 
 from critterchat.data.user import UserData
@@ -5,6 +6,7 @@ from critterchat.data.user import UserData
 from ..mocks import MockConfig
 
 
+@pytest.mark.integration
 class TestUserData:
     def test_user_crud(self, tx: Session) -> None:
         config = MockConfig()

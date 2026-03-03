@@ -13,6 +13,21 @@ from critterchat.data import Data
 TESTS_PATH = os.path.dirname(os.path.realpath(__file__))
 
 
+@pytest.hookimpl(tryfirst=True)
+def pytest_collection_modifyitems(items: list[pytest.Function]) -> None:
+    TYPES: list[str] = ["unit", "integration"]
+
+    for item in items:
+        if any(item.get_closest_marker(m) for m in TYPES):
+            continue
+
+        # This test doesn't have a unit or integration marker!
+        insns = ", ".join(f"@pytest.mark.{t}" for t in TYPES)
+        raise Exception(
+            f"{item.location[0]}:{item.location[1]}: {item.location[2]} is missing a marker for test type! Please decorate your function or class with one of the following: {insns}"
+        )
+
+
 @pytest.fixture(scope="session")
 def db() -> Engine:
     # First, try to open any testdb.ini file in our directory.

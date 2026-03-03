@@ -1,3 +1,5 @@
+import pytest
+
 from critterchat.common import Time
 from critterchat.data.types import (
     ActionID,
@@ -21,6 +23,7 @@ from critterchat.http.messagepump import SocketInfo, send_emote_deltas, send_pro
 from ..mocks import MockConfig, MockData, MockSocketIO, Message, set_return, set_lambda
 
 
+@pytest.mark.unit
 class TestMessagePumpEmotes:
     def test_send_emote_deltas_empty(self) -> None:
         """
@@ -146,6 +149,7 @@ class TestMessagePumpEmotes:
         ]
 
 
+@pytest.mark.unit
 class TestMessagePumpUser:
     def test_send_profile_deltas_no_change(self) -> None:
         """
@@ -297,6 +301,7 @@ class TestMessagePumpUser:
         ]
 
 
+@pytest.mark.unit
 class TestMessagePumpActions:
     def test_send_chat_deltas_no_monitoring(self) -> None:
         """
