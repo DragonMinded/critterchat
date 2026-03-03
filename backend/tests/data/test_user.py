@@ -1,6 +1,7 @@
 import pytest
 from sqlalchemy.orm import Session
 
+from critterchat.data import UserID
 from critterchat.data.user import UserData
 
 from ..mocks import MockConfig
@@ -24,6 +25,10 @@ class TestUserData:
         assert user.id == by_id.id
         assert by_username is not None
         assert user.id == by_username.id
+
+        # Verify that we don't get exceptions trying to look up a nonexistent user.
+        assert userdata.get_user(UserID(1000000)) is None
+        assert userdata.from_username("nonexistent_username") is None
 
         # Now, verify user modifications.
         assert user.nickname == "test_user_crud"
