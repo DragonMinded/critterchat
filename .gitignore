@@ -9,3 +9,6 @@ backend/critterchat/http/static/home.*.js.LICENSE.txt
 backend/critterchat/http/static/webpack-assets.json
 frontend/dist/
 frontend/node_modules/
+backend/.env/
+backend/.venv/
+backend/tests/.testdb.toml

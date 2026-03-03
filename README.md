@@ -68,10 +68,10 @@ get in touch so we can work out the direction you plan to take.
 At minimum, you will need a MySQL database or compatible (MariaDB that is recent)
 that supports at least MySQL 5.7 features due to using the JSON column type. You will
 also need a modern version of Python. Recommended version is 3.12 or higher due to
-being tested only on this version. Finally, you will need ffmpeg installed for
-notification conversion. It is heavily recommended to use a production-ready
-webserver for SSL termination and static resources. Something such as nginx should
-be sufficient.
+being tested only on this version, but some things in the repo also depend on at least
+Python 3.11. Finally, you will need ffmpeg installed for notification conversion. It
+is heavily recommended to use a production-ready webserver for SSL termination and
+static resources. Something such as nginx should be sufficient.
 
 ## Developing
 

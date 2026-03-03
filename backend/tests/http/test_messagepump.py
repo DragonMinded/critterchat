@@ -18,7 +18,7 @@ from critterchat.data.types import (
 from critterchat.data.attachment import Attachment, Emote
 from critterchat.http.messagepump import SocketInfo, send_emote_deltas, send_profile_deltas, send_chat_deltas
 
-from .mocks import MockConfig, MockData, MockSocketIO, Message, set_return, set_lambda
+from ..mocks import MockConfig, MockData, MockSocketIO, Message, set_return, set_lambda
 
 
 class TestMessagePumpEmotes:

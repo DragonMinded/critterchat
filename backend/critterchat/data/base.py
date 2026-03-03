@@ -6,7 +6,7 @@ from typing import Iterator, cast
 from sqlfragments import Statement, Fragment, statement, fragment
 
 from sqlalchemy import MetaData
-from sqlalchemy.orm import scoped_session
+from sqlalchemy.orm import Session
 from sqlalchemy.engine import CursorResult  # type: ignore
 from sqlalchemy.sql import text
 
@@ -34,7 +34,7 @@ class _BytesEncoder(json.JSONEncoder):
 
 
 class BaseData:
-    def __init__(self, config: Config, session: scoped_session) -> None:
+    def __init__(self, config: Config, session: Session) -> None:
         """
         Initializes any DB singleton.
 
@@ -90,7 +90,7 @@ class BaseData:
 
     @contextmanager
     def transaction(self) -> Iterator[None]:
-        with self.__session.begin():
+        with self.__session.begin(nested=True):
             nonce = random.randint(0, 2 ** 31)
             self.__depth.append(nonce)
 

@@ -754,9 +754,12 @@ class UserData(BaseData):
             iconid = user.iconid
         else:
             iconid = None
+            user.iconid = None
+            user.icon = None
 
         if (user.username == user.nickname) or (not user.nickname):
             nickname = None
+            user.nickname = user.username
         else:
             nickname = user.nickname
 

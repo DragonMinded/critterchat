@@ -5,7 +5,7 @@ import alembic.config
 from alembic.migration import MigrationContext
 from alembic.autogenerate import compare_metadata
 from sqlalchemy import create_engine
-from sqlalchemy.orm import scoped_session, sessionmaker
+from sqlalchemy.orm import Session, scoped_session, sessionmaker
 from sqlalchemy.engine import Engine
 from sqlalchemy.sql import text
 from sqlalchemy.exc import ProgrammingError
@@ -43,7 +43,7 @@ class Data:
     info and provide a set of functions for querying and storing data.
     """
 
-    def __init__(self, config: Config, session: scoped_session | None = None) -> None:
+    def __init__(self, config: Config, session: Session | None = None) -> None:
         """
         Initializes the data object.
 
@@ -56,7 +56,7 @@ class Data:
                 bind=config.database.engine,
                 autoflush=True,
             )
-            self.__session: scoped_session | None = scoped_session(session_factory)
+            self.__session: Session | None = scoped_session(session_factory)
         else:
             self.__session = session
 
