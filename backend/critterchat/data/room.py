@@ -146,7 +146,7 @@ class RoomData(BaseData):
             return []
 
         filters: list[Fragment] = [fragment("user_id = %value", userid)]
-        if include_left:
+        if not include_left:
             filters.append(fragment("inactive != TRUE"))
 
         cursor = self.execute(statement(

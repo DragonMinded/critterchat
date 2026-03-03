@@ -1,8 +1,6 @@
 TODO Immediate
 ==============
 
- - Room lookup filter is backwards after refactor.
-
 TODO For Public Instance
 ========================
 

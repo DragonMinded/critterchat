@@ -10,6 +10,10 @@ from ..mocks import MockConfig
 @pytest.mark.integration
 class TestUserData:
     def test_user_crud(self, tx: Session) -> None:
+        """
+        Tests basic create, retrieve, update, delete for users in the system.
+        """
+
         config = MockConfig()
         userdata = UserData(config, tx)
 

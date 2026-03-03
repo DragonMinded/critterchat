@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 
 from critterchat.data import ActionType, Room, RoomPurpose, RoomID, NewRoomID, NewUserID
 from critterchat.data.room import RoomData
+from critterchat.data.user import UserData
 
 from ..mocks import MockConfig
 
@@ -10,6 +11,10 @@ from ..mocks import MockConfig
 @pytest.mark.integration
 class TestRoomData:
     def test_room_crud(self, tx: Session) -> None:
+        """
+        Tests basic create, retrieve, update, delete for rooms in the system.
+        """
+
         config = MockConfig()
         roomdata = RoomData(config, tx)
 
@@ -56,3 +61,71 @@ class TestRoomData:
         assert history[0].action == ActionType.CHANGE_INFO
 
         # No delete because we do not delete rooms currently.
+
+    def test_get_joined_rooms(self, tx: Session) -> None:
+        """
+        Verifies that get_joined_rooms operates properly.
+        """
+
+        config = MockConfig()
+        roomdata = RoomData(config, tx)
+        userdata = UserData(config, tx)
+
+        # First, create a few rooms for users to be in or not be in.
+        room1 = Room(
+            NewRoomID,
+            "test room 1",
+            "",
+            RoomPurpose.DIRECT_MESSAGE,
+            False,
+            None,
+            None,
+        )
+        roomdata.create_room(room1)
+
+        room2 = Room(
+            NewRoomID,
+            "test room 2",
+            "",
+            RoomPurpose.DIRECT_MESSAGE,
+            False,
+            None,
+            None,
+        )
+        roomdata.create_room(room2)
+
+        # Now, create some users to join those rooms.
+        userdata.create_account("test_user_1", "arbitrary_password")
+        userdata.create_account("test_user_2", "arbitrary_password")
+
+        user1 = userdata.from_username("test_user_1")
+        assert user1 is not None
+        user2 = userdata.from_username("test_user_2")
+        assert user2 is not None
+
+        # Now, join one user to both rooms, the other user to one room and shadow join the other.
+        # Shadow joining is just joining as already left, so that we can simulate how direct messages
+        # are created without popping up on the other user's clients.
+        roomdata.join_room(room1.id, user1.id)
+        roomdata.join_room(room1.id, user2.id)
+
+        roomdata.join_room(room2.id, user1.id)
+        roomdata.shadow_join_room(room2.id, user2.id)
+
+        # Now, verify that we get the right responses back for joined rooms for each user.
+        rooms = {room.id for room in roomdata.get_joined_rooms(user1.id)}
+        assert rooms == {room1.id, room2.id}
+        rooms = {room.id for room in roomdata.get_left_rooms(user1.id)}
+        assert rooms == set()
+
+        rooms = {room.id for room in roomdata.get_joined_rooms(user2.id)}
+        assert rooms == {room1.id}
+        rooms = {room.id for room in roomdata.get_left_rooms(user2.id)}
+        assert rooms == {room2.id}
+
+        # Now, verify that we get all rooms back for joined rooms with include left.
+        rooms = {room.id for room in roomdata.get_joined_rooms(user1.id, include_left=True)}
+        assert rooms == {room1.id, room2.id}
+
+        rooms = {room.id for room in roomdata.get_joined_rooms(user2.id, include_left=True)}
+        assert rooms == {room1.id, room2.id}
