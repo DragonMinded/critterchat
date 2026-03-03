@@ -135,6 +135,30 @@ the `backend/` directory. CritterChat provides configuration for both so you don
 need to provide any other arguments. Make sure before submitting any PR that you
 have run both of these and fixed any issues present.
 
+The backend also includes its own test suite, run by pytest. To run all tests in the
+backend you can run `pytest` in the `backend/` directory much like you would the
+above lint and type checking commands. By default, there is no test database set
+up so all tests that require a testing DB to operate will auto-skip. If you want
+to run the DB tests to verify or iterate on the various `critterchat.data` modules
+you will want to set this up. Create an empty database in an identical fashion to
+how you created your local development DB. Then, create a `.testdb.toml` under the
+`backend/tests/` directory with the following contents and customize it to your
+testing DB credentials. Note that every time the tests run, this DB will be wiped
+and recreated fresh so do not use your local development DB for this.
+
+```
+[database]
+address = "localhost"
+database = "critterchat_test"
+user = "critterchat_test"
+password = "critterchat_test"
+```
+
+Note that all tests in the backend have to be tagged as either `unit` or `integration`
+so that somebody wishing to iterate quickly can run only one type of test. This is
+enforced by the test configuration, but you can easily mark a test or a class of tests
+using either the `@pytest.mark.unit` or `@pytest.mark.integration` decorator.
+
 ### MySQL Schema Management
 
 CritterChat uses SQLAlchemy's Alembic migration framework to provide schema

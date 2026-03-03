@@ -2,7 +2,6 @@ TODO Immediate
 ==============
 
  - Room lookup filter is backwards after refactor.
- - README update for test DB.
 
 TODO For Public Instance
 ========================
