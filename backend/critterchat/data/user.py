@@ -802,7 +802,8 @@ class UserData(BaseData):
 
         # Post-filter by name if requested, so we don't find ourselves all the time.
         if name:
-            users = [u for u in users if (name in u.username) or (name in u.nickname)]
+            lowername = name.lower()
+            users = [u for u in users if (lowername in u.username.lower()) or (lowername in u.nickname.lower())]
 
         return users
 
@@ -831,7 +832,8 @@ class UserData(BaseData):
 
         # Post-filter by name if requested, so we don't find ourselves all the time.
         if name:
-            users = [u for u in users if (name in u.username) or (name in u.nickname)]
+            lowername = name.lower()
+            users = [u for u in users if (lowername in u.username.lower()) or (lowername in u.nickname.lower())]
 
         return users
 
