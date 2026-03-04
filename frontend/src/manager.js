@@ -653,7 +653,16 @@ export function manager(socket) {
     });
 
     eventBus.on('newroom', (details) => {
-        socket.emit('newroom', details);
+        if (details.icon) {
+            // Need to upload the new icon and get the attachment ID back.
+            uploader.uploadIcon(details.icon, (iconid) => {
+                details.icon = iconid;
+                socket.emit('newroom', details);
+            });
+        } else {
+            // No need to upload anything, no icon changes.
+            socket.emit('newroom', details);
+        }
     });
 
     eventBus.on('updateroom', (msg) => {
