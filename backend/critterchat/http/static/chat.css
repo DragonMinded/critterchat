@@ -5,6 +5,7 @@ body.smallest {
     --application-item-padding: 4px;
     --application-pane-padding: 8px;
 
+    --search-fixed-height: 350px;
     --modal-fixed-height: 300px;
     --modal-item-padding: 8px;
 
@@ -94,6 +95,7 @@ body.smaller {
     --application-item-padding: 5px;
     --application-pane-padding: 9px;
 
+    --search-fixed-height: 350px;
     --modal-fixed-height: 300px;
     --modal-item-padding: 9px;
 
@@ -183,6 +185,7 @@ body:not(.smallest):not(.smaller):not(.larger):not(.largest) {
     --application-item-padding: 5px;
     --application-pane-padding: 10px;
 
+    --search-fixed-height: 350px;
     --modal-fixed-height: 300px;
     --modal-item-padding: 10px;
 
@@ -272,6 +275,7 @@ body.larger {
     --application-item-padding: 5px;
     --application-pane-padding: 10px;
 
+    --search-fixed-height: 375px;
     --modal-fixed-height: 325px;
     --modal-item-padding: 10px;
 
@@ -361,6 +365,7 @@ body.largest {
     --application-item-padding: 5px;
     --application-pane-padding: 10px;
 
+    --search-fixed-height: 400px;
     --modal-fixed-height: 350px;
     --modal-item-padding: 10px;
 
@@ -1423,10 +1428,17 @@ div.occupants div.header:not(:first-child) {
 }
 
 div.search, div.warning, div.information {
-    height: var(--modal-fixed-height);
     display: flex;
     flex-direction: column;
     gap: var(--modal-item-padding);
+}
+
+div.warning, div.information {
+    height: var(--modal-fixed-height);
+}
+
+div.search {
+    height: var(--search-fixed-height);
 }
 
 div.invite-wrapper {
@@ -1555,6 +1567,11 @@ div.profile div.nickname-wrapper, div.profile div.username-wrapper, div.profile 
 div.profile div.actions-wrapper, div.profile div.admin-wrapper {
     margin-top: var(--modal-item-padding);
     margin-bottom: var(--modal-item-padding);
+}
+
+div.search div.actions-wrapper {
+    display: flex;
+    gap: var(--modal-item-padding);
 }
 
 div.profile div.nickname-wrapper div.nickname {
