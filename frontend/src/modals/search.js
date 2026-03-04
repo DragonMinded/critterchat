@@ -9,6 +9,7 @@ class Search {
     constructor( eventBus, inputState ) {
         this.eventBus = eventBus;
         this.inputState = inputState;
+        this.preferences = {};
 
         $( '#search' ).on( 'input', (event) => {
             event.preventDefault();
@@ -53,7 +54,7 @@ class Search {
         this.eventBus.emit('searchrooms', "")
 
         // Show or hide action buttons based on admin rights.
-        if (window.admin) {
+        if (window.admin && this.preferences.admin_controls == "visible") {
             $('#search-create-public-room').show();
         } else {
             $('#search-create-public-room').hide();
@@ -110,6 +111,14 @@ class Search {
                 this._joinRoom( id );
             });
         });
+    }
+
+    /**
+     * Called when our parent informs us that the user's preferences have been updated. We only
+     * care about the admin controls visibility preference here.
+     */
+    setPreferences( preferences ) {
+        this.preferences = preferences;
     }
 
     /**

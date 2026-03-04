@@ -2,7 +2,6 @@ TODO Immediate
 ==============
 
  - Cannot search for and jump to existing private room.
- - Do not display create public room button when prefs turn off admin.
  - Private group chat invite UI.
 
 TODO For Public Instance

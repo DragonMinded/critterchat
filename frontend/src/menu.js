@@ -275,6 +275,7 @@ class Menu {
         this.preferences = preferences;
         this.preferencesLoaded = true;
         this.editPreferences.setPreferences( preferences );
+        this.search.setPreferences( preferences );
         this._updateGlobalBadges();
         if (this.roomsLoaded) {
             this.setRooms(this.rooms, true);
