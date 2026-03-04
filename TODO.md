@@ -1,7 +1,6 @@
 TODO Immediate
 ==============
 
- - Cannot search for and jump to existing private room.
  - Private group chat invite UI.
 
 TODO For Public Instance
@@ -28,3 +27,4 @@ TODO Low Priority
  - Attachment thumbnails so larger images don't get downloaded on slow connections on display.
  - Role groups, for moderators and public room visibility, including auto-join on add to group.
  - Better autocomplete that lets you scroll down past the first 10 entries.
+ - When server selects a room for you, ensure that the menu on the left scrolls to make that room visible.

@@ -671,9 +671,18 @@ class MessageService:
                     # This is somebody else's DM?! Get outta here!
                     raise MessageServiceException("Room does not exist!")
 
-            else:
+            elif room.purpose == RoomPurpose.CHAT:
+                # Verify that we're already in the private message, or that we have an invite to
+                # join this room.
+                in_chat_already = False
+                occupants = self.__data.room.get_room_occupants(room.id)
+                for occupant in occupants:
+                    if occupant.userid == userid:
+                        in_chat_already = True
+
                 # TODO: At some point, need to check if the user has an invite to a non-public chat
-                raise MessageServiceException("Room does not exist!")
+                if not in_chat_already:
+                    raise MessageServiceException("Room does not exist!")
 
         self.__data.room.join_room(room.id, userid)
 
