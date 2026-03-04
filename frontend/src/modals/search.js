@@ -31,6 +31,13 @@ class Search {
             this._createChat();
         });
 
+        $( '#search-create-public-room' ).on( 'click', (event) => {
+            event.preventDefault();
+            this.inputState.setState("empty");
+
+            this._createRoom();
+        });
+
         $( '#search-form' ).on( 'submit', (event) => {
             event.preventDefault();
         });
@@ -112,7 +119,17 @@ class Search {
         $.modal.close();
         $( '#search' ).val("");
         this.populateSearchResults([]);
-        this.eventBus.emit('newroom', {'purpose': 'chat'});
+        this.eventBus.emit('newroom', {'type': 'chat'});
+    }
+
+    /**
+     * Called internally when we want to create a new public room.
+     */
+    _createRoom() {
+        $.modal.close();
+        $( '#search' ).val("");
+        this.populateSearchResults([]);
+        this.eventBus.emit('createroom');
     }
 
     /**

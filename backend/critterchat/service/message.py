@@ -524,6 +524,50 @@ class MessageService:
         self.__infer_room_info(userid, room)
         return room
 
+    def create_direct_message(self, userid: UserID, otherid: UserID) -> Room:
+        # First, find all rooms that the first user is in or was ever in.
+        rooms = self.__data.room.get_joined_rooms(userid, include_left=True)
+
+        # Now, for each of these, see if the only ones in the room are the two IDs.
+        for room in rooms:
+            if room.purpose != RoomPurpose.DIRECT_MESSAGE:
+                # Private chats never can go to a public room or a group chat even
+                # if that only has the two of you chatting.
+                continue
+
+            occupants = self.__data.room.get_room_occupants(room.id, include_left=True)
+            desired = {userid, otherid}
+            if len(desired) == len(occupants):
+                for occupant in occupants:
+                    if occupant.userid not in desired:
+                        break
+                else:
+                    # Found the room, just return this room after making both parties join it.
+                    self.__data.room.join_room(room.id, userid)
+                    self.__data.room.shadow_join_room(room.id, otherid)
+                    self.__infer_room_info(userid, room)
+                    return room
+
+        # Now, create a new room since we don't have an existing one.
+        room = Room(NewRoomID, "", "", RoomPurpose.DIRECT_MESSAGE, False, False, None, None)
+        self.__data.room.create_room(room)
+        self.__data.room.join_room(room.id, userid)
+        self.__data.room.shadow_join_room(room.id, otherid)
+        self.__infer_room_info(userid, room)
+        return room
+
+    def rejoin_direct_message(self, roomid: RoomID) -> None:
+        # Ensure that the room exists and is a direct message.
+        room = self.__data.room.get_room(roomid)
+        if room is None or room.purpose != RoomPurpose.DIRECT_MESSAGE:
+            return
+
+        # Join all occupants including left occupants to the room so they can receive
+        # an incoming message.
+        occupants = self.__data.room.get_room_occupants(room.id, include_left=True)
+        for occupant in occupants:
+            self.__data.room.join_room(room.id, occupant.userid)
+
     def lookup_room(self, roomid: RoomID, userid: UserID) -> Room | None:
         room = self.__data.room.get_room(roomid)
         if room:
@@ -607,50 +651,6 @@ class MessageService:
 
         # Finally, return the updated room.
         return room
-
-    def create_direct_message(self, userid: UserID, otherid: UserID) -> Room:
-        # First, find all rooms that the first user is in or was ever in.
-        rooms = self.__data.room.get_joined_rooms(userid, include_left=True)
-
-        # Now, for each of these, see if the only ones in the room are the two IDs.
-        for room in rooms:
-            if room.purpose != RoomPurpose.DIRECT_MESSAGE:
-                # Private chats never can go to a public room or a group chat even
-                # if that only has the two of you chatting.
-                continue
-
-            occupants = self.__data.room.get_room_occupants(room.id, include_left=True)
-            desired = {userid, otherid}
-            if len(desired) == len(occupants):
-                for occupant in occupants:
-                    if occupant.userid not in desired:
-                        break
-                else:
-                    # Found the room, just return this room after making both parties join it.
-                    self.__data.room.join_room(room.id, userid)
-                    self.__data.room.shadow_join_room(room.id, otherid)
-                    self.__infer_room_info(userid, room)
-                    return room
-
-        # Now, create a new room since we don't have an existing one.
-        room = Room(NewRoomID, "", "", RoomPurpose.DIRECT_MESSAGE, False, False, None, None)
-        self.__data.room.create_room(room)
-        self.__data.room.join_room(room.id, userid)
-        self.__data.room.shadow_join_room(room.id, otherid)
-        self.__infer_room_info(userid, room)
-        return room
-
-    def rejoin_direct_message(self, roomid: RoomID) -> None:
-        # Ensure that the room exists and is a direct message.
-        room = self.__data.room.get_room(roomid)
-        if room is None or room.purpose != RoomPurpose.DIRECT_MESSAGE:
-            return
-
-        # Join all occupants including left occupants to the room so they can receive
-        # an incoming message.
-        occupants = self.__data.room.get_room_occupants(room.id, include_left=True)
-        for occupant in occupants:
-            self.__data.room.join_room(room.id, occupant.userid)
 
     def join_room(self, roomid: RoomID, userid: UserID) -> None:
         # First, check permissions for the room the user is trying to join, to ensure

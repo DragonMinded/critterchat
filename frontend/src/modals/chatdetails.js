@@ -12,7 +12,7 @@ class ChatDetails {
         this.inputState = inputState;
         this.preferences = {};
         this.room = {};
-        this.roomLoaded = false;
+        this.action = undefined;
         this.icon = "";
         this.iconDelete = false;
 
@@ -25,15 +25,30 @@ class ChatDetails {
             $.modal.close();
             this.inputState.setState("empty");
 
-            if (this.roomLoaded) {
+            if (this.action == "edit") {
                 this.eventBus.emit('updateroom', {'roomid': this.room.id, 'details': {
                     'name': $('#chatdetails-name').val().substring(0, 255),
                     'topic': $('#chatdetails-topic').val().substring(0, 255),
-                    'moderated': $('form#chatdetails-form  input[type=radio][name="moderation"]:checked').val() == "moderated",
-                    'autojoin': $('form#chatdetails-form  input[type=radio][name="autojoin"]:checked').val() == "on",
+                    'moderated': $('form#chatdetails-form input[type=radio][name="moderation"]:checked').val() == "moderated",
+                    'autojoin': $('form#chatdetails-form input[type=radio][name="autojoin"]:checked').val() == "on",
                     'icon': this.icon,
                     'icon_delete': this.iconDelete,
                 }});
+
+                this.action = undefined;
+            }
+
+            if (this.action == "create") {
+                this.eventBus.emit('newroom', {
+                    'name': $('#chatdetails-name').val().substring(0, 255),
+                    'topic': $('#chatdetails-topic').val().substring(0, 255),
+                    'moderated': $('form#chatdetails-form input[type=radio][name="moderation"]:checked').val() == "moderated",
+                    'autojoin': $('form#chatdetails-form input[type=radio][name="autojoin"]:checked').val() == "on",
+                    'icon': this.icon,
+                    'type': 'room',
+                });
+
+                this.action = undefined;
             }
         });
 
@@ -41,6 +56,8 @@ class ChatDetails {
             event.preventDefault();
             $.modal.close();
             this.inputState.setState("empty");
+
+            this.action = undefined;
         });
 
         $( '#chatdetails-remove-icon' ).on( 'click', (event) => {
@@ -129,62 +146,81 @@ class ChatDetails {
      * close any existing modal, open the chat details modal, and render the various details
      * for the room onto the DOM by finding the correct elements to update.
      */
-    display( roomid ) {
-        if (this.roomLoaded && this.room.id == roomid) {
-            $.modal.close();
+    edit( room ) {
+        this.room = room;
 
-            // Start with a fresh form (clear bad file inputs).
-            $('#chatdetails-form')[0].reset()
+        $.modal.close();
 
-            // Display any server configured limits.
-            $('#chatdetails-max-icon-width').text(window.maxicondimensions[0]);
-            $('#chatdetails-max-icon-height').text(window.maxicondimensions[1]);
-            $('#chatdetails-max-icon-size').text(window.maxiconsize);
+        // Mark that we're editing.
+        this.action = "edit";
 
-            // Make sure we don't accidentally set a previous icon.
-            this.icon = "";
-            this.iconDelete = false;
-
-            var photoType = this.room['public'] ? 'room' : 'avatar';
-            $('div.chatdetails div.icon').removeClass('avatar').removeClass('room').addClass(photoType);
-
-            var roomType = this.room.type == "room" ? "room" : "chat";
-            $("#chatdetails-name-label").text(roomType + " name");
-            $("#chatdetails-name").attr('placeholder', 'Type a custom name for this ' + roomType + '...');
-            $("#chatdetails-topic-label").text(roomType + " topic");
-            $("#chatdetails-topic").attr('placeholder', 'Type a topic for this ' + roomType + '...');
-
-            // Only show moderator options for admins.
-            if (window.admin && this.preferences.admin_controls == "visible" && this.room.type == "room") {
-                $("form#chatdetails-form dl.moderation").show();
-                $('form#chatdetails-form  input[type=radio][name="moderation"]').val([
-                    this.room.moderated ? "moderated" : "free-for-all"
-                ]);
-
-                $("form#chatdetails-form dl.autojoin").show();
-                $('form#chatdetails-form  input[type=radio][name="autojoin"]').val([
-                    this.room.autojoin ? "on" : "off"
-                ]);
-            } else {
-                $("form#chatdetails-form dl.moderation").hide();
-                $("form#chatdetails-form dl.autojoin").hide();
-            }
-
-            $('#chatdetails-name').val(this.room.customname);
-            $('#chatdetails-topic').val(this.room.topic);
-            $('#chatdetails-icon').attr('src', this.room.icon);
-            $('#chatdetails-form').modal();
-        }
+        $( '#chatdetails-confirm' ).text('update info');
+        this._display();
     }
 
-    /**
-     * Called when our parent informs us that the user has selected a new room, or when a new
-     * room has been selected for the user (such as selecting a room after joining it). In either
-     * case, all we care about is updating the room's information so we can display it for edit.
-     */
-    setRoom( room ) {
-        this.room = room;
-        this.roomLoaded = true;
+    create() {
+        this.room = {
+            'public': true,
+            'type': 'room',
+            'moderated': false,
+            'autojoin': false,
+            'customname': '',
+            'topic': '',
+            'icon': window.defroom,
+            'deficon': window.defroom,
+        };
+
+        $.modal.close();
+
+        // Mark that we're creating.
+        this.action = "create";
+
+        $( '#chatdetails-confirm' ).text('create room');
+        this._display();
+    }
+
+    _display() {
+        // Start with a fresh form (clear bad file inputs).
+        $('#chatdetails-form')[0].reset()
+
+        // Display any server configured limits.
+        $('#chatdetails-max-icon-width').text(window.maxicondimensions[0]);
+        $('#chatdetails-max-icon-height').text(window.maxicondimensions[1]);
+        $('#chatdetails-max-icon-size').text(window.maxiconsize);
+
+        // Make sure we don't accidentally set a previous icon.
+        this.icon = "";
+        this.iconDelete = false;
+
+        var photoType = this.room['public'] ? 'room' : 'avatar';
+        $('div.chatdetails div.icon').removeClass('avatar').removeClass('room').addClass(photoType);
+
+        var roomType = this.room.type == "room" ? "room" : "chat";
+        $("#chatdetails-name-label").text(roomType + " name");
+        $("#chatdetails-name").attr('placeholder', 'Type a custom name for this ' + roomType + '...');
+        $("#chatdetails-topic-label").text(roomType + " topic");
+        $("#chatdetails-topic").attr('placeholder', 'Type a topic for this ' + roomType + '...');
+
+        // Only show moderator options for admins.
+        if (window.admin && this.preferences.admin_controls == "visible" && this.room.type == "room") {
+            $("form#chatdetails-form dl.moderation").show();
+            $('form#chatdetails-form  input[type=radio][name="moderation"]').val([
+                this.room.moderated ? "moderated" : "free-for-all"
+            ]);
+
+            $("form#chatdetails-form dl.autojoin").show();
+            $('form#chatdetails-form  input[type=radio][name="autojoin"]').val([
+                this.room.autojoin ? "on" : "off"
+            ]);
+        } else {
+            $("form#chatdetails-form dl.moderation").hide();
+            $("form#chatdetails-form dl.autojoin").hide();
+        }
+
+        $('#chatdetails-name').val(this.room.customname);
+        $('#chatdetails-topic').val(this.room.topic);
+        $('#chatdetails-icon').attr('src', this.room.icon);
+        $('#chatdetails-form').modal();
     }
 
     /**
@@ -193,19 +229,6 @@ class ChatDetails {
      */
     setPreferences( preferences ) {
         this.preferences = preferences;
-    }
-
-    /**
-     * Called whenever our parent informs us that we've left a room. This can happen when
-     * the user chooses to leave a room via the info panel. There is not currently a method
-     * for having the server kick a user from a room and update the client, but when that's
-     * added our parent will call this function as well.
-     */
-    closeRoom( roomid ) {
-        if (this.room.id == roomid) {
-            this.room = {};
-            this.roomLoaded = false;
-        }
     }
 }
 

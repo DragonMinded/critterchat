@@ -894,7 +894,7 @@ def newroom(json: dict[str, object]) -> None:
     purpose = {
         'room': RoomPurpose.ROOM,
         'chat': RoomPurpose.CHAT,
-    }.get(str(json.get('purpose')))
+    }.get(str(json.get('type')))
 
     # Locking our socket info so we can add this chat to our monitoring.
     actual_id: RoomID | None = None
@@ -908,7 +908,36 @@ def newroom(json: dict[str, object]) -> None:
                 return
 
         elif purpose == RoomPurpose.ROOM:
-            raise Exception("Not implemented!")
+            if UserPermission.ADMINISTRATOR not in user.permissions:
+                flash('error', 'You cannot create public rooms!', room=request.sid)
+
+            newname = str(json.get('name', '')).strip()
+            newtopic = str(json.get('topic', '')).strip()
+            newicon = str(json.get('icon', '')).strip()
+            newmoderated = bool(json.get('moderated', ''))
+            newautojoin = bool(json.get('autojoin', ''))
+
+            if not represents_real_text(newname):
+                newname = ""
+            if not represents_real_text(newtopic):
+                newtopic = ""
+
+            icon: AttachmentID | None = None
+            if newicon:
+                icon = Attachment.to_id(newicon)
+
+            try:
+                room = messageservice.create_public_room(
+                    newname,
+                    newtopic,
+                    icon,
+                    newautojoin,
+                    newmoderated,
+                )
+                messageservice.join_room(room.id, user.id)
+                actual_id = room.id
+            except MessageServiceException as e:
+                error(str(e), room=request.sid)
 
         if actual_id:
             # Grab all rooms that the user is in, based on their user ID.

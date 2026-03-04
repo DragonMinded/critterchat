@@ -87,8 +87,14 @@ class Info {
             event.preventDefault();
 
             this.inputState.setState("empty");
-            var roomid = $( '#leave-room' ).attr('roomid');
-            this.chatdetails.display( roomid );
+            var roomid = $( '#edit-info' ).attr('roomid');
+            if ( roomid ) {
+                this.rooms.forEach((room) => {
+                    if (room.id == roomid) {
+                        this.chatdetails.edit( room );
+                    }
+                });
+            }
         });
 
         $( 'div.info > div.occupants' ).on( 'click', () => {
@@ -110,6 +116,13 @@ class Info {
             this.size = newSize;
             this._updateSize();
             this._recalculateScrollPadding();
+        });
+
+        // Set up a handler for when an administrator clicks to create a new room. This is owned by us
+        // because the control we use for this is usually used for editing existing room info, so we
+        // want to be in control over its lifecycle.
+        eventBus.on( 'createroom', () => {
+            this.chatdetails.create();
         });
 
         this.screenState.registerStateChangeCallback(() => {
@@ -592,7 +605,6 @@ class Info {
 
                     this.roomType = room.type;
                     this.moderated = room.moderated;
-                    this.chatdetails.setRoom(room);
                     this._recalculateScrollPadding();
                 }
             });
@@ -651,7 +663,6 @@ class Info {
                     $( 'div.top-info div.title' ).html(escapeHtml(room.name));
                     $( 'div.top-info div.topic' ).html(linkifyHtml(escapeHtml(room.topic), linkifyOptions));
                     $( 'div.top-info div.icon img' ).attr('src', room.icon);
-                    this.chatdetails.setRoom(room);
                 }
             });
         }
@@ -665,7 +676,6 @@ class Info {
      */
     closeRoom( roomid ) {
         if (roomid == this.roomid) {
-            this.chatdetails.closeRoom(roomid);
             this.occupants = [];
             this.occupantsLoaded = false;
             this.infoLoaded = false;

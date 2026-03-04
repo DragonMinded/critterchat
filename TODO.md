@@ -1,11 +1,15 @@
 TODO Immediate
 ==============
 
+ - Cannot search for and jump to existing private room.
+ - Do not display create public room button when prefs turn off admin.
+ - Icon doesn't get uploaded on create public room.
+ - Private group chat invite UI.
+
 TODO For Public Instance
 ========================
 
  - Stickers support in some form.
- - Private group chat invite UI.
  - Accessibility pass.
 
 TODO Low Priority
