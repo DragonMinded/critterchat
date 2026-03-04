@@ -103,6 +103,20 @@ class EmoteService:
         # Now, link it to the emote.
         self.__data.attachment.add_emote(alias, attachmentid)
 
+    def fetch_emote(self, alias: str) -> tuple[str, bytes] | None:
+        # Fetch the data for an emote given that emote.
+        emote = self.__data.attachment.get_emote(alias)
+        if not emote:
+            return None
+
+        # Don't care about content type, but do want to name it properly.
+        content_type_and_data = self.__attachments.get_attachment_data(emote.attachmentid)
+        if not content_type_and_data:
+            return None
+
+        extension = self.__attachments.get_extension(content_type_and_data[0])
+        return (f"{alias}{extension}", content_type_and_data[1])
+
     def drop_emote(self, alias: str) -> None:
         # First, sanitize the name of the emote.
         alias = alias.lower()

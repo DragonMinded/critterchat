@@ -404,9 +404,9 @@ def list_emotes(config: Config, only_broken: bool) -> None:
         print(f"{name}")
 
 
-def add_emote(config: Config, alias: str | None, filename_or_directory: str) -> None:
+def import_emote(config: Config, alias: str | None, filename_or_directory: str) -> None:
     """
-    Given a filename or a directory, and optionally an alias, add emotes to the system.
+    Given a filename or a directory, and optionally an alias, import emotes to the system.
     """
 
     data = Data(config)
@@ -455,9 +455,37 @@ def add_emote(config: Config, alias: str | None, filename_or_directory: str) -> 
         data.close()
 
 
-def drop_emote(config: Config, alias: str) -> None:
+def export_emote(config: Config, directory: str) -> None:
     """
-    Given an alias of an existing emote, drop it from the instance.
+    Given a directory, export emotes from the system.
+    """
+
+    data = Data(config)
+    try:
+        emoteservice = EmoteService(config, data)
+        emotes = emoteservice.get_all_emotes()
+
+        names = sorted([e for e in emotes])
+        for alias in names:
+            name_and_data = emoteservice.fetch_emote(alias)
+            if name_and_data:
+                os.makedirs(directory, exist_ok=True)
+
+                filename = os.path.join(directory, name_and_data[0])
+                with open(filename, "wb") as bfp:
+                    bfp.write(name_and_data[1])
+
+                print(f"Emote with alias '{alias}' written to file {filename!r}")
+
+    except EmoteServiceException as e:
+        raise CommandException(str(e))
+    finally:
+        data.close()
+
+
+def remove_emote(config: Config, alias: str) -> None:
+    """
+    Given an alias of an existing emote, remove it from the instance.
     """
 
     data = Data(config)
@@ -1105,37 +1133,55 @@ def main() -> None:
     )
 
     # A few params for this one
-    addemote_parser = emote_commands.add_parser(
-        "add",
-        help="add a custom emote",
-        description="Add a custom emote.",
+    importemote_parser = emote_commands.add_parser(
+        "import",
+        help="import a custom emote",
+        description="Import a custom emote.",
     )
-    addemote_parser.add_argument(
+    importemote_parser.add_argument(
         "-a",
         "--alias",
         type=str,
-        help="alias to use for the emote you're adding, containing only alphanumberic characters, dashes and underscores",
+        help="alias to use for the emote you're importing, containing only alphanumberic characters, dashes and underscores",
     )
-    addemote_parser.add_argument(
+    importemote_parser.add_argument(
         "-f",
         "--file",
         type=str,
         required=True,
-        help="file of the emote you're adding, and the name of the emote (without extension) if no alias is provided",
+        help=(
+            "file or directory of the emote you're importing. "
+            + "if you provide a file and do not provide an alias, the filename without the extension will be used as the alias. "
+            + "if you provide a directory, all supported images in that directory will be imported as emotes using their filename without extension as the alias."
+        )
     )
 
     # A few params for this one
-    dropemote_parser = emote_commands.add_parser(
-        "drop",
-        help="drop a custom emote",
-        description="Drop a custom emote.",
+    removeemote_parser = emote_commands.add_parser(
+        "remove",
+        help="remove a custom emote",
+        description="Remove a custom emote.",
     )
-    dropemote_parser.add_argument(
+    removeemote_parser.add_argument(
         "-a",
         "--alias",
         type=str,
         required=True,
-        help="alias of the emote you're dropping, containing only alphanumberic characters, dashes and underscores",
+        help="alias of the emote you're removing, containing only alphanumberic characters, dashes and underscores",
+    )
+
+    # A few params for this one
+    exportemote_parser = emote_commands.add_parser(
+        "export",
+        help="export all custom emotes",
+        description="List all custom emotes.",
+    )
+    exportemote_parser.add_argument(
+        "-d",
+        "--directory",
+        type=str,
+        required=True,
+        help="the directory we should export all custom emotes to",
     )
 
     # Another subcommand here.
@@ -1453,10 +1499,12 @@ def main() -> None:
                 raise CLIException("Unspecified emote operation!")
             elif args.emote == "list":
                 list_emotes(config, args.only_broken)
-            elif args.emote == "add":
-                add_emote(config, args.alias, args.file)
-            elif args.emote == "drop":
-                drop_emote(config, args.alias)
+            elif args.emote == "import":
+                import_emote(config, args.alias, args.file)
+            elif args.emote == "export":
+                export_emote(config, args.directory)
+            elif args.emote == "remove":
+                remove_emote(config, args.alias)
             else:
                 raise CLIException(f"Unknown emote operation '{args.emote}'")
 
