@@ -30,6 +30,7 @@ class ChatDetails {
                     'name': $('#chatdetails-name').val().substring(0, 255),
                     'topic': $('#chatdetails-topic').val().substring(0, 255),
                     'moderated': $('form#chatdetails-form  input[type=radio][name="moderation"]:checked').val() == "moderated",
+                    'autojoin': $('form#chatdetails-form  input[type=radio][name="autojoin"]:checked').val() == "on",
                     'icon': this.icon,
                     'icon_delete': this.iconDelete,
                 }});
@@ -159,8 +160,14 @@ class ChatDetails {
                 $('form#chatdetails-form  input[type=radio][name="moderation"]').val([
                     this.room.moderated ? "moderated" : "free-for-all"
                 ]);
+
+                $("form#chatdetails-form dl.autojoin").show();
+                $('form#chatdetails-form  input[type=radio][name="autojoin"]').val([
+                    this.room.autojoin ? "on" : "off"
+                ]);
             } else {
                 $("form#chatdetails-form dl.moderation").hide();
+                $("form#chatdetails-form dl.autojoin").hide();
             }
 
             $('#chatdetails-name').val(this.room.customname);

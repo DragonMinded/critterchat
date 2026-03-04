@@ -555,13 +555,12 @@ def list_public_rooms(config: Config) -> None:
     try:
         messageservice = MessageService(config, data)
         rooms = messageservice.get_public_rooms(NewUserID)
-        autojoin_ids = {room.id for room in messageservice.get_autojoin_rooms(NewUserID)}
 
         for room in rooms:
             print(f"ID: {Room.from_id(room.id)}")
             print(f"Name: {room.name}")
             print(f"Topic: {room.topic}")
-            print(f"Autojoin: {'on' if room.id in autojoin_ids else 'off'}")
+            print(f"Autojoin: {'on' if room.autojoin else 'off'}")
             print("")
     except MessageServiceException as e:
         raise CommandException(str(e))
@@ -689,7 +688,8 @@ def modify_public_room_info(config: Config, roomid: str, name: str | None, topic
 def modify_public_room_autojoin(config: Config, roomid: str, autojoin: str) -> None:
     """
     Modify an existing room by ID, setting it's autojoin property. Note that when toggling this,
-    it does not join existing users to the room.
+    if you set a room to autojoin and it was not set to that before, all users will be joined to
+    the room.
     """
 
     data = Data(config)
@@ -698,7 +698,7 @@ def modify_public_room_autojoin(config: Config, roomid: str, autojoin: str) -> N
         if actual_id is None:
             raise CommandException("Room ID is not valid!")
         messageservice = MessageService(config, data)
-        messageservice.update_public_room_autojoin(actual_id, autojoin == "on")
+        messageservice.update_public_room_autojoin(actual_id, NewUserID, autojoin == "on")
 
         if autojoin == "on":
             print(f"Room with ID {Room.from_id(actual_id)} set to auto join new users.")

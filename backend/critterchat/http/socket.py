@@ -933,6 +933,10 @@ def updateroom(json: dict[str, object]) -> None:
         if UserPermission.ADMINISTRATOR in user.permissions:
             newmoderated = bool(details.get('moderated', ''))
 
+        newautojoin: bool | None = None
+        if UserPermission.ADMINISTRATOR in user.permissions:
+            newautojoin = bool(details.get('autojoin', ''))
+
         if not represents_real_text(newname):
             newname = ""
         if not represents_real_text(newtopic):
@@ -949,6 +953,7 @@ def updateroom(json: dict[str, object]) -> None:
                 name=newname,
                 topic=newtopic,
                 moderated=newmoderated,
+                autojoin=newautojoin,
                 icon=icon,
                 icon_delete=icondelete,
             )

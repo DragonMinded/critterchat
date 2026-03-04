@@ -22,6 +22,23 @@
             <dt id="chatdetails-topic-label"></dt>
             <dd><input type="text" id="chatdetails-topic" autocomplete="off" maxlength="255" /></dd>
         </dl>
+        <dl class="autojoin">
+            <dt id="chatdetails-autojoin-label">auto join</dt>
+            <dd>
+                <div class="options">
+                    <input type="radio" id="chatdetails-autojoin-off" name="autojoin" value="off" />
+                    <label for="chatdetails-autojoin-off">off</label>
+                    <input type="radio" id="chatdetails-autojoin-on" name="autojoin" value="on" />
+                    <label for="chatdetails-autojoin-on">on</label>
+                </div>
+                <div class="explain">
+                    When autojoin is set to off, new users will not be joined to the room. Existing users
+                    can join the room by searching for it in the "find or start chat" dialog. When autojoin
+                    is set to on, new users will be joined to the room when they are activated. Existing
+                    users who are not in the room will be auto joined to the room after enabling auto join.
+                </div>
+            </dd>
+        </dl>
         <dl class="moderation">
             <dt id="chatdetails-moderation-label">moderation</dt>
             <dd>

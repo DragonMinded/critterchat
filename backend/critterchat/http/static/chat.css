@@ -1612,7 +1612,7 @@ div.alt-text dd {
     margin-left: 0px;
 }
 
-div.chatdetails dl.moderation dd {
+div.chatdetails dl.moderation dd, div.chatdetails dl.autojoin dd {
     margin-left: 0px;
 }
 

@@ -151,7 +151,7 @@ class RoomData(BaseData):
 
         cursor = self.execute(statement(
             """
-                SELECT id, name, topic, icon, purpose, moderated, last_action
+                SELECT id, name, topic, icon, purpose, moderated, autojoin, last_action
                 FROM room
                 WHERE id in (SELECT room_id FROM occupant WHERE %andlist)
             """,
@@ -164,6 +164,7 @@ class RoomData(BaseData):
                 topic=result['topic'],
                 purpose=self._get_purpose(str(result['purpose'])),
                 moderated=bool(result['moderated']),
+                autojoin=bool(result['autojoin']),
                 last_action_timestamp=result['last_action'],
                 iconid=AttachmentID(result['icon']) if result['icon'] else None,
                 deficonid=None,
@@ -185,7 +186,7 @@ class RoomData(BaseData):
             return []
 
         sql = """
-            SELECT id, name, topic, icon, purpose, moderated, last_action FROM room WHERE id in (
+            SELECT id, name, topic, icon, purpose, moderated, autojoin, last_action FROM room WHERE id in (
                 SELECT room_id FROM occupant WHERE user_id = :userid AND inactive = TRUE
             )
         """
@@ -197,6 +198,7 @@ class RoomData(BaseData):
                 topic=result['topic'],
                 purpose=self._get_purpose(str(result['purpose'])),
                 moderated=bool(result['moderated']),
+                autojoin=bool(result['autojoin']),
                 last_action_timestamp=result['last_action'],
                 iconid=AttachmentID(result['icon']) if result['icon'] else None,
                 deficonid=None,
@@ -253,7 +255,7 @@ class RoomData(BaseData):
             return []
 
         sql = """
-            SELECT id, name, topic, icon, purpose, moderated, last_action FROM room WHERE id in (
+            SELECT id, name, topic, icon, purpose, moderated, autojoin, last_action FROM room WHERE id in (
                 SELECT room_id FROM occupant WHERE user_id = :userid AND inactive != TRUE
             )
         """
@@ -268,6 +270,7 @@ class RoomData(BaseData):
                 topic=result['topic'],
                 purpose=self._get_purpose(str(result['purpose'])),
                 moderated=bool(result['moderated']),
+                autojoin=bool(result['autojoin']),
                 last_action_timestamp=result['last_action'],
                 iconid=AttachmentID(result['icon']) if result['icon'] else None,
                 deficonid=None,
@@ -286,7 +289,7 @@ class RoomData(BaseData):
             list of Room objects representing the rooms on the network
         """
         sql = """
-            SELECT id, name, topic, icon, purpose, moderated, last_action FROM room
+            SELECT id, name, topic, icon, purpose, moderated, autojoin, last_action FROM room
         """
         if name is not None:
             sql += " WHERE (name IS NULL OR name = '' OR name COLLATE utf8mb4_general_ci LIKE :name)"
@@ -299,6 +302,7 @@ class RoomData(BaseData):
                 topic=result['topic'],
                 purpose=self._get_purpose(str(result['purpose'])),
                 moderated=bool(result['moderated']),
+                autojoin=bool(result['autojoin']),
                 last_action_timestamp=result['last_action'],
                 iconid=AttachmentID(result['icon']) if result['icon'] else None,
                 deficonid=None,
@@ -317,7 +321,7 @@ class RoomData(BaseData):
             list of Room objects representing the public rooms on the network
         """
         sql = """
-            SELECT id, name, topic, icon, purpose, moderated, last_action FROM room WHERE purpose = :purpose
+            SELECT id, name, topic, icon, purpose, moderated, autojoin, last_action FROM room WHERE purpose = :purpose
         """
         if name is not None:
             sql += " AND (name IS NULL OR name = '' OR name COLLATE utf8mb4_general_ci LIKE :name)"
@@ -330,6 +334,7 @@ class RoomData(BaseData):
                 topic=result['topic'],
                 purpose=self._get_purpose(str(result['purpose'])),
                 moderated=bool(result['moderated']),
+                autojoin=bool(result['autojoin']),
                 last_action_timestamp=result['last_action'],
                 iconid=AttachmentID(result['icon']) if result['icon'] else None,
                 deficonid=None,
@@ -354,7 +359,7 @@ class RoomData(BaseData):
             return []
 
         sql = """
-            SELECT id, name, topic, icon, purpose, moderated, last_action FROM room WHERE purpose = :purpose
+            SELECT id, name, topic, icon, purpose, moderated, autojoin, last_action FROM room WHERE purpose = :purpose
         """
         if name is not None:
             sql += " AND (name IS NULL OR name = '' OR name COLLATE utf8mb4_general_ci LIKE :name)"
@@ -367,6 +372,7 @@ class RoomData(BaseData):
                 topic=result['topic'],
                 purpose=self._get_purpose(str(result['purpose'])),
                 moderated=bool(result['moderated']),
+                autojoin=bool(result['autojoin']),
                 last_action_timestamp=result['last_action'],
                 iconid=AttachmentID(result['icon']) if result['icon'] else None,
                 deficonid=None,
@@ -382,10 +388,14 @@ class RoomData(BaseData):
             list of Room objects representing the rooms the user will auto-join.
         """
         sql = """
-            SELECT id, name, topic, icon, purpose, moderated, last_action FROM room WHERE autojoin = TRUE
+            SELECT
+                id, name, topic, icon, purpose, moderated, autojoin, last_action
+            FROM room
+            WHERE
+                autojoin = TRUE AND purpose = :purpose
         """
 
-        cursor = self.execute(sql)
+        cursor = self.execute(sql, {'purpose': RoomPurpose.ROOM})
         return self._hydrate_actions([
             Room(
                 roomid=RoomID(result['id']),
@@ -393,6 +403,7 @@ class RoomData(BaseData):
                 topic=result['topic'],
                 purpose=self._get_purpose(str(result['purpose'])),
                 moderated=bool(result['moderated']),
+                autojoin=bool(result['autojoin']),
                 last_action_timestamp=result['last_action'],
                 iconid=AttachmentID(result['icon']) if result['icon'] else None,
                 deficonid=None,
@@ -444,6 +455,7 @@ class RoomData(BaseData):
             topic=result['topic'],
             purpose=self._get_purpose(str(result['purpose'])),
             moderated=bool(result['moderated']),
+            autojoin=bool(result['autojoin']),
             last_action_timestamp=result['last_action'],
             oldest_action=oldest_actions.get(room_id),
             newest_action=newest_actions.get(room_id),

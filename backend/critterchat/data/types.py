@@ -280,6 +280,7 @@ class Room:
         topic: str,
         purpose: RoomPurpose,
         moderated: bool,
+        autojoin: bool,
         iconid: AttachmentID | None,
         deficonid: AttachmentID | None,
         oldest_action: ActionID | None = None,
@@ -292,6 +293,7 @@ class Room:
         self.topic = topic or ""
         self.purpose = purpose
         self.moderated = moderated
+        self.autojoin = autojoin
         self.oldest_action = oldest_action
         self.newest_action = newest_action
         self.last_action_timestamp = last_action_timestamp
@@ -317,6 +319,7 @@ class Room:
             "topic": self.topic,
             "public": self.public,
             "moderated": self.moderated,
+            "autojoin": self.autojoin,
             "oldest_action": Action.from_id(self.oldest_action) if self.oldest_action else None,
             "newest_action": Action.from_id(self.newest_action) if self.newest_action else None,
             "last_action_timestamp": self.last_action_timestamp,

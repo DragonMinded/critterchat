@@ -497,7 +497,7 @@ class MessageService:
     ) -> Room:
         # Create a new public room, possibly with auto-join enabled, and return it. If auto-join is
         # enabled then join all existing users to the room after creating.
-        room = Room(NewRoomID, name, topic, RoomPurpose.ROOM, moderated, icon, None)
+        room = Room(NewRoomID, name, topic, RoomPurpose.ROOM, moderated, False, icon, None)
         self.__data.room.create_room(room)
 
         if autojoin:
@@ -546,7 +546,7 @@ class MessageService:
         self.__infer_room_info(occupant.userid, room)
         return room
 
-    def update_public_room_autojoin(self, roomid: RoomID, autojoin: bool) -> Room:
+    def update_public_room_autojoin(self, roomid: RoomID, userid: UserID, autojoin: bool) -> Room:
         # First, look up the room, making sure it exists.
         room = self.__data.room.get_room(roomid)
         if not room:
@@ -559,6 +559,21 @@ class MessageService:
         # Grab info, update the autojoin property.
         self.__infer_room_info(NewUserID, room)
         self.__data.room.set_room_autojoin(room.id, autojoin)
+
+        # Figure out if we need to add people to the room.
+        changed = room.autojoin != autojoin
+        room.autojoin = autojoin
+
+        if changed and room.autojoin:
+            for user in self.__data.user.get_users():
+                if UserPermission.ACTIVATED not in user.permissions:
+                    continue
+
+                self.__data.room.join_room(room.id, user.id)
+
+        if changed:
+            # Trigger an action so any clients that are admins can see the updated value.
+            self.__data.room.update_room(room, userid)
 
         # Finally, return the room.
         return room
@@ -608,7 +623,7 @@ class MessageService:
                     return room
 
         # Now, create a new room since we don't have an existing one.
-        room = Room(NewRoomID, "", "", RoomPurpose.DIRECT_MESSAGE, False, None, None)
+        room = Room(NewRoomID, "", "", RoomPurpose.DIRECT_MESSAGE, False, False, None, None)
         self.__data.room.create_room(room)
         self.__data.room.join_room(room.id, userid)
         self.__data.room.shadow_join_room(room.id, otherid)
@@ -662,6 +677,7 @@ class MessageService:
         name: str | None = None,
         topic: str | None = None,
         moderated: bool | None = None,
+        autojoin: bool | None = None,
         icon: AttachmentID | None = None,
         icon_delete: bool = False,
     ) -> None:
@@ -718,6 +734,15 @@ class MessageService:
             room.iconid = None
         if room.iconid != old_icon:
             changed = True
+
+        # Do this before the room update itself because otherwise the person doing the autojoin
+        # update might not get the changed property. This action will join everyone to the room
+        # who is not in the room before saving the room update. Force an update so the client gets
+        # notified.
+        if autojoin is not None:
+            if autojoin != room.autojoin and room.purpose == RoomPurpose.ROOM:
+                self.update_public_room_autojoin(room.id, userid, autojoin)
+                changed = True
 
         if changed:
             self.__data.room.update_room(room, userid)

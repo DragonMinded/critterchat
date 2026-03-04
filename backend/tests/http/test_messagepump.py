@@ -341,7 +341,7 @@ class TestMessagePumpActions:
         info.lastseen = {}
 
         set_return(data.room.get_joined_rooms, [
-            Room(RoomID(401), "test room", "test topic", RoomPurpose.ROOM, False, None, None, oldest_action=ActionID(100000), newest_action=ActionID(100001)),
+            Room(RoomID(401), "test room", "test topic", RoomPurpose.ROOM, False, False, None, None, oldest_action=ActionID(100000), newest_action=ActionID(100001)),
         ])
         set_return(data.user.get_last_seen_counts, [
             (RoomID(401), 2),
@@ -369,6 +369,7 @@ class TestMessagePumpActions:
                             'topic': 'test topic',
                             'public': True,
                             'moderated': False,
+                            'autojoin': False,
                             'oldest_action': 'a100000',
                             'newest_action': 'a100001',
                             'last_action_timestamp': 0,
@@ -400,8 +401,8 @@ class TestMessagePumpActions:
 
         set_return(data.room.get_room_history, [])
         set_return(data.room.get_joined_rooms, [
-            Room(RoomID(501), "test room 1", "test topic 1", RoomPurpose.ROOM, False, None, None, oldest_action=ActionID(100100), newest_action=ActionID(100101)),
-            Room(RoomID(502), "test room 2", "test topic 2", RoomPurpose.ROOM, False, None, None, oldest_action=ActionID(100102), newest_action=ActionID(100104)),
+            Room(RoomID(501), "test room 1", "test topic 1", RoomPurpose.ROOM, False, False, None, None, oldest_action=ActionID(100100), newest_action=ActionID(100101)),
+            Room(RoomID(502), "test room 2", "test topic 2", RoomPurpose.ROOM, False, False, None, None, oldest_action=ActionID(100102), newest_action=ActionID(100104)),
         ])
         set_return(data.user.get_last_seen_counts, [
             (RoomID(501), 2),
@@ -430,6 +431,7 @@ class TestMessagePumpActions:
                             'topic': 'test topic 1',
                             'public': True,
                             'moderated': False,
+                            'autojoin': False,
                             'oldest_action': 'a100100',
                             'newest_action': 'a100101',
                             'last_action_timestamp': 0,
@@ -444,6 +446,7 @@ class TestMessagePumpActions:
                             'topic': 'test topic 2',
                             'public': True,
                             'moderated': False,
+                            'autojoin': False,
                             'oldest_action': 'a100102',
                             'newest_action': 'a100104',
                             'last_action_timestamp': 0,
@@ -478,8 +481,8 @@ class TestMessagePumpActions:
 
         set_return(data.room.get_room_history, [])
         set_return(data.room.get_joined_rooms, [
-            Room(RoomID(601), "test room 1", "test topic 1", RoomPurpose.ROOM, False, None, None, oldest_action=ActionID(100200), newest_action=ActionID(100201)),
-            Room(RoomID(602), "test room 2", "test topic 2", RoomPurpose.ROOM, False, None, None, oldest_action=ActionID(100202), newest_action=ActionID(100204)),
+            Room(RoomID(601), "test room 1", "test topic 1", RoomPurpose.ROOM, False, False, None, None, oldest_action=ActionID(100200), newest_action=ActionID(100201)),
+            Room(RoomID(602), "test room 2", "test topic 2", RoomPurpose.ROOM, False, False, None, None, oldest_action=ActionID(100202), newest_action=ActionID(100204)),
         ])
         set_return(data.user.get_last_seen_counts, [
             (RoomID(601), 2),
@@ -521,8 +524,8 @@ class TestMessagePumpActions:
 
         set_return(data.room.get_room_history, [])
         set_return(data.room.get_joined_rooms, [
-            Room(RoomID(701), "test room 1", "test topic 1", RoomPurpose.ROOM, False, None, None, oldest_action=ActionID(100300), newest_action=ActionID(100301)),
-            Room(RoomID(702), "test room 2", "test topic 2", RoomPurpose.ROOM, False, None, None, oldest_action=ActionID(100302), newest_action=ActionID(100304)),
+            Room(RoomID(701), "test room 1", "test topic 1", RoomPurpose.ROOM, False, False, None, None, oldest_action=ActionID(100300), newest_action=ActionID(100301)),
+            Room(RoomID(702), "test room 2", "test topic 2", RoomPurpose.ROOM, False, False, None, None, oldest_action=ActionID(100302), newest_action=ActionID(100304)),
         ])
         set_return(data.user.get_last_seen_counts, [
             (RoomID(701), 2),
@@ -562,8 +565,8 @@ class TestMessagePumpActions:
 
         set_lambda(data.room.get_room_history, lambda roomid, before=None, after=None, types=None: actions.get(roomid, []))
         set_return(data.room.get_joined_rooms, [
-            Room(RoomID(801), "test room 1", "test topic 1", RoomPurpose.ROOM, False, None, None, oldest_action=ActionID(100400), newest_action=ActionID(100401)),
-            Room(RoomID(802), "test room 2!", "test topic 2!", RoomPurpose.ROOM, False, None, None, oldest_action=ActionID(100402), newest_action=ActionID(100406)),
+            Room(RoomID(801), "test room 1", "test topic 1", RoomPurpose.ROOM, False, False, None, None, oldest_action=ActionID(100400), newest_action=ActionID(100401)),
+            Room(RoomID(802), "test room 2!", "test topic 2!", RoomPurpose.ROOM, False, False, None, None, oldest_action=ActionID(100402), newest_action=ActionID(100406)),
         ])
         set_return(data.user.get_last_seen_counts, [
             (RoomID(801), 2),
@@ -628,6 +631,7 @@ class TestMessagePumpActions:
                             'topic': 'test topic 1',
                             'public': True,
                             'moderated': False,
+                            'autojoin': False,
                             'oldest_action': 'a100400',
                             'newest_action': 'a100401',
                             'last_action_timestamp': 0,
@@ -642,6 +646,7 @@ class TestMessagePumpActions:
                             'topic': 'test topic 2!',
                             'public': True,
                             'moderated': False,
+                            'autojoin': False,
                             'oldest_action': 'a100402',
                             'newest_action': 'a100406',
                             'last_action_timestamp': 0,

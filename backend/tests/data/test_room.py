@@ -25,6 +25,7 @@ class TestRoomData:
             "test room crud topic",
             RoomPurpose.ROOM,
             False,
+            False,
             None,
             None,
         )
@@ -78,6 +79,7 @@ class TestRoomData:
             "",
             RoomPurpose.DIRECT_MESSAGE,
             False,
+            False,
             None,
             None,
         )
@@ -88,6 +90,7 @@ class TestRoomData:
             "test room 2",
             "",
             RoomPurpose.DIRECT_MESSAGE,
+            False,
             False,
             None,
             None,
