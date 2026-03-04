@@ -514,6 +514,16 @@ class MessageService:
         # Finally, return the room.
         return room
 
+    def create_private_chat(self, userid: UserID) -> Room:
+        # Create a new private group chat.
+        room = Room(NewRoomID, "", "", RoomPurpose.CHAT, False, False, None, None)
+        self.__data.room.create_room(room)
+        self.__data.room.join_room(room.id, userid)
+
+        # Fetch room info so we can grab occupants.
+        self.__infer_room_info(userid, room)
+        return room
+
     def lookup_room(self, roomid: RoomID, userid: UserID) -> Room | None:
         room = self.__data.room.get_room(roomid)
         if room:

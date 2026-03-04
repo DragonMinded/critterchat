@@ -652,6 +652,10 @@ export function manager(socket) {
         socket.emit('joinroom', {'roomid': roomoruserid})
     });
 
+    eventBus.on('newroom', (details) => {
+        socket.emit('newroom', details);
+    });
+
     eventBus.on('updateroom', (msg) => {
         const roomid = msg.roomid;
         var details = msg.details;

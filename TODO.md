@@ -5,8 +5,8 @@ TODO For Public Instance
 ========================
 
  - Stickers support in some form.
- - Private group chat creation UI.
  - Private group chat invite UI.
+ - Accessibility pass.
 
 TODO Low Priority
 =================

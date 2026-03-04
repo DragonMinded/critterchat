@@ -22,6 +22,7 @@ from ..data import (
     Attachment,
     Room,
     User,
+    RoomPurpose,
     UserPermission,
     UserSettings,
     Occupant,
@@ -859,6 +860,55 @@ def joinroom(json: dict[str, object]) -> None:
             except MessageServiceException as e:
                 error(str(e), room=request.sid)
                 return
+
+        if actual_id:
+            # Grab all rooms that the user is in, based on their user ID.
+            rooms = messageservice.get_joined_rooms(user.id)
+
+            # Pre-charge the delta fetches for all rooms this user is in that
+            # they weren't in beforehand.
+            for room in rooms:
+                if room.id not in info.fetchlimit:
+                    info.fetchlimit[room.id] = room.newest_action if room.newest_action is not None else NewActionID
+
+    if actual_id:
+        socketio.emit('roomlist', {
+            'rooms': [room.to_dict() for room in rooms],
+            'selected': Room.from_id(actual_id),
+        }, room=request.sid)
+
+
+@socketio.on('newroom')  # type: ignore
+def newroom(json: dict[str, object]) -> None:
+    data = Data(config)
+    messageservice = MessageService(config, data)
+
+    # Try to associate with a user if there is one.
+    user = recover_user(data, request.sid)
+    info = recover_info(request.sid)
+    if user is None or info is None:
+        return
+
+    # Grab info about the room itself. Anyone can create a new private chat. Only admins
+    # can create public rooms.
+    purpose = {
+        'room': RoomPurpose.ROOM,
+        'chat': RoomPurpose.CHAT,
+    }.get(str(json.get('purpose')))
+
+    # Locking our socket info so we can add this chat to our monitoring.
+    actual_id: RoomID | None = None
+    with info.lock:
+        if purpose == RoomPurpose.CHAT:
+            try:
+                room = messageservice.create_private_chat(user.id)
+                actual_id = room.id
+            except MessageServiceException as e:
+                error(str(e), room=request.sid)
+                return
+
+        elif purpose == RoomPurpose.ROOM:
+            raise Exception("Not implemented!")
 
         if actual_id:
             # Grab all rooms that the user is in, based on their user ID.

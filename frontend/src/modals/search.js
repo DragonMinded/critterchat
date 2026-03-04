@@ -20,17 +20,41 @@ class Search {
         $( '#search-chat' ).on( 'click', (event) => {
             event.preventDefault();
             this.inputState.setState("empty");
-            $( '#search' ).val("");
-            this.populateSearchResults([]);
 
-            this.eventBus.emit('searchrooms', "")
-            $('#search-form').modal();
-            $('#search').focus();
+            this.showSearch();
+        });
+
+        $( '#search-create-private-chat' ).on( 'click', (event) => {
+            event.preventDefault();
+            this.inputState.setState("empty");
+
+            this._createChat();
         });
 
         $( '#search-form' ).on( 'submit', (event) => {
             event.preventDefault();
         });
+    }
+
+    /**
+     * Called when the user clicks on the "find or start chat" button.
+     */
+    showSearch() {
+        // Clear out any previous search, ask the backend for default results.
+        $( '#search' ).val("");
+        this.populateSearchResults([]);
+        this.eventBus.emit('searchrooms', "")
+
+        // Show or hide action buttons based on admin rights.
+        if (window.admin) {
+            $('#search-create-public-room').show();
+        } else {
+            $('#search-create-public-room').hide();
+        }
+
+        // Finally, display the modal.
+        $('#search-form').modal();
+        $('#search').focus();
     }
 
     /**
@@ -79,6 +103,16 @@ class Search {
                 this._joinRoom( id );
             });
         });
+    }
+
+    /**
+     * Called internally when we want to create a new private chat.
+     */
+    _createChat() {
+        $.modal.close();
+        $( '#search' ).val("");
+        this.populateSearchResults([]);
+        this.eventBus.emit('newroom', {'purpose': 'chat'});
     }
 
     /**
