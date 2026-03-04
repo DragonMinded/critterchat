@@ -24,7 +24,7 @@ from .login import (
     logout_all,
     ensure_logged_out_all,
 )
-from ..common import get_emoji_unicode_dict, get_aliases_unicode_dict
+from ..common import get_aliases_unicode_dict
 from ..data import UserPermission, FaviconID
 from ..service import (
     AttachmentService,
@@ -392,11 +392,7 @@ def invitepost(invite: str) -> Response:
     user = g.data.user.from_invite(invite)
     jsname = get_frontend_filename('home')
 
-    emojis = {
-        **get_emoji_unicode_dict('en'),
-        **get_aliases_unicode_dict(),
-    }
-    emojis = {key: emojis[key] for key in emojis if "__" not in key}
+    emojis = {key: val for (key, val) in get_aliases_unicode_dict().items() if "__" not in key}
     emotes = {f":{key}:": val.to_dict() for key, val in emoteservice.get_all_emotes().items()}
 
     username = request.form["username"]
@@ -523,11 +519,7 @@ def invite(invite: str) -> Response:
     user = g.data.user.from_invite(invite)
     jsname = get_frontend_filename('home')
 
-    emojis = {
-        **get_emoji_unicode_dict('en'),
-        **get_aliases_unicode_dict(),
-    }
-    emojis = {key: emojis[key] for key in emojis if "__" not in key}
+    emojis = {key: val for (key, val) in get_aliases_unicode_dict().items() if "__" not in key}
     emotes = {f":{key}:": val.to_dict() for key, val in emoteservice.get_all_emotes().items()}
 
     return Response(render_template(

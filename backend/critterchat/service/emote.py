@@ -1,6 +1,6 @@
 from typing import cast
 
-from ..common import get_emoji_unicode_dict, get_aliases_unicode_dict
+from ..common import get_aliases_unicode_dict
 from ..config import Config
 from ..data import Data, Emote, MetadataType
 from .attachment import AttachmentService, AttachmentServiceUnsupportedImageException, AttachmentServiceException
@@ -26,10 +26,7 @@ class EmoteService:
         if _valid_emojis:
             return _valid_emojis
 
-        emojis = {
-            **get_emoji_unicode_dict('en'),
-            **get_aliases_unicode_dict(),
-        }
+        emojis = get_aliases_unicode_dict()
 
         def strip_colons(string: str) -> str:
             if string and string[0] == ":" and string[-1] == ":":

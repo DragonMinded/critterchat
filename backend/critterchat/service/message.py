@@ -1,8 +1,7 @@
-import emoji
 from typing import Final, Literal, cast
 
 from ..config import Config
-from ..common import Time
+from ..common import Time, emojize
 from ..data import (
     Data,
     Action,
@@ -113,7 +112,7 @@ class MessageService:
         attachments: list[AttachmentID],
     ) -> Action | None:
         # Ensure we're not trying to send too much text.
-        message = emoji.emojize(emoji.emojize(message, language="alias"), language="en")
+        message = emojize(message)
         if len(message) > self.__config.limits.message_length:
             raise MessageServiceException("You're trying to send a message that is too long!")
 

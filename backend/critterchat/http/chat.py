@@ -13,7 +13,7 @@ from .app import (
     get_fingerprint_hash,
     g,
 )
-from ..common import get_emoji_unicode_dict, get_aliases_unicode_dict, EMOJI_CATEGORIES
+from ..common import get_aliases_unicode_dict, EMOJI_CATEGORIES
 from ..data import DefaultAvatarID, DefaultRoomID, FaviconID, User, UserPermission
 from ..service import AttachmentService, EmoteService, MessageService
 
@@ -33,11 +33,7 @@ def home() -> Response:
     emoteservice = EmoteService(g.config, g.data)
     messageservice = MessageService(g.config, g.data)
 
-    emojis = {
-        **get_emoji_unicode_dict('en'),
-        **get_aliases_unicode_dict(),
-    }
-    emojis = {key: emojis[key] for key in emojis if "__" not in key}
+    emojis = {key: val for (key, val) in get_aliases_unicode_dict().items() if "__" not in key}
     emotes = {f":{key}:": val.to_dict() for key, val in emoteservice.get_all_emotes().items()}
 
     userid = None if (not g.user) else User.from_id(g.user.id)
@@ -83,11 +79,7 @@ def config() -> dict[str, object]:
     emoteservice = EmoteService(g.config, g.data)
     messageservice = MessageService(g.config, g.data)
 
-    emojis = {
-        **get_emoji_unicode_dict('en'),
-        **get_aliases_unicode_dict(),
-    }
-    emojis = {key: emojis[key] for key in emojis if "__" not in key}
+    emojis = {key: val for (key, val) in get_aliases_unicode_dict().items() if "__" not in key}
     emotes = {f":{key}:": val.to_dict() for key, val in emoteservice.get_all_emotes().items()}
 
     userid = None if (not g.user) else User.from_id(g.user.id)
