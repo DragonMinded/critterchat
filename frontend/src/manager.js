@@ -468,10 +468,10 @@ export function manager(socket) {
         infoInst.updateActions(msg.roomid, msg.actions);
     });
 
-    socket.on('searchrooms', (msg) => {
+    socket.on('searchresults', (msg) => {
         // Pretty self-explanatory, handles ferrying any search results sent from the server to the
         // search instance for update.
-        menuInst.populateSearchResults(msg.rooms);
+        menuInst.populateSearchResults(msg.results);
     });
 
     socket.on('emotechanges', (msg) => {
@@ -713,8 +713,12 @@ export function manager(socket) {
         }
     });
 
-    eventBus.on('searchrooms', (value) => {
-        socket.emit('searchrooms', {'name': value})
+    eventBus.on('searchrooms', (info) => {
+        socket.emit('searchrooms', info);
+    });
+
+    eventBus.on('searchusers', (info) => {
+        socket.emit('searchusers', info);
     });
 
     eventBus.on('lastaction', (value) => {

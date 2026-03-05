@@ -342,7 +342,7 @@ class Room:
             return None
 
 
-class RoomSearchResult:
+class SearchResult:
     def __init__(
         self,
         name: str,

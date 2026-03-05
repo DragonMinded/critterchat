@@ -9,13 +9,21 @@ class Search {
     constructor( eventBus, inputState ) {
         this.eventBus = eventBus;
         this.inputState = inputState;
+        this.mode = undefined;
+        this.roomid = "";
         this.preferences = {};
 
         $( '#search' ).on( 'input', (event) => {
             event.preventDefault();
 
             var searchValue = $('#search').val();
-            this.eventBus.emit('searchrooms', searchValue);
+
+            if (this.mode == "search") {
+                this.eventBus.emit('searchrooms', {'name': searchValue});
+            }
+            if (this.mode == "invite" && this.roomid) {
+                this.eventBus.emit('searchusers', {'roomid': this.roomid, 'name': searchValue});
+            }
         });
 
         $( '#search-chat' ).on( 'click', (event) => {
@@ -23,6 +31,16 @@ class Search {
             this.inputState.setState("empty");
 
             this.showSearch();
+        });
+
+        $( '#invite-chatter' ).on( 'click', (event) => {
+            event.preventDefault();
+
+            this.inputState.setState("empty");
+            var roomid = $( '#invite-chatter' ).attr('roomid');
+            if ( roomid ) {
+                this.showInvites(roomid);
+            }
         });
 
         $( '#search-create-private-chat' ).on( 'click', (event) => {
@@ -51,7 +69,7 @@ class Search {
         // Clear out any previous search, ask the backend for default results.
         $( '#search' ).val("");
         this.populateSearchResults([]);
-        this.eventBus.emit('searchrooms', "")
+        this.eventBus.emit('searchrooms', {'name': ""})
 
         // Show or hide action buttons based on admin rights.
         if (window.admin && this.preferences.admin_controls == "visible") {
@@ -59,11 +77,36 @@ class Search {
         } else {
             $('#search-create-public-room').hide();
         }
+        $( '#search' ).attr('placeholder', "Find a chatter or an existing chat...")
+
+        this.mode = "search";
+        this.roomid = "";
 
         // Finally, display the modal.
+        $('#search-form div.actions-wrapper').show();
         $('#search-form').modal();
         $('#search').focus();
     }
+
+    /**
+     * Called when the user clicks on the "send invite" button.
+     */
+    showInvites( roomid ) {
+        // Clear out any previous search, ask the backend for default results.
+        $( '#search' ).val("");
+        this.populateSearchResults([]);
+        this.eventBus.emit('searchusers', {'roomid': roomid, 'name': ""});
+
+        this.mode = "invite";
+        this.roomid = roomid;
+
+        // Finally, display the modal.
+        $('#search-form div.actions-wrapper').hide();
+        $('#search').attr('placeholder', "Find a chatter to invite...")
+        $('#search-form').modal();
+        $('#search').focus();
+    }
+
 
     /**
      * Called every time we have updated search results from the server based on a search event
@@ -76,12 +119,18 @@ class Search {
         results.forEach((result) => {
             var id = result.roomid || result.userid;
             var action = "";
-            if (result.roomid) {
-                action = result.joined ? "jump" : "join";
-            } else {
-                action = "message";
-            }
             var type = result.type == "room" ? 'room' : 'avatar';
+
+            if (this.mode == "search") {
+                if (result.roomid) {
+                    action = result.joined ? "jump" : "join";
+                } else {
+                    action = "message";
+                }
+            }
+            if (this.mode == "invite") {
+                action = result.joined ? "" : "invite";
+            }
 
             var handleText = "";
             if (result.handle) {
@@ -99,17 +148,31 @@ class Search {
             html    += '    <span dir="auto">' + escapeHtml(result.name) + '</span>';
             html    += '    ' + handleText;
             html    += '  </div></div>';
-            html    += '  <div class="action-wrapper"><div class="action">' + action + '</div></div>';
+            if (action) {
+                html    += '  <div class="action-wrapper"><div class="action">' + action + '</div></div>';
+            }
             html    += '</div>';
             resultdom.append(html);
 
-            $('div.search > div.results div.item#' + id).on('click', (event) => {
-                event.stopPropagation();
-                event.stopImmediatePropagation();
+            if (this.mode == "search") {
+                $('div.search > div.results div.item#' + id).on('click', (event) => {
+                    event.stopPropagation();
+                    event.stopImmediatePropagation();
 
-                var id = $(event.currentTarget).attr('id')
-                this._joinRoom( id );
-            });
+                    var id = $(event.currentTarget).attr('id')
+                    this._joinRoom( id );
+                });
+            }
+
+            if (this.mode == "invite" && action) {
+                $('div.search > div.results div.item#' + id).on('click', (event) => {
+                    event.stopPropagation();
+                    event.stopImmediatePropagation();
+
+                    var id = $(event.currentTarget).attr('id')
+                    this._inviteToRoom( id );
+                });
+            }
         });
     }
 
@@ -150,6 +213,19 @@ class Search {
         $( '#search' ).val("");
         this.populateSearchResults([]);
         this.eventBus.emit('joinroom', id);
+    }
+
+    /**
+     * Called internally when we want to invite a user to our private chat room.
+     */
+    _inviteToRoom( id ) {
+        $.modal.close();
+        $( '#search' ).val("");
+        this.populateSearchResults([]);
+
+        if (this.roomid) {
+            this.eventBus.emit('inviteroom', {'roomid': this.roomid, 'userid': id});
+        }
     }
 }
 

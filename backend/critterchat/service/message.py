@@ -10,7 +10,7 @@ from ..data import (
     Occupant,
     Room,
     RoomPurpose,
-    RoomSearchResult,
+    SearchResult,
     User,
     UserPermission,
     DefaultAvatarID,
@@ -806,7 +806,7 @@ class MessageService:
             self.__infer_room_info(userid, room)
         return rooms
 
-    def get_matching_rooms(self, userid: UserID, *, name: str | None = None) -> list[RoomSearchResult]:
+    def get_matching_rooms(self, userid: UserID, *, name: str | None = None) -> list[SearchResult]:
         # First get the list of rooms that we can see based on our user ID (joined rooms).
         inrooms = self.__data.room.get_matching_rooms(userid, name=name)
         memberof = {r.id for r in inrooms}
@@ -855,7 +855,7 @@ class MessageService:
             self.__attachments.resolve_user_icon(user)
 
         # Finally, combined the two.
-        results: list[RoomSearchResult] = []
+        results: list[SearchResult] = []
         for room in rooms:
             icon = room.icon
             handle: str | None = None
@@ -870,13 +870,46 @@ class MessageService:
                 raise Exception("Logic error, should have been inferred above!")
 
             if room.id in memberof:
-                results.append(RoomSearchResult(room.name, handle, room.purpose, True, room.id, None, icon))
+                results.append(SearchResult(room.name, handle, room.purpose, True, room.id, None, icon))
             else:
-                results.append(RoomSearchResult(room.name, handle, room.purpose, False, room.id, None, icon))
+                results.append(SearchResult(room.name, handle, room.purpose, False, room.id, None, icon))
         for user in potentialusers:
             icon = user.icon
             if not icon:
                 raise Exception("Logic error, should have been inferred above!")
-            results.append(RoomSearchResult(user.nickname, f"@{user.username}", RoomPurpose.DIRECT_MESSAGE, False, None, user.id, icon))
+            results.append(SearchResult(user.nickname, f"@{user.username}", RoomPurpose.DIRECT_MESSAGE, False, None, user.id, icon))
+
+        return results
+
+    def get_matching_users(self, userid: UserID, roomid: RoomID, *, name: str | None = None) -> list[SearchResult]:
+        # First, look up the room itself and get its joined occupants. Users should not be able to
+        # deduce who is in a room by searching it.
+        room = self.__data.room.get_room(roomid)
+        if not room:
+            return []
+
+        if room.purpose not in {RoomPurpose.ROOM, RoomPurpose.CHAT}:
+            return []
+
+        occupants = {o.userid: o for o in self.__data.room.get_room_occupants(roomid)}
+        if userid not in occupants:
+            # We're not in the room we're searching, no results for you!
+            return []
+
+        # Now, look up potential users that we could be inviting to this room.
+        potentialusers = sorted(
+            self.__data.user.get_visible_users(userid, name=name),
+            key=lambda u: u.nickname,
+        )
+
+        # Now, resolve the icons of everyone that we can invite and send back the result list.
+        results: list[SearchResult] = []
+        for user in potentialusers:
+            self.__attachments.resolve_user_icon(user)
+            icon = user.icon
+            if not icon:
+                raise Exception("Logic error, should have been inferred above!")
+
+            results.append(SearchResult(user.nickname, f"@{user.username}", room.purpose, user.id in occupants, None, user.id, icon))
 
         return results

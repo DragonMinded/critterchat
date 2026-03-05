@@ -11,7 +11,7 @@ from .types import (
     Occupant,
     Room,
     RoomPurpose,
-    RoomSearchResult,
+    SearchResult,
     User,
     UserPreferences,
     UserSettings,
@@ -67,5 +67,5 @@ __all__ = [
     "Occupant",
     "Room",
     "RoomPurpose",
-    "RoomSearchResult",
+    "SearchResult",
 ]

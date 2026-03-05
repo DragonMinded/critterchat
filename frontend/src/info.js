@@ -443,6 +443,13 @@ class Info {
     }
 
     /**
+     * Used to ask whether the current user is allowed to invite others to this room.
+     */
+    _canInviteOthers() {
+        return this.roomType == "chat";
+    }
+
+    /**
      * Update the DOM to include a mirror of our known occupants for a room. We always maintain the
      * occupant list sorted alphabetically by nickname, so this function simply makes sure the right
      * names are in the right order.
@@ -455,6 +462,15 @@ class Info {
         } else {
             infoControl.hide();
         }
+
+        // Now, show or hide the invite button depending on room type.
+        const inviteControl = $('button#invite-chatter').parent();
+        if (this._canInviteOthers()) {
+            inviteControl.show();
+        } else {
+            inviteControl.hide();
+        }
+
         $( 'div.info div.actions' ).show();
 
         // Now, draw the actual occupants.
@@ -600,6 +616,7 @@ class Info {
                     $( 'div.top-info div.topic' ).html(linkifyHtml(escapeHtml(room.topic), linkifyOptions));
                     $( '#leave-room' ).attr('roomid', roomid);
                     $( '#edit-info' ).attr('roomid', roomid);
+                    $( '#invite-chatter' ).attr('roomid', roomid);
 
                     updated = true;
 
@@ -686,6 +703,7 @@ class Info {
             $( 'div.info > div.occupants' ).empty();
             $( '#leave-room' ).attr('roomid', '');
             $( '#edit-info' ).attr('roomid', '');
+            $( '#invite-chatter' ).attr('roomid', '');
             $( 'div.top-info div.title' ).html('&nbsp;');
             $( 'div.top-info div.topic' ).html('&nbsp;');
             $( 'div.top-info div.icon' ).addClass('hidden');

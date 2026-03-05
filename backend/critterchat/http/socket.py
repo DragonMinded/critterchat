@@ -822,10 +822,33 @@ def searchrooms(json: dict[str, object]) -> None:
     if user is None:
         return
 
-    # Grab all rooms that match this search result
-    rooms = messageservice.get_matching_rooms(user.id, name=str(json.get('name')))
-    socketio.emit('searchrooms', hydrate_tag(json, {
-        'rooms': [room.to_dict() for room in rooms],
+    # Grab all results that match this search query
+    results = messageservice.get_matching_rooms(user.id, name=str(json.get('name')))
+    socketio.emit('searchresults', hydrate_tag(json, {
+        'results': [result.to_dict() for result in results],
+    }), room=request.sid)
+
+
+@socketio.on('searchusers')  # type: ignore
+def searchusers(json: dict[str, object]) -> None:
+    data = Data(config)
+    messageservice = MessageService(config, data)
+
+    # Try to associate with a user if there is one.
+    user = recover_user(data, request.sid)
+    if user is None:
+        return
+
+    roomid = Room.to_id(str(json.get('roomid')))
+    name = str(json.get('name'))
+    results = []
+
+    if roomid:
+        # Grab all results that match this search query
+        results = messageservice.get_matching_users(user.id, roomid, name=name)
+
+    socketio.emit('searchresults', hydrate_tag(json, {
+        'results': [result.to_dict() for result in results],
     }), room=request.sid)
 
 
