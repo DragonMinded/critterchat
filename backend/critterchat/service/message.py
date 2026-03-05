@@ -684,8 +684,8 @@ class MessageService:
                     if occupant.userid == userid:
                         in_chat_already = True
 
-                # TODO: At some point, need to check if the user has an invite to a non-public chat
-                if not in_chat_already:
+                # Check if the user has an invite to a non-public chat, and let them in if they do.
+                if not in_chat_already and not self.__data.room.is_invited(room.id, userid):
                     raise MessageServiceException("Room does not exist!")
 
         self.__data.room.join_room(room.id, userid)

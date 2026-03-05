@@ -559,6 +559,12 @@ class RoomData(BaseData):
             """
             self.execute(sql, {"userid": userid, "roomid": roomid})
 
+            # Also delete any invites for this user associated with this room since we joined.
+            sql = """
+                DELETE FROM invite WHERE room_id = :roomid AND invited_user_id = :userid
+            """
+            self.execute(sql, {"userid": userid, "roomid": roomid})
+
             if not already_joined:
                 occupant = Occupant(
                     occupantid=NewOccupantID,

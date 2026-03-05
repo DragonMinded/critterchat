@@ -5,6 +5,7 @@ TODO Immediate
  - Preference for auto-accept group chat invites.
  - Verify badging works correctly with invite actions.
  - Allow uninviting to room (revoke invite action).
+ - Show invited rooms on search results (allow join that way).
 
 TODO For Public Instance
 ========================
