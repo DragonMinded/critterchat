@@ -90,6 +90,7 @@ invite = Table(
     Column("invited_user_id", Integer, nullable=False),
     Column("inviter_user_id", Integer, nullable=False),
     Column("ignored", Boolean, nullable=False, default=False),
+    Column("revoked", Boolean, nullable=False, default=False),
     UniqueConstraint("room_id", "invited_user_id", name='ridiuid'),
     mysql_charset="utf8mb4",
 )
@@ -249,7 +250,8 @@ class RoomData(BaseData):
                 user.username AS unick,
                 user.permissions AS permissions,
                 invite.id AS invite_id,
-                invite.ignored AS invite_ignored
+                invite.ignored AS invite_ignored,
+                invite.revoked AS invite_revoked
             FROM occupant
             LEFT JOIN profile ON occupant.user_id = profile.user_id
             LEFT JOIN user ON occupant.user_id = user.id
@@ -874,7 +876,7 @@ class RoomData(BaseData):
         muted = bool(result['muted'])
 
         # Invite status is just if there is an invite or not.
-        invited = (not present) and (result['invite_id'] is not None) and (not bool(result['invite_ignored']))
+        invited = (not present) and (result['invite_id'] is not None) and (not bool(result['invite_revoked']))
 
         return Occupant(
             OccupantID(result['id']),
@@ -925,7 +927,8 @@ class RoomData(BaseData):
                     user.username AS unick,
                     user.permissions AS permissions,
                     invite.id AS invite_id,
-                    invite.ignored AS invite_ignored
+                    invite.ignored AS invite_ignored,
+                    invite.revoked AS invite_revoked
                 FROM occupant
                 LEFT JOIN profile ON occupant.user_id = profile.user_id
                 LEFT JOIN user ON occupant.user_id = user.id
@@ -961,7 +964,8 @@ class RoomData(BaseData):
                 user.username AS unick,
                 user.permissions AS permissions,
                 invite.id AS invite_id,
-                invite.ignored AS invite_ignored
+                invite.ignored AS invite_ignored,
+                invite.revoked AS invite_revoked
             FROM occupant
             LEFT JOIN profile ON occupant.user_id = profile.user_id
             LEFT JOIN user ON occupant.user_id = user.id
@@ -1057,7 +1061,8 @@ class RoomData(BaseData):
                     user.username AS unick,
                     user.permissions AS permissions,
                     invite.id AS invite_id,
-                    invite.ignored AS invite_ignored
+                    invite.ignored AS invite_ignored,
+                    invite.revoked AS invite_revoked
                 FROM occupant
                 LEFT JOIN profile ON occupant.user_id = profile.user_id
                 LEFT JOIN user ON occupant.user_id = user.id
@@ -1135,7 +1140,8 @@ class RoomData(BaseData):
                     user.username AS unick,
                     user.permissions AS permissions,
                     invite.id AS invite_id,
-                    invite.ignored AS invite_ignored
+                    invite.ignored AS invite_ignored,
+                    invite.revoked AS invite_revoked
                 FROM occupant
                 LEFT JOIN profile ON occupant.user_id = profile.user_id
                 LEFT JOIN user ON occupant.user_id = user.id
@@ -1303,10 +1309,10 @@ class RoomData(BaseData):
             now = Time.now()
             sql = """
                 INSERT INTO invite
-                    (`room_id`, `inviter_user_id`, `invited_user_id`, `timestamp`, `ignored`)
+                    (`room_id`, `inviter_user_id`, `invited_user_id`, `timestamp`, `ignored`, `revoked`)
                 VALUES
-                    (:roomid, :inviter, :invited, :ts, FALSE)
-                ON DUPLICATE KEY UPDATE `invited_user_id` = :invited, `timestamp` = :ts, `ignored` = FALSE
+                    (:roomid, :inviter, :invited, :ts, FALSE, FALSE)
+                ON DUPLICATE KEY UPDATE `invited_user_id` = :invited, `timestamp` = :ts, `ignored` = FALSE, `revoked` = FALSE
             """
             self.execute(sql, {"roomid": roomid, "inviter": inviterid, "invited": invitedid, 'ts': now})
 
@@ -1350,7 +1356,7 @@ class RoomData(BaseData):
 
         sql = """
             SELECT id FROM invite
-            WHERE room_id = :roomid AND invited_user_id = :invited
+            WHERE room_id = :roomid AND invited_user_id = :invited AND revoked != TRUE
             LIMIT 1
         """
         cursor = self.execute(sql, {"roomid": roomid, "invited": invitedid})

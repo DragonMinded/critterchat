@@ -4,6 +4,7 @@ TODO Immediate
  - Private group chat invite UI.
  - Preference for auto-accept group chat invites.
  - Verify badging works correctly with invite actions.
+ - Allow uninviting to room (revoke invite action).
 
 TODO For Public Instance
 ========================
