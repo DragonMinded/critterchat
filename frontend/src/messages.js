@@ -1022,7 +1022,7 @@ class Messages {
      */
     _updateUsers() {
         var acusers = this.occupants.filter(
-            (occupant) => !occupant.inactive
+            (occupant) => occupant.present
         ).map(
             (user) => {
                 return {
@@ -1304,6 +1304,7 @@ class Messages {
                             const newOccupant = newOccupants.get(occupant.id);
                             occupant.moderator = newOccupant.moderator;
                             occupant.inactive = newOccupant.inactive;
+                            occupant.present = newOccupant.present;
                             occupant.muted = newOccupant.muted;
                             occupant.invited = newOccupant.invited;
                         }
@@ -1328,6 +1329,7 @@ class Messages {
                             const newOccupant = newOccupants.get(occupant.id);
                             occupant.moderator = newOccupant.moderator;
                             occupant.inactive = newOccupant.inactive;
+                            occupant.present = newOccupant.present;
                             occupant.muted = newOccupant.muted;
                             occupant.invited = newOccupant.invited;
                         }

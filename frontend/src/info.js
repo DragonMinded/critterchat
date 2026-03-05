@@ -290,14 +290,9 @@ class Info {
                         this.occupants.push(entry.occupant);
                         changed = true;
                     } else {
-                        // This has the subtle bug of if you message somebody who was deactivated and they
-                        // also had previously been in your DM but closed it, it will show them as activated
-                        // again until you refresh or navigate away and back. This is a rare enough occurance
-                        // that I'm not worried about it.
                         this.occupants.forEach((occupant) => {
                             if (occupant.id == entry.occupant.id) {
-                                occupant.inactive = false;
-                                occupant.invited = false;
+                                occupant.present = true;
                                 changed = true;
                             }
                         });
@@ -309,8 +304,7 @@ class Info {
                     } else {
                         this.occupants.forEach((occupant) => {
                             if (occupant.id == entry.occupant.id) {
-                                occupant.inactive = true;
-                                occupant.invited = false;
+                                occupant.present = false;
                                 changed = true;
                             }
                         });
@@ -340,6 +334,7 @@ class Info {
                                 const newOccupant = newOccupants.get(occupant.id);
                                 occupant.moderator = newOccupant.moderator;
                                 occupant.inactive = newOccupant.inactive;
+                                occupant.present = newOccupant.present;
                                 occupant.muted = newOccupant.muted;
                                 occupant.invited = newOccupant.invited;
                             }
@@ -515,9 +510,17 @@ class Info {
         });
 
         this.occupants.forEach((occupant) => {
-            // Now, draw it fresh since it's not an update.
+            // Don't draw users that were invited but ignored the invite.
+            if (this.roomType != "dm" && !occupant.present && !occupant.invited) {
+                return;
+            }
+
+            // Ensure that we fade out inactive, muted and invited users who aren't here.
             var cls = "item";
-            if (occupant.inactive || occupant.muted) {
+            if (occupant.present && (occupant.inactive || occupant.muted)) {
+                cls += " faded";
+            }
+            if (!occupant.present && (occupant.invited)) {
                 cls += " faded";
             }
 

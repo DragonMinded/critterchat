@@ -210,15 +210,19 @@ class TestRoomData:
         assert not users1[user1.id].muted
         assert not users1[user1.id].invited
         assert not users1[user1.id].inactive
+        assert users1[user1.id].present
+
         assert users1[user2.id].username == "test_user_2"
         assert not users1[user2.id].muted
         assert not users1[user2.id].invited
         assert not users1[user2.id].inactive
+        assert users1[user2.id].present
 
         assert users2[user1.id].username == "test_user_1"
         assert not users2[user1.id].muted
         assert not users2[user1.id].invited
         assert not users2[user1.id].inactive
+        assert users2[user1.id].present
 
         # Now, verify that we get all users back for each room when specifying include left.
         users1 = {occupant.userid: occupant for occupant in roomdata.get_room_occupants(room1.id, include_left=True)}
@@ -234,23 +238,31 @@ class TestRoomData:
         assert not users1[user1.id].muted
         assert not users1[user1.id].invited
         assert not users1[user1.id].inactive
+        assert users1[user1.id].present
+
         assert users1[user2.id].username == "test_user_2"
         assert not users1[user2.id].muted
         assert not users1[user2.id].invited
         assert not users1[user2.id].inactive
+        assert users1[user2.id].present
+
         assert users1[user3.id].username == "test_user_3"
         assert not users1[user3.id].muted
         assert users1[user3.id].invited
-        assert users1[user3.id].inactive
+        assert not users1[user3.id].inactive
+        assert not users1[user3.id].present
 
         assert users2[user1.id].username == "test_user_1"
         assert not users2[user1.id].muted
         assert not users2[user1.id].invited
         assert not users2[user1.id].inactive
+        assert users2[user1.id].present
+
         assert users2[user2.id].username == "test_user_2"
         assert not users2[user2.id].muted
         assert not users2[user2.id].invited
-        assert users2[user2.id].inactive
+        assert not users2[user2.id].inactive
+        assert not users2[user2.id].present
 
         # Now, verify that we get all users back for each room when specifying include invited.
         users1 = {occupant.userid: occupant for occupant in roomdata.get_room_occupants(room1.id, include_invited=True)}
@@ -265,19 +277,25 @@ class TestRoomData:
         assert not users1[user1.id].muted
         assert not users1[user1.id].invited
         assert not users1[user1.id].inactive
+        assert users1[user1.id].present
+
         assert users1[user2.id].username == "test_user_2"
         assert not users1[user2.id].muted
         assert not users1[user2.id].invited
         assert not users1[user2.id].inactive
+        assert users1[user2.id].present
+
         assert users1[user3.id].username == "test_user_3"
         assert not users1[user3.id].muted
         assert users1[user3.id].invited
-        assert users1[user3.id].inactive
+        assert not users1[user3.id].inactive
+        assert not users1[user3.id].present
 
         assert users2[user1.id].username == "test_user_1"
         assert not users2[user1.id].muted
         assert not users2[user1.id].invited
         assert not users2[user1.id].inactive
+        assert users2[user1.id].present
 
         # Now, verify that we get all users back for each room when specifying include left and include invited
         users1 = {
@@ -299,20 +317,28 @@ class TestRoomData:
         assert not users1[user1.id].muted
         assert not users1[user1.id].invited
         assert not users1[user1.id].inactive
+        assert users1[user1.id].present
+
         assert users1[user2.id].username == "test_user_2"
         assert not users1[user2.id].muted
         assert not users1[user2.id].invited
         assert not users1[user2.id].inactive
+        assert users1[user2.id].present
+
         assert users1[user3.id].username == "test_user_3"
         assert not users1[user3.id].muted
         assert users1[user3.id].invited
-        assert users1[user3.id].inactive
+        assert not users1[user3.id].inactive
+        assert not users1[user3.id].present
 
         assert users2[user1.id].username == "test_user_1"
         assert not users2[user1.id].muted
         assert not users2[user1.id].invited
         assert not users2[user1.id].inactive
+        assert users2[user1.id].present
+
         assert users2[user2.id].username == "test_user_2"
         assert not users2[user2.id].muted
         assert not users2[user2.id].invited
-        assert users2[user2.id].inactive
+        assert not users2[user2.id].inactive
+        assert not users2[user2.id].present

@@ -597,6 +597,7 @@ class TestMessagePumpActions:
                                 'userid': 'u900',
                                 'username': 'testusername',
                                 'nickname': 'test nickname',
+                                'present': True,
                                 'inactive': False,
                                 'moderator': False,
                                 'muted': False,

@@ -89,6 +89,7 @@ invite = Table(
     Column("room_id", Integer, nullable=False, index=True),
     Column("invited_user_id", Integer, nullable=False),
     Column("inviter_user_id", Integer, nullable=False),
+    Column("ignored", Boolean, nullable=False, default=False),
     UniqueConstraint("room_id", "invited_user_id", name='ridiuid'),
     mysql_charset="utf8mb4",
 )
@@ -247,7 +248,8 @@ class RoomData(BaseData):
                 profile.icon AS picon,
                 user.username AS unick,
                 user.permissions AS permissions,
-                invite.id AS invite_id
+                invite.id AS invite_id,
+                invite.ignored AS invite_ignored
             FROM occupant
             LEFT JOIN profile ON occupant.user_id = profile.user_id
             LEFT JOIN user ON occupant.user_id = user.id
@@ -857,10 +859,11 @@ class RoomData(BaseData):
             if (bitmask & perm) == perm:
                 permissions.add(perm)
 
-        # Treat a user as inactive if they're deactivated or if they've left the channel.
-        inactive = bool(result['inactive'])
-        if UserPermission.ACTIVATED not in permissions:
-            inactive = True
+        # Treat a user as present if they're not inactive.
+        present = not bool(result['inactive'])
+
+        # Treat a user as inactive if they're deactivated.
+        inactive = UserPermission.ACTIVATED not in permissions
 
         # Treat a user as a moderator if they're an administrator.
         moderator = bool(result['moderator'])
@@ -871,13 +874,14 @@ class RoomData(BaseData):
         muted = bool(result['muted'])
 
         # Invite status is just if there is an invite or not.
-        invited = inactive and (result['invite_id'] is not None)
+        invited = (not present) and (result['invite_id'] is not None) and (not bool(result['invite_ignored']))
 
         return Occupant(
             OccupantID(result['id']),
             UserID(result['user_id']),
             username=result['unick'],
             nickname=nickname,
+            present=present,
             inactive=inactive,
             moderator=moderator,
             muted=muted,
@@ -920,7 +924,8 @@ class RoomData(BaseData):
                     profile.icon AS picon,
                     user.username AS unick,
                     user.permissions AS permissions,
-                    invite.id AS invite_id
+                    invite.id AS invite_id,
+                    invite.ignored AS invite_ignored
                 FROM occupant
                 LEFT JOIN profile ON occupant.user_id = profile.user_id
                 LEFT JOIN user ON occupant.user_id = user.id
@@ -955,7 +960,8 @@ class RoomData(BaseData):
                 profile.icon AS picon,
                 user.username AS unick,
                 user.permissions AS permissions,
-                invite.id AS invite_id
+                invite.id AS invite_id,
+                invite.ignored AS invite_ignored
             FROM occupant
             LEFT JOIN profile ON occupant.user_id = profile.user_id
             LEFT JOIN user ON occupant.user_id = user.id
@@ -1050,7 +1056,8 @@ class RoomData(BaseData):
                     profile.icon AS picon,
                     user.username AS unick,
                     user.permissions AS permissions,
-                    invite.id AS invite_id
+                    invite.id AS invite_id,
+                    invite.ignored AS invite_ignored
                 FROM occupant
                 LEFT JOIN profile ON occupant.user_id = profile.user_id
                 LEFT JOIN user ON occupant.user_id = user.id
@@ -1127,7 +1134,8 @@ class RoomData(BaseData):
                     profile.icon AS picon,
                     user.username AS unick,
                     user.permissions AS permissions,
-                    invite.id AS invite_id
+                    invite.id AS invite_id,
+                    invite.ignored AS invite_ignored
                 FROM occupant
                 LEFT JOIN profile ON occupant.user_id = profile.user_id
                 LEFT JOIN user ON occupant.user_id = user.id
@@ -1224,6 +1232,10 @@ class RoomData(BaseData):
             if newoccupant:
                 action.occupant.nickname = newoccupant.nickname
                 action.occupant.inactive = newoccupant.inactive
+                action.occupant.present = newoccupant.present
+                action.occupant.muted = newoccupant.muted
+                action.occupant.moderator = newoccupant.moderator
+                action.occupant.invited = newoccupant.invited
                 action.occupant.iconid = newoccupant.iconid
 
         if purpose == RoomPurpose.DIRECT_MESSAGE:
@@ -1291,10 +1303,10 @@ class RoomData(BaseData):
             now = Time.now()
             sql = """
                 INSERT INTO invite
-                    (`room_id`, `inviter_user_id`, `invited_user_id`, `timestamp`)
+                    (`room_id`, `inviter_user_id`, `invited_user_id`, `timestamp`, `ignored`)
                 VALUES
-                    (:roomid, :inviter, :invited, :ts)
-                ON DUPLICATE KEY UPDATE `invited_user_id` = :invited, `timestamp` = :ts
+                    (:roomid, :inviter, :invited, :ts, FALSE)
+                ON DUPLICATE KEY UPDATE `invited_user_id` = :invited, `timestamp` = :ts, `ignored` = FALSE
             """
             self.execute(sql, {"roomid": roomid, "inviter": inviterid, "invited": invitedid, 'ts': now})
 

@@ -385,6 +385,7 @@ class Occupant:
         username: str = "",
         nickname: str = "",
         iconid: AttachmentID | None = None,
+        present: bool = True,
         inactive: bool = False,
         moderator: bool = False,
         muted: bool = False,
@@ -394,6 +395,7 @@ class Occupant:
         self.userid = userid
         self.username = username
         self.nickname = nickname
+        self.present = present
         self.inactive = inactive
         self.moderator = moderator
         self.muted = muted
@@ -422,6 +424,7 @@ class Occupant:
             "userid": User.from_id(self.userid),
             "username": self.username,
             "nickname": self.nickname,
+            "present": self.present,
             "inactive": self.inactive,
             "moderator": self.moderator,
             "muted": self.muted,
