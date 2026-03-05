@@ -797,6 +797,7 @@ class Messages {
                     if (message.action == "join") {
                         // Add a new occupant to our list.
                         this.occupants.push(message.occupant);
+                        this.occupants.sort((a, b) => { return a.username.localeCompare(b.username); });
                         changed = true;
                     } else if (message.action == "leave") {
                         this.occupants = this.occupants.filter((occupant) => occupant.id != message.occupant.id);
@@ -1020,13 +1021,17 @@ class Messages {
      * Whenever user changes occur (joins/parts/renames), update the autocomplete typeahead for those names.
      */
     _updateUsers() {
-        var acusers = this.occupants.map(function(user) {
-            return {
-                text: "@" + user.username,
-                type: "user",
-                preview: "<img class=\"icon-preview\" src=\"" + user.icon + "\" />&nbsp;<span dir=\"auto\">" + escapeHtml(user.nickname) + "</span>",
-            };
-        });
+        var acusers = this.occupants.filter(
+            (occupant) => !occupant.inactive
+        ).map(
+            (user) => {
+                return {
+                    text: "@" + user.username,
+                    type: "user",
+                    preview: "<img class=\"icon-preview\" src=\"" + user.icon + "\" />&nbsp;<span dir=\"auto\">" + escapeHtml(user.nickname) + "</span>",
+                };
+            }
+        );
         this.autocompleteUpdate(this.autocompleteOptions.concat(acusers));
     }
 
@@ -1193,6 +1198,9 @@ class Messages {
         } else {
             // Now, draw it fresh since it's not an update.
             var html = "";
+            var type = this.roomType == "room" ? "room" : "chat";
+            var otheroccupant = undefined;
+
             if (message.action == "message") {
                 let content = this._formatMessage(message.details.message);
                 let highlighted = this._wasHighlighted(message.details.message);
@@ -1264,8 +1272,6 @@ class Messages {
                 html += '  </div>';
                 html += '</div>';
             } else if (message.action == "change_info") {
-                var type = this.roomType == "room" ? "room" : "chat";
-
                 html  = '<div class="item" id="' + message.id + '">';
                 html += '  <div class="content-wrapper">';
                 html += '    <div class="meta-wrapper">';
@@ -1299,11 +1305,67 @@ class Messages {
                             occupant.moderator = newOccupant.moderator;
                             occupant.inactive = newOccupant.inactive;
                             occupant.muted = newOccupant.muted;
+                            occupant.invited = newOccupant.invited;
                         }
                     });
 
+                    this._recalculateSelf();
+                    this._updateUsers();
                     this._recalculateSendEnabled();
                 }
+            } else if (message.action == "invite_user") {
+                const occupants = message.details.occupants;
+                const invited = message.details.invited;
+                if (this.occupantsLoaded && occupants) {
+                    const newOccupants = new Map();
+                    occupants.forEach((occupant) => {
+                        newOccupants.set(occupant.id, occupant);
+                    });
+
+                    var seenInvited = false;
+                    this.occupants.forEach((occupant) => {
+                        if (newOccupants.has(occupant.id)) {
+                            const newOccupant = newOccupants.get(occupant.id);
+                            occupant.moderator = newOccupant.moderator;
+                            occupant.inactive = newOccupant.inactive;
+                            occupant.muted = newOccupant.muted;
+                            occupant.invited = newOccupant.invited;
+                        }
+
+                        if (invited && occupant.id == invited) {
+                            seenInvited = true;
+                        }
+                    });
+
+                    if (invited && !seenInvited && newOccupants.has(invited)) {
+                        this.occupants.push(newOccupants.get(invited));
+                        this.occupants.sort((a, b) => { return a.username.localeCompare(b.username); });
+                    }
+
+                    this._recalculateSelf();
+                    this._updateUsers();
+                    this._recalculateSendEnabled();
+                }
+
+                this.occupants.forEach((occupant) => {
+                    if (occupant.id == invited) {
+                        otheroccupant = occupant;
+                    }
+                });
+
+                html  = '<div class="item" id="' + message.id + '">';
+                html += '  <div class="content-wrapper">';
+                html += '    <div class="meta-wrapper">';
+                html += '      <div class="action-wrapper">';
+                html += '        <span class="name" dir="auto" id="' + message.occupant.id + '">' + escapeHtml(message.occupant.nickname) + '</span>';
+                html += '        <span class="action">has invited</span>';
+                html += '        <span class="name" dir="auto" id="' + otheroccupant.id + '">' + escapeHtml(otheroccupant.nickname) + '</span>';
+                html += '        <span class="action">to the ' + type + '!</span>';
+                html += '      </div>';
+                html += '      <span class="timestamp">' + formatDateTime(message.timestamp) + '</span>';
+                html += '    </div>';
+                html += '  </div>';
+                html += '</div>';
             }
 
             // Place either before or after existing messages depending on if it's a backfill or a new message.
@@ -1315,9 +1377,17 @@ class Messages {
                     messages.prepend(html);
                 }
 
+                const clickables = []
                 if (message.occupant) {
+                    clickables.push(message.occupant);
+                }
+                if (otheroccupant) {
+                    clickables.push(otheroccupant);
+                }
+
+                clickables.forEach((clickable) => {
                     // Allow clicking a username in a message to view the person's profile.
-                    $('div.item#' + message.id + ' span.name#' + message.occupant.id).on('click', (event) => {
+                    $('div.item#' + message.id + ' span.name#' + clickable.id).on('click', (event) => {
                         event.stopPropagation();
                         event.stopImmediatePropagation();
 
@@ -1326,7 +1396,7 @@ class Messages {
                         var id = $(event.currentTarget).attr('id')
                         this.eventBus.emit('displayprofile', {userid: id, room: this.rooms.get(this.roomid), actor: this.myself});
                     });
-                }
+                });
 
                 // Allow clicking on a username in the message itself.
                 $('div.item#' + message.id + ' span.name-link').on('click', (event) => {

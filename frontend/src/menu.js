@@ -440,7 +440,8 @@ class Menu {
                 action.action == "message" ||
                 (roomType != "dm" && action.action == "join") ||
                 (roomType != "dm" && action.action == "leave") ||
-                action.action == "change_info"
+                action.action == "change_info" ||
+                action.action == "invite_user"
             ) {
                 if (action.action == "message" && action.details.modified) {
                     // Ignore this, this is a reaction.
