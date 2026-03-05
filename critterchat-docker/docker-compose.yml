@@ -8,7 +8,10 @@ services:
     # But if it bothers you having the image named `critter-chat-docker-backend:latest`, you should uncomment this line:
     # image: critterchat
     ports:
-      - 5678:5678
+      # By default, docker opens ports on the host machine if you do not bind to a local address. If you intend to run
+      # with a nginx reverse proxy in front of this software (the recommended path), this is fine. If you instead need
+      # CritterChat to be routable on the machine's external IP, change this to just "5678:5678".
+      - "127.0.0.1:5678:5678"
     volumes:
       - ./docker.config.yaml:/app/backend/config.yaml
       - ./mysqlkd/:/var/run/mysqld/

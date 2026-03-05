@@ -5,7 +5,6 @@ WORKDIR /app
 COPY backend ./backend
 COPY frontend ./frontend
 COPY ./critterchat-docker/docker-entrypoint.sh ./backend/
-RUN ls
 
 # BACKEND
 WORKDIR /app/backend
