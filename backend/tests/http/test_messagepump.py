@@ -600,6 +600,7 @@ class TestMessagePumpActions:
                                 'inactive': False,
                                 'moderator': False,
                                 'muted': False,
+                                'invited': False,
                                 'icon': 'http://localhost/attachments/defavi'
                             },
                             'action': ActionType.MESSAGE,

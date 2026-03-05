@@ -297,6 +297,7 @@ class Info {
                         this.occupants.forEach((occupant) => {
                             if (occupant.id == entry.occupant.id) {
                                 occupant.inactive = false;
+                                occupant.invited = false;
                                 changed = true;
                             }
                         });
@@ -309,6 +310,7 @@ class Info {
                         this.occupants.forEach((occupant) => {
                             if (occupant.id == entry.occupant.id) {
                                 occupant.inactive = true;
+                                occupant.invited = false;
                                 changed = true;
                             }
                         });
@@ -322,21 +324,37 @@ class Info {
                     });
                     $('div.info > div.occupants div.item#' + entry.occupant.id + ' div.name').html(escapeHtml(entry.occupant.nickname));
                     $('div.info > div.occupants div.item#' + entry.occupant.id + ' div.icon img').attr('src', entry.occupant.icon);
-                } else if (entry.action == "change_users") {
-                    const newOccupants = new Map();
-                    entry.details.occupants.forEach((occupant) => {
-                        newOccupants.set(occupant.id, occupant);
-                    });
+                } else if (entry.action == "change_users" || entry.action == "invite_user") {
+                    const occupants = entry.details.occupants;
+                    const invited = entry.details.invited;
 
-                    this.occupants.forEach((occupant) => {
-                        if (newOccupants.has(occupant.id)) {
-                            const newOccupant = newOccupants.get(occupant.id);
-                            occupant.moderator = newOccupant.moderator;
-                            occupant.inactive = newOccupant.inactive;
-                            occupant.muted = newOccupant.muted;
+                    if (occupants) {
+                        const newOccupants = new Map();
+                        occupants.forEach((occupant) => {
+                            newOccupants.set(occupant.id, occupant);
+                        });
+
+                        var seenInvited = false;
+                        this.occupants.forEach((occupant) => {
+                            if (newOccupants.has(occupant.id)) {
+                                const newOccupant = newOccupants.get(occupant.id);
+                                occupant.moderator = newOccupant.moderator;
+                                occupant.inactive = newOccupant.inactive;
+                                occupant.muted = newOccupant.muted;
+                                occupant.invited = newOccupant.invited;
+                            }
+
+                            if (invited && occupant.id == invited) {
+                                seenInvited = true;
+                            }
+                        });
+
+                        if (invited && !seenInvited && newOccupants.has(invited)) {
+                            this.occupants.push(newOccupants.get(invited));
                         }
-                    });
-                    changed = true;
+
+                        changed = true;
+                    }
                 } else if (entry.action == "change_info") {
                     this.moderated = entry.details.moderated;
                     changed = true;
@@ -366,8 +384,12 @@ class Info {
      */
     _computeSortOrder(occupant) {
         if (this.roomType != "dm") {
-            if (occupant.inactive || occupant.muted) {
+            if (occupant.invited) {
                 return 2;
+            }
+
+            if (occupant.inactive || occupant.muted) {
+                return 3;
             }
         }
 
@@ -479,7 +501,7 @@ class Info {
         occupantElement.empty();
 
         var lastType = undefined;
-        const typeMap = ['moderators', 'chatters', 'inactive'];
+        const typeMap = ['moderators', 'chatters', 'invited', 'inactive'];
 
         // Calcualte number of users in each type.
         const countMap = new Map();
@@ -499,7 +521,7 @@ class Info {
                 cls += " faded";
             }
 
-            if (this.roomType == "room") {
+            if (this.roomType == "room" || this.roomType == "chat") {
                 const curType = typeMap[this._computeSortOrder(occupant)];
                 if (curType != lastType) {
                     lastType = curType;

@@ -77,6 +77,23 @@ action = Table(
 )
 
 
+"""
+Table representing a chat room's invite from one user to another. This
+works as somewhat of a "ticket" or "token" to joining a private chat.
+"""
+invite = Table(
+    "invite",
+    metadata,
+    Column("id", Integer, nullable=False, primary_key=True, autoincrement=True),
+    Column("timestamp", Integer, nullable=False),
+    Column("room_id", Integer, nullable=False, index=True),
+    Column("invited_user_id", Integer, nullable=False),
+    Column("inviter_user_id", Integer, nullable=False),
+    UniqueConstraint("room_id", "invited_user_id", name='ridiuid'),
+    mysql_charset="utf8mb4",
+)
+
+
 class RoomData(BaseData):
     def _get_oldest_action(self, room_ids: list[RoomID]) -> dict[RoomID, ActionID | None]:
         if not room_ids:
@@ -229,10 +246,12 @@ class RoomData(BaseData):
                 profile.nickname AS pnick,
                 profile.icon AS picon,
                 user.username AS unick,
-                user.permissions AS permissions
+                user.permissions AS permissions,
+                invite.id AS invite_id
             FROM occupant
             LEFT JOIN profile ON occupant.user_id = profile.user_id
             LEFT JOIN user ON occupant.user_id = user.id
+            LEFT JOIN invite ON occupant.room_id = invite.room_id AND occupant.user_id = invite.invited_user_id
             WHERE occupant.user_id = :userid
         """
         cursor = self.execute(sql, {"userid": userid})
@@ -851,6 +870,9 @@ class RoomData(BaseData):
         # Mute status is simpler.
         muted = bool(result['muted'])
 
+        # Invite status is just if there is an invite or not.
+        invited = inactive and (result['invite_id'] is not None)
+
         return Occupant(
             OccupantID(result['id']),
             UserID(result['user_id']),
@@ -859,10 +881,11 @@ class RoomData(BaseData):
             inactive=inactive,
             moderator=moderator,
             muted=muted,
+            invited=invited,
             iconid=AttachmentID(icon) if icon else None,
         )
 
-    def get_room_occupants(self, roomid: RoomID, include_left: bool = False) -> list[Occupant]:
+    def get_room_occupants(self, roomid: RoomID, include_left: bool = False, include_invited: bool = False) -> list[Occupant]:
         """
         Given a room ID, look up all occupants of that room and their names and avatars.
 
@@ -872,30 +895,40 @@ class RoomData(BaseData):
         if roomid == NewRoomID:
             return []
 
-        if include_left:
-            extra = ""
-        else:
-            extra = "AND occupant.inactive != TRUE"
+        if include_left and include_invited:
+            # Including left will end up grabbing invited users as well, so we don't need both of
+            # these filters at once. Turn off invited so just left operates.
+            include_invited = False
 
-        sql = f"""
-            SELECT
-                occupant.id AS id,
-                occupant.user_id AS user_id,
-                occupant.nickname AS onick,
-                occupant.inactive AS inactive,
-                occupant.moderator AS moderator,
-                occupant.muted AS muted,
-                occupant.icon AS oicon,
-                profile.nickname AS pnick,
-                profile.icon AS picon,
-                user.username AS unick,
-                user.permissions AS permissions
-            FROM occupant
-            LEFT JOIN profile ON occupant.user_id = profile.user_id
-            LEFT JOIN user ON occupant.user_id = user.id
-            WHERE occupant.room_id = :roomid {extra}
-        """
-        cursor = self.execute(sql, {"roomid": roomid})
+        filters: list[Fragment] = [fragment("occupant.room_id = %value", roomid)]
+        if include_invited:
+            filters.append(fragment("(occupant.inactive != TRUE) OR (invite.id IS NOT NULL)"))
+        elif not include_left:
+            filters.append(fragment("occupant.inactive != TRUE"))
+
+        cursor = self.execute(statement(
+            """
+                SELECT
+                    occupant.id AS id,
+                    occupant.user_id AS user_id,
+                    occupant.nickname AS onick,
+                    occupant.inactive AS inactive,
+                    occupant.moderator AS moderator,
+                    occupant.muted AS muted,
+                    occupant.icon AS oicon,
+                    profile.nickname AS pnick,
+                    profile.icon AS picon,
+                    user.username AS unick,
+                    user.permissions AS permissions,
+                    invite.id AS invite_id
+                FROM occupant
+                LEFT JOIN profile ON occupant.user_id = profile.user_id
+                LEFT JOIN user ON occupant.user_id = user.id
+                LEFT JOIN invite ON occupant.room_id = invite.room_id AND occupant.user_id = invite.invited_user_id
+                WHERE %andlist:filters
+            """,
+            filters=filters,
+        ))
         return [self.__to_occupant(o) for o in cursor.mappings()]
 
     def get_room_occupant(self, occupantid: OccupantID) -> Occupant | None:
@@ -921,10 +954,12 @@ class RoomData(BaseData):
                 profile.nickname AS pnick,
                 profile.icon AS picon,
                 user.username AS unick,
-                user.permissions AS permissions
+                user.permissions AS permissions,
+                invite.id AS invite_id
             FROM occupant
             LEFT JOIN profile ON occupant.user_id = profile.user_id
             LEFT JOIN user ON occupant.user_id = user.id
+            LEFT JOIN invite ON occupant.room_id = invite.room_id AND occupant.user_id = invite.invited_user_id
             WHERE occupant.id = :occupantid
         """
         cursor = self.execute(sql, {"occupantid": occupantid})
@@ -1014,10 +1049,12 @@ class RoomData(BaseData):
                     profile.nickname AS pnick,
                     profile.icon AS picon,
                     user.username AS unick,
-                    user.permissions AS permissions
+                    user.permissions AS permissions,
+                    invite.id AS invite_id
                 FROM occupant
                 LEFT JOIN profile ON occupant.user_id = profile.user_id
                 LEFT JOIN user ON occupant.user_id = user.id
+                LEFT JOIN invite ON occupant.room_id = invite.room_id AND occupant.user_id = invite.invited_user_id
                 WHERE occupant.id IN :occupantids
             """
             cursor = self.execute(sql, {"occupantids": list(occupantids)})
@@ -1089,10 +1126,12 @@ class RoomData(BaseData):
                     profile.nickname AS pnick,
                     profile.icon AS picon,
                     user.username AS unick,
-                    user.permissions AS permissions
+                    user.permissions AS permissions,
+                    invite.id AS invite_id
                 FROM occupant
                 LEFT JOIN profile ON occupant.user_id = profile.user_id
                 LEFT JOIN user ON occupant.user_id = user.id
+                LEFT JOIN invite ON occupant.room_id = invite.room_id AND occupant.user_id = invite.invited_user_id
                 WHERE occupant.id = :occupantid
             """
             cursor = self.execute(sql, {"occupantid": occupantid})
@@ -1128,7 +1167,7 @@ class RoomData(BaseData):
             if action.occupant.userid == NewUserID:
                 # Cannot insert an action as a fake user. This should be performed as an action without
                 # an occupant.
-                return
+                raise Exception("Logic error, cannot insert an action with an empty occupant userid!")
 
             # First, find the occupant ID.
             sql = "SELECT id FROM occupant WHERE room_id = :roomid AND user_id = :userid AND inactive != TRUE LIMIT 1"
@@ -1212,3 +1251,95 @@ class RoomData(BaseData):
             UPDATE action SET details = :details WHERE id = :id LIMIT 1
         """
         self.execute(sql, {"id": action.id, "details": self.serialize(action.details)})
+
+    def grant_room_invite(self, roomid: RoomID, invitedid: UserID, inviterid: UserID) -> None:
+        """
+        Given a room to invite and a user to invite to the room, invite them. Tracks the invite
+        in the invite table, but also shadow-joins the user to the room (this doesn't affect
+        the user's ability to join or see events, but it does grant an occupantid to the user
+        which is necessary for action-based updates).
+
+        Parameters:
+            roomid - ID of the room we wish to invite somebody to.
+            invitedid - ID of the user getting invited.
+            inviterid - ID of the user granting the invite.
+        """
+
+        if invitedid == NewUserID or inviterid == NewUserID or roomid == NewRoomID:
+            return None
+
+        with self.transaction():
+            # First, figure out if the inviter is present and the invitee is in already.
+            sql = """
+                SELECT id, user_id
+                FROM occupant
+                WHERE `user_id` IN :userids AND `room_id` = :roomid AND `inactive` != TRUE
+            """
+            cursor = self.execute(sql, {"userids": [invitedid, inviterid], "roomid": roomid})
+            user_to_occupant: dict[UserID, OccupantID] = {
+                UserID(result['user_id']): OccupantID(result['id'])
+                for result in cursor.mappings()
+            }
+            if invitedid in user_to_occupant:
+                # The invited user is already in the room.
+                return
+            if inviterid not in user_to_occupant:
+                # The inviting user is not in the room.
+                return
+
+            # Grant the invite.
+            now = Time.now()
+            sql = """
+                INSERT INTO invite
+                    (`room_id`, `inviter_user_id`, `invited_user_id`, `timestamp`)
+                VALUES
+                    (:roomid, :inviter, :invited, :ts)
+                ON DUPLICATE KEY UPDATE `invited_user_id` = :invited, `timestamp` = :ts
+            """
+            self.execute(sql, {"roomid": roomid, "inviter": inviterid, "invited": invitedid, 'ts': now})
+
+            # Now, shadow-join the user so we can get the occupant ID.
+            self.shadow_join_room(roomid, invitedid)
+
+            # Look up the occupant ID specifically instead of having shadow_join_room return it
+            # because it could do nothing if the user is already shadow joined.
+            sql = """
+                SELECT id FROM occupant
+                WHERE `user_id` = :userid AND `room_id` = :roomid
+            """
+            cursor = self.execute(sql, {"userid": invitedid, "roomid": roomid})
+            for result in cursor.mappings():
+                user_to_occupant[invitedid] = OccupantID(result['id'])
+
+            # This should never happen, but let's put a logic error assert in so if it does we
+            # know the invariant that failed.
+            if invitedid not in user_to_occupant or inviterid not in user_to_occupant:
+                raise Exception("Logic error, there should be an occupant ID for both the inviter and invitee at this point!")
+
+            # Finally, add an action so clients know to refresh the invite list. Attribute it
+            # to the user doing the invite.
+            occupant = Occupant(
+                occupantid=NewOccupantID,
+                userid=inviterid,
+            )
+            action = Action(
+                actionid=NewActionID,
+                timestamp=Time.now(),
+                occupant=occupant,
+                action=ActionType.INVITE_USER,
+                details={'invited': user_to_occupant[invitedid]},
+            )
+            self.insert_action(roomid, action)
+
+    def is_invited(self, roomid: RoomID, invitedid: UserID) -> bool:
+        """
+        Returns True if the given user is invited to the given room. Returns False otherwise.
+        """
+
+        sql = """
+            SELECT id FROM invite
+            WHERE room_id = :roomid AND invited_user_id = :invited
+            LIMIT 1
+        """
+        cursor = self.execute(sql, {"roomid": roomid, "invited": invitedid})
+        return bool(cursor.rowcount == 1)

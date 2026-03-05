@@ -92,11 +92,16 @@ def send_action_deltas(
                     fetchlimit = action.id if fetchlimit is None else max(fetchlimit, action.id)
 
                     if action.action == ActionType.CHANGE_USERS:
-                        occupants = messageservice.lookup_room_occupants(roomid, info.userid)
+                        occupants = messageservice.get_room_occupants(roomid, info.userid)
                         if occupants is not None:
                             action.details = {
                                 "occupants": [o.to_dict() for o in occupants],
                             }
+
+                    elif action.action == ActionType.INVITE_USER:
+                        occupants = messageservice.get_room_occupants(roomid, info.userid)
+                        if occupants is not None:
+                            action.details['occupants'] = [o.to_dict() for o in occupants]
 
                     elif action.action == ActionType.CHANGE_MESSAGE:
                         original = cast(ActionID, action.details["actionid"])

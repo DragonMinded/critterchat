@@ -388,6 +388,7 @@ class Occupant:
         inactive: bool = False,
         moderator: bool = False,
         muted: bool = False,
+        invited: bool = False,
     ) -> None:
         self.id = occupantid
         self.userid = userid
@@ -396,6 +397,7 @@ class Occupant:
         self.inactive = inactive
         self.moderator = moderator
         self.muted = muted
+        self.invited = invited
         self.iconid = iconid
         self.icon: str | None = None
 
@@ -409,6 +411,7 @@ class Occupant:
             inactive=self.inactive,
             moderator=self.moderator,
             muted=self.muted,
+            invited=self.invited,
         )
         o.icon = self.icon
         return o
@@ -422,6 +425,7 @@ class Occupant:
             "inactive": self.inactive,
             "moderator": self.moderator,
             "muted": self.muted,
+            "invited": self.invited,
             "icon": self.icon,
         }
 
@@ -448,6 +452,7 @@ class ActionType(StrEnum):
     CHANGE_PROFILE = 'change_profile'
     CHANGE_USERS = 'change_users'
     CHANGE_MESSAGE = 'change_message'
+    INVITE_USER = 'invite_user'
 
     @staticmethod
     def unread_types() -> set["ActionType"]:
@@ -457,6 +462,7 @@ class ActionType(StrEnum):
             ActionType.JOIN,
             ActionType.LEAVE,
             ActionType.CHANGE_INFO,
+            ActionType.INVITE_USER,
         }
 
     @staticmethod
@@ -478,6 +484,7 @@ class ActionType(StrEnum):
             ActionType.CHANGE_PROFILE,
             ActionType.CHANGE_USERS,
             ActionType.CHANGE_MESSAGE,
+            ActionType.INVITE_USER,
         }
 
 
@@ -539,6 +546,11 @@ class Action:
                 converted[reaction] = [Occupant.from_id(o) for o in occupants]
             details["reactions"] = converted
 
+            return details
+
+        if self.action == ActionType.INVITE_USER:
+            details = {**self.details}
+            details["invited"] = Occupant.from_id(cast(OccupantID, details["invited"]))
             return details
 
         return self.details

@@ -695,7 +695,7 @@ def chathistory(json: dict[str, object]) -> None:
             else:
                 lastseen = userservice.get_last_seen_actions(user.id)
                 actions = messageservice.get_room_history(roomid)
-                occupants = messageservice.get_room_occupants(roomid)
+                occupants = messageservice.get_room_occupants(roomid, user.id) or []
 
                 # Starting from the point where we read here, and only updating if new events
                 # somehow came in after we read the list of joined rooms. This stops us from
@@ -810,6 +810,27 @@ def leaveroom(json: dict[str, object]) -> None:
                 del info.fetchlimit[roomid]
 
             messageservice.leave_room(roomid, user.id)
+
+
+@socketio.on('inviteroom')  # type: ignore
+def inviteroom(json: dict[str, object]) -> None:
+    data = Data(config)
+    messageservice = MessageService(config, data)
+
+    # Try to associate with a user if there is one.
+    user = recover_user(data, request.sid)
+    info = recover_info(request.sid)
+    if user is None or info is None:
+        return
+
+    # Grab the room and user we're inviting.
+    roomid = Room.to_id(str(json.get('roomid')))
+    otherid = User.to_id(str(json.get('userid')))
+    if otherid and roomid:
+        try:
+            messageservice.invite_to_room(roomid, user.id, otherid)
+        except MessageServiceException as e:
+            error(str(e), room=request.sid)
 
 
 @socketio.on('searchrooms')  # type: ignore

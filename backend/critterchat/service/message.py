@@ -446,10 +446,10 @@ class MessageService:
     def __infer_room_info(self, userid: UserID, room: Room) -> None:
         if room.purpose == RoomPurpose.ROOM:
             room_name = "Unnamed Public Chat"
-            occupants = self.__data.room.get_room_occupants(room.id)
+            occupants = self.__data.room.get_room_occupants(room.id, include_invited=True)
         elif room.purpose == RoomPurpose.CHAT:
             room_name = "Unnamed Private Chat"
-            occupants = self.__data.room.get_room_occupants(room.id)
+            occupants = self.__data.room.get_room_occupants(room.id, include_invited=True)
         else:
             # Figure out how many people are in the direct message, name it after them.
             occupants = self.__data.room.get_room_occupants(room.id, include_left=True)
@@ -578,11 +578,15 @@ class MessageService:
 
         return room
 
-    def lookup_room_occupants(self, roomid: RoomID, userid: UserID) -> list[Occupant] | None:
+    def get_room_occupants(self, roomid: RoomID, userid: UserID) -> list[Occupant] | None:
         if roomid not in self.__data.requestcache.occupants:
             room = self.lookup_room(roomid, userid)
             if room:
-                self.__data.requestcache.occupants[roomid] = room.occupants
+                occupants = [
+                    self.__attachments.resolve_occupant_icon(o)
+                    for o in room.occupants
+                ]
+                self.__data.requestcache.occupants[roomid] = occupants
             else:
                 self.__data.requestcache.occupants[roomid] = None
 
@@ -766,6 +770,25 @@ class MessageService:
         if changed:
             self.__data.room.update_room(room, userid)
 
+    def invite_to_room(self, roomid: RoomID, inviter: UserID, invited: UserID) -> None:
+        room = self.__data.room.get_room(roomid)
+        if room is None:
+            raise MessageServiceException("Room does not exist!")
+
+        # Verify that we're a participant in this room, can't be inviting to rooms we're not in.
+        occupants = self.__data.room.get_room_occupants(room.id)
+        for occupant in occupants:
+            if occupant.userid == inviter:
+                break
+        else:
+            # This is somebody else's room?! You can't invite to this!
+            raise MessageServiceException("Room does not exist!")
+
+        if room.purpose not in {RoomPurpose.ROOM, RoomPurpose.CHAT}:
+            raise MessageServiceException("Cannot invite somebody to this room!")
+
+        self.__data.room.grant_room_invite(roomid, inviterid=inviter, invitedid=invited)
+
     def get_joined_rooms(self, userid: UserID) -> list[Room]:
         rooms = self.__data.room.get_joined_rooms(userid)
 
@@ -774,17 +797,6 @@ class MessageService:
             self.__infer_room_info(userid, room)
 
         return sorted(rooms, key=lambda r: r.last_action_timestamp, reverse=True)
-
-    def get_room_occupants(self, roomid: RoomID) -> list[Occupant]:
-        room = self.__data.room.get_room(roomid)
-        if not room:
-            return []
-
-        occupants = [
-            self.__attachments.resolve_occupant_icon(o)
-            for o in self.__data.room.get_room_occupants(roomid, include_left=room.purpose == RoomPurpose.DIRECT_MESSAGE)
-        ]
-        return sorted(occupants, key=lambda o: o.nickname)
 
     def get_autojoin_rooms(self, userid: UserID) -> list[Room]:
         rooms = self.__data.room.get_autojoin_rooms()
@@ -891,7 +903,7 @@ class MessageService:
         if room.purpose not in {RoomPurpose.ROOM, RoomPurpose.CHAT}:
             return []
 
-        occupants = {o.userid: o for o in self.__data.room.get_room_occupants(roomid)}
+        occupants = {o.userid: o for o in self.__data.room.get_room_occupants(roomid, include_invited=True)}
         if userid not in occupants:
             # We're not in the room we're searching, no results for you!
             return []

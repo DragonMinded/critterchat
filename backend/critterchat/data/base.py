@@ -100,7 +100,10 @@ class BaseData:
             if nonce != newnonce:
                 raise Exception("Logic error, nonce order issue!")
 
-            self.__session.commit()
+            if self.__depth:
+                self.__session.flush()
+            else:
+                self.__session.commit()
 
     def execute(self, sql: Statement | str, params: dict[str, object] | None = None) -> CursorResult:
         """

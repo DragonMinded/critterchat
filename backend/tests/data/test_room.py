@@ -1,7 +1,7 @@
 import pytest
 from sqlalchemy.orm import Session
 
-from critterchat.data import ActionType, Room, RoomPurpose, RoomID, NewRoomID, NewUserID
+from critterchat.data import ActionType, Room, RoomPurpose, RoomID, NewRoomID, NewUserID, UserPermission
 from critterchat.data.room import RoomData
 from critterchat.data.user import UserData
 
@@ -132,3 +132,187 @@ class TestRoomData:
 
         rooms = {room.id for room in roomdata.get_joined_rooms(user2.id, include_left=True)}
         assert rooms == {room1.id, room2.id}
+
+    def test_get_room_occupants(self, tx: Session) -> None:
+        """
+        Verifies that get_room_occupants operates properly.
+        """
+
+        config = MockConfig()
+        roomdata = RoomData(config, tx)
+        userdata = UserData(config, tx)
+
+        # First, create a few rooms for users to be in or not be in.
+        room1 = Room(
+            NewRoomID,
+            "test room 1",
+            "",
+            RoomPurpose.CHAT,
+            False,
+            False,
+            None,
+            None,
+        )
+        roomdata.create_room(room1)
+
+        room2 = Room(
+            NewRoomID,
+            "test room 2",
+            "",
+            RoomPurpose.CHAT,
+            False,
+            False,
+            None,
+            None,
+        )
+        roomdata.create_room(room2)
+
+        # Now, create some users to join those rooms.
+        userdata.create_account("test_user_1", "arbitrary_password")
+        userdata.create_account("test_user_2", "arbitrary_password")
+        userdata.create_account("test_user_3", "arbitrary_password")
+
+        user1 = userdata.from_username("test_user_1")
+        assert user1 is not None
+        user2 = userdata.from_username("test_user_2")
+        assert user2 is not None
+        user3 = userdata.from_username("test_user_3")
+        assert user3 is not None
+
+        # Activate users so they don't appear inactive.
+        user1.permissions.add(UserPermission.ACTIVATED)
+        user2.permissions.add(UserPermission.ACTIVATED)
+        user3.permissions.add(UserPermission.ACTIVATED)
+        userdata.update_user(user1)
+        userdata.update_user(user2)
+        userdata.update_user(user3)
+
+        # Now, join one user to both rooms, the other user to one room and shadow join the other.
+        # Shadow joining is just joining as already left, so that we can simulate how direct messages
+        # are created without popping up on the other user's clients.
+        roomdata.join_room(room1.id, user1.id)
+        roomdata.join_room(room1.id, user2.id)
+        roomdata.grant_room_invite(room1.id, user3.id, user1.id)
+
+        roomdata.join_room(room2.id, user1.id)
+        roomdata.shadow_join_room(room2.id, user2.id)
+
+        # Now, verify that we get the right responses back for users in each room.
+        users1 = {occupant.userid: occupant for occupant in roomdata.get_room_occupants(room1.id)}
+        assert users1.keys() == {user1.id, user2.id}
+        users2 = {occupant.userid: occupant for occupant in roomdata.get_room_occupants(room2.id)}
+        assert users2.keys() == {user1.id}
+
+        # Verify some properties and ensure the occupants are different.
+        assert users1[user1.id].id != users2[user1.id].id
+
+        assert users1[user1.id].username == "test_user_1"
+        assert not users1[user1.id].muted
+        assert not users1[user1.id].invited
+        assert not users1[user1.id].inactive
+        assert users1[user2.id].username == "test_user_2"
+        assert not users1[user2.id].muted
+        assert not users1[user2.id].invited
+        assert not users1[user2.id].inactive
+
+        assert users2[user1.id].username == "test_user_1"
+        assert not users2[user1.id].muted
+        assert not users2[user1.id].invited
+        assert not users2[user1.id].inactive
+
+        # Now, verify that we get all users back for each room when specifying include left.
+        users1 = {occupant.userid: occupant for occupant in roomdata.get_room_occupants(room1.id, include_left=True)}
+        assert users1.keys() == {user1.id, user2.id, user3.id}
+        users2 = {occupant.userid: occupant for occupant in roomdata.get_room_occupants(room2.id, include_left=True)}
+        assert users2.keys() == {user1.id, user2.id}
+
+        # Verify some properties and ensure the occupants are different.
+        assert users1[user1.id].id != users2[user1.id].id
+        assert users1[user2.id].id != users2[user2.id].id
+
+        assert users1[user1.id].username == "test_user_1"
+        assert not users1[user1.id].muted
+        assert not users1[user1.id].invited
+        assert not users1[user1.id].inactive
+        assert users1[user2.id].username == "test_user_2"
+        assert not users1[user2.id].muted
+        assert not users1[user2.id].invited
+        assert not users1[user2.id].inactive
+        assert users1[user3.id].username == "test_user_3"
+        assert not users1[user3.id].muted
+        assert users1[user3.id].invited
+        assert users1[user3.id].inactive
+
+        assert users2[user1.id].username == "test_user_1"
+        assert not users2[user1.id].muted
+        assert not users2[user1.id].invited
+        assert not users2[user1.id].inactive
+        assert users2[user2.id].username == "test_user_2"
+        assert not users2[user2.id].muted
+        assert not users2[user2.id].invited
+        assert users2[user2.id].inactive
+
+        # Now, verify that we get all users back for each room when specifying include invited.
+        users1 = {occupant.userid: occupant for occupant in roomdata.get_room_occupants(room1.id, include_invited=True)}
+        assert users1.keys() == {user1.id, user2.id, user3.id}
+        users2 = {occupant.userid: occupant for occupant in roomdata.get_room_occupants(room2.id, include_invited=True)}
+        assert users2.keys() == {user1.id}
+
+        # Verify some properties and ensure the occupants are different.
+        assert users1[user1.id].id != users2[user1.id].id
+
+        assert users1[user1.id].username == "test_user_1"
+        assert not users1[user1.id].muted
+        assert not users1[user1.id].invited
+        assert not users1[user1.id].inactive
+        assert users1[user2.id].username == "test_user_2"
+        assert not users1[user2.id].muted
+        assert not users1[user2.id].invited
+        assert not users1[user2.id].inactive
+        assert users1[user3.id].username == "test_user_3"
+        assert not users1[user3.id].muted
+        assert users1[user3.id].invited
+        assert users1[user3.id].inactive
+
+        assert users2[user1.id].username == "test_user_1"
+        assert not users2[user1.id].muted
+        assert not users2[user1.id].invited
+        assert not users2[user1.id].inactive
+
+        # Now, verify that we get all users back for each room when specifying include left and include invited
+        users1 = {
+            occupant.userid: occupant
+            for occupant in roomdata.get_room_occupants(room1.id, include_left=True, include_invited=True)
+        }
+        assert users1.keys() == {user1.id, user2.id, user3.id}
+        users2 = {
+            occupant.userid: occupant
+            for occupant in roomdata.get_room_occupants(room2.id, include_left=True, include_invited=True)
+        }
+        assert users2.keys() == {user1.id, user2.id}
+
+        # Verify some properties and ensure the occupants are different.
+        assert users1[user1.id].id != users2[user1.id].id
+        assert users1[user2.id].id != users2[user2.id].id
+
+        assert users1[user1.id].username == "test_user_1"
+        assert not users1[user1.id].muted
+        assert not users1[user1.id].invited
+        assert not users1[user1.id].inactive
+        assert users1[user2.id].username == "test_user_2"
+        assert not users1[user2.id].muted
+        assert not users1[user2.id].invited
+        assert not users1[user2.id].inactive
+        assert users1[user3.id].username == "test_user_3"
+        assert not users1[user3.id].muted
+        assert users1[user3.id].invited
+        assert users1[user3.id].inactive
+
+        assert users2[user1.id].username == "test_user_1"
+        assert not users2[user1.id].muted
+        assert not users2[user1.id].invited
+        assert not users2[user1.id].inactive
+        assert users2[user2.id].username == "test_user_2"
+        assert not users2[user2.id].muted
+        assert not users2[user2.id].invited
+        assert users2[user2.id].inactive

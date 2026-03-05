@@ -2,6 +2,7 @@ TODO Immediate
 ==============
 
  - Private group chat invite UI.
+ - Preference for auto-accept group chat invites.
 
 TODO For Public Instance
 ========================
