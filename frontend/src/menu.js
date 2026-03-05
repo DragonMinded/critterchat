@@ -3,7 +3,6 @@ import { escapeHtml } from "./utils.js";
 import { EditProfile } from "./modals/editprofile.js";
 import { EditPreferences } from "./modals/editpreferences.js";
 import { displayWarning } from "./modals/warningmodal.js";
-import { Search } from "./modals/search.js";
 
 /**
  * The class responsible for the left hand menu. This also generates room change request events
@@ -20,7 +19,6 @@ class Menu {
         this.inputState = inputState;
         this.editProfile = new EditProfile( eventBus, inputState );
         this.editPreferences = new EditPreferences( eventBus, inputState );
-        this.search = new Search( eventBus, inputState )
         this.size = initialSize;
         this.visibility = initialVisibility;
         this.title = document.title;
@@ -275,7 +273,6 @@ class Menu {
         this.preferences = preferences;
         this.preferencesLoaded = true;
         this.editPreferences.setPreferences( preferences );
-        this.search.setPreferences( preferences );
         this._updateGlobalBadges();
         if (this.roomsLoaded) {
             this.setRooms(this.rooms, true);
@@ -297,14 +294,6 @@ class Menu {
      */
     deleteEmotes( aliases ) {
         this.editProfile.deleteEmotes( aliases );
-    }
-
-    /**
-     * Called every time the server has updated search results which we pass onto the search instance
-     * that we manage.
-     */
-    populateSearchResults( results ) {
-        this.search.populateSearchResults( results );
     }
 
     /**

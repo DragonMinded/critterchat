@@ -10,6 +10,7 @@ import { Menu } from "./menu.js";
 import { Messages } from "./messages.js";
 import { Info } from "./info.js";
 import { Profile } from "./modals/profile.js";
+import { Search } from "./modals/search.js";
 
 import { escapeHtml, flash, flashHook, containsStandaloneText } from "./utils.js";
 import { displayInfo } from "./modals/infomodal.js";
@@ -82,6 +83,10 @@ export function manager(socket) {
     // Handles the profile view popover, not owned by any one panel since it can be summoned
     // by multiple of them.
     var profileInst = new Profile(eventBus);
+
+    // Handles the search view, both when searching for chats to join or jump to, and when
+    // searching for users to invite to a private chat.
+    var search = new Search(eventBus, inputState);
 
     // Ensure any server-generated messages are closeable.
     flashHook();
@@ -368,6 +373,7 @@ export function manager(socket) {
         infoInst.setPreferences(msg);
         notifInst.setPreferences(msg);
         profileInst.setPreferences(msg);
+        search.setPreferences(msg);
     });
 
     socket.on('chathistory', (msg) => {
@@ -471,7 +477,7 @@ export function manager(socket) {
     socket.on('searchresults', (msg) => {
         // Pretty self-explanatory, handles ferrying any search results sent from the server to the
         // search instance for update.
-        menuInst.populateSearchResults(msg.results);
+        search.populateSearchResults(msg.results);
     });
 
     socket.on('emotechanges', (msg) => {
