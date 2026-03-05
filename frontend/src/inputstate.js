@@ -7,10 +7,13 @@ export function InputState() {
     }
 
     this.setState = function(newState) {
+        const changed = this.current != newState;
         this.current = newState;
 
-        this.callbacks.forEach(function(callback) {
-            callback(newState);
-        });
+        if (changed) {
+            this.callbacks.forEach(function(callback) {
+                callback(newState);
+            });
+        }
     }
 }

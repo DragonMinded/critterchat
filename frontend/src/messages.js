@@ -126,6 +126,11 @@ class Messages {
 
         if (window.reactionsenabled) {
             $( document ).on("mouseenter", "div.item div.message, div.item div.attachments, div.item div.reactions", (event) => {
+                if (this.inputState.current == "search") {
+                    // Once a user searches an emoji to react, it should be sticky.
+                    return;
+                }
+
                 event.preventDefault();
                 event.stopPropagation();
                 event.stopImmediatePropagation();
@@ -152,6 +157,11 @@ class Messages {
             }
 
             $( "div" ).on("mouseenter", () => {
+                if (this.inputState.current == "search") {
+                    // Once a user searches an emoji to react, it should be sticky.
+                    return;
+                }
+
                 this.reactions.hide();
             });
 
