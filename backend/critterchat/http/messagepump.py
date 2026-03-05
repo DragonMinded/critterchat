@@ -33,6 +33,7 @@ class SocketInfo:
         self.lastseen: dict[RoomID, int] = {}
         self.profilets: int | None = None
         self.prefsts: int | None = None
+        self.invitests: int | None = None
         self.lock: Lock = Lock()
 
 
@@ -209,3 +210,28 @@ def send_profile_deltas(
             if userpreferences:
                 info.prefsts = ts
                 socketio.emit('preferences', userpreferences.to_dict(), room=info.sid)
+
+
+def send_invite_deltas(
+    config: Config,
+    data: Data,
+    socketio: SupportsSocketIO,
+    info: SocketInfo,
+) -> None:
+    if not info.userid:
+        raise Exception("Logic error, should only call this with valid users!")
+
+    messageservice = MessageService(config, data)
+
+    # Figure out if we've gotten any invites since last time we updated the client.
+    invitests = info.invitests
+
+    if invitests is not None:
+        ts = Time.now()
+        if messageservice.has_updated_invites(info.userid, invitests):
+            invites = messageservice.get_invited_rooms(info.userid)
+            info.invitests = ts
+            socketio.emit('invites', {
+                'active': [invite.to_dict() for invite in invites if invite.active],
+                'ignored': [invite.to_dict() for invite in invites if not invite.active],
+            })

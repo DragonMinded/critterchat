@@ -193,10 +193,14 @@ class UserService:
         return user
 
     def lookup_user(self, userid: UserID) -> User | None:
-        user = self.__data.user.get_user(userid)
-        if user:
-            self.__attachments.resolve_user_icon(user)
-        return user
+        if userid not in self.__data.requestcache.users:
+            user = self.__data.user.get_user(userid)
+            if user:
+                self.__attachments.resolve_user_icon(user)
+
+            self.__data.requestcache.users[userid] = user
+
+        return self.__data.requestcache.users[userid]
 
     def find_user(self, username: str) -> User | None:
         # Just try to find the user by username, returning that.

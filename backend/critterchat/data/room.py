@@ -10,6 +10,7 @@ from .base import BaseData, Fragment, fragment, statement, metadata
 from .types import (
     Action,
     ActionType,
+    Invite,
     Occupant,
     Room,
     RoomPurpose,
@@ -21,6 +22,7 @@ from .types import (
     NewRoomID,
     ActionID,
     AttachmentID,
+    InviteID,
     OccupantID,
     RoomID,
     UserID,
@@ -85,7 +87,7 @@ invite = Table(
     "invite",
     metadata,
     Column("id", Integer, nullable=False, primary_key=True, autoincrement=True),
-    Column("timestamp", Integer, nullable=False),
+    Column("timestamp", Integer, nullable=False, index=True),
     Column("room_id", Integer, nullable=False, index=True),
     Column("invited_user_id", Integer, nullable=False),
     Column("inviter_user_id", Integer, nullable=False),
@@ -1367,3 +1369,87 @@ class RoomData(BaseData):
         """
         cursor = self.execute(sql, {"roomid": roomid, "invited": invitedid})
         return bool(cursor.rowcount == 1)
+
+    def get_invites(self, userid: UserID) -> list[Invite]:
+        """
+        Given a user, returns the list of their invites that are not revoked.
+        """
+
+        if userid == NewUserID:
+            return []
+
+        sql = """
+            SELECT
+                room.id AS room_id,
+                room.name AS name,
+                room.topic AS topic,
+                room.icon AS icon,
+                room.purpose AS purpose,
+                room.moderated AS moderated,
+                room.autojoin AS autojoin,
+                room.last_action AS last_action,
+                invite.id AS invite_id,
+                invite.ignored AS ignored,
+                invite.inviter_user_id AS inviter
+            FROM invite
+            LEFT JOIN room ON invite.room_id = room.id
+            WHERE invite.invited_user_id = :userid AND invite.revoked != TRUE
+        """
+        cursor = self.execute(sql, {"userid": userid})
+
+        rooms: list[Room] = []
+        results: list[Invite] = []
+
+        for result in cursor.mappings():
+            room = Room(
+                roomid=RoomID(result['room_id']),
+                name=result['name'],
+                topic=result['topic'],
+                purpose=self._get_purpose(str(result['purpose'])),
+                moderated=bool(result['moderated']),
+                autojoin=bool(result['autojoin']),
+                last_action_timestamp=result['last_action'],
+                iconid=AttachmentID(result['icon']) if result['icon'] else None,
+                deficonid=None,
+            )
+            rooms.append(room)
+
+            results.append(Invite(
+                inviteid=InviteID(result['invite_id']),
+                active=not bool(result['ignored']),
+                room=room,
+                userid=UserID(result['inviter']),
+            ))
+
+        # This will modify each room in the list so it's safe to do on the collected temporary list.
+        self._hydrate_actions(rooms)
+        return results
+
+    def get_last_invite_update(self) -> int | None:
+        """
+        Returns the timestamp of the last invite update on the instance, or None if there
+        are actually no invites.
+        """
+
+        last_update: int | None = None
+        cursor = self.execute("SELECT timestamp FROM invite ORDER BY timestamp DESC LIMIT 1")
+        if cursor.rowcount == 1:
+            result = cursor.mappings().fetchone()
+            last_update = int(result['timestamp']) if result['timestamp'] else None
+
+        return last_update
+
+    def has_updated_invites(self, userid: UserID, last_checked: int) -> bool:
+        """
+        Given a user ID and a last checked timestamp, return whether there's an updated set of
+        invites for that user ID or not.
+        """
+
+        sql = """
+            SELECT invited_user_id FROM invite WHERE invited_user_id = :userid AND timestamp >= :ts
+        """
+        cursor = self.execute(sql, {"userid": userid, "ts": last_checked})
+        if cursor.rowcount == 1:
+            return True
+
+        return False

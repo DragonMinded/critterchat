@@ -5,7 +5,7 @@ from threading import Lock
 from typing import Any, Final, Literal, cast
 
 from .app import app, socketio, config, request
-from .messagepump import SocketInfo, send_emote_deltas, send_chat_deltas, send_profile_deltas
+from .messagepump import SocketInfo, send_emote_deltas, send_chat_deltas, send_profile_deltas, send_invite_deltas
 from ..common import AESCipher, Time, represents_real_text
 from ..service import (
     AttachmentService,
@@ -72,6 +72,7 @@ def background_thread_proc_impl() -> None:
     emotes = {k for k in emoteservice.get_all_emotes()}
     last_emote_update = Time.now()
     last_user_update: int | None = None
+    last_invite_update: int | None = None
     last_action: ActionID | None = None
 
     while True:
@@ -86,6 +87,7 @@ def background_thread_proc_impl() -> None:
         # Look for any new actions that should be relayed.
         current_action = messageservice.get_last_action()
         current_update = userservice.get_last_user_update()
+        current_invite = messageservice.get_last_invite_update()
 
         # Shut down early if we have nothing to poll.
         global background_thread
@@ -96,12 +98,13 @@ def background_thread_proc_impl() -> None:
 
                 return
 
-        if current_action == last_action and current_update == last_user_update:
+        if current_action == last_action and current_update == last_user_update and current_invite == last_invite_update:
             # Nothing to do, skip the expensive part below.
             continue
 
         last_action = current_action
         last_user_update = current_update
+        last_invite_update = current_invite
 
         # If we have actual actions, grab who we need to act on and then individually lock.
         # This prevents a misbehaving client from locking the whole network.
@@ -132,6 +135,7 @@ def background_thread_proc_impl() -> None:
                     # of their account that might have been changed.
                     send_chat_deltas(config, deltadata, socketio, info)
                     send_profile_deltas(config, deltadata, socketio, info)
+                    send_invite_deltas(config, deltadata, socketio, info)
 
                 finally:
                     info.lock.release()
@@ -434,6 +438,30 @@ def preferences(json: dict[str, object]) -> None:
         if userpreferences:
             info.prefsts = ts
             socketio.emit('preferences', hydrate_tag(json, userpreferences.to_dict()), room=request.sid)
+
+
+@socketio.on('invites')  # type: ignore
+def invites(json: dict[str, object]) -> None:
+    data = Data(config)
+    messageservice = MessageService(config, data)
+
+    # Try to associate with a user if there is one.
+    user = recover_user(data, request.sid)
+    info = recover_info(request.sid)
+    if user is None or info is None:
+        return
+
+    # Locking our socket info so we can keep track of invites sent to all sessions.
+    # That way we can reliably notify sessions when a user sends them an invite.
+    with info.lock:
+        # Look up last settings for this user.
+        ts = Time.now()
+        invites = messageservice.get_invited_rooms(user.id)
+        info.invitests = ts
+        socketio.emit('invites', {
+            'active': [invite.to_dict() for invite in invites if invite.active],
+            'ignored': [invite.to_dict() for invite in invites if not invite.active],
+        })
 
 
 @socketio.on('updatesettings')  # type: ignore

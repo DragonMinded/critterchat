@@ -127,8 +127,9 @@ export function manager(socket) {
             socket.emit('chatactions', {roomid: room.id, after: room.newest_action})
         });
 
-        // Ask for our list of rooms that we're in.
+        // Ask for our list of rooms that we're in and any invites that we have pending for new rooms.
         socket.emit('roomlist', {});
+        socket.emit('invites', {});
 
         // Ask for any server MOTD or admin messages.
         socket.emit('motd', {});
@@ -309,6 +310,10 @@ export function manager(socket) {
             // room. This only happens when we request to join a new room or start a new chat.
             menuInst.selectRoom(msg.selected);
         }
+    });
+
+    socket.on('invites', (msg) => {
+        menuInst.setInvites(msg);
     });
 
     socket.on('lastsettings', (msg) => {

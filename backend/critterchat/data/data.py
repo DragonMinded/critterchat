@@ -17,7 +17,7 @@ from .room import RoomData
 from .attachment import AttachmentData
 from .migration import MigrationData
 from .mastodon import MastodonData
-from .types import ActionID, RoomID, Action, Occupant
+from .types import ActionID, RoomID, UserID, Action, Occupant, User
 
 
 __all__ = [
@@ -35,6 +35,7 @@ class RequestCache:
     def __init__(self) -> None:
         self.actions: Final[dict[ActionID, Action | None]] = {}
         self.occupants: Final[dict[RoomID, list[Occupant] | None]] = {}
+        self.users: Final[dict[UserID, User | None]] = {}
 
 
 class Data:

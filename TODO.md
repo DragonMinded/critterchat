@@ -6,6 +6,7 @@ TODO Immediate
  - Verify badging works correctly with invite actions.
  - Allow uninviting to room (revoke invite action).
  - Show invited rooms on search results (allow join that way).
+ - Update invite timestamp when room details change so invites can get renamed.
 
 TODO For Public Instance
 ========================

@@ -6,6 +6,7 @@ from ..config import Config
 
 UserID = NewType("UserID", int)
 RoomID = NewType("RoomID", int)
+InviteID = NewType("InviteID", int)
 OccupantID = NewType("OccupantID", int)
 ActionID = NewType("ActionID", int)
 AttachmentID = NewType("AttachmentID", int)
@@ -338,6 +339,38 @@ class Room:
 
         try:
             return RoomID(int(idstr[1:]))
+        except ValueError:
+            return None
+
+
+class Invite:
+    def __init__(self, inviteid: InviteID, active: bool, room: Room, userid: UserID) -> None:
+        self.id = inviteid
+        self.active = active
+        self.room = room
+        self.userid = userid
+
+        # This is filled in only after lookup by the message/search system.
+        self.user: User | None = None
+
+    def to_dict(self) -> dict[str, object]:
+        return {
+            "id": Invite.from_id(self.id),
+            "room": self.room.to_dict(),
+            "user": self.user.to_dict() if self.user else None,
+        }
+
+    @staticmethod
+    def from_id(inviteid: InviteID) -> str:
+        return f"i{inviteid}"
+
+    @staticmethod
+    def to_id(idstr: str) -> InviteID | None:
+        if idstr[0] != 'i':
+            return None
+
+        try:
+            return InviteID(int(idstr[1:]))
         except ValueError:
             return None
 

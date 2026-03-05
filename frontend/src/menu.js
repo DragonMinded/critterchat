@@ -26,9 +26,14 @@ class Menu {
         this.rooms = [];
         this.selected = "";
         this.pendingRoomSelect = "";
-        this.lastSettings = {};
         this.roomsLoaded = false;
+
+        this.invites = {'active': [], 'ignored': []};
+        this.invitesLoaded = false;
+
+        this.lastSettings = {};
         this.lastSettingsLoaded = false;
+
         this.preferences = {}
         this.preferencesLoaded = false;
 
@@ -209,6 +214,9 @@ class Menu {
 
         // Make a copy instead of holding onto a reference, so we can mutate.
         this.rooms = rooms.filter(() => true);
+        if (!this.roomsLoaded) {
+            needsEmpty = true;
+        }
         this.roomsLoaded = true;
 
         // Copy badge counts over to both our stored and rendered lists.
@@ -221,19 +229,68 @@ class Menu {
             }
         });
 
-        // If we re-arranged anything, nuke our existing.
-        var scrollPos = $('div.menu > div.rooms').scrollTop();
-        if (needsEmpty) {
-            $('div.menu > div.rooms').empty();
-        }
+        // Now draw it. We always redraw the whole thing on first rooms set, because we could
+        // have drawn invites before drawing rooms depending on packet order.
+        this._drawRooms( sortedRooms, this.invitesLoaded ? this.invites.active : [], needsEmpty );
 
-        // Draw the sorted order, and then select the room.
-        sortedRooms.forEach((room) => this._drawRoom(room));
-        $('div.menu > div.rooms').scrollTop(scrollPos);
-
+        // Now, once we're drawn, select the pending room if we have one.
         if (this.pendingRoomSelect) {
             this.selectRoom(this.pendingRoomSelect);
             this.pendingRoomSelect = "";
+        }
+    }
+
+    _drawRooms( rooms, invites, fullRedraw ) {
+        // If we re-arranged anything, nuke our existing.
+        var scrollPos = undefined;
+        if (fullRedraw) {
+            scrollPos = $('div.menu > div.rooms').scrollTop();
+            $('div.menu > div.rooms').empty();
+        }
+
+        // Only draw the header if this is a full refresh and we have zero or more invites.
+        const conversations = $('div.menu > div.rooms');
+        if (fullRedraw && invites.length > 0) {
+            conversations.append('<div class="header">invites</div>');
+        }
+
+        // Now, draw the invites.
+        invites.forEach((invite) => this._drawInvite(invite));
+
+        // Only draw another header if this is a full refresh and we had invites, or we have rooms on top
+        // as our setting.
+        const forceHeaders = this.preferencesLoaded && this.preferences.rooms_on_top;
+        if (fullRedraw && (invites.length > 0 || forceHeaders)) {
+            var label = undefined;
+            if (forceHeaders && rooms.length > 0 && rooms[0].type == "room") {
+                label = "rooms";
+            } else {
+                label = "conversations";
+            }
+
+            conversations.append('<div class="header">' + label + '</div>');
+        }
+
+        // Now draw rooms, interjecting another header for conversations when we get there if need be.
+        var lastSeen = undefined;
+        rooms.forEach((room) => {
+            if (fullRedraw && forceHeaders) {
+                if (lastSeen != "chat" && lastSeen != "dm" && room.type != "room") {
+                    conversations.append('<div class="header">conversations</div>');
+                }
+
+                lastSeen = room.type;
+            }
+
+            this._drawRoom(room);
+        });
+
+        this._recalculateScrollPadding();
+        this._updateSelected();
+
+        // Jump back to our position if we nuked.
+        if (scrollPos) {
+            $('div.menu > div.rooms').scrollTop(scrollPos);
         }
     }
 
@@ -276,6 +333,24 @@ class Menu {
         this._updateGlobalBadges();
         if (this.roomsLoaded) {
             this.setRooms(this.rooms, true);
+        }
+    }
+
+    /**
+     * Called every time the server informs us that our list of room invites was updated.
+     */
+    setInvites( invites ) {
+        this.invites = {
+            'active': invites.active.filter(() => true),
+            'ignored': invites.ignored.filter(() => true),
+        }
+        this.invitesLoaded = true;
+
+        // Always refresh on invites set, since this is a pretty rare occurance.
+        if (this.roomsLoaded) {
+            this.setRooms( this.rooms, true );
+        } else {
+            this._drawRooms( [], this.invites.active, true );
         }
     }
 
@@ -336,9 +411,44 @@ class Menu {
                 this.selectRoom( id );
             });
         }
+    }
 
-        this._recalculateScrollPadding();
-        this._updateSelected();
+    /**
+     * Given an invite object, either add a DOM element representing that invite in the right place
+     * in the menu or update the existing DOM element that represents that invite if it already exists.
+     */
+    _drawInvite( invite ) {
+        // First, see if this is an update.
+        var conversations = $('div.menu > div.rooms');
+        var drawnInvite = conversations.find('div.item#' + invite.id);
+        if (drawnInvite.length > 0) {
+            drawnInvite.find('.icon img').attr('src', invite.room.icon);
+            drawnInvite.find('.name').html(escapeHtml(invite.room.name));
+        } else {
+            // Now, draw it fresh since it's not an update.
+            var type = invite.room.type == 'room' ? 'room' : 'avatar';
+            var html = '<div class="item" id="' + invite.id + '">';
+            html    += '  <div class="icon ' + type + '">';
+            html    += '    <img src="' + invite.room.icon + '" />';
+            html    += '    <div class="badge empty"><div class="count"></div></div>';
+            if (invite.room.type == 'room') {
+                html    += '    <div class="room-indicator">#</div>';
+            }
+            html    += '  </div>';
+            html    += '  <div class="name-wrapper"><div class="name">' + escapeHtml(invite.room.name) + '</div></div>';
+            html    += '</div>';
+            conversations.append(html);
+
+            $('div.menu > div.rooms div.item#' + invite.id).on('click', (event) => {
+                event.stopPropagation();
+                event.stopImmediatePropagation();
+
+                this.inputState.setState("empty");
+
+                var id = $(event.currentTarget).attr('id')
+                this.selectInvite( id );
+            });
+        }
     }
 
     /**
@@ -353,6 +463,13 @@ class Menu {
         } else {
             conversations.removeClass('scroll');
         }
+    }
+
+    /**
+     * Called whenever we select an invite that we've been given to join a room.
+     */
+    selectInvite( inviteid ) {
+        console.log(inviteid);
     }
 
     /**

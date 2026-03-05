@@ -1,9 +1,10 @@
-from .data import Data, DBCreateException
+from .data import Data, RequestCache, DBCreateException
 from .types import (
     Action,
     ActionType,
     Attachment,
     Emote,
+    Invite,
     MastodonInstance,
     MastodonProfile,
     MetadataType,
@@ -31,12 +32,14 @@ from .types import (
     OccupantID,
     RoomID,
     UserID,
+    InviteID,
 )
 
 
 __all__ = [
     "Data",
     "DBCreateException",
+    "RequestCache",
     "NewActionID",
     "NewMastodonInstanceID",
     "NewOccupantID",
@@ -48,6 +51,7 @@ __all__ = [
     "OccupantID",
     "RoomID",
     "UserID",
+    "InviteID",
     "DefaultAvatarID",
     "DefaultRoomID",
     "FaviconID",
@@ -55,6 +59,7 @@ __all__ = [
     "ActionType",
     "Attachment",
     "Emote",
+    "Invite",
     "MastodonInstance",
     "MastodonProfile",
     "MetadataType",

@@ -2,7 +2,7 @@ from typing import Any
 from unittest.mock import MagicMock
 
 from critterchat.config import Config
-from critterchat.data import Data
+from critterchat.data import Data, RequestCache
 
 
 def MockData() -> Data:
@@ -12,6 +12,7 @@ def MockData() -> Data:
     data.attachment = MagicMock()
     data.migration = MagicMock()
     data.mastodon = MagicMock()
+    data.requestcache = RequestCache()
 
     return data
 

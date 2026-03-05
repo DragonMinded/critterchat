@@ -7,6 +7,7 @@ from ..data import (
     Action,
     ActionType,
     Attachment,
+    Invite,
     Occupant,
     Room,
     RoomPurpose,
@@ -28,6 +29,7 @@ from ..data import (
 )
 from .attachment import AttachmentService
 from .emote import EmoteService
+from .user import UserService
 
 
 class MessageServiceException(Exception):
@@ -40,6 +42,7 @@ class MessageService:
     def __init__(self, config: Config, data: Data) -> None:
         self.__config = config
         self.__data = data
+        self.__user = UserService(self.__config, self.__data)
         self.__attachments = AttachmentService(self.__config, self.__data)
         self.__emotes = EmoteService(self.__config, self.__data)
 
@@ -770,6 +773,12 @@ class MessageService:
         if changed:
             self.__data.room.update_room(room, userid)
 
+    def get_last_invite_update(self) -> int | None:
+        return self.__data.room.get_last_invite_update()
+
+    def has_updated_invites(self, userid: UserID, last_checked: int) -> bool:
+        return self.__data.room.has_updated_invites(userid, last_checked)
+
     def invite_to_room(self, roomid: RoomID, inviter: UserID, invited: UserID) -> None:
         room = self.__data.room.get_room(roomid)
         if room is None:
@@ -788,6 +797,13 @@ class MessageService:
             raise MessageServiceException("Cannot invite somebody to this room!")
 
         self.__data.room.grant_room_invite(roomid, inviterid=inviter, invitedid=invited)
+
+    def get_invited_rooms(self, userid: UserID) -> list[Invite]:
+        invites = self.__data.room.get_invites(userid)
+        for invite in invites:
+            invite.user = self.__user.lookup_user(invite.userid)
+            self.__infer_room_info(userid, invite.room)
+        return invites
 
     def get_joined_rooms(self, userid: UserID) -> list[Room]:
         rooms = self.__data.room.get_joined_rooms(userid)

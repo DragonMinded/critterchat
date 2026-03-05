@@ -1418,13 +1418,13 @@ div.occupants div.item {
     border: 1px solid transparent;
 }
 
-div.occupants div.header {
+div.occupants div.header, div.rooms div.header {
     text-transform: uppercase;
     font-size: var(--application-text-size-12);
 }
 
-div.occupants div.header:not(:first-child) {
-    padding-top: var(--application-item-padding);
+div.occupants div.header:not(:first-child), div.rooms div.header:not(:first-child) {
+    padding-top: var(--application-pane-padding);
 }
 
 div.search, div.warning, div.information {
