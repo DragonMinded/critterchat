@@ -840,6 +840,12 @@ class RoomData(BaseData):
                 userid=userid,
             )
 
+        # Also update any invite timestamps so those users can get the update sent to them.
+        sql = """
+            UPDATE invite SET timestamp = :ts WHERE room_id = :roomid AND revoked != TRUE
+        """
+        self.execute(sql, {"roomid": room.id, "ts": Time.now()})
+
         action = Action(
             actionid=NewActionID,
             timestamp=Time.now(),

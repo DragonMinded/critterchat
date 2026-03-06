@@ -1,10 +1,10 @@
 TODO Immediate
 ==============
 
- - Preference for auto-accept group chat invites.
+ - Preference for auto-accept group invites.
+ - Preference for allowing room invites, preference for allowing group invites.
  - Allow uninviting to room (revoke invite action).
  - Show invited rooms on search results (allow join that way), ensure deduplicating from rooms you can see.
- - Update invite timestamp when room details change so invites can get renamed.
 
 TODO For Public Instance
 ========================
