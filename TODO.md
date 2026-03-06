@@ -1,8 +1,8 @@
 TODO Immediate
 ==============
 
- - Preference for auto-accept group invites.
- - Preference for allowing room invites, preference for allowing group invites.
+ - Preference for invites, including "auto-accept", "let me choose", and "disallow".
+ - Preference for searchability in user search panel.
  - Show invited rooms on search results (allow join that way), ensure deduplicating from rooms you can see.
 
 TODO For Public Instance
