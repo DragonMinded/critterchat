@@ -82,6 +82,8 @@
 
     --action-background: #d372fd;
     --action-text: #000000;
+    --action-background-grayed: light-dark(#e8e8e8, #383838);
+    --action-text-grayed: light-dark(#000000, #ffffff);
 
     /* Metrics for things that don't change on a per-scale basis */
     --emoji-height: 1.15em;

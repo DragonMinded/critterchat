@@ -936,7 +936,7 @@ div.rooms div.item div.icon img, div.results div.item div.icon img, div.occupant
 }
 
 div.rooms div.item div.name-wrapper, div.results div.item div.name-wrapper, div.occupants div.item div.name-wrapper {
-    width: 100%;
+    flex-grow: 1;
     height: 100%;
     padding-left: var(--application-item-padding);
     display: flex;
@@ -970,6 +970,11 @@ div.results div.item div.action {
     max-height: var(--icon-height);
     padding: var(--application-item-padding);
     font-size: var(--application-text-size-12);
+}
+
+div.results div.item div.action.grayed {
+    color: var(--action-text-grayed);
+    background: var(--action-background-grayed);
 }
 
 div.menu > div.actions, div.info > div.actions {

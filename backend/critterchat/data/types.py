@@ -388,6 +388,7 @@ class SearchResult:
         handle: str | None,
         purpose: RoomPurpose,
         joined: bool,
+        invited: bool,
         roomid: RoomID | None,
         userid: UserID | None,
         icon: str,
@@ -396,6 +397,7 @@ class SearchResult:
         self.handle = handle
         self.purpose = purpose
         self.joined = joined
+        self.invited = invited
         self.roomid = roomid
         self.userid = userid
         self.icon = icon
@@ -411,6 +413,7 @@ class SearchResult:
             "icon": self.icon,
             "public": self.public,
             "joined": self.joined,
+            "invited": self.invited,
             "roomid": Room.from_id(self.roomid) if self.roomid else None,
             "userid": User.from_id(self.userid) if self.userid else None,
         }

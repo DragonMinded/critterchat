@@ -120,16 +120,22 @@ class Search {
             var id = result.roomid || result.userid;
             var action = "";
             var type = result.type == "room" ? 'room' : 'avatar';
+            var actionclass = "action";
+            var hook = true;
 
             if (this.mode == "search") {
                 if (result.roomid) {
-                    action = result.joined ? "jump" : "join";
+                    action = result.joined ? "jump" : (result.invited ? "accept invite" : "join");
                 } else {
                     action = "message";
                 }
             }
             if (this.mode == "invite") {
-                action = result.joined ? "" : "invite";
+                action = result.joined ? "already present" : (result.invited ? "already invited" : "invite");
+                if (result.joined || result.invited) {
+                    actionclass += " grayed";
+                    hook = false;
+                }
             }
 
             var handleText = "";
@@ -149,12 +155,12 @@ class Search {
             html    += '    ' + handleText;
             html    += '  </div></div>';
             if (action) {
-                html    += '  <div class="action-wrapper"><div class="action">' + action + '</div></div>';
+                html    += '  <div class="action-wrapper"><div class="' + actionclass + '">' + action + '</div></div>';
             }
             html    += '</div>';
             resultdom.append(html);
 
-            if (this.mode == "search") {
+            if (this.mode == "search" && hook) {
                 $('div.search > div.results div.item#' + id).on('click', (event) => {
                     event.stopPropagation();
                     event.stopImmediatePropagation();
@@ -164,7 +170,7 @@ class Search {
                 });
             }
 
-            if (this.mode == "invite" && action) {
+            if (this.mode == "invite" && hook) {
                 $('div.search > div.results div.item#' + id).on('click', (event) => {
                     event.stopPropagation();
                     event.stopImmediatePropagation();

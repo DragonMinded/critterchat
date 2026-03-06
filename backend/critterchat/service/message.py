@@ -911,6 +911,11 @@ class MessageService:
         for user in potentialusers:
             self.__attachments.resolve_user_icon(user)
 
+        # Now, look up any invites that we might have and combine those.
+        potentialinvites = {
+            inv.room.id: inv.room for inv in self.get_invited_rooms(userid)
+        }
+
         # Finally, combined the two.
         results: list[SearchResult] = []
         for room in rooms:
@@ -926,17 +931,37 @@ class MessageService:
             if not icon:
                 raise Exception("Logic error, should have been inferred above!")
 
+            invited = room.id in potentialinvites
+            if invited:
+                del potentialinvites[room.id]
+
             if room.id in memberof:
-                results.append(SearchResult(room.name, handle, room.purpose, True, room.id, None, icon))
+                results.append(SearchResult(room.name, handle, room.purpose, True, False, room.id, None, icon))
             else:
-                results.append(SearchResult(room.name, handle, room.purpose, False, room.id, None, icon))
+                results.append(SearchResult(room.name, handle, room.purpose, False, invited, room.id, None, icon))
         for user in potentialusers:
             icon = user.icon
             if not icon:
                 raise Exception("Logic error, should have been inferred above!")
-            results.append(SearchResult(user.nickname, f"@{user.username}", RoomPurpose.DIRECT_MESSAGE, False, None, user.id, icon))
+            results.append(SearchResult(
+                user.nickname, f"@{user.username}", RoomPurpose.DIRECT_MESSAGE, False, False, None, user.id, icon
+            ))
 
-        return results
+        # Now, handle adding on room invites that weren't handled above.
+        if name:
+            lowername = name.lower()
+            potentialinvites = {
+                k: v for (k, v) in potentialinvites.items()
+                if lowername in v.name.lower()
+            }
+
+        for room in potentialinvites.values():
+            icon = room.icon
+            if not icon:
+                raise Exception("Logic error, should have been inferred above!")
+            results.append(SearchResult(room.name, None, room.purpose, False, True, room.id, None, icon))
+
+        return sorted(results, key=lambda result: (result.name or "").lower())
 
     def get_matching_users(self, userid: UserID, roomid: RoomID, *, name: str | None = None) -> list[SearchResult]:
         # First, look up the room itself and get its joined occupants. Users should not be able to
@@ -971,6 +996,15 @@ class MessageService:
             if not icon:
                 raise Exception("Logic error, should have been inferred above!")
 
-            results.append(SearchResult(user.nickname, f"@{user.username}", room.purpose, user.id in occupants, None, user.id, icon))
+            results.append(SearchResult(
+                user.nickname,
+                f"@{user.username}",
+                room.purpose,
+                user.id in occupants and occupants[user.id].present,
+                user.id in occupants and occupants[user.id].invited,
+                None,
+                user.id,
+                icon,
+            ))
 
-        return results
+        return sorted(results, key=lambda result: (result.name or "").lower())
