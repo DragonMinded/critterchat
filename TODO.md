@@ -7,6 +7,7 @@ TODO Immediate
 TODO For Public Instance
 ========================
 
+ - Another pass to PROTOCOL.md.
  - Stickers support in some form.
  - Accessibility pass.
 
