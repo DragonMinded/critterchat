@@ -257,15 +257,19 @@ class Menu {
         // Now, draw the invites.
         invites.forEach((invite) => this._drawInvite(invite));
 
-        // Only draw another header if this is a full refresh and we had invites, or we have rooms on top
-        // as our setting.
+        // Only draw another header if this is a full refresh.
         const forceHeaders = this.preferencesLoaded && this.preferences.rooms_on_top;
-        if (fullRedraw && (invites.length > 0 || forceHeaders)) {
+        if (fullRedraw) {
             var label = undefined;
-            if (forceHeaders && rooms.length > 0 && rooms[0].type == "room") {
-                label = "rooms";
+
+            if (!forceHeaders) {
+                label = "rooms and conversations";
             } else {
-                label = "conversations";
+                if (rooms.length > 0 && rooms[0].type == "room") {
+                    label = "rooms";
+                } else {
+                    label = "conversations";
+                }
             }
 
             conversations.append('<div class="header">' + label + '</div>');

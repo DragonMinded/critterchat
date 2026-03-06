@@ -1,12 +1,10 @@
 TODO Immediate
 ==============
 
- - Private group chat invite UI.
  - Preference for auto-accept group chat invites.
  - Allow uninviting to room (revoke invite action).
- - Show invited rooms on search results (allow join that way).
+ - Show invited rooms on search results (allow join that way), ensure deduplicating from rooms you can see.
  - Update invite timestamp when room details change so invites can get renamed.
- - Update to "rooms and conversations" on LHS, show regardless.
 
 TODO For Public Instance
 ========================
