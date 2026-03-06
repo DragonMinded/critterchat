@@ -20,6 +20,7 @@ from ..data import (
     Action,
     ActionType,
     Attachment,
+    Invite,
     Room,
     User,
     RoomPurpose,
@@ -72,7 +73,7 @@ def background_thread_proc_impl() -> None:
     emotes = {k for k in emoteservice.get_all_emotes()}
     last_emote_update = Time.now()
     last_user_update: int | None = None
-    last_invite_update: int | None = None
+    last_invite_update: tuple[int, int] | None = None
     last_action: ActionID | None = None
 
     while True:
@@ -133,9 +134,9 @@ def background_thread_proc_impl() -> None:
 
                     # Now, send this connected client any updates both in terms of actions and details
                     # of their account that might have been changed.
-                    send_chat_deltas(config, deltadata, socketio, info)
                     send_profile_deltas(config, deltadata, socketio, info)
                     send_invite_deltas(config, deltadata, socketio, info)
+                    send_chat_deltas(config, deltadata, socketio, info)
 
                 finally:
                     info.lock.release()
@@ -438,30 +439,6 @@ def preferences(json: dict[str, object]) -> None:
         if userpreferences:
             info.prefsts = ts
             socketio.emit('preferences', hydrate_tag(json, userpreferences.to_dict()), room=request.sid)
-
-
-@socketio.on('invites')  # type: ignore
-def invites(json: dict[str, object]) -> None:
-    data = Data(config)
-    messageservice = MessageService(config, data)
-
-    # Try to associate with a user if there is one.
-    user = recover_user(data, request.sid)
-    info = recover_info(request.sid)
-    if user is None or info is None:
-        return
-
-    # Locking our socket info so we can keep track of invites sent to all sessions.
-    # That way we can reliably notify sessions when a user sends them an invite.
-    with info.lock:
-        # Look up last settings for this user.
-        ts = Time.now()
-        invites = messageservice.get_invited_rooms(user.id)
-        info.invitests = ts
-        socketio.emit('invites', {
-            'active': [invite.to_dict() for invite in invites if invite.active],
-            'ignored': [invite.to_dict() for invite in invites if not invite.active],
-        })
 
 
 @socketio.on('updatesettings')  # type: ignore
@@ -840,27 +817,6 @@ def leaveroom(json: dict[str, object]) -> None:
             messageservice.leave_room(roomid, user.id)
 
 
-@socketio.on('inviteroom')  # type: ignore
-def inviteroom(json: dict[str, object]) -> None:
-    data = Data(config)
-    messageservice = MessageService(config, data)
-
-    # Try to associate with a user if there is one.
-    user = recover_user(data, request.sid)
-    info = recover_info(request.sid)
-    if user is None or info is None:
-        return
-
-    # Grab the room and user we're inviting.
-    roomid = Room.to_id(str(json.get('roomid')))
-    otherid = User.to_id(str(json.get('userid')))
-    if otherid and roomid:
-        try:
-            messageservice.invite_to_room(roomid, user.id, otherid)
-        except MessageServiceException as e:
-            error(str(e), room=request.sid)
-
-
 @socketio.on('searchrooms')  # type: ignore
 def searchrooms(json: dict[str, object]) -> None:
     data = Data(config)
@@ -1026,6 +982,68 @@ def newroom(json: dict[str, object]) -> None:
             'rooms': [room.to_dict() for room in rooms],
             'selected': Room.from_id(actual_id),
         }, room=request.sid)
+
+
+@socketio.on('inviteroom')  # type: ignore
+def inviteroom(json: dict[str, object]) -> None:
+    data = Data(config)
+    messageservice = MessageService(config, data)
+
+    # Try to associate with a user if there is one.
+    user = recover_user(data, request.sid)
+    info = recover_info(request.sid)
+    if user is None or info is None:
+        return
+
+    # Grab the room and user we're inviting.
+    roomid = Room.to_id(str(json.get('roomid')))
+    otherid = User.to_id(str(json.get('userid')))
+    if otherid and roomid:
+        try:
+            messageservice.invite_to_room(roomid, user.id, otherid)
+        except MessageServiceException as e:
+            error(str(e), room=request.sid)
+
+
+@socketio.on('invites')  # type: ignore
+def invites(json: dict[str, object]) -> None:
+    data = Data(config)
+    messageservice = MessageService(config, data)
+
+    # Try to associate with a user if there is one.
+    user = recover_user(data, request.sid)
+    info = recover_info(request.sid)
+    if user is None or info is None:
+        return
+
+    # Locking our socket info so we can keep track of invites sent to all sessions.
+    # That way we can reliably notify sessions when a user sends them an invite.
+    with info.lock:
+        # Look up last settings for this user.
+        ts = Time.now()
+        invites = messageservice.get_invited_rooms(user.id)
+        info.invitests = ts
+        info.inviteslen = len(invites)
+        socketio.emit('invites', hydrate_tag(json, {
+            'active': [invite.to_dict() for invite in invites if invite.active],
+            'ignored': [invite.to_dict() for invite in invites if not invite.active],
+        }), room=request.sid)
+
+
+@socketio.on('dismissinvite')  # type: ignore
+def dismissinviteupdateroom(json: dict[str, object]) -> None:
+    data = Data(config)
+    messageservice = MessageService(config, data)
+
+    # Try to associate with a user if there is one.
+    user = recover_user(data, request.sid)
+    if user is None:
+        return
+
+    # Figure out which invite the user wants to dismiss.
+    inviteid = Invite.to_id(str(json.get('inviteid')))
+    if inviteid is not None:
+        messageservice.dismiss_invite(user.id, inviteid)
 
 
 @socketio.on('lastaction')  # type: ignore

@@ -1357,7 +1357,7 @@ class RoomData(BaseData):
             )
             self.insert_action(roomid, action)
 
-    def is_invited(self, roomid: RoomID, invitedid: UserID) -> bool:
+    def is_invited_to_room(self, roomid: RoomID, invitedid: UserID) -> bool:
         """
         Returns True if the given user is invited to the given room. Returns False otherwise.
         """
@@ -1370,7 +1370,7 @@ class RoomData(BaseData):
         cursor = self.execute(sql, {"roomid": roomid, "invited": invitedid})
         return bool(cursor.rowcount == 1)
 
-    def get_invites(self, userid: UserID) -> list[Invite]:
+    def get_room_invites(self, userid: UserID) -> list[Invite]:
         """
         Given a user, returns the list of their invites that are not revoked.
         """
@@ -1425,21 +1425,45 @@ class RoomData(BaseData):
         self._hydrate_actions(rooms)
         return results
 
-    def get_last_invite_update(self) -> int | None:
+    def dismiss_room_invite(self, inviteid: InviteID) -> None:
+        """
+        Given an invite ID, if it is valid then dismiss it by marking the ignored flag. If the invite
+        is already dismissed or does not exist then this has no effect.
+        """
+
+        sql = """
+            UPDATE invite SET ignored = TRUE, timestamp = :ts WHERE id = :inviteid
+        """
+        self.execute(sql, {"ts": Time.now(), "inviteid": inviteid})
+
+    def get_last_invite_update(self) -> tuple[int, int] | None:
         """
         Returns the timestamp of the last invite update on the instance, or None if there
         are actually no invites.
         """
 
-        last_update: int | None = None
-        cursor = self.execute("SELECT timestamp FROM invite ORDER BY timestamp DESC LIMIT 1")
-        if cursor.rowcount == 1:
+        with self.transaction():
+            last_update: int | None = None
+            cursor = self.execute("SELECT timestamp FROM invite ORDER BY timestamp DESC LIMIT 1")
+            if cursor.rowcount == 1:
+                result = cursor.mappings().fetchone()
+                last_update = int(result['timestamp']) if result['timestamp'] else None
+
+            if last_update is None:
+                # Can't possibly have a count, so return nothing.
+                return None
+
+            cursor = self.execute("SELECT COUNT(id) AS count FROM invite")
+            if cursor.rowcount != 1:
+                # Shouldn't be possible, but return nothing since the above query should have returned nothing.
+                return None
+
             result = cursor.mappings().fetchone()
-            last_update = int(result['timestamp']) if result['timestamp'] else None
+            count = int(result['count'])
 
-        return last_update
+            return (last_update, count)
 
-    def has_updated_invites(self, userid: UserID, last_checked: int) -> bool:
+    def has_updated_invites(self, userid: UserID, last_checked: int, last_count: int) -> bool:
         """
         Given a user ID and a last checked timestamp, return whether there's an updated set of
         invites for that user ID or not.
@@ -1449,7 +1473,16 @@ class RoomData(BaseData):
             SELECT invited_user_id FROM invite WHERE invited_user_id = :userid AND timestamp >= :ts
         """
         cursor = self.execute(sql, {"userid": userid, "ts": last_checked})
-        if cursor.rowcount == 1:
+        if cursor.rowcount > 0:
             return True
 
-        return False
+        sql = """
+            SELECT COUNT(id) AS count FROM invite WHERE invited_user_id = :userid
+        """
+        cursor = self.execute(sql, {"userid": userid})
+        if cursor.rowcount != 1:
+            return False
+
+        result = cursor.mappings().fetchone()
+        actual = int(result['count'])
+        return actual != last_count

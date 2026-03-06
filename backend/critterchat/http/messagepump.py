@@ -34,6 +34,7 @@ class SocketInfo:
         self.profilets: int | None = None
         self.prefsts: int | None = None
         self.invitests: int | None = None
+        self.inviteslen: int | None = None
         self.lock: Lock = Lock()
 
 
@@ -225,13 +226,15 @@ def send_invite_deltas(
 
     # Figure out if we've gotten any invites since last time we updated the client.
     invitests = info.invitests
+    inviteslen = info.inviteslen
 
-    if invitests is not None:
+    if invitests is not None and inviteslen is not None:
         ts = Time.now()
-        if messageservice.has_updated_invites(info.userid, invitests):
+        if messageservice.has_updated_invites(info.userid, invitests, inviteslen):
             invites = messageservice.get_invited_rooms(info.userid)
             info.invitests = ts
+            info.inviteslen = len(invites)
             socketio.emit('invites', {
                 'active': [invite.to_dict() for invite in invites if invite.active],
                 'ignored': [invite.to_dict() for invite in invites if not invite.active],
-            })
+            }, room=info.sid)

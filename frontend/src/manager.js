@@ -736,6 +736,10 @@ export function manager(socket) {
         socket.emit('inviteroom', info);
     });
 
+    eventBus.on('dismissinvite', (id) => {
+        socket.emit('dismissinvite', {'inviteid': id});
+    });
+
     eventBus.on('lastaction', (value) => {
         // Inform the server of the last action the client read for a given room.
         socket.emit('lastaction', value);

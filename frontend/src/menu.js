@@ -469,7 +469,34 @@ class Menu {
      * Called whenever we select an invite that we've been given to join a room.
      */
     selectInvite( inviteid ) {
-        console.log(inviteid);
+        this.invites.active.forEach((invite) => {
+            if (invite.id != inviteid) {
+                return;
+            }
+
+            var html = "";
+            html += '<div class="invite-wrapper">';
+            html += 'You have been invited to ';
+            html += '<span class="invite-details" dir="auto">' + escapeHtml(invite.room.name) + '</span>';
+            html += ' by ';
+            html += '<span class="invite-details" dir="auto">' + escapeHtml(invite.user.nickname) + '</span>';
+            html += '.';
+            html += '</div>';
+
+            var type = invite.room.type == "room" ? "room" : "chat";
+
+            displayWarning(
+                html,
+                'join ' + type,
+                'dismiss invite',
+                () => {
+                    this.eventBus.emit('joinroom', invite.room.id);
+                },
+                () => {
+                    this.eventBus.emit('dismissinvite', invite.id);
+                },
+            );
+        });
     }
 
     /**

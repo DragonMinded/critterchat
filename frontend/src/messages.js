@@ -735,7 +735,9 @@ class Messages {
                     message.action == "message" ||
                     (this.roomType != "dm" && message.action == "join") ||
                     (this.roomType != "dm" && message.action == "leave") ||
-                    message.action == "change_info"
+                    message.action == "change_info" ||
+                    message.action == "invite_user"
+
                 ) {
                     newerMessages += 1;
                 }

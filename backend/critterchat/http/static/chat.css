@@ -1457,6 +1457,10 @@ div.invite-link-wrapper div.invite-link {
     border: 1px solid var(--input-button-border)
 }
 
+div.invite-wrapper span.invite-details {
+    font-weight: bold;
+}
+
 div.information div.info-header, div.information div.info-subheader {
     display: flex;
     flex-direction: row;

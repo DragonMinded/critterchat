@@ -23,6 +23,7 @@ from ..data import (
     NewUserID,
     ActionID,
     AttachmentID,
+    InviteID,
     OccupantID,
     RoomID,
     UserID,
@@ -688,7 +689,7 @@ class MessageService:
                         in_chat_already = True
 
                 # Check if the user has an invite to a non-public chat, and let them in if they do.
-                if not in_chat_already and not self.__data.room.is_invited(room.id, userid):
+                if not in_chat_already and not self.__data.room.is_invited_to_room(room.id, userid):
                     raise MessageServiceException("Room does not exist!")
 
         self.__data.room.join_room(room.id, userid)
@@ -773,11 +774,11 @@ class MessageService:
         if changed:
             self.__data.room.update_room(room, userid)
 
-    def get_last_invite_update(self) -> int | None:
+    def get_last_invite_update(self) -> tuple[int, int] | None:
         return self.__data.room.get_last_invite_update()
 
-    def has_updated_invites(self, userid: UserID, last_checked: int) -> bool:
-        return self.__data.room.has_updated_invites(userid, last_checked)
+    def has_updated_invites(self, userid: UserID, last_checked: int, last_length: int) -> bool:
+        return self.__data.room.has_updated_invites(userid, last_checked, last_length)
 
     def invite_to_room(self, roomid: RoomID, inviter: UserID, invited: UserID) -> None:
         room = self.__data.room.get_room(roomid)
@@ -798,8 +799,15 @@ class MessageService:
 
         self.__data.room.grant_room_invite(roomid, inviterid=inviter, invitedid=invited)
 
+    def dismiss_invite(self, userid: UserID, inviteid: InviteID) -> None:
+        # Ensure that this user owns this invite, so we can't dismiss for another.
+        invites = self.__data.room.get_room_invites(userid)
+        invites = [inv for inv in invites if inv.id == inviteid]
+        if invites:
+            self.__data.room.dismiss_room_invite(invites[0].id)
+
     def get_invited_rooms(self, userid: UserID) -> list[Invite]:
-        invites = self.__data.room.get_invites(userid)
+        invites = self.__data.room.get_room_invites(userid)
         for invite in invites:
             invite.user = self.__user.lookup_user(invite.userid)
             self.__infer_room_info(userid, invite.room)

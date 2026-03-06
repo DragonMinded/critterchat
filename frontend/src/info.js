@@ -287,12 +287,23 @@ class Info {
             history.forEach((entry) => {
                 if (entry.action == "join") {
                     if (this.roomType != "dm") {
-                        this.occupants.push(entry.occupant);
-                        changed = true;
+                        this.occupants.forEach((occupant) => {
+                            if (occupant.id == entry.occupant.id) {
+                                occupant.present = true;
+                                occupant.invited = false;
+                                changed = true;
+                            }
+                        });
+
+                        if (!changed) {
+                            this.occupants.push(entry.occupant);
+                            changed = true;
+                        }
                     } else {
                         this.occupants.forEach((occupant) => {
                             if (occupant.id == entry.occupant.id) {
                                 occupant.present = true;
+                                occupant.invited = false;
                                 changed = true;
                             }
                         });
