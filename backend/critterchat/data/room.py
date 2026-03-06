@@ -1107,7 +1107,7 @@ class RoomData(BaseData):
         Locks the actions table for exclusive write, when needing to attach data to a new
         attachment without other clients polling incomplete actions. Use in a with block.
         """
-        sql = "LOCK TABLES room WRITE, action WRITE, occupant READ, profile READ, user READ"
+        sql = "LOCK TABLES room WRITE, action WRITE, occupant READ, invite READ, profile READ, user READ"
         self.execute(sql)
         try:
             yield
