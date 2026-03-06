@@ -4,6 +4,7 @@ TODO Immediate
  - Preference for invites, including "auto-accept", "let me choose", and "disallow".
  - Preference for searchability in user search panel.
  - Notification for when you get invited to a new private chat.
+ - Poll less frequently for user updates and invites than chat actions.
 
 TODO For Public Instance
 ========================
