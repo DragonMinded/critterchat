@@ -736,6 +736,10 @@ export function manager(socket) {
         socket.emit('inviteroom', info);
     });
 
+    eventBus.on('uninviteroom', (info) => {
+        socket.emit('uninviteroom', info);
+    });
+
     eventBus.on('dismissinvite', (id) => {
         socket.emit('dismissinvite', {'inviteid': id});
     });

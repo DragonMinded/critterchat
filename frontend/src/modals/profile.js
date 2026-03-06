@@ -15,6 +15,7 @@ class Profile {
         this.userid = undefined;
         this.profileid = undefined;
         this.preferences = {};
+        this.room = {};
         this.actor = undefined;
 
         $('#profile-form').on('submit', (event) => {
@@ -82,6 +83,16 @@ class Profile {
 
             if (this.profileid) {
                 this.eventBus.emit('mod', {action: 'unmute', occupantid: this.profileid});
+            }
+        });
+
+        $('#profile-uninvite').on('click', (event) => {
+            event.stopPropagation();
+            event.stopImmediatePropagation();
+
+            if (this.userid && this.room.id) {
+                this.eventBus.emit('uninviteroom', {'roomid': this.room.id, 'userid': this.userid});
+                $('#profile-form #profile-uninvite').hide();
             }
         });
 
@@ -204,6 +215,10 @@ class Profile {
             }
         }
 
+        if (profile.invited) {
+            $('#profile-form #profile-uninvite').show();
+        }
+
         // Ensure we can send chat requests to the right place.
         this.userid = profile.id;
         this.profileid = profile.occupantid;
@@ -236,6 +251,7 @@ class Profile {
         this.actor = actor;
 
         $('#profile-form div.admin-wrapper').hide();
+        $('#profile-form #profile-uninvite').hide();
         $('#profile-form div.loading').show();
         $('#profile-form div.profile').hide();
         this._hideAdminTools();

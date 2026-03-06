@@ -100,7 +100,7 @@ def send_action_deltas(
                                 "occupants": [o.to_dict() for o in occupants],
                             }
 
-                    elif action.action == ActionType.INVITE_USER:
+                    elif action.action in {ActionType.INVITE_USER, ActionType.UNINVITE_USER}:
                         occupants = messageservice.get_room_occupants(roomid, info.userid)
                         if occupants is not None:
                             action.details['occupants'] = [o.to_dict() for o in occupants]

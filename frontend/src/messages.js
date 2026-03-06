@@ -736,7 +736,8 @@ class Messages {
                     (this.roomType != "dm" && message.action == "join") ||
                     (this.roomType != "dm" && message.action == "leave") ||
                     message.action == "change_info" ||
-                    message.action == "invite_user"
+                    message.action == "invite_user" ||
+                    message.action == "uninvite_user"
 
                 ) {
                     newerMessages += 1;
@@ -808,13 +809,24 @@ class Messages {
                     }
                 }
 
+                if (
+                    message.action == "change_users" ||
+                    message.action == "invite_user" ||
+                    message.action == "uninvite_user"
+                ) {
+                    this._updateUserDetails(message);
+                    changed = true;
+                }
+
                 // Remove -- new -- indicator on receipt of own message instead of on send, since
                 // it can take a little while to round trip and the double change to the message
                 // window looks weird.
                 if (message.occupant && message.occupant.username == window.username) {
                     if (
                         message.action == "message" ||
-                        message.action == "change_info"
+                        message.action == "change_info" ||
+                        message.action == "invite_user" ||
+                        message.action == "uninvite_user"
                     ) {
                         selfMessage = true;
                     }
@@ -1089,6 +1101,40 @@ class Messages {
     }
 
     /**
+     * Called when we encounter an update that requires us to update our occupant details.
+     */
+    _updateUserDetails(message) {
+        const occupants = message.details.occupants;
+        const invited = message.details.invited;
+        if (this.occupantsLoaded && occupants) {
+            const newOccupants = new Map();
+            occupants.forEach((occupant) => {
+                newOccupants.set(occupant.id, occupant);
+            });
+
+            var seenInvited = false;
+            this.occupants.forEach((occupant) => {
+                if (newOccupants.has(occupant.id)) {
+                    const newOccupant = newOccupants.get(occupant.id);
+                    occupant.moderator = newOccupant.moderator;
+                    occupant.inactive = newOccupant.inactive;
+                    occupant.present = newOccupant.present;
+                    occupant.muted = newOccupant.muted;
+                    occupant.invited = newOccupant.invited;
+                }
+
+                if (invited && occupant.id == invited) {
+                    seenInvited = true;
+                }
+            });
+
+            if (invited && !seenInvited && newOccupants.has(invited)) {
+                this.occupants.push(newOccupants.get(invited));
+            }
+        }
+    }
+
+    /**
      * Returns image dimensions, capped to a given maximum height, respecting aspect ratios.
      */
     _getDims( attachment, desiredHeight ) {
@@ -1294,65 +1340,9 @@ class Messages {
                 // Just update the name and icon since this is a change.
                 $('div.chat > div.conversation-wrapper > div.conversation span.name#' + message.occupant.id).html(escapeHtml(message.occupant.nickname));
                 $('div.chat > div.conversation-wrapper > div.conversation div.icon#' + message.occupant.id + ' img').attr('src', message.occupant.icon);
-            } else if (message.action == "change_users") {
-                if (this.occupantsLoaded) {
-                    const newOccupants = new Map();
-                    message.details.occupants.forEach((occupant) => {
-                        newOccupants.set(occupant.id, occupant);
-                    });
-
-                    this.occupants.forEach((occupant) => {
-                        if (newOccupants.has(occupant.id)) {
-                            const newOccupant = newOccupants.get(occupant.id);
-                            occupant.moderator = newOccupant.moderator;
-                            occupant.inactive = newOccupant.inactive;
-                            occupant.present = newOccupant.present;
-                            occupant.muted = newOccupant.muted;
-                            occupant.invited = newOccupant.invited;
-                        }
-                    });
-
-                    this._recalculateSelf();
-                    this._updateUsers();
-                    this._recalculateSendEnabled();
-                }
             } else if (message.action == "invite_user") {
-                const occupants = message.details.occupants;
-                const invited = message.details.invited;
-                if (this.occupantsLoaded && occupants) {
-                    const newOccupants = new Map();
-                    occupants.forEach((occupant) => {
-                        newOccupants.set(occupant.id, occupant);
-                    });
-
-                    var seenInvited = false;
-                    this.occupants.forEach((occupant) => {
-                        if (newOccupants.has(occupant.id)) {
-                            const newOccupant = newOccupants.get(occupant.id);
-                            occupant.moderator = newOccupant.moderator;
-                            occupant.inactive = newOccupant.inactive;
-                            occupant.present = newOccupant.present;
-                            occupant.muted = newOccupant.muted;
-                            occupant.invited = newOccupant.invited;
-                        }
-
-                        if (invited && occupant.id == invited) {
-                            seenInvited = true;
-                        }
-                    });
-
-                    if (invited && !seenInvited && newOccupants.has(invited)) {
-                        this.occupants.push(newOccupants.get(invited));
-                        this.occupants.sort((a, b) => { return a.username.localeCompare(b.username); });
-                    }
-
-                    this._recalculateSelf();
-                    this._updateUsers();
-                    this._recalculateSendEnabled();
-                }
-
                 this.occupants.forEach((occupant) => {
-                    if (occupant.id == invited) {
+                    if (occupant.id == message.details.invited) {
                         otheroccupant = occupant;
                     }
                 });
@@ -1365,6 +1355,26 @@ class Messages {
                 html += '        <span class="action">has invited</span>';
                 html += '        <span class="name" dir="auto" id="' + otheroccupant.id + '">' + escapeHtml(otheroccupant.nickname) + '</span>';
                 html += '        <span class="action">to the ' + type + '!</span>';
+                html += '      </div>';
+                html += '      <span class="timestamp">' + formatDateTime(message.timestamp) + '</span>';
+                html += '    </div>';
+                html += '  </div>';
+                html += '</div>';
+            } else if (message.action == "uninvite_user") {
+                this.occupants.forEach((occupant) => {
+                    if (occupant.id == message.details.uninvited) {
+                        otheroccupant = occupant;
+                    }
+                });
+
+                html  = '<div class="item" id="' + message.id + '">';
+                html += '  <div class="content-wrapper">';
+                html += '    <div class="meta-wrapper">';
+                html += '      <div class="action-wrapper">';
+                html += '        <span class="name" dir="auto" id="' + message.occupant.id + '">' + escapeHtml(message.occupant.nickname) + '</span>';
+                html += '        <span class="action">has uninvited</span>';
+                html += '        <span class="name" dir="auto" id="' + otheroccupant.id + '">' + escapeHtml(otheroccupant.nickname) + '</span>';
+                html += '        <span class="action">from the ' + type + '!</span>';
                 html += '      </div>';
                 html += '      <span class="timestamp">' + formatDateTime(message.timestamp) + '</span>';
                 html += '    </div>';

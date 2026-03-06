@@ -58,6 +58,8 @@ class User:
         self.occupantid: OccupantID | None = None
         self.moderator: bool | None = None
         self.muted: bool | None = None
+        self.inactive: bool | None = None
+        self.invited: bool | None = None
 
     def to_dict(self, *, config: Config | None = None, admin: bool = False) -> dict[str, object]:
         retval: dict[str, object] = {
@@ -74,6 +76,10 @@ class User:
             retval["moderator"] = self.moderator
         if self.muted is not None:
             retval["muted"] = self.muted
+        if self.inactive is not None:
+            retval["inactive"] = self.inactive
+        if self.invited is not None:
+            retval["invited"] = self.invited
 
         if config:
             retval["full_username"] = f"@{self.username}@{config.account_base}"
@@ -489,6 +495,7 @@ class ActionType(StrEnum):
     CHANGE_USERS = 'change_users'
     CHANGE_MESSAGE = 'change_message'
     INVITE_USER = 'invite_user'
+    UNINVITE_USER = 'uninvite_user'
 
     @staticmethod
     def unread_types() -> set["ActionType"]:
@@ -499,6 +506,7 @@ class ActionType(StrEnum):
             ActionType.LEAVE,
             ActionType.CHANGE_INFO,
             ActionType.INVITE_USER,
+            ActionType.UNINVITE_USER,
         }
 
     @staticmethod
@@ -521,6 +529,7 @@ class ActionType(StrEnum):
             ActionType.CHANGE_USERS,
             ActionType.CHANGE_MESSAGE,
             ActionType.INVITE_USER,
+            ActionType.UNINVITE_USER,
         }
 
 
@@ -587,6 +596,11 @@ class Action:
         if self.action == ActionType.INVITE_USER:
             details = {**self.details}
             details["invited"] = Occupant.from_id(cast(OccupantID, details["invited"]))
+            return details
+
+        if self.action == ActionType.UNINVITE_USER:
+            details = {**self.details}
+            details["uninvited"] = Occupant.from_id(cast(OccupantID, details["uninvited"]))
             return details
 
         return self.details

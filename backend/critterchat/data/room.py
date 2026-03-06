@@ -1363,6 +1363,80 @@ class RoomData(BaseData):
             )
             self.insert_action(roomid, action)
 
+    def revoke_room_invite(self, roomid: RoomID, invitedid: UserID, inviterid: UserID) -> None:
+        """
+        Given a room to revoke an invite and a user to uninvite to the room, revoke their existing invite.
+
+        Parameters:
+            roomid - ID of the room we wish to revoke an invite for somebody.
+            invitedid - ID of the user getting uninvited.
+            inviterid - ID of the user revoking the invite.
+        """
+
+        if invitedid == NewUserID or inviterid == NewUserID or roomid == NewRoomID:
+            return None
+
+        with self.transaction():
+            # First, figure out if the inviter is present and the invitee is in already.
+            sql = """
+                SELECT id, user_id
+                FROM occupant
+                WHERE `user_id` IN :userids AND `room_id` = :roomid AND `inactive` != TRUE
+            """
+            cursor = self.execute(sql, {"userids": [invitedid, inviterid], "roomid": roomid})
+            user_to_occupant: dict[UserID, OccupantID] = {
+                UserID(result['user_id']): OccupantID(result['id'])
+                for result in cursor.mappings()
+            }
+            if invitedid in user_to_occupant:
+                # The invited user is already in the room.
+                return
+            if inviterid not in user_to_occupant:
+                # The inviting user is not in the room.
+                return
+
+            # Now, only proceed if the user is invited.
+            if not self.is_invited_to_room(roomid, invitedid):
+                return
+
+            # Revoke the invite
+            now = Time.now()
+            sql = """
+                UPDATE invite
+                SET inviter_user_id = :inviter, revoked = TRUE, timestamp = :ts
+                WHERE room_id = :roomid AND invited_user_id = :invited
+            """
+            self.execute(sql, {"roomid": roomid, "inviter": inviterid, "invited": invitedid, 'ts': now})
+
+            # The occupant should be in the table from previously getting an invite.
+            sql = """
+                SELECT id FROM occupant
+                WHERE `user_id` = :userid AND `room_id` = :roomid
+            """
+            cursor = self.execute(sql, {"userid": invitedid, "roomid": roomid})
+            for result in cursor.mappings():
+                user_to_occupant[invitedid] = OccupantID(result['id'])
+
+            # This should never happen, but let's put a logic error assert in so if it does we
+            # know the invariant that failed.
+            if invitedid not in user_to_occupant or inviterid not in user_to_occupant:
+                raise Exception("Logic error, there should be an occupant ID for both the revoker and revokee at this point!")
+
+            # Finally, add an action so clients know to refresh the invite list. Attribute it
+            # to the user doing the invite.
+            occupant = Occupant(
+                occupantid=NewOccupantID,
+                userid=inviterid,
+            )
+            action = Action(
+                actionid=NewActionID,
+                timestamp=Time.now(),
+                occupant=occupant,
+                action=ActionType.UNINVITE_USER,
+                details={'uninvited': user_to_occupant[invitedid]},
+            )
+            self.insert_action(roomid, action)
+
     def is_invited_to_room(self, roomid: RoomID, invitedid: UserID) -> bool:
         """
         Returns True if the given user is invited to the given room. Returns False otherwise.

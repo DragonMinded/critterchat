@@ -332,6 +332,8 @@ class MessageService:
         user.occupantid = occupantid
         user.moderator = occupant.moderator
         user.muted = occupant.muted
+        user.inactive = occupant.inactive
+        user.invited = occupant.invited
         self.__attachments.resolve_user_icon(user)
         return user
 
@@ -799,6 +801,25 @@ class MessageService:
 
         self.__data.room.grant_room_invite(roomid, inviterid=inviter, invitedid=invited)
 
+    def uninvite_to_room(self, roomid: RoomID, inviter: UserID, invited: UserID) -> None:
+        room = self.__data.room.get_room(roomid)
+        if room is None:
+            raise MessageServiceException("Room does not exist!")
+
+        # Verify that we're a participant in this room, can't be inviting to rooms we're not in.
+        occupants = self.__data.room.get_room_occupants(room.id)
+        for occupant in occupants:
+            if occupant.userid == inviter:
+                break
+        else:
+            # This is somebody else's room?! You can't invite to this!
+            raise MessageServiceException("Room does not exist!")
+
+        if room.purpose not in {RoomPurpose.ROOM, RoomPurpose.CHAT}:
+            raise MessageServiceException("Cannot uninvite somebody to this room!")
+
+        self.__data.room.revoke_room_invite(roomid, inviterid=inviter, invitedid=invited)
+
     def dismiss_invite(self, userid: UserID, inviteid: InviteID) -> None:
         # Ensure that this user owns this invite, so we can't dismiss for another.
         invites = self.__data.room.get_room_invites(userid)
@@ -927,7 +948,11 @@ class MessageService:
         if room.purpose not in {RoomPurpose.ROOM, RoomPurpose.CHAT}:
             return []
 
-        occupants = {o.userid: o for o in self.__data.room.get_room_occupants(roomid, include_invited=True)}
+        occupants = {
+            o.userid: o
+            for o in self.__data.room.get_room_occupants(roomid, include_invited=True)
+            if o.present or o.invited
+        }
         if userid not in occupants:
             # We're not in the room we're searching, no results for you!
             return []

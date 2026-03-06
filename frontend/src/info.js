@@ -329,7 +329,11 @@ class Info {
                     });
                     $('div.info > div.occupants div.item#' + entry.occupant.id + ' div.name').html(escapeHtml(entry.occupant.nickname));
                     $('div.info > div.occupants div.item#' + entry.occupant.id + ' div.icon img').attr('src', entry.occupant.icon);
-                } else if (entry.action == "change_users" || entry.action == "invite_user") {
+                } else if (
+                    entry.action == "change_users" ||
+                    entry.action == "invite_user" ||
+                    entry.action == "uninvite_user"
+                ) {
                     const occupants = entry.details.occupants;
                     const invited = entry.details.invited;
 

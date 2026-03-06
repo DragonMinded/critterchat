@@ -1005,6 +1005,27 @@ def inviteroom(json: dict[str, object]) -> None:
             error(str(e), room=request.sid)
 
 
+@socketio.on('uninviteroom')  # type: ignore
+def uninviteroom(json: dict[str, object]) -> None:
+    data = Data(config)
+    messageservice = MessageService(config, data)
+
+    # Try to associate with a user if there is one.
+    user = recover_user(data, request.sid)
+    info = recover_info(request.sid)
+    if user is None or info is None:
+        return
+
+    # Grab the room and user we're inviting.
+    roomid = Room.to_id(str(json.get('roomid')))
+    otherid = User.to_id(str(json.get('userid')))
+    if otherid and roomid:
+        try:
+            messageservice.uninvite_to_room(roomid, user.id, otherid)
+        except MessageServiceException as e:
+            error(str(e), room=request.sid)
+
+
 @socketio.on('invites')  # type: ignore
 def invites(json: dict[str, object]) -> None:
     data = Data(config)
