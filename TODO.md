@@ -5,7 +5,6 @@ TODO Immediate
  - Preference for searchability in user search panel.
  - Notification for when you get invited to a new private conversation.
  - Poll less frequently for user updates and invites than conversation actions.
- - Rename "chat" to "conversation" in frontend, and in readme.
  - Grace period after invite where only inviter can revoke.
 
 TODO For Public Instance

@@ -451,10 +451,10 @@ class MessageService:
 
     def __infer_room_info(self, userid: UserID, room: Room) -> None:
         if room.purpose == RoomPurpose.ROOM:
-            room_name = "Unnamed Public Chat"
+            room_name = "Unnamed Public Room"
             occupants = self.__data.room.get_room_occupants(room.id, include_invited=True)
         elif room.purpose == RoomPurpose.CHAT:
-            room_name = "Unnamed Private Chat"
+            room_name = "Unnamed Private Conversation"
             occupants = self.__data.room.get_room_occupants(room.id, include_invited=True)
         else:
             # Figure out how many people are in the direct message, name it after them.
@@ -477,10 +477,11 @@ class MessageService:
                         room.iconid = not_me[0].iconid
                     room.deficonid = not_me[0].iconid
                 else:
-                    room_name = "Unnamed Private Chat"
+                    # This should not happen, but let's account for it anyway.
+                    room_name = "Unnamed Private Conversation"
             else:
                 # This should never happen, but let's account for it anyway.
-                room_name = "Unnamed Private Chat"
+                room_name = "Unnamed Private Conversation"
 
         room.occupants = occupants
         if not room.name:

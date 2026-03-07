@@ -487,7 +487,7 @@ class Menu {
             html += '.';
             html += '</div>';
 
-            var type = invite.room.type == "room" ? "room" : "chat";
+            var type = invite.room.type == "room" ? "room" : (invite.room.type == "chat" ? "conversation" : "chat");
 
             displayWarning(
                 html,

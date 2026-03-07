@@ -1246,7 +1246,7 @@ class Messages {
         } else {
             // Now, draw it fresh since it's not an update.
             var html = "";
-            var type = this.roomType == "room" ? "room" : "chat";
+            var type = this.roomType == "room" ? "room" : (this.roomType == "chat" ? "conversation" : "chat");
             var otheroccupant = undefined;
 
             if (message.action == "message") {

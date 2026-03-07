@@ -191,7 +191,7 @@ class Search {
     }
 
     /**
-     * Called internally when we want to create a new private chat.
+     * Called internally when we want to create a new private conversation.
      */
     _createChat() {
         $.modal.close();
@@ -222,7 +222,7 @@ class Search {
     }
 
     /**
-     * Called internally when we want to invite a user to our private chat room.
+     * Called internally when we want to invite a user to our private conversation.
      */
     _inviteToRoom( id ) {
         $.modal.close();

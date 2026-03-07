@@ -1,19 +1,19 @@
 # CritterChat
 
-A web-based chat program that you can host yourself, providing direct messaging, private
-group chat and public rooms. Started as a middle finger to Discord and now evolving
-slowly into its own thing. CritterChat focuses on ease of experience over highly
-technical things like end-to-end encryption. As of right now, instances are
-standalone, but I would like to implement some sort of federation between instances
-that can be enabled or disabled per-instance.
+A web-based chat program that you can host yourself, providing direct messaging,
+private group conversations and public rooms. Started as a middle finger to Discord
+and now evolving slowly into its own thing. CritterChat focuses on ease of
+experience over highly technical things like end-to-end encryption. As of right
+now instances are standalone but I would like to implement some sort of
+federation between instances that can be enabled or disabled per-instance.
 
 ## Feature List
 
  - Web frontend with both mobile and desktop support.
  - Public rooms with optional auto-join for new members.
- - Private group chats with an invite system for adding members.
+ - Private group conversations with an invite system for adding members.
  - Direct messages between members on the instance.
- - Direct messages, private chats and public rooms have an editable name and topic.
+ - Direct messages, private conversations and public rooms have an editable name and topic.
  - Member profile support with ability to view other chatters' profiles.
  - Custom emoji support controlled by the instance administrator.
  - Message reactions, with custom emoji support and multiple reactions per message.
@@ -39,12 +39,12 @@ that can be enabled or disabled per-instance.
  - Emoji auto-categorization by prefix.
  - Arbitrary file attachments.
  - Sitewide CSS themeing with CSS moved to themes directory.
- - Per-chat CSS themeing for direct messages, private chats and rooms.
- - Ability to set a personal nickname for a user that only you can see in a direct message or private chat.
+ - Per-chat CSS themeing for direct messages, private conversations and rooms.
+ - Ability to set a personal nickname for a user that only you can see in a direct message or private conversation.
  - Port Myno's Pictochat over from PyStreaming, allow drawing and remixing.
  - Link auto-sanitization to remove tracking info.
  - Multi-account support in the web frontend.
- - Inter-instance direct messages and private chats, inter-instance OIDC-based authentication.
+ - Inter-instance direct messages and private conversations, inter-instance OIDC-based authentication.
  - REST API for bot integration.
 
 ## Needed Help

@@ -62,8 +62,8 @@ class Info {
                         );
                     } else if(room.type == "chat") {
                         msg =(
-                            'Leaving this chat will mean you no longer receive messages from the other chatters. You can still ' +
-                            're-join this chat in the future if you are re-invited to the chat.'
+                            'Leaving this conversation will mean you no longer receive messages from the other members. ' +
+                            'You can still re-join this conversation in the future if you are re-invited by another member.'
                         );
                     } else {
                         // This is a 1:1 conversation, you can always reopen these.
@@ -627,7 +627,7 @@ class Info {
                     var title;
                     var iconType;
                     if (room.type == "chat") {
-                        title = "Private chat";
+                        title = "Private conversation";
                         iconType = 'avatar';
                         $( 'div.top-info div.room-indicator' ).addClass('hidden');
                     } else if (room.type == "dm") {
@@ -641,7 +641,7 @@ class Info {
                     }
                     $( '#room-title' ).text(title);
                     if (room.type == 'chat') {
-                        $( '#leave-type' ).text('leave chat');
+                        $( '#leave-type' ).text('leave conversation');
                     } else if (room.type == 'dm') {
                         $( '#leave-type' ).text('close chat');
                     } else {
@@ -699,7 +699,7 @@ class Info {
                 if (room.id == roomid) {
                     var title;
                     if (room.type == "chat") {
-                        title = "Private chat";
+                        title = "Private conversation";
                         $( 'div.top-info div.room-indicator' ).addClass('hidden');
                     } else if (room.type == "dm") {
                         title = "Direct message";
@@ -710,7 +710,7 @@ class Info {
                     }
                     $( '#room-title' ).text(title);
                     if (room.type == 'chat') {
-                        $( '#leave-type' ).text('leave chat');
+                        $( '#leave-type' ).text('leave conversation');
                     } else if (room.type == 'dm') {
                         $( '#leave-type' ).text('close chat');
                     } else {
