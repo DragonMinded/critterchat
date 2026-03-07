@@ -3,8 +3,11 @@ TODO Immediate
 
  - Preference for invites, including "auto-accept", "let me choose", and "disallow".
  - Preference for searchability in user search panel.
- - Notification for when you get invited to a new private chat.
- - Poll less frequently for user updates and invites than chat actions.
+ - Notification for when you get invited to a new private conversation.
+ - Poll less frequently for user updates and invites than conversation actions.
+ - Rename "chat" to "conversation" in frontend, and in readme.
+ - Grace period after invite where only inviter can revoke.
+ - Better description of invite to sign up page, mention that it bypasses activation.
 
 TODO For Public Instance
 ========================
@@ -16,9 +19,9 @@ TODO For Public Instance
 TODO Low Priority
 =================
 
- - Generate a unique URI for all chats and rooms, allow editing for public rooms.
+ - Generate a unique URI for all conversations and rooms, allow editing for public rooms.
  - Mentioning typeahead should allow searching by display nick as well as username.
- - Support editing your nickname and avatar per-chat (limit to non-DMs).
+ - Support editing your nickname and avatar per-room (limit to non-DMs).
  - Support arbitrary info fields in profile for links to other services, etc.
  - Allow arbitrary statuses such as "LIVE" with ability to put a link in.
  - Image attachment carousel instead of opening images in new browser tab.
