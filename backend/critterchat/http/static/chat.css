@@ -1462,7 +1462,7 @@ div.invite-link-wrapper div.invite-link {
     border: 1px solid var(--input-button-border)
 }
 
-div.invite-wrapper span.invite-details {
+div.invite-wrapper span.invite-details, div.invited-by-wrapper span.invite-details {
     font-weight: bold;
 }
 
@@ -1567,7 +1567,10 @@ div.profile div.icon img {
     margin: 0px;
 }
 
-div.profile div.nickname-wrapper, div.profile div.username-wrapper, div.profile div.actions-wrapper, div.profile div.admin-wrapper {
+div.profile div.nickname-wrapper,
+div.profile div.username-wrapper,
+div.profile div.actions-wrapper,
+div.profile div.admin-wrapper {
     display: flex;
     justify-content: center;
     gap: var(--modal-item-padding);
@@ -1588,6 +1591,12 @@ div.profile div.nickname-wrapper div.nickname {
 }
 
 div.profile div.username-wrapper div.username {
+    font-size: var(--application-text-size-14);
+}
+
+div.profile div.invited-by-wrapper {
+    display: flex;
+    justify-content: center;
     font-size: var(--application-text-size-14);
 }
 

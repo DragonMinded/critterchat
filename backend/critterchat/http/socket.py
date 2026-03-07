@@ -37,7 +37,7 @@ from ..data import (
 
 MESSAGE_PUMP_TICK_SECONDS: Final[float] = 0.05
 EMOJI_REFRESH_TICK_SECONDS: Final[float] = 5.0
-AUXILIARY_REFRESH_TICK_SECONDS: Final[float] = 2.5
+AUXILIARY_REFRESH_TICK_SECONDS: Final[float] = 0.5
 
 
 MAX_ICON_WIDTH: Final[int] = 256
@@ -409,7 +409,7 @@ def profile(json: dict[str, object]) -> None:
     occupantid = Occupant.to_id(str(json.get('userid')))
     if occupantid:
         # Per-room profile lookup request.
-        userprofile = messageservice.lookup_occupant(occupantid)
+        userprofile = messageservice.lookup_occupant(occupantid, user.id)
         if userprofile:
             socketio.emit('profile', hydrate_tag(json, userprofile.to_dict(config=config, admin=admin)), room=request.sid)
             return

@@ -252,6 +252,8 @@ class RoomData(BaseData):
                 user.username AS unick,
                 user.permissions AS permissions,
                 invite.id AS invite_id,
+                invite.timestamp AS invite_timestamp,
+                invite.inviter_user_id AS invite_user,
                 invite.ignored AS invite_ignored,
                 invite.revoked AS invite_revoked
             FROM occupant
@@ -889,8 +891,19 @@ class RoomData(BaseData):
         # Mute status is simpler.
         muted = bool(result['muted'])
 
-        # Invite status is just if there is an invite or not.
-        invited = (not present) and (result['invite_id'] is not None) and (not bool(result['invite_revoked']))
+        # Invite sub-object needs to be filled out if the invite is not revoked.
+        invite: Invite | None = None
+        if (not present) and (result['invite_id'] is not None) and (not bool(result['invite_revoked'])):
+            inviteid = InviteID(result['invite_id'])
+            active = not bool(result['invite_ignored'])
+            timestamp = int(result['invite_timestamp'] or 0)
+            inviter = UserID(result['invite_user'])
+            invite = Invite(
+                inviteid=inviteid,
+                active=active,
+                timestamp=timestamp,
+                userid=inviter,
+            )
 
         return Occupant(
             OccupantID(result['id']),
@@ -901,7 +914,7 @@ class RoomData(BaseData):
             inactive=inactive,
             moderator=moderator,
             muted=muted,
-            invited=invited,
+            invite=invite,
             iconid=AttachmentID(icon) if icon else None,
         )
 
@@ -941,6 +954,8 @@ class RoomData(BaseData):
                     user.username AS unick,
                     user.permissions AS permissions,
                     invite.id AS invite_id,
+                    invite.timestamp AS invite_timestamp,
+                    invite.inviter_user_id AS invite_user,
                     invite.ignored AS invite_ignored,
                     invite.revoked AS invite_revoked
                 FROM occupant
@@ -978,6 +993,8 @@ class RoomData(BaseData):
                 user.username AS unick,
                 user.permissions AS permissions,
                 invite.id AS invite_id,
+                invite.timestamp AS invite_timestamp,
+                invite.inviter_user_id AS invite_user,
                 invite.ignored AS invite_ignored,
                 invite.revoked AS invite_revoked
             FROM occupant
@@ -1075,6 +1092,8 @@ class RoomData(BaseData):
                     user.username AS unick,
                     user.permissions AS permissions,
                     invite.id AS invite_id,
+                    invite.timestamp AS invite_timestamp,
+                    invite.inviter_user_id AS invite_user,
                     invite.ignored AS invite_ignored,
                     invite.revoked AS invite_revoked
                 FROM occupant
@@ -1154,6 +1173,8 @@ class RoomData(BaseData):
                     user.username AS unick,
                     user.permissions AS permissions,
                     invite.id AS invite_id,
+                    invite.timestamp AS invite_timestamp,
+                    invite.inviter_user_id AS invite_user,
                     invite.ignored AS invite_ignored,
                     invite.revoked AS invite_revoked
                 FROM occupant
@@ -1255,7 +1276,7 @@ class RoomData(BaseData):
                 action.occupant.present = newoccupant.present
                 action.occupant.muted = newoccupant.muted
                 action.occupant.moderator = newoccupant.moderator
-                action.occupant.invited = newoccupant.invited
+                action.occupant.invite = newoccupant.invite
                 action.occupant.iconid = newoccupant.iconid
 
         if purpose == RoomPurpose.DIRECT_MESSAGE:
@@ -1470,6 +1491,7 @@ class RoomData(BaseData):
                 room.last_action AS last_action,
                 invite.id AS invite_id,
                 invite.ignored AS ignored,
+                invite.timestamp AS timestamp,
                 invite.inviter_user_id AS inviter
             FROM invite
             LEFT JOIN room ON invite.room_id = room.id
@@ -1497,6 +1519,7 @@ class RoomData(BaseData):
             results.append(Invite(
                 inviteid=InviteID(result['invite_id']),
                 active=not bool(result['ignored']),
+                timestamp=int(result['timestamp'] or 0),
                 room=room,
                 userid=UserID(result['inviter']),
             ))

@@ -1120,7 +1120,7 @@ class Messages {
                     occupant.inactive = newOccupant.inactive;
                     occupant.present = newOccupant.present;
                     occupant.muted = newOccupant.muted;
-                    occupant.invited = newOccupant.invited;
+                    occupant.invite = newOccupant.invite;
                 }
 
                 if (invited && occupant.id == invited) {

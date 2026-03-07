@@ -215,8 +215,19 @@ class Profile {
             }
         }
 
-        if (profile.invited) {
-            $('#profile-form #profile-uninvite').show();
+        if (profile.invite && profile.invite.user && this.room) {
+            $('#profile-form #profile-invited-to').html(escapeHtml(this.room.name));
+            $('#profile-form #profile-invited-by').html(escapeHtml(profile.invite.user.nickname));
+            $('#profile-form div.invited-by-wrapper').show();
+
+            if (profile.invite.cancellable) {
+                $('#profile-form #profile-uninvite').show();
+            } else {
+                $('#profile-form #profile-uninvite').hide();
+            }
+        } else {
+            $('#profile-form div.invited-by-wrapper').hide();
+            $('#profile-form #profile-uninvite').hide();
         }
 
         // Ensure we can send chat requests to the right place.

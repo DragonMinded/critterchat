@@ -601,7 +601,7 @@ class TestMessagePumpActions:
                                 'inactive': False,
                                 'moderator': False,
                                 'muted': False,
-                                'invited': False,
+                                'invite': None,
                                 'icon': 'http://localhost/attachments/defavi'
                             },
                             'action': ActionType.MESSAGE,

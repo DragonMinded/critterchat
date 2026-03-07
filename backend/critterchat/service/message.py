@@ -38,7 +38,11 @@ class MessageServiceException(Exception):
 
 
 class MessageService:
+    # Maximum number of displayable events we pull on first load of a chat.
     MAX_HISTORY: Final[int] = 100
+
+    # Number of seconds in which only the inviter can cancel an invite.
+    INVITE_SELF_CANCEL_GRACE_PERIOD_SECONDS: Final[int] = Time.SECONDS_IN_DAY * 3
 
     def __init__(self, config: Config, data: Data) -> None:
         self.__config = config
@@ -316,7 +320,7 @@ class MessageService:
 
                 self.__data.room.insert_action(room.id, action)
 
-    def lookup_occupant(self, occupantid: OccupantID) -> User | None:
+    def lookup_occupant(self, occupantid: OccupantID, userid: UserID) -> User | None:
         occupant = self.__data.room.get_room_occupant(occupantid)
         if not occupant:
             return None
@@ -326,6 +330,32 @@ class MessageService:
         if not user:
             return None
 
+        # Grab invite information, based on other occupant that sent invite.
+        if occupant.invite:
+            occupant.invite.user = self.__data.user.get_user(occupant.invite.userid)
+
+            # Person looking this up can cancel if it's been > 72 hours since the invite was issued
+            # or they were the one that invited the user.
+            occupant.invite.cancellable = (
+                occupant.invite.userid == userid or
+                (occupant.invite.timestamp + self.INVITE_SELF_CANCEL_GRACE_PERIOD_SECONDS) < Time.now()
+            )
+
+            # In this case, we need to look up the occupant info of this user, because
+            # they could have a different nickname in this particular room.
+            if occupant.invite.user:
+                room = self.__data.room.get_occupant_room(occupant.id)
+                if room:
+                    occupants = {
+                        o.userid: o
+                        for o in self.__data.room.get_room_occupants(room.id, include_left=True)
+                    }
+                    if occupant.invite.userid in occupants:
+                        occupant.invite.user.nickname = occupants[occupant.invite.userid].nickname
+                        occupant.invite.user.iconid = occupants[occupant.invite.userid].iconid
+
+                self.__attachments.resolve_user_icon(occupant.invite.user)
+
         # Copy the data over so the client can display it.
         user.iconid = occupant.iconid
         user.nickname = occupant.nickname
@@ -333,7 +363,7 @@ class MessageService:
         user.moderator = occupant.moderator
         user.muted = occupant.muted
         user.inactive = occupant.inactive
-        user.invited = occupant.invited
+        user.invite = occupant.invite
         self.__attachments.resolve_user_icon(user)
         return user
 
@@ -798,7 +828,7 @@ class MessageService:
             raise MessageServiceException("Room does not exist!")
 
         if room.purpose not in {RoomPurpose.ROOM, RoomPurpose.CHAT}:
-            raise MessageServiceException("Cannot invite somebody to this room!")
+            raise MessageServiceException("Cannot invite to this room!")
 
         self.__data.room.grant_room_invite(roomid, inviterid=inviter, invitedid=invited)
 
@@ -817,9 +847,23 @@ class MessageService:
             raise MessageServiceException("Room does not exist!")
 
         if room.purpose not in {RoomPurpose.ROOM, RoomPurpose.CHAT}:
-            raise MessageServiceException("Cannot uninvite somebody to this room!")
+            raise MessageServiceException("Cannot uninvite from this room!")
 
-        self.__data.room.revoke_room_invite(roomid, inviterid=inviter, invitedid=invited)
+        # Ensure that you are actually allowed to uninvite this person.
+        invites = [inv for inv in self.__data.room.get_room_invites(invited) if inv.room and inv.room.id == roomid]
+        if not invites:
+            raise MessageServiceException("Cannot uninvite from this room!")
+
+        invite = invites[0]
+        cancellable = (
+            invite.userid == inviter or
+            (invite.timestamp + self.INVITE_SELF_CANCEL_GRACE_PERIOD_SECONDS) < Time.now()
+        )
+
+        if cancellable:
+            self.__data.room.revoke_room_invite(roomid, inviterid=inviter, invitedid=invited)
+        else:
+            raise MessageServiceException("Cannot uninvite from this room!")
 
     def dismiss_invite(self, userid: UserID, inviteid: InviteID) -> None:
         # Ensure that this user owns this invite, so we can't dismiss for another.
@@ -832,6 +876,8 @@ class MessageService:
         invites = self.__data.room.get_room_invites(userid)
         for invite in invites:
             invite.user = self.__user.lookup_user(invite.userid)
+            if invite.room is None:
+                raise Exception("Logic error, rooms should exist when looking up invites directly!")
             self.__infer_room_info(userid, invite.room)
         return invites
 
@@ -914,7 +960,7 @@ class MessageService:
 
         # Now, look up any invites that we might have and combine those.
         potentialinvites = {
-            inv.room.id: inv.room for inv in self.get_invited_rooms(userid)
+            inv.room.id: inv.room for inv in self.get_invited_rooms(userid) if inv.room
         }
 
         # Finally, combined the two.
@@ -977,7 +1023,7 @@ class MessageService:
         occupants = {
             o.userid: o
             for o in self.__data.room.get_room_occupants(roomid, include_invited=True)
-            if o.present or o.invited
+            if o.present or o.invite is not None
         }
         if userid not in occupants:
             # We're not in the room we're searching, no results for you!
@@ -1002,7 +1048,7 @@ class MessageService:
                 f"@{user.username}",
                 room.purpose,
                 user.id in occupants and occupants[user.id].present,
-                user.id in occupants and occupants[user.id].invited,
+                user.id in occupants and occupants[user.id].invite is not None,
                 None,
                 user.id,
                 icon,

@@ -59,7 +59,25 @@ class User:
         self.moderator: bool | None = None
         self.muted: bool | None = None
         self.inactive: bool | None = None
-        self.invited: bool | None = None
+        self.invite: Invite | None = None
+
+    def clone(self) -> "User":
+        user = User(
+            userid=self.id,
+            username=self.username,
+            permissions={p for p in self.permissions},
+            nickname=self.nickname,
+            about=self.about,
+            iconid=self.iconid,
+        )
+
+        user.icon = self.icon
+        user.occupantid = self.occupantid
+        user.moderator = self.moderator
+        user.muted = self.muted
+        user.inactive = self.inactive
+        user.invite = self.invite.clone() if self.invite else None
+        return user
 
     def to_dict(self, *, config: Config | None = None, admin: bool = False) -> dict[str, object]:
         retval: dict[str, object] = {
@@ -78,8 +96,8 @@ class User:
             retval["muted"] = self.muted
         if self.inactive is not None:
             retval["inactive"] = self.inactive
-        if self.invited is not None:
-            retval["invited"] = self.invited
+        if self.invite is not None:
+            retval["invite"] = self.invite.to_dict()
 
         if config:
             retval["full_username"] = f"@{self.username}@{config.account_base}"
@@ -317,6 +335,28 @@ class Room:
         # Resolved only after lookup by message/search system, not sent to clients.
         self.occupants: list[Occupant] = []
 
+    def clone(self) -> "Room":
+        room = Room(
+            roomid=self.id,
+            name=self.name,
+            topic=self.topic,
+            purpose=self.purpose,
+            moderated=self.moderated,
+            autojoin=self.autojoin,
+            iconid=self.iconid,
+            deficonid=self.deficonid,
+            oldest_action=self.oldest_action,
+            newest_action=self.newest_action,
+            last_action_timestamp=self.last_action_timestamp,
+        )
+
+        room.customname = self.customname
+        room.public = self.public
+        room.icon = self.icon
+        room.deficon = self.deficon
+        room.occupants = [o.clone() for o in self.occupants]
+        return room
+
     def to_dict(self) -> dict[str, object]:
         return {
             "id": Room.from_id(self.id),
@@ -350,21 +390,50 @@ class Room:
 
 
 class Invite:
-    def __init__(self, inviteid: InviteID, active: bool, room: Room, userid: UserID) -> None:
+    def __init__(
+        self,
+        inviteid: InviteID,
+        active: bool,
+        timestamp: int,
+        userid: UserID,
+        room: Room | None = None,
+    ) -> None:
         self.id = inviteid
         self.active = active
+        self.timestamp = timestamp
         self.room = room
         self.userid = userid
 
         # This is filled in only after lookup by the message/search system.
         self.user: User | None = None
+        self.cancellable: bool | None = None
+
+    def clone(self) -> "Invite":
+        invite = Invite(
+            inviteid=self.id,
+            active=self.active,
+            timestamp=self.timestamp,
+            userid=self.userid,
+            room=self.room.clone() if self.room else None,
+        )
+
+        invite.user = self.user.clone() if self.user else None
+        invite.cancellable = self.cancellable
+        return invite
 
     def to_dict(self) -> dict[str, object]:
-        return {
+        retval: dict[str, object] = {
             "id": Invite.from_id(self.id),
-            "room": self.room.to_dict(),
             "user": self.user.to_dict() if self.user else None,
+            "timestamp": self.timestamp,
         }
+
+        if self.room:
+            retval["room"] = self.room.to_dict()
+        if self.cancellable is not None:
+            retval["cancellable"] = self.cancellable
+
+        return retval
 
     @staticmethod
     def from_id(inviteid: InviteID) -> str:
@@ -431,7 +500,7 @@ class Occupant:
         inactive: bool = False,
         moderator: bool = False,
         muted: bool = False,
-        invited: bool = False,
+        invite: Invite | None = None,
     ) -> None:
         self.id = occupantid
         self.userid = userid
@@ -441,7 +510,7 @@ class Occupant:
         self.inactive = inactive
         self.moderator = moderator
         self.muted = muted
-        self.invited = invited
+        self.invite = invite
         self.iconid = iconid
         self.icon: str | None = None
 
@@ -455,7 +524,7 @@ class Occupant:
             inactive=self.inactive,
             moderator=self.moderator,
             muted=self.muted,
-            invited=self.invited,
+            invite=self.invite.clone() if self.invite else None,
         )
         o.icon = self.icon
         return o
@@ -470,7 +539,7 @@ class Occupant:
             "inactive": self.inactive,
             "moderator": self.moderator,
             "muted": self.muted,
-            "invited": self.invited,
+            "invite": self.invite.to_dict() if self.invite else None,
             "icon": self.icon,
         }
 

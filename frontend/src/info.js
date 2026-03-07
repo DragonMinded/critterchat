@@ -290,7 +290,7 @@ class Info {
                         this.occupants.forEach((occupant) => {
                             if (occupant.id == entry.occupant.id) {
                                 occupant.present = true;
-                                occupant.invited = false;
+                                occupant.invite = null;
                                 changed = true;
                             }
                         });
@@ -303,7 +303,7 @@ class Info {
                         this.occupants.forEach((occupant) => {
                             if (occupant.id == entry.occupant.id) {
                                 occupant.present = true;
-                                occupant.invited = false;
+                                occupant.invite = null;
                                 changed = true;
                             }
                         });
@@ -351,7 +351,7 @@ class Info {
                                 occupant.inactive = newOccupant.inactive;
                                 occupant.present = newOccupant.present;
                                 occupant.muted = newOccupant.muted;
-                                occupant.invited = newOccupant.invited;
+                                occupant.invite = newOccupant.invite;
                             }
 
                             if (invited && occupant.id == invited) {
@@ -394,7 +394,7 @@ class Info {
      */
     _computeSortOrder(occupant) {
         if (this.roomType != "dm") {
-            if (occupant.invited) {
+            if (occupant.invite) {
                 return 2;
             }
 
@@ -526,7 +526,7 @@ class Info {
 
         this.occupants.forEach((occupant) => {
             // Don't draw users that were invited but ignored the invite.
-            if (this.roomType != "dm" && !occupant.present && !occupant.invited) {
+            if (this.roomType != "dm" && !occupant.present && !occupant.invite) {
                 return;
             }
 
@@ -535,7 +535,7 @@ class Info {
             if (occupant.present && (occupant.inactive || occupant.muted)) {
                 cls += " faded";
             }
-            if (!occupant.present && (occupant.invited)) {
+            if (!occupant.present && (occupant.invite)) {
                 cls += " faded";
             }
 
