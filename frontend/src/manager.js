@@ -498,9 +498,12 @@ export function manager(socket) {
 
     socket.on('invite', (msg) => {
         // Handles displaying an invite using the info panel.
+        const name = escapeHtml(window.appname);
         const info = (
-            "A single-use invite link has been generated and associated with you. " +
+            "A single-use invite link to register on " + name + "  has been generated and associated with you. " +
             "Feel free to give it to somebody so they can sign up to chat! " +
+            "The person you give the link to will be able to sign up even if " + name + " has disabled registration. " +
+            "Their new account will be auto-activated so they can start chatting immediately. " +
             "Do note that the invite has been personalized to include your nickname."
         );
 

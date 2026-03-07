@@ -7,7 +7,6 @@ TODO Immediate
  - Poll less frequently for user updates and invites than conversation actions.
  - Rename "chat" to "conversation" in frontend, and in readme.
  - Grace period after invite where only inviter can revoke.
- - Better description of invite to sign up page, mention that it bypasses activation.
 
 TODO For Public Instance
 ========================
