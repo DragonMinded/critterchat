@@ -36,7 +36,8 @@ from ..data import (
 
 
 MESSAGE_PUMP_TICK_SECONDS: Final[float] = 0.05
-EMOJI_REFRESH_TICK_SECONDS: Final[int] = 5
+EMOJI_REFRESH_TICK_SECONDS: Final[float] = 5.0
+AUXILIARY_REFRESH_TICK_SECONDS: Final[float] = 2.5
 
 
 MAX_ICON_WIDTH: Final[int] = 256
@@ -72,6 +73,7 @@ def background_thread_proc_impl() -> None:
     # Make sure we can send emote additions and subtractions to the connected clients.
     emotes = {k for k in emoteservice.get_all_emotes()}
     last_emote_update = Time.now()
+    last_auxiliary_poll = 0
     last_user_update: int | None = None
     last_invite_update: tuple[int, int] | None = None
     last_action: ActionID | None = None
@@ -88,7 +90,11 @@ def background_thread_proc_impl() -> None:
         # Look for any new actions that should be relayed.
         current_action = messageservice.get_last_action()
         current_update = userservice.get_last_user_update()
-        current_invite = messageservice.get_last_invite_update()
+
+        # Also look for any new invites, but do so less frequently.
+        if (Time.now() - last_auxiliary_poll) >= AUXILIARY_REFRESH_TICK_SECONDS:
+            last_auxiliary_poll = Time.now()
+            current_invite = messageservice.get_last_invite_update()
 
         # Shut down early if we have nothing to poll.
         global background_thread
