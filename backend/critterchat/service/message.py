@@ -872,6 +872,13 @@ class MessageService:
         if invites:
             self.__data.room.dismiss_room_invite(invites[0].id)
 
+    def acknowledge_invite(self, userid: UserID, inviteid: InviteID) -> None:
+        # Ensure that this user owns this invite, so we can't acknowledge for another.
+        invites = self.__data.room.get_room_invites(userid)
+        invites = [inv for inv in invites if inv.id == inviteid]
+        if invites:
+            self.__data.room.acknowledge_room_invite(invites[0].id)
+
     def get_invited_rooms(self, userid: UserID) -> list[Invite]:
         invites = self.__data.room.get_room_invites(userid)
         for invite in invites:

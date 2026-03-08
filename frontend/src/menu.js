@@ -351,6 +351,7 @@ class Menu {
         this.invitesLoaded = true;
 
         // Always refresh on invites set, since this is a pretty rare occurance.
+        this._updateGlobalBadges();
         if (this.roomsLoaded) {
             this.setRooms( this.rooms, true );
         } else {
@@ -434,7 +435,11 @@ class Menu {
             var html = '<div class="item" id="' + invite.id + '">';
             html    += '  <div class="icon ' + type + '">';
             html    += '    <img src="' + invite.room.icon + '" />';
-            html    += '    <div class="badge empty"><div class="count"></div></div>';
+            if (!invite.seen) {
+                html    += '    <div class="badge"><div class="count">1</div></div>';
+            } else {
+                html    += '    <div class="badge empty"><div class="count"></div></div>';
+            }
             if (invite.room.type == 'room') {
                 html    += '    <div class="room-indicator">#</div>';
             }
@@ -478,6 +483,13 @@ class Menu {
                 return;
             }
 
+            // Let the server know that the invite should be debadged on other clients since it was seen.
+            this.eventBus.emit('selectinvite', invite.id);
+
+            // Mark this as seen, to debadge.
+            const changed = !invite.seen;
+            invite.seen = true;
+
             var html = "";
             html += '<div class="invite-wrapper">';
             html += 'You have been invited to ';
@@ -500,6 +512,14 @@ class Menu {
                     this.eventBus.emit('dismissinvite', invite.id);
                 },
             );
+
+            if (changed) {
+                // Also redraw the left menu to debadge.
+                this._updateGlobalBadges();
+                if (this.roomsLoaded) {
+                    this.setRooms(this.rooms, true);
+                }
+            }
         });
     }
 
@@ -732,6 +752,12 @@ class Menu {
                 } else {
                     total += parseInt(room.count);
                 }
+                notified = true;
+            }
+        });
+        this.invites.active.forEach((invite) => {
+            if (!invite.seen) {
+                total += 1;
                 notified = true;
             }
         });

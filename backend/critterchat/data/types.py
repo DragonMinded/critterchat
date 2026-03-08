@@ -97,7 +97,7 @@ class User:
         if self.inactive is not None:
             retval["inactive"] = self.inactive
         if self.invite is not None:
-            retval["invite"] = self.invite.to_dict()
+            retval["invite"] = self.invite.to_dict(include_status=False)
 
         if config:
             retval["full_username"] = f"@{self.username}@{config.account_base}"
@@ -394,12 +394,14 @@ class Invite:
         self,
         inviteid: InviteID,
         active: bool,
+        seen: bool,
         timestamp: int,
         userid: UserID,
         room: Room | None = None,
     ) -> None:
         self.id = inviteid
         self.active = active
+        self.seen = seen
         self.timestamp = timestamp
         self.room = room
         self.userid = userid
@@ -412,6 +414,7 @@ class Invite:
         invite = Invite(
             inviteid=self.id,
             active=self.active,
+            seen=self.seen,
             timestamp=self.timestamp,
             userid=self.userid,
             room=self.room.clone() if self.room else None,
@@ -421,7 +424,7 @@ class Invite:
         invite.cancellable = self.cancellable
         return invite
 
-    def to_dict(self) -> dict[str, object]:
+    def to_dict(self, include_status: bool = True) -> dict[str, object]:
         retval: dict[str, object] = {
             "id": Invite.from_id(self.id),
             "user": self.user.to_dict() if self.user else None,
@@ -432,6 +435,9 @@ class Invite:
             retval["room"] = self.room.to_dict()
         if self.cancellable is not None:
             retval["cancellable"] = self.cancellable
+        if include_status:
+            retval["active"] = self.active
+            retval["seen"] = self.seen
 
         return retval
 
@@ -539,7 +545,7 @@ class Occupant:
             "inactive": self.inactive,
             "moderator": self.moderator,
             "muted": self.muted,
-            "invite": self.invite.to_dict() if self.invite else None,
+            "invite": self.invite.to_dict(include_status=False) if self.invite else None,
             "icon": self.icon,
         }
 

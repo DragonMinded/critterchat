@@ -1057,8 +1057,24 @@ def invites(json: dict[str, object]) -> None:
         }), room=request.sid)
 
 
+@socketio.on('selectinvite')  # type: ignore
+def selectinvite(json: dict[str, object]) -> None:
+    data = Data(config)
+    messageservice = MessageService(config, data)
+
+    # Try to associate with a user if there is one.
+    user = recover_user(data, request.sid)
+    if user is None:
+        return
+
+    # Figure out which invite the user wants to dismiss.
+    inviteid = Invite.to_id(str(json.get('inviteid')))
+    if inviteid is not None:
+        messageservice.acknowledge_invite(user.id, inviteid)
+
+
 @socketio.on('dismissinvite')  # type: ignore
-def dismissinviteupdateroom(json: dict[str, object]) -> None:
+def dismissinvite(json: dict[str, object]) -> None:
     data = Data(config)
     messageservice = MessageService(config, data)
 

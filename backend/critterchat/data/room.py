@@ -93,6 +93,7 @@ invite = Table(
     Column("inviter_user_id", Integer, nullable=False),
     Column("ignored", Boolean, nullable=False, default=False),
     Column("revoked", Boolean, nullable=False, default=False),
+    Column("seen", Boolean, nullable=False, default=False),
     UniqueConstraint("room_id", "invited_user_id", name='ridiuid'),
     mysql_charset="utf8mb4",
 )
@@ -255,6 +256,7 @@ class RoomData(BaseData):
                 invite.timestamp AS invite_timestamp,
                 invite.inviter_user_id AS invite_user,
                 invite.ignored AS invite_ignored,
+                invite.seen AS invite_seen,
                 invite.revoked AS invite_revoked
             FROM occupant
             LEFT JOIN profile ON occupant.user_id = profile.user_id
@@ -896,11 +898,13 @@ class RoomData(BaseData):
         if (not present) and (result['invite_id'] is not None) and (not bool(result['invite_revoked'])):
             inviteid = InviteID(result['invite_id'])
             active = not bool(result['invite_ignored'])
+            seen = bool(result['invite_seen'])
             timestamp = int(result['invite_timestamp'] or 0)
             inviter = UserID(result['invite_user'])
             invite = Invite(
                 inviteid=inviteid,
                 active=active,
+                seen=seen,
                 timestamp=timestamp,
                 userid=inviter,
             )
@@ -957,6 +961,7 @@ class RoomData(BaseData):
                     invite.timestamp AS invite_timestamp,
                     invite.inviter_user_id AS invite_user,
                     invite.ignored AS invite_ignored,
+                    invite.seen AS invite_seen,
                     invite.revoked AS invite_revoked
                 FROM occupant
                 LEFT JOIN profile ON occupant.user_id = profile.user_id
@@ -996,6 +1001,7 @@ class RoomData(BaseData):
                 invite.timestamp AS invite_timestamp,
                 invite.inviter_user_id AS invite_user,
                 invite.ignored AS invite_ignored,
+                invite.seen AS invite_seen,
                 invite.revoked AS invite_revoked
             FROM occupant
             LEFT JOIN profile ON occupant.user_id = profile.user_id
@@ -1095,6 +1101,7 @@ class RoomData(BaseData):
                     invite.timestamp AS invite_timestamp,
                     invite.inviter_user_id AS invite_user,
                     invite.ignored AS invite_ignored,
+                    invite.seen AS invite_seen,
                     invite.revoked AS invite_revoked
                 FROM occupant
                 LEFT JOIN profile ON occupant.user_id = profile.user_id
@@ -1176,6 +1183,7 @@ class RoomData(BaseData):
                     invite.timestamp AS invite_timestamp,
                     invite.inviter_user_id AS invite_user,
                     invite.ignored AS invite_ignored,
+                    invite.seen AS invite_seen,
                     invite.revoked AS invite_revoked
                 FROM occupant
                 LEFT JOIN profile ON occupant.user_id = profile.user_id
@@ -1344,10 +1352,10 @@ class RoomData(BaseData):
             now = Time.now()
             sql = """
                 INSERT INTO invite
-                    (`room_id`, `inviter_user_id`, `invited_user_id`, `timestamp`, `ignored`, `revoked`)
+                    (`room_id`, `inviter_user_id`, `invited_user_id`, `timestamp`, `ignored`, `revoked`, `seen`)
                 VALUES
-                    (:roomid, :inviter, :invited, :ts, FALSE, FALSE)
-                ON DUPLICATE KEY UPDATE `invited_user_id` = :invited, `timestamp` = :ts, `ignored` = FALSE, `revoked` = FALSE
+                    (:roomid, :inviter, :invited, :ts, FALSE, FALSE, FALSE)
+                ON DUPLICATE KEY UPDATE `invited_user_id` = :invited, `timestamp` = :ts, `ignored` = FALSE, `revoked` = FALSE, `seen` = FALSE
             """
             self.execute(sql, {"roomid": roomid, "inviter": inviterid, "invited": invitedid, 'ts': now})
 
@@ -1491,6 +1499,7 @@ class RoomData(BaseData):
                 room.last_action AS last_action,
                 invite.id AS invite_id,
                 invite.ignored AS ignored,
+                invite.seen AS seen,
                 invite.timestamp AS timestamp,
                 invite.inviter_user_id AS inviter
             FROM invite
@@ -1519,6 +1528,7 @@ class RoomData(BaseData):
             results.append(Invite(
                 inviteid=InviteID(result['invite_id']),
                 active=not bool(result['ignored']),
+                seen=bool(result['seen']),
                 timestamp=int(result['timestamp'] or 0),
                 room=room,
                 userid=UserID(result['inviter']),
@@ -1528,6 +1538,17 @@ class RoomData(BaseData):
         self._hydrate_actions(rooms)
         return results
 
+    def acknowledge_room_invite(self, inviteid: InviteID) -> None:
+        """
+        Given an invite ID, if it is valid then mark it as seen. If it has already been marked seen
+        or does not exist then this has no effect.
+        """
+
+        sql = """
+            UPDATE invite SET seen = TRUE, timestamp = :ts WHERE id = :inviteid
+        """
+        self.execute(sql, {"ts": Time.now(), "inviteid": inviteid})
+
     def dismiss_room_invite(self, inviteid: InviteID) -> None:
         """
         Given an invite ID, if it is valid then dismiss it by marking the ignored flag. If the invite
@@ -1535,7 +1556,7 @@ class RoomData(BaseData):
         """
 
         sql = """
-            UPDATE invite SET ignored = TRUE, timestamp = :ts WHERE id = :inviteid
+            UPDATE invite SET ignored = TRUE, seen = TRUE, timestamp = :ts WHERE id = :inviteid
         """
         self.execute(sql, {"ts": Time.now(), "inviteid": inviteid})
 

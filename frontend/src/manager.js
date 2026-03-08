@@ -54,6 +54,10 @@ export function manager(socket) {
     // Tracks known actions to determine whether that action is our own or not.
     var actions = new Map();
 
+    // Tracks known invites to determine whether an invite requires notification or not.
+    var invites = new Map();
+    var invitesGathered = false;
+
     // Tracks the user's last settings, such as what room they are in and the info panel visibility.
     var settings = {};
 
@@ -313,6 +317,33 @@ export function manager(socket) {
     });
 
     socket.on('invites', (msg) => {
+        msg.active.forEach((invite) => {
+            if (invitesGathered) {
+                if (invites.has(invite.id)) {
+                    if (invites.get(invite.id).seen && !invite.seen) {
+                        // The old one was seen but the new one is not seen (must have been updated).
+                        eventBus.emit("notification", {"action": "invite", "type": invite.room.type});
+                    }
+                } else {
+                    if (!invite.seen) {
+                        // This is a brand new invite which we haven't seen.
+                        eventBus.emit("notification", {"action": "invite", "type": invite.room.type});
+                    }
+                }
+            }
+
+            // Also set it in our cache so we can compare against it in the future.
+            invites.set(invite.id, invite);
+        });
+
+        msg.ignored.forEach((invite) => {
+            // These we dismissed previously, no need to badge or notify.
+            invites.set(invite.id, invite);
+        });
+
+        // Make sure we don't send notifications on initial load.
+        invitesGathered = true;
+
         menuInst.setInvites(msg);
     });
 
@@ -741,6 +772,10 @@ export function manager(socket) {
 
     eventBus.on('uninviteroom', (info) => {
         socket.emit('uninviteroom', info);
+    });
+
+    eventBus.on('selectinvite', (id) => {
+        socket.emit('selectinvite', {'inviteid': id});
     });
 
     eventBus.on('dismissinvite', (id) => {
