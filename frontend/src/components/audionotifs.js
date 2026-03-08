@@ -10,6 +10,7 @@ import {
     USER_LEFT,
     USER_REACTED,
     REACTION_RECEIVED,
+    INVITATION_RECEIVED,
     AUDIO_PREFS
 } from "../common.js";
 
@@ -71,6 +72,8 @@ class AudioNotifications {
                 } else {
                     sound = this.sounds[USER_REACTED];
                 }
+            } else if (notif.action == "invite") {
+                sound = this.sounds[INVITATION_RECEIVED];
             }
 
             if (sound) {

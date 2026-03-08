@@ -166,6 +166,8 @@ class UserNotification(IntEnum):
     USER_REACTED = 0x080
     # A user reacted to a message you wrote in a room you're in.
     REACTION_RECEIVED = 0x100
+    # You were given a new invite to a room or conversation.
+    INVITATION_RECEIVED = 0x200
 
 
 class UserPreferences:

@@ -3,12 +3,11 @@ TODO Immediate
 
  - Preference for invites, including "auto-accept", "let me choose", and "disallow".
  - Preference for searchability in user search panel.
- - Notification for when you get invited to a new private conversation.
+ - Another pass to PROTOCOL.md.
 
 TODO For Public Instance
 ========================
 
- - Another pass to PROTOCOL.md.
  - Stickers support in some form.
  - Accessibility pass.
 
