@@ -2,10 +2,11 @@ import $ from "jquery";
 
 export function autocomplete(state, selector, items) {
     var displayed = false;
-    var handled = false;
     var hovering = false;
     var displaying = [];
     var displayingAdditional = false;
+    var hiddenText = undefined;
+    var hiddenCursor = undefined;
 
     // Sort our items.
     items = items.toSorted((a, b) => a.text.localeCompare(b.text));
@@ -20,7 +21,6 @@ export function autocomplete(state, selector, items) {
     });
 
     $(selector).on('keydown', function(event) {
-        handled = false;
         hovering = false;
 
         if(!displayed) {
@@ -40,8 +40,12 @@ export function autocomplete(state, selector, items) {
         if(event.key == "Escape") {
             // Close menu.
             hide();
-            handled = true;
             event.preventDefault();
+
+            // Remember what the state was when we chose to hide.
+            hiddenText = $(selector).val();
+            hiddenCursor = pos;
+
             return false;
         }
 
@@ -54,7 +58,6 @@ export function autocomplete(state, selector, items) {
             }
 
             // Don't move the cursor
-            handled = true;
             event.preventDefault();
             return false;
         }
@@ -64,16 +67,31 @@ export function autocomplete(state, selector, items) {
             var choice = cursorselection();
             selectOption(choice);
 
+            // Remember what the state was when we chose to hide.
+            hiddenText = $(selector).val();
+            hiddenCursor = pos;
+
             // Don't send a message or move the cursor.
-            handled = true;
             event.preventDefault();
             return false;
         }
+
+        hiddenText = undefined;
+        hiddenCursor = undefined;
     });
 
     $(selector).on('keyup focus click', function() {
-        if (handled) {
-            handled = false;
+        // Ignore any keys that we previously handled in keydown.
+        if(
+            event.key == "Escape" ||
+            event.key == "ArrowUp" || event.key == "ArrowDown" ||
+            event.key == "Enter" || event.key == "Tab"
+        ) {
+            return;
+        }
+
+        // Ignore events we don't care about at all.
+        if (event.type == "submit") {
             return;
         }
 
@@ -87,9 +105,16 @@ export function autocomplete(state, selector, items) {
             return;
         }
 
+        var text = $(selector).val();
+        if (event.type == "focus" || event.type == "click") {
+            if (text == hiddenText && pos == hiddenCursor) {
+                // We've refocused after explicitly closing, don't re-open.
+                return;
+            }
+        }
+
         // Figure out if we have anything to display.
         var word = "";
-        var text = $(selector).val();
         var curpos = pos;
 
         while(curpos > 0) {

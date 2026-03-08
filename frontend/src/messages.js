@@ -71,8 +71,8 @@ class Messages {
             event.preventDefault();
 
             this.inputState.setState("empty");
-            var roomid = $( '#message-actions' ).attr('roomid');
 
+            var roomid = $( '#message-actions' ).attr('roomid');
             if (roomid) {
                 if (this.awaitingResponse.has(roomid) && this.awaitingResponse.get(roomid)) {
                     // Skip out on this, we're waiting for a server response so we shouldn't duplicate
