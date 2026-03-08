@@ -1042,9 +1042,33 @@ class MessageService:
             key=lambda u: u.nickname,
         )
 
-        # Now, resolve the icons of everyone that we can invite and send back the result list.
+        # First, return all occupants, so that we can display in-room nickname/icon. Also display
+        # any users that are in the chat already but have invites disabled.
         results: list[SearchResult] = []
+        for occupant in occupants.values():
+            self.__attachments.resolve_occupant_icon(occupant)
+            icon = occupant.icon
+            if not icon:
+                raise Exception("Logic error, should have been inferred above!")
+
+            results.append(SearchResult(
+                occupant.nickname,
+                f"@{occupant.username}",
+                room.purpose,
+                occupant.present,
+                occupant.invite is not None,
+                None,
+                occupant.userid,
+                icon,
+            ))
+
+        # Now, resolve the icons of everyone that we can invite who wasn't already in the above
+        # list and send back the results.
         for user in potentialusers:
+            if user.id in occupants:
+                # Already displayed above.
+                continue
+
             self.__attachments.resolve_user_icon(user)
             icon = user.icon
             if not icon:
