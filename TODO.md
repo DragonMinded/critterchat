@@ -30,3 +30,4 @@ TODO Low Priority
  - Role groups, for moderators and public room visibility, including auto-join on add to group.
  - Better autocomplete that lets you scroll down past the first 10 entries.
  - When server selects a room for you, ensure that the menu on the left scrolls to make that room visible.
+ - Proper history integration for mobile so browser back action works the same as back button.
