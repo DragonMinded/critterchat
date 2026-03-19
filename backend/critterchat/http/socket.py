@@ -6,7 +6,7 @@ from typing import Any, Final, Literal, cast
 
 from .app import app, socketio, config, request
 from .messagepump import SocketInfo, send_emote_deltas, send_chat_deltas, send_profile_deltas, send_invite_deltas
-from ..common import AESCipher, Time, represents_real_text
+from ..common import AESCipher, Time, represents_real_text, coerce_enum
 from ..service import (
     AttachmentService,
     EmoteService,
@@ -26,6 +26,9 @@ from ..data import (
     RoomPurpose,
     UserPermission,
     UserSettings,
+    ColorScheme,
+    UISize,
+    AdminControls,
     Occupant,
     NewActionID,
     ActionID,
@@ -524,37 +527,10 @@ def updatepreferences(json: dict[str, object]) -> None:
     new_combined_messages = json.get('combined_messages', None)
     if new_combined_messages is not None:
         new_combined_messages = bool(new_combined_messages)
-    new_color_scheme = json.get('color_scheme', None)
-    if new_color_scheme is not None:
-        new_color_scheme = {
-            "system": "system",
-            "light": "light",
-            "dark": "dark",
-        }.get(str(new_color_scheme))
-    new_desktop_size = json.get('desktop_size', None)
-    if new_desktop_size is not None:
-        new_desktop_size = {
-            "smallest": "smallest",
-            "smaller": "smaller",
-            "normal": "normal",
-            "larger": "larger",
-            "largest": "largest",
-        }.get(str(new_desktop_size))
-    new_mobile_size = json.get('mobile_size', None)
-    if new_mobile_size is not None:
-        new_mobile_size = {
-            "smallest": "smallest",
-            "smaller": "smaller",
-            "normal": "normal",
-            "larger": "larger",
-            "largest": "largest",
-        }.get(str(new_mobile_size))
-    new_admin_controls = json.get('admin_controls', None)
-    if new_admin_controls is not None:
-        new_admin_controls = {
-            "hidden": "hidden",
-            "visible": "visible",
-        }.get(str(new_admin_controls))
+    new_color_scheme = coerce_enum(ColorScheme, json.get('color_scheme'))
+    new_desktop_size = coerce_enum(UISize, json.get('desktop_size'))
+    new_mobile_size = coerce_enum(UISize, json.get('mobile_size'))
+    new_admin_controls = coerce_enum(AdminControls, json.get('admin_controls'))
     new_title_notifs = json.get('title_notifs', None)
     if new_title_notifs is not None:
         new_title_notifs = bool(new_title_notifs)

@@ -244,12 +244,16 @@ def toorderedjson(val: object) -> str:
 def extrafunctions() -> dict[str, Any]:
     cachebust = get_frontend_version() + "-" + get_fingerprint_hash()
     colorscheme = request.cookies.get("ColorScheme", "system")
+    desktopSize = request.cookies.get("DesktopSize", "normal")
+    mobileSize = request.cookies.get("MobileSize", "normal")
 
     return {
         "absolute_url_for": absolute_url_for,
         "config": config,
         "cachebust": f"cachebust={cachebust}",
         "colorscheme": colorscheme,
+        "desktopSize": desktopSize,
+        "mobileSize": mobileSize,
     }
 
 

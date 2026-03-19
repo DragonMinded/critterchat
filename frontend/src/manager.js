@@ -65,8 +65,8 @@ export function manager(socket) {
     // in desktop mode (vertical panels available) or mobile mode (one screen at a time and using
     // the screen state to coordinate moving between screens).
     var size = $( window ).width() <= 700 ? "mobile" : "desktop";
-    var desktopSize = "normal";
-    var mobileSize = "normal";
+    var desktopSize = window.desktopSize;
+    var mobileSize = window.mobileSize;
 
     // Tracks whether we are currently the active, visible tab or a background tab.
     var visibility = document.visibilityState;
@@ -109,6 +109,19 @@ export function manager(socket) {
 
     // Arbitrarily chosen to be a 15 second interval.
     setInterval(checkForUpdates, 1000 * 15);
+
+    // Update our application UI size.
+    function updateSize() {
+        $( "body" ).removeClass("smallest").removeClass("smaller").removeClass("normal").removeClass("larger").removeClass("largest");
+        if (size == "mobile") {
+            $( "body" ).addClass(mobileSize);
+        } else {
+            $( "body" ).addClass(desktopSize);
+        }
+    }
+
+    // Force render the UI based on any previously set preferences.
+    updateSize();
 
     // Socket callback that occurs every time we successfully connect to the backend server
     // via our websocket connection. This happens on document load for the initial connection,
@@ -166,14 +179,9 @@ export function manager(socket) {
         const newSize = width <= 700 ? "mobile" : "desktop";
 
         if (newSize != size) {
-            $( "body" ).removeClass("smallest").removeClass("smaller").removeClass("normal").removeClass("larger").removeClass("largest");
-            if (newSize == "mobile") {
-                $( "body" ).addClass(mobileSize);
-            } else {
-                $( "body" ).addClass(desktopSize);
-            }
-
             size = newSize;
+
+            updateSize();
             eventBus.emit('resize', size);
         }
     });
@@ -391,16 +399,12 @@ export function manager(socket) {
 
         // Set a preference cookie so even logged-out pages respect the light/dark theme.
         document.cookie = "ColorScheme=" + msg.color_scheme;
+        document.cookie = "DesktopSize=" + msg.desktop_size;
+        document.cookie = "MobileSize=" + msg.mobile_size;
 
         desktopSize = msg.desktop_size;
         mobileSize = msg.mobile_size;
-
-        $( "body" ).removeClass("smallest").removeClass("smaller").removeClass("normal").removeClass("larger").removeClass("largest");
-        if (size == "mobile") {
-            $( "body" ).addClass(mobileSize);
-        } else {
-            $( "body" ).addClass(desktopSize);
-        }
+        updateSize();
 
         // Notify various systems that preferences were updated and allow them to redraw
         // as needed based on the updated preferences.

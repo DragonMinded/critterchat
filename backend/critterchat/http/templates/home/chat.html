@@ -22,6 +22,8 @@
     window.uploadAvatar = "{{ absolute_url_for('upload.avatar_upload', component="upload") }}";
     window.uploadNotifications = "{{ absolute_url_for('upload.notifications_upload', component="upload") }}";
     window.uploadAttachments = "{{ absolute_url_for('upload.attachments_upload', component="upload") }}";
+    window.desktopSize = {{ desktopSize|tojson|safe }};
+    window.mobileSize = {{ mobileSize|tojson|safe }};
     window.appname = {{ title|tojson|safe }};
     window.version = {{ version|tojson|safe }};
     window.emojis = {{ emojis|tojson|safe }};

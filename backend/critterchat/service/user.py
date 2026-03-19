@@ -21,6 +21,9 @@ from ..data import (
     Occupant,
     RoomID,
     UserID,
+    ColorScheme,
+    UISize,
+    AdminControls,
 )
 from .attachment import AttachmentService
 
@@ -92,10 +95,10 @@ class UserService:
         *,
         rooms_on_top: bool | None = None,
         combined_messages: bool | None = None,
-        color_scheme: str | None = None,
-        desktop_size: str | None = None,
-        mobile_size: str | None = None,
-        admin_controls: str | None = None,
+        color_scheme: ColorScheme | None = None,
+        desktop_size: UISize | None = None,
+        mobile_size: UISize | None = None,
+        admin_controls: AdminControls | None = None,
         title_notifs: bool | None = None,
         mobile_audio_notifs: bool | None = None,
         audio_notifs: set[str] | None = None,

@@ -176,6 +176,25 @@ class UserNotification(IntEnum):
     INVITATION_RECEIVED = 0x200
 
 
+class ColorScheme(StrEnum):
+    LIGHT = "light"
+    DARK = "dark"
+    SYSTEM = "system"
+
+
+class UISize(StrEnum):
+    SMALLEST = "smallest"
+    SMALLER = "smaller"
+    NORMAL = "normal"
+    LARGER = "larger"
+    LARGEST = "largest"
+
+
+class AdminControls(StrEnum):
+    VISIBLE = "visible"
+    HIDDEN = "hidden"
+
+
 class UserPreferences:
     def __init__(
         self,
@@ -183,10 +202,10 @@ class UserPreferences:
         *,
         rooms_on_top: bool,
         combined_messages: bool,
-        color_scheme: str,
-        desktop_size: str,
-        mobile_size: str,
-        admin_controls: str,
+        color_scheme: ColorScheme,
+        desktop_size: UISize,
+        mobile_size: UISize,
+        admin_controls: AdminControls,
         title_notifs: bool,
         mobile_audio_notifs: bool,
         audio_notifs: set[UserNotification],
@@ -223,10 +242,10 @@ class UserPreferences:
             userid=userid,
             rooms_on_top=False,
             combined_messages=False,
-            color_scheme="system",
-            desktop_size="normal",
-            mobile_size="normal",
-            admin_controls="visible",
+            color_scheme=ColorScheme.SYSTEM,
+            desktop_size=UISize.NORMAL,
+            mobile_size=UISize.NORMAL,
+            admin_controls=AdminControls.VISIBLE,
             title_notifs=True,
             mobile_audio_notifs=False,
             audio_notifs=set(),
