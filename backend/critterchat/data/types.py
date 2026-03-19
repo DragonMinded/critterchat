@@ -1,6 +1,7 @@
 from enum import IntEnum, StrEnum
 from typing import NewType, cast
 
+from ..common import coerce_enum
 from ..config import Config
 
 
@@ -122,8 +123,13 @@ class User:
             return None
 
 
+class InfoState(StrEnum):
+    HIDDEN = "hidden"
+    SHOWN = "shown"
+
+
 class UserSettings:
-    def __init__(self, userid: UserID, roomid: RoomID | None, info: str | None) -> None:
+    def __init__(self, userid: UserID, roomid: RoomID | None, info: InfoState | None) -> None:
         self.userid = userid
         self.roomid = roomid
         self.info = info
@@ -131,14 +137,14 @@ class UserSettings:
     def to_dict(self) -> dict[str, object]:
         return {
             "roomid": Room.from_id(self.roomid) if self.roomid is not None else None,
-            "info": self.info if self.info else "hidden",
+            "info": self.info if self.info else InfoState.HIDDEN,
         }
 
     @staticmethod
     def from_dict(userid: UserID, values: dict[str, object]) -> "UserSettings":
         room = values.get("roomid")
         roomid = Room.to_id(str(room)) if room is not None else None
-        info: str = str(values['info']) if values.get("info") else "hidden"
+        info = coerce_enum(InfoState, values.get("info"), InfoState.HIDDEN)
 
         return UserSettings(
             userid=userid,

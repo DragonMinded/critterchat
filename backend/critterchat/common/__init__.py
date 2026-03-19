@@ -3,6 +3,7 @@ from .text import convert_spaces, represents_real_text
 from .time import Time
 from .emoji import get_aliases_unicode_dict, emojize
 from .emojicategories import EMOJI_CATEGORIES
+from .enums import coerce_enum
 
 
 __all__ = [
@@ -13,4 +14,5 @@ __all__ = [
     "convert_spaces",
     "represents_real_text",
     "EMOJI_CATEGORIES",
+    "coerce_enum",
 ]

@@ -8,7 +8,7 @@ from sqlalchemy.dialects.mysql import MEDIUMTEXT as MediumText
 from typing import Any, Final
 from passlib.hash import pbkdf2_sha512  # type: ignore
 
-from ..common import Time
+from ..common import Time, coerce_enum
 from .base import BaseData, metadata
 from .types import (
     ActionType,
@@ -18,6 +18,7 @@ from .types import (
     UserSettings,
     UserNotification,
     UserPermission,
+    InfoState,
     NewActionID,
     NewRoomID,
     NewUserID,
@@ -511,7 +512,7 @@ class UserData(BaseData):
         return UserSettings(
             userid=UserID(result['user_id']),
             roomid=RoomID(result['last_room']) if result['last_room'] is not None else None,
-            info=result['info'],
+            info=coerce_enum(InfoState, result['info']),
         )
 
     def get_any_settings(self, userid: UserID) -> UserSettings | None:
@@ -530,7 +531,7 @@ class UserData(BaseData):
         return UserSettings(
             userid=UserID(result['user_id']),
             roomid=RoomID(result['last_room']) if result['last_room'] is not None else None,
-            info=result['info'],
+            info=coerce_enum(InfoState, result['info']),
         )
 
     def put_settings(self, session: str, settings: UserSettings) -> None:
