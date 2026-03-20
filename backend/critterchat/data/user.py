@@ -1,11 +1,12 @@
 import random
 import string
 
+from sqlfragments import Fragment, fragment, statement
 from sqlalchemy import Table, Column
 from sqlalchemy.schema import UniqueConstraint
 from sqlalchemy.types import Boolean, String, Integer
 from sqlalchemy.dialects.mysql import MEDIUMTEXT as MediumText
-from typing import Any, Final
+from typing import Any, Final, Literal
 from passlib.hash import pbkdf2_sha512  # type: ignore
 
 from ..common import Time, coerce_enum
@@ -847,7 +848,7 @@ class UserData(BaseData):
 
         return users
 
-    def get_visible_users(self, userid: UserID, name: str | None = None) -> list[User]:
+    def get_visible_users(self, userid: UserID, purpose: Literal["search", "invite"], name: str | None = None) -> list[User]:
         """
         Given a user searching, return a list of visible users (users that haven't blocked the
         user, etc). If the name is specified, returns all users with that name.
@@ -855,16 +856,34 @@ class UserData(BaseData):
         if userid == NewUserID:
             return []
 
-        sql = """
-            SELECT user.id AS id, user.username AS uname, user.permissions AS permissions, profile.nickname AS pname, profile.about AS about, profile.icon AS icon
-            FROM user
-            LEFT JOIN profile ON profile.user_id = user.id
-            WHERE user.id = :myid
-        """
+        qualifiers: list[Fragment] = []
 
         if name is not None:
-            sql += " OR (user.username COLLATE utf8mb4_general_ci LIKE :name OR profile.nickname COLLATE utf8mb4_general_ci LIKE :name)"
-        cursor = self.execute(sql, {"myid": userid, "name": f"%{name}%"})
+            qualifiers.append(fragment(
+                """
+                    user.username COLLATE utf8mb4_general_ci LIKE %value:name OR
+                    profile.nickname COLLATE utf8mb4_general_ci LIKE %value:name
+                """,
+                name=f"%{name}%",
+            ))
+
+        if purpose == "search":
+            qualifiers.append(fragment("preferences.search_privacy IS NULL OR preferences.search_privacy != %value", SearchPrivacy.HIDDEN))
+        elif purpose == "invite":
+            qualifiers.append(fragment("preferences.invite_privacy IS NULL OR preferences.invite_privacy != %value", InvitePrivacy.DISALLOW))
+
+        cursor = self.execute(statement(
+            """
+                SELECT user.id AS id, user.username AS uname, user.permissions AS permissions, profile.nickname AS pname, profile.about AS about, profile.icon AS icon
+                FROM user
+                LEFT JOIN profile ON profile.user_id = user.id
+                LEFT JOIN preferences ON preferences.user_id = user.id
+                WHERE (user.id = %value:myid) OR (%andlist:qualifiers)
+            """,
+            myid=userid,
+            qualifiers=qualifiers,
+        ))
+
         users = [self.__to_user(u) for u in cursor.mappings()]
 
         # Post-filter by users who are activated, so we don't display deactivated users.

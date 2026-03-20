@@ -28,8 +28,15 @@ def pytest_collection_modifyitems(items: list[pytest.Function]) -> None:
         )
 
 
-@pytest.fixture(scope="session")
-def db() -> Engine:
+__config: Config | None = None
+
+
+def config() -> Config:
+    # Return cached config if needed.
+    global __config
+    if __config is not None:
+        return __config
+
     # First, try to open any testdb.ini file in our directory.
     ini = os.path.join(TESTS_PATH, ".testdb.toml")
     if os.path.isfile(ini):
@@ -48,37 +55,42 @@ def db() -> Engine:
         config = Config(configdict)
         config["database"]["engine"] = Data.create_engine(config)
 
-        session = Session(config.database.engine)
+        __config = config
 
-        # Now, need to drop all existing tables and recreate so we ensure the test DB is in a known state.
-        cursor = session.execute(
-            text("""
-                SELECT concat('DROP TABLE IF EXISTS `', table_name, '`;') AS cmd
-                FROM information_schema.tables
-                WHERE table_schema = :schema;
-            """),
-            {'schema': config.database.database},
-        )
-        for result in cursor.mappings():
-            cmd = result['cmd']
-            session.execute(
-                text(f"""
-                    SET FOREIGN_KEY_CHECKS = 0;
-                    {cmd}
-                """)
-            )
-
-        data = Data(config, session)
-        data.create()
-
-        session.commit()
-        session.close()
-
-        return config.database.engine
+        return config
 
     else:
         # No config, so skip this test.
         pytest.skip(f'No .testdb.toml found in {TESTS_PATH}, cannot manage test DB!')
+
+
+@pytest.fixture(scope="session")
+def db() -> Engine:
+    session = Session(config().database.engine)
+
+    # Now, need to drop all existing tables and recreate so we ensure the test DB is in a known state.
+    cursor = session.execute(
+        text("""
+            SELECT concat('DROP TABLE IF EXISTS `', table_name, '`;') AS cmd
+            FROM information_schema.tables
+            WHERE table_schema = :schema;
+        """),
+        {'schema': config().database.database},
+    )
+    cmds = "SET FOREIGN_KEY_CHECKS = 0;"
+    for result in cursor.mappings():
+        cmd = result['cmd']
+        cmds += cmd
+    session.execute(text(cmds))
+    session.commit()
+
+    data = Data(config(), session)
+    data.create()
+
+    session.commit()
+    session.close()
+
+    return config().database.engine
 
 
 @pytest.fixture(scope="function")
@@ -92,6 +104,19 @@ def tx(db: Engine) -> Generator[Session, None, None]:
         yield session
 
     finally:
-        # Roll it back so we don't pollute tests.
-        session.rollback()
+        # Nuke all test data so we don't pollute other tests.
+        cursor = session.execute(
+            text("""
+                SELECT concat('`', table_name, '`') AS table_name
+                FROM information_schema.tables
+                WHERE table_schema = :schema;
+            """),
+            {'schema': config().database.database},
+        )
+        cmds = "SET FOREIGN_KEY_CHECKS = 0;"
+        for result in cursor.mappings():
+            cmds += f"DELETE FROM {result['table_name']};"
+
+        session.execute(text(cmds))
+        session.commit()
         session.close()

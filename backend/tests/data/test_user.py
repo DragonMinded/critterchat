@@ -2,7 +2,7 @@ import pytest
 from sqlalchemy.orm import Session
 
 from critterchat.common import Time
-from critterchat.data import UserID, RoomID, UserPreferences, UISize, UserSettings, InfoState
+from critterchat.data import UserID, RoomID, UserPermission, UserPreferences, UISize, SearchPrivacy, InvitePrivacy, UserSettings, InfoState
 from critterchat.data.user import UserData
 
 from ..mocks import MockConfig
@@ -182,3 +182,115 @@ class TestUserData:
         # And make sure the availability boolean still works.
         assert userdata.has_updated_preferences(user.id, Time.now() - 10) is True
         assert userdata.has_updated_preferences(user.id, Time.now() + 10) is False
+
+    def test_get_visible_users(self, tx: Session) -> None:
+        """
+        Verifies that get_visible_users understands and respects privacy settings given a purpose, and
+        can properly filter out users when requested to by name match.
+        """
+
+        config = MockConfig()
+        userdata = UserData(config, tx)
+
+        # First, create some user accounts so we can test searching.
+        user1 = userdata.create_account('test_get_visible_users_1', 'some_arbitrary_password')
+        user2 = userdata.create_account('test_get_visible_users_2', 'some_arbitrary_password')
+        user3 = userdata.create_account('test_get_visible_users_3', 'some_arbitrary_password')
+        user4 = userdata.create_account('test_get_visible_users_4', 'some_arbitrary_password')
+        assert user1 is not None
+        assert user2 is not None
+        assert user3 is not None
+        assert user4 is not None
+
+        # Nickname them so we can verify searching by username and nickname.
+        user1.nickname = "first"
+        user1.permissions.add(UserPermission.ACTIVATED)
+        userdata.update_user(user1)
+
+        user2.nickname = "second"
+        user2.permissions.add(UserPermission.ACTIVATED)
+        userdata.update_user(user2)
+
+        user3.nickname = "third"
+        user3.permissions.add(UserPermission.ACTIVATED)
+        userdata.update_user(user3)
+
+        user4.nickname = "fourth"
+        userdata.update_user(user4)
+
+        # Now, configure one each to be not visible given a particular search.
+        user2_prefs = UserPreferences.default(user2.id)
+        user2_prefs.search_privacy = SearchPrivacy.HIDDEN
+        userdata.put_preferences(user2_prefs)
+
+        user3_prefs = UserPreferences.default(user3.id)
+        user3_prefs.invite_privacy = InvitePrivacy.DISALLOW
+        userdata.put_preferences(user3_prefs)
+
+        # Now, verify that we get the right accounts back for generic searches without names.
+        assert {user1.id, user3.id} == {u.id for u in userdata.get_visible_users(user1.id, "search")}
+        assert {user1.id, user2.id, user3.id} == {u.id for u in userdata.get_visible_users(user2.id, "search")}
+        assert {user1.id, user3.id} == {u.id for u in userdata.get_visible_users(user3.id, "search")}
+
+        # And same for invite searches.
+        assert {user1.id, user2.id} == {u.id for u in userdata.get_visible_users(user1.id, "invite")}
+        assert {user1.id, user2.id} == {u.id for u in userdata.get_visible_users(user2.id, "invite")}
+        assert {user1.id, user2.id, user3.id} == {u.id for u in userdata.get_visible_users(user3.id, "invite")}
+
+        # Now, re-run both of the above but with specific username searches.
+        assert {user1.id, user3.id} == {u.id for u in userdata.get_visible_users(user1.id, "search", name="users")}
+        assert {user1.id, user2.id, user3.id} == {u.id for u in userdata.get_visible_users(user2.id, "search", name="users")}
+        assert {user1.id, user3.id} == {u.id for u in userdata.get_visible_users(user3.id, "search", name="users")}
+        assert {user1.id, user2.id} == {u.id for u in userdata.get_visible_users(user1.id, "invite", name="users")}
+        assert {user1.id, user2.id} == {u.id for u in userdata.get_visible_users(user2.id, "invite", name="users")}
+        assert {user1.id, user2.id, user3.id} == {u.id for u in userdata.get_visible_users(user3.id, "invite", name="users")}
+
+        assert {user1.id} == {u.id for u in userdata.get_visible_users(user1.id, "search", name="users_1")}
+        assert {user1.id} == {u.id for u in userdata.get_visible_users(user2.id, "search", name="users_1")}
+        assert {user1.id} == {u.id for u in userdata.get_visible_users(user3.id, "search", name="users_1")}
+        assert {user1.id} == {u.id for u in userdata.get_visible_users(user1.id, "invite", name="users_1")}
+        assert {user1.id} == {u.id for u in userdata.get_visible_users(user2.id, "invite", name="users_1")}
+        assert {user1.id} == {u.id for u in userdata.get_visible_users(user3.id, "invite", name="users_1")}
+
+        assert set() == {u.id for u in userdata.get_visible_users(user1.id, "search", name="users_2")}
+        assert {user2.id} == {u.id for u in userdata.get_visible_users(user2.id, "search", name="users_2")}
+        assert set() == {u.id for u in userdata.get_visible_users(user3.id, "search", name="users_2")}
+        assert {user2.id} == {u.id for u in userdata.get_visible_users(user1.id, "invite", name="users_2")}
+        assert {user2.id} == {u.id for u in userdata.get_visible_users(user2.id, "invite", name="users_2")}
+        assert {user2.id} == {u.id for u in userdata.get_visible_users(user3.id, "invite", name="users_2")}
+
+        assert {user3.id} == {u.id for u in userdata.get_visible_users(user1.id, "search", name="users_3")}
+        assert {user3.id} == {u.id for u in userdata.get_visible_users(user2.id, "search", name="users_3")}
+        assert {user3.id} == {u.id for u in userdata.get_visible_users(user3.id, "search", name="users_3")}
+        assert set() == {u.id for u in userdata.get_visible_users(user1.id, "invite", name="users_3")}
+        assert set() == {u.id for u in userdata.get_visible_users(user2.id, "invite", name="users_3")}
+        assert {user3.id} == {u.id for u in userdata.get_visible_users(user3.id, "invite", name="users_3")}
+
+        assert {user1.id} == {u.id for u in userdata.get_visible_users(user1.id, "search", name="first")}
+        assert {user1.id} == {u.id for u in userdata.get_visible_users(user2.id, "search", name="first")}
+        assert {user1.id} == {u.id for u in userdata.get_visible_users(user3.id, "search", name="first")}
+        assert {user1.id} == {u.id for u in userdata.get_visible_users(user1.id, "invite", name="first")}
+        assert {user1.id} == {u.id for u in userdata.get_visible_users(user2.id, "invite", name="first")}
+        assert {user1.id} == {u.id for u in userdata.get_visible_users(user3.id, "invite", name="first")}
+
+        assert set() == {u.id for u in userdata.get_visible_users(user1.id, "search", name="second")}
+        assert {user2.id} == {u.id for u in userdata.get_visible_users(user2.id, "search", name="second")}
+        assert set() == {u.id for u in userdata.get_visible_users(user3.id, "search", name="second")}
+        assert {user2.id} == {u.id for u in userdata.get_visible_users(user1.id, "invite", name="second")}
+        assert {user2.id} == {u.id for u in userdata.get_visible_users(user2.id, "invite", name="second")}
+        assert {user2.id} == {u.id for u in userdata.get_visible_users(user3.id, "invite", name="second")}
+
+        assert {user3.id} == {u.id for u in userdata.get_visible_users(user1.id, "search", name="third")}
+        assert {user3.id} == {u.id for u in userdata.get_visible_users(user2.id, "search", name="third")}
+        assert {user3.id} == {u.id for u in userdata.get_visible_users(user3.id, "search", name="third")}
+        assert set() == {u.id for u in userdata.get_visible_users(user1.id, "invite", name="third")}
+        assert set() == {u.id for u in userdata.get_visible_users(user2.id, "invite", name="third")}
+        assert {user3.id} == {u.id for u in userdata.get_visible_users(user3.id, "invite", name="third")}
+
+        # Negative testing too.
+        assert set() == {u.id for u in userdata.get_visible_users(user3.id, "search", name="users_4")}
+        assert set() == {u.id for u in userdata.get_visible_users(user3.id, "invite", name="users_4")}
+        assert set() == {u.id for u in userdata.get_visible_users(user3.id, "search", name="fourth")}
+        assert set() == {u.id for u in userdata.get_visible_users(user3.id, "invite", name="fourth")}
+        assert set() == {u.id for u in userdata.get_visible_users(user3.id, "search", name="nobody")}
+        assert set() == {u.id for u in userdata.get_visible_users(user3.id, "invite", name="nobody")}

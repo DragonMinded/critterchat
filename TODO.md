@@ -2,7 +2,6 @@ TODO Immediate
 ==============
 
  - Preference for invites, including "auto-accept", "let me choose", and "disallow".
- - Preference for searchability in user search panel.
  - Another pass to PROTOCOL.md.
 
 TODO For Public Instance

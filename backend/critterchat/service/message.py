@@ -954,7 +954,7 @@ class MessageService:
 
         # Now, look up all users we could chat with, given our criteria.
         potentialusers = sorted(
-            self.__data.user.get_visible_users(userid, name=name),
+            self.__data.user.get_visible_users(userid, "search", name=name),
             key=lambda u: u.nickname,
         )
 
@@ -1038,7 +1038,7 @@ class MessageService:
 
         # Now, look up potential users that we could be inviting to this room.
         potentialusers = sorted(
-            self.__data.user.get_visible_users(userid, name=name),
+            self.__data.user.get_visible_users(userid, "invite", name=name),
             key=lambda u: u.nickname,
         )
 
