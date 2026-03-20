@@ -13,7 +13,7 @@ webcolors
 pillow
 requests
 pycryptodome
-passlib
+libpass
 sqlalchemy-stubs
 sql-fragments
 python-dateutil
