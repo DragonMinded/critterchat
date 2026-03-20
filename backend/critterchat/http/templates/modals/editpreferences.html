@@ -79,6 +79,44 @@
                     into one block of text. With it disabled, each message from the same person will appear in a separate block.
                 </div>
             </div>
+
+            <h2>Privacy</h2>
+            <span id="editpreferences-search-privacy-container">
+                <h4>Search Results</h4>
+                <div class="preference">
+                    <input type="radio" id="editpreferences-search-privacy-visible" name="search-privacy" value="visible" />
+                    <label for="editpreferences-search-privacy-visible">included</label>
+                    <input type="radio" id="editpreferences-search-privacy-hidden" name="search-privacy" value="hidden" />
+                    <label for="editpreferences-search-privacy-hidden">excluded</label>
+                    <div class="explain">
+                        With this setting set to included, your account will show up in search results when somebody
+                        else searches for chatters in the "find or start chat" interface. Others will be able to send
+                        a direct message to you by selecting your account in the search results. With this setting
+                        set to excluded, your account will not show up in search results. Others will still be able to
+                        send a direct message to you by clicking on your profile when they are in the same public room
+                        or private conversation as you.
+                    </div>
+                </div>
+            </span>
+            <span id="editpreferences-invite-privacy-container">
+                <h4>Private Conversation Invites</h4>
+                <div class="preference">
+                    <input type="radio" id="editpreferences-invite-privacy-auto_accept" name="invite-privacy" value="auto_accept" />
+                    <label for="editpreferences-invite-privacy-auto_accept">auto-accept invites</label>
+                    <input type="radio" id="editpreferences-invite-privacy-choose" name="invite-privacy" value="choose" />
+                    <label for="editpreferences-invite-privacy-choose">let me choose</label>
+                    <input type="radio" id="editpreferences-invite-privacy-disallow" name="invite-privacy" value="disallow" />
+                    <label for="editpreferences-invite-privacy-disallow">disallow invites</label>
+                    <div class="explain">
+                        With this setting set to auto-accept invites, you will automatically join any private conversation
+                        that you are invited to. With this setting set to let me choose, when somebody invites you to a
+                        private conversation an invite will appear on the left side menu and you will be able to choose whether
+                        to join the private conversation or decline the invite. With this setting set to disallow invites,
+                        others will not be able to invite you to private conversations.
+                    </div>
+                </div>
+            </span>
+
             <h2>Notifications</h2>
             <div class="preference">
                 <input type="checkbox" id="editpreferences-title-notifications">

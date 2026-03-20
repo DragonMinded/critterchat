@@ -43,6 +43,8 @@ class EditPreferences {
                     'title_notifs': $('#editpreferences-title-notifications').is(":checked"),
                     'mobile_audio_notifs': $('#editpreferences-mobile-audio-notifications').is(":checked"),
                     'admin_controls': $('input[type=radio][name="admin-controls"]:checked').val(),
+                    'invite_privacy': $('input[type=radio][name="invite-privacy"]:checked').val(),
+                    'search_privacy': $('input[type=radio][name="search-privacy"]:checked').val(),
                     'audio_notifs': set_audio_notifs,
                     'notif_sounds': this.newnotifications,
                     'notif_sounds_delete': Object.keys(this.deletednotifications),
@@ -160,6 +162,8 @@ class EditPreferences {
             $('input[type=radio][name="desktop-size"]').val([this.preferences.desktop_size]);
             $('input[type=radio][name="mobile-size"]').val([this.preferences.mobile_size]);
             $('input[type=radio][name="admin-controls"]').val([this.preferences.admin_controls]);
+            $('input[type=radio][name="search-privacy"]').val([this.preferences.search_privacy]);
+            $('input[type=radio][name="invite-privacy"]').val([this.preferences.invite_privacy]);
 
             AUDIO_PREFS.forEach((pref) => {
                 const checked = this.preferences.audio_notifs.includes(pref);
