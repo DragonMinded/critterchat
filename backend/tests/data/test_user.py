@@ -1,7 +1,8 @@
 import pytest
 from sqlalchemy.orm import Session
 
-from critterchat.data import UserID, RoomID, UserSettings, InfoState
+from critterchat.common import Time
+from critterchat.data import UserID, RoomID, UserPreferences, UISize, UserSettings, InfoState
 from critterchat.data.user import UserData
 
 from ..mocks import MockConfig
@@ -114,3 +115,70 @@ class TestUserData:
         assert settings.userid == new_settings.userid
         assert settings.roomid == new_settings.roomid
         assert settings.info == new_settings.info
+
+    def test_preferences_crud(self, tx: Session) -> None:
+        """
+        Tests basic create, retrieve, update, delete for user preferences in the system.
+        """
+
+        config = MockConfig()
+        userdata = UserData(config, tx)
+
+        # First, create a user so we can have settings against it.
+        user = userdata.create_account('test_preferences_crud', 'some_arbitrary_password')
+        assert user is not None
+
+        # Now, attempt to grab the preferences that don't exist yet.
+        prefs = userdata.get_preferences(user.id)
+        assert prefs is None
+        assert userdata.has_updated_preferences(user.id, Time.now() - 10) is False
+        assert userdata.has_updated_preferences(user.id, Time.now() + 10) is False
+
+        # Now, create a fresh preferences and save them.
+        prefs = UserPreferences.default(user.id)
+        userdata.put_preferences(prefs)
+
+        # Now, attempt to grab the preferences again.
+        new_prefs = userdata.get_preferences(user.id)
+        assert new_prefs is not None
+        assert new_prefs.userid == prefs.userid
+        assert new_prefs.rooms_on_top == prefs.rooms_on_top
+        assert new_prefs.combined_messages == prefs.combined_messages
+        assert new_prefs.color_scheme == prefs.color_scheme
+        assert new_prefs.desktop_size == prefs.desktop_size
+        assert new_prefs.mobile_size == prefs.mobile_size
+        assert new_prefs.admin_controls == prefs.admin_controls
+        assert new_prefs.title_notifs == prefs.title_notifs
+        assert new_prefs.search_privacy == prefs.search_privacy
+        assert new_prefs.invite_privacy == prefs.invite_privacy
+        assert new_prefs.mobile_audio_notifs == prefs.mobile_audio_notifs
+        assert new_prefs.audio_notifs == prefs.audio_notifs
+
+        # And make sure the availability boolean works.
+        assert userdata.has_updated_preferences(user.id, Time.now() - 10) is True
+        assert userdata.has_updated_preferences(user.id, Time.now() + 10) is False
+
+        # Now make some updates.
+        prefs.desktop_size = UISize.SMALLEST
+        prefs.mobile_size = UISize.LARGEST
+        userdata.put_preferences(prefs)
+
+        # Now, attempt to grab the preferences again after update.
+        new_prefs = userdata.get_preferences(user.id)
+        assert new_prefs is not None
+        assert new_prefs.userid == prefs.userid
+        assert new_prefs.rooms_on_top == prefs.rooms_on_top
+        assert new_prefs.combined_messages == prefs.combined_messages
+        assert new_prefs.color_scheme == prefs.color_scheme
+        assert new_prefs.desktop_size == prefs.desktop_size
+        assert new_prefs.mobile_size == prefs.mobile_size
+        assert new_prefs.admin_controls == prefs.admin_controls
+        assert new_prefs.title_notifs == prefs.title_notifs
+        assert new_prefs.search_privacy == prefs.search_privacy
+        assert new_prefs.invite_privacy == prefs.invite_privacy
+        assert new_prefs.mobile_audio_notifs == prefs.mobile_audio_notifs
+        assert new_prefs.audio_notifs == prefs.audio_notifs
+
+        # And make sure the availability boolean still works.
+        assert userdata.has_updated_preferences(user.id, Time.now() - 10) is True
+        assert userdata.has_updated_preferences(user.id, Time.now() + 10) is False

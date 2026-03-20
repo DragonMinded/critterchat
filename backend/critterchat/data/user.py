@@ -17,6 +17,8 @@ from .types import (
     ColorScheme,
     UISize,
     AdminControls,
+    SearchPrivacy,
+    InvitePrivacy,
     UserPreferences,
     UserSettings,
     UserNotification,
@@ -86,6 +88,8 @@ preferences = Table(
     Column("desktop_size", String(10)),
     Column("mobile_size", String(10)),
     Column("admin_controls", String(10)),
+    Column("search_privacy", String(10)),
+    Column("invite_privacy", String(14)),
     Column("title_notifs", Boolean),
     Column("mobile_audio_notifs", Boolean),
     Column("audio_notifs", Integer),
@@ -587,6 +591,8 @@ class UserData(BaseData):
             desktop_size=coerce_enum(UISize, result['desktop_size'], UISize.NORMAL),
             mobile_size=coerce_enum(UISize, result['mobile_size'], UISize.NORMAL),
             admin_controls=coerce_enum(AdminControls, result['admin_controls'], AdminControls.VISIBLE),
+            search_privacy=coerce_enum(SearchPrivacy, result['search_privacy'], SearchPrivacy.VISIBLE),
+            invite_privacy=coerce_enum(InvitePrivacy, result['invite_privacy'], InvitePrivacy.CHOOSE),
             title_notifs=bool(result['title_notifs']),
             mobile_audio_notifs=bool(result['mobile_audio_notifs']),
             audio_notifs=notifications,
@@ -619,10 +625,36 @@ class UserData(BaseData):
             audio_notifs |= an
 
         sql = """
-            INSERT INTO `preferences`
-                (`user_id`, `rooms_on_top`, `combined_messages`, `color_scheme`, `desktop_size`, `mobile_size`, `admin_controls`, `title_notifs`, `mobile_audio_notifs`, `audio_notifs`, `timestamp`)
-            VALUES
-                (:userid, :rooms_on_top, :combined_messages, :color_scheme, :desktop_size, :mobile_size, :admin_controls, :title_notifs, :mobile_audio_notifs, :audio_notifs, :ts)
+            INSERT INTO `preferences` (
+                `user_id`,
+                `rooms_on_top`,
+                `combined_messages`,
+                `color_scheme`,
+                `desktop_size`,
+                `mobile_size`,
+                `admin_controls`,
+                `title_notifs`,
+                `mobile_audio_notifs`,
+                `audio_notifs`,
+                `search_privacy`,
+                `invite_privacy`,
+                `timestamp`
+            )
+            VALUES (
+                :userid,
+                :rooms_on_top,
+                :combined_messages,
+                :color_scheme,
+                :desktop_size,
+                :mobile_size,
+                :admin_controls,
+                :title_notifs,
+                :mobile_audio_notifs,
+                :audio_notifs,
+                :search_privacy,
+                :invite_privacy,
+                :ts
+            )
             ON DUPLICATE KEY UPDATE
                 `rooms_on_top` = :rooms_on_top,
                 `combined_messages` = :combined_messages,
@@ -633,6 +665,8 @@ class UserData(BaseData):
                 `title_notifs` = :title_notifs,
                 `mobile_audio_notifs` = :mobile_audio_notifs,
                 `audio_notifs` = :audio_notifs,
+                `search_privacy` = :search_privacy,
+                `invite_privacy` = :invite_privacy,
                 `timestamp` = :ts
         """
         self.execute(sql, {
@@ -646,6 +680,8 @@ class UserData(BaseData):
             "title_notifs": preferences.title_notifs,
             "mobile_audio_notifs": preferences.mobile_audio_notifs,
             "audio_notifs": audio_notifs,
+            "search_privacy": preferences.search_privacy,
+            "invite_privacy": preferences.invite_privacy,
             "ts": Time.now()
         })
 

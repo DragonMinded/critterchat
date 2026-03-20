@@ -195,6 +195,17 @@ class AdminControls(StrEnum):
     HIDDEN = "hidden"
 
 
+class SearchPrivacy(StrEnum):
+    VISIBLE = "visible"
+    HIDDEN = "hidden"
+
+
+class InvitePrivacy(StrEnum):
+    AUTO_ACCEPT = "auto_accept"
+    CHOOSE = "choose"
+    DISALLOW = "disallow"
+
+
 class UserPreferences:
     def __init__(
         self,
@@ -206,6 +217,8 @@ class UserPreferences:
         desktop_size: UISize,
         mobile_size: UISize,
         admin_controls: AdminControls,
+        search_privacy: SearchPrivacy,
+        invite_privacy: InvitePrivacy,
         title_notifs: bool,
         mobile_audio_notifs: bool,
         audio_notifs: set[UserNotification],
@@ -218,8 +231,12 @@ class UserPreferences:
         self.mobile_size = mobile_size
         self.admin_controls = admin_controls
         self.title_notifs = title_notifs
+        self.search_privacy = search_privacy
+        self.invite_privacy = invite_privacy
         self.mobile_audio_notifs = mobile_audio_notifs
         self.audio_notifs = audio_notifs
+
+        # Only ever filled in by the user service before returning to the client.
         self.notif_sounds: dict[str, str] = {}
 
     def to_dict(self) -> dict[str, object]:
@@ -231,6 +248,8 @@ class UserPreferences:
             "mobile_size": self.mobile_size,
             "admin_controls": self.admin_controls,
             "title_notifs": self.title_notifs,
+            "search_privacy": self.search_privacy,
+            "invite_privacy": self.invite_privacy,
             "mobile_audio_notifs": self.mobile_audio_notifs,
             "audio_notifs": [str(an.name) for an in self.audio_notifs],
             "notif_sounds": self.notif_sounds,
@@ -246,6 +265,8 @@ class UserPreferences:
             desktop_size=UISize.NORMAL,
             mobile_size=UISize.NORMAL,
             admin_controls=AdminControls.VISIBLE,
+            search_privacy=SearchPrivacy.VISIBLE,
+            invite_privacy=InvitePrivacy.CHOOSE,
             title_notifs=True,
             mobile_audio_notifs=False,
             audio_notifs=set(),

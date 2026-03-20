@@ -289,6 +289,8 @@ class TestMessagePumpUser:
                     'mobile_size': 'normal',
                     'admin_controls': 'visible',
                     'title_notifs': True,
+                    'search_privacy': 'visible',
+                    'invite_privacy': 'choose',
                     'mobile_audio_notifs': False,
                     'audio_notifs': [],
                     'notif_sounds': {

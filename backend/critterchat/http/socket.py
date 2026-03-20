@@ -29,6 +29,8 @@ from ..data import (
     ColorScheme,
     UISize,
     AdminControls,
+    SearchPrivacy,
+    InvitePrivacy,
     Occupant,
     NewActionID,
     ActionID,
@@ -531,6 +533,8 @@ def updatepreferences(json: dict[str, object]) -> None:
     new_desktop_size = coerce_enum(UISize, json.get('desktop_size'))
     new_mobile_size = coerce_enum(UISize, json.get('mobile_size'))
     new_admin_controls = coerce_enum(AdminControls, json.get('admin_controls'))
+    new_search_privacy = coerce_enum(SearchPrivacy, json.get('search_privacy'))
+    new_invite_privacy = coerce_enum(InvitePrivacy, json.get('invite_privacy'))
     new_title_notifs = json.get('title_notifs', None)
     if new_title_notifs is not None:
         new_title_notifs = bool(new_title_notifs)
@@ -571,6 +575,8 @@ def updatepreferences(json: dict[str, object]) -> None:
             mobile_size=new_mobile_size,
             admin_controls=new_admin_controls,
             title_notifs=new_title_notifs,
+            search_privacy=new_search_privacy,
+            invite_privacy=new_invite_privacy,
             mobile_audio_notifs=new_mobile_audio_notifs,
             audio_notifs=new_audio_notifs,
             notif_sounds=new_notif_sounds,

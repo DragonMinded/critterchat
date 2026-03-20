@@ -24,6 +24,8 @@ from ..data import (
     ColorScheme,
     UISize,
     AdminControls,
+    SearchPrivacy,
+    InvitePrivacy,
 )
 from .attachment import AttachmentService
 
@@ -99,6 +101,8 @@ class UserService:
         desktop_size: UISize | None = None,
         mobile_size: UISize | None = None,
         admin_controls: AdminControls | None = None,
+        search_privacy: SearchPrivacy | None = None,
+        invite_privacy: InvitePrivacy | None = None,
         title_notifs: bool | None = None,
         mobile_audio_notifs: bool | None = None,
         audio_notifs: set[str] | None = None,
@@ -122,6 +126,10 @@ class UserService:
             prefs.mobile_size = mobile_size
         if admin_controls is not None:
             prefs.admin_controls = admin_controls
+        if search_privacy is not None:
+            prefs.search_privacy = search_privacy
+        if invite_privacy is not None:
+            prefs.invite_privacy = invite_privacy
         if title_notifs is not None:
             prefs.title_notifs = title_notifs
         if mobile_audio_notifs is not None:
