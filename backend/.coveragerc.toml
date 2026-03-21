@@ -1,0 +1,7 @@
+[run]
+branch = true
+
+[report]
+omit = [
+    "*/migrations/*",
+]

@@ -29,3 +29,4 @@ types-setuptools
 mypy
 flake8
 pytest
+pytest-cov

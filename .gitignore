@@ -12,3 +12,4 @@ frontend/node_modules/
 backend/.env/
 backend/.venv/
 backend/tests/.testdb.toml
+backend/.coverage
