@@ -56,6 +56,27 @@ class TestUserData:
 
         # No delete because we don't support user deletion since that would screw history.
 
+    def test_user_password(self, tx: Session) -> None:
+        """
+        Tests password verification and update functionality.
+        """
+
+        config = MockConfig()
+        userdata = UserData(config, tx)
+
+        # First, create the user
+        user = userdata.create_account('test_user_password', 'some_arbitrary_password')
+        assert user is not None
+
+        # Now, verify that the password we created the account with validates.
+        assert userdata.validate_password(user.id, 'some_arbitrary_password') is True
+        assert userdata.validate_password(user.id, 'another_wrong_password') is False
+
+        # Now, change the password, verify that we still work.
+        userdata.update_password(user.id, 'brand_new_password')
+        assert userdata.validate_password(user.id, 'brand_new_password') is True
+        assert userdata.validate_password(user.id, 'some_arbitrary_password') is False
+
     def test_settings_crud(self, tx: Session) -> None:
         """
         Tests basic create, retrieve, update, delete for user settings in the system.
