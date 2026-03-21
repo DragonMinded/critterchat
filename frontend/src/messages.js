@@ -1296,24 +1296,57 @@ class Messages {
                 html += '  </div>';
                 html += '</div>';
             } else if (this.roomType != "dm" && message.action == "join") {
+                // Handle the case where a user was added to a room instead of joining on their own.
+                this.occupants.forEach((occupant) => {
+                    if (occupant.id == message.details.inviter) {
+                        otheroccupant = occupant;
+                    }
+                });
+
+
                 html  = '<div class="item" id="' + message.id + '">';
                 html += '  <div class="content-wrapper">';
                 html += '    <div class="meta-wrapper">';
                 html += '      <div class="action-wrapper">';
-                html += '        <span class="name" dir="auto" id="' + message.occupant.id + '">' + escapeHtml(message.occupant.nickname) + '</span>';
-                html += '        <span class="action">has joined!</span>';
+
+                if (otheroccupant) {
+                    html += '        <span class="name" dir="auto" id="' + message.occupant.id + '">' + escapeHtml(message.occupant.nickname) + '</span>';
+                    html += '        <span class="action">has been added to the ' + type + ' by</span>';
+                    html += '        <span class="name" dir="auto" id="' + otheroccupant.id + '">' + escapeHtml(otheroccupant.nickname) + '</span>';
+                    html += '        <span class="action">!</span>';
+                } else {
+                    html += '        <span class="name" dir="auto" id="' + message.occupant.id + '">' + escapeHtml(message.occupant.nickname) + '</span>';
+                    html += '        <span class="action">has joined!</span>';
+                }
+
                 html += '      </div>';
                 html += '      <span class="timestamp">' + formatDateTime(message.timestamp) + '</span>';
                 html += '    </div>';
                 html += '  </div>';
                 html += '</div>';
             } else if (this.roomType != "dm" && message.action == "leave") {
+                // Handle the case where a user was removed from a room instead of leaving on their own.
+                this.occupants.forEach((occupant) => {
+                    if (occupant.id == message.details.remover) {
+                        otheroccupant = occupant;
+                    }
+                });
+
                 html  = '<div class="item" id="' + message.id + '">';
                 html += '  <div class="content-wrapper">';
                 html += '    <div class="meta-wrapper">';
                 html += '      <div class="action-wrapper">';
-                html += '        <span class="name" dir="auto" id="' + message.occupant.id + '">' + escapeHtml(message.occupant.nickname) + '</span>';
-                html += '        <span class="action">has left!</span>';
+
+                if (otheroccupant) {
+                    html += '        <span class="name" dir="auto" id="' + message.occupant.id + '">' + escapeHtml(message.occupant.nickname) + '</span>';
+                    html += '        <span class="action">has been removed from the ' + type + ' by</span>';
+                    html += '        <span class="name" dir="auto" id="' + otheroccupant.id + '">' + escapeHtml(otheroccupant.nickname) + '</span>';
+                    html += '        <span class="action">!</span>';
+                } else {
+                    html += '        <span class="name" dir="auto" id="' + message.occupant.id + '">' + escapeHtml(message.occupant.nickname) + '</span>';
+                    html += '        <span class="action">has left!</span>';
+                }
+
                 html += '      </div>';
                 html += '      <span class="timestamp">' + formatDateTime(message.timestamp) + '</span>';
                 html += '    </div>';

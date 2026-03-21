@@ -8,6 +8,7 @@ from ..data import (
     ActionType,
     Attachment,
     Invite,
+    InvitePrivacy,
     Occupant,
     Room,
     RoomPurpose,
@@ -130,7 +131,7 @@ class MessageService:
             raise MessageServiceException("You cannot message a room that does not exist!")
 
         # Now, make sure the user adding to the room is here and not muted.
-        occupants = self.__data.room.get_room_occupants(room.id, room.purpose == RoomPurpose.DIRECT_MESSAGE)
+        occupants = self.__data.room.get_room_occupants(room.id, include_left=room.purpose == RoomPurpose.DIRECT_MESSAGE)
         for occupant in occupants:
             if occupant.userid == userid:
                 if occupant.muted:
@@ -482,10 +483,10 @@ class MessageService:
     def __infer_room_info(self, userid: UserID, room: Room) -> None:
         if room.purpose == RoomPurpose.ROOM:
             room_name = "Unnamed Public Room"
-            occupants = self.__data.room.get_room_occupants(room.id, include_invited=True)
+            occupants = self.__data.room.get_room_occupants(room.id, include_left=True, include_invited=True)
         elif room.purpose == RoomPurpose.CHAT:
             room_name = "Unnamed Private Conversation"
-            occupants = self.__data.room.get_room_occupants(room.id, include_invited=True)
+            occupants = self.__data.room.get_room_occupants(room.id, include_left=True, include_invited=True)
         else:
             # Figure out how many people are in the direct message, name it after them.
             occupants = self.__data.room.get_room_occupants(room.id, include_left=True)
@@ -609,7 +610,11 @@ class MessageService:
         room = self.__data.room.get_room(roomid)
         if room:
             self.__infer_room_info(userid, room)
-            self.__data.requestcache.occupants[roomid] = room.occupants
+            occupants = [
+                self.__attachments.resolve_occupant_icon(o)
+                for o in room.occupants
+            ]
+            self.__data.requestcache.occupants[roomid] = occupants
         else:
             self.__data.requestcache.occupants[roomid] = None
 
@@ -745,7 +750,7 @@ class MessageService:
         room = self.__data.room.get_room(roomid)
         if not room:
             raise MessageServiceException("You cannot update a room that does not exist!")
-        occupants = self.__data.room.get_room_occupants(room.id, room.purpose == RoomPurpose.DIRECT_MESSAGE)
+        occupants = self.__data.room.get_room_occupants(room.id, include_left=room.purpose == RoomPurpose.DIRECT_MESSAGE)
 
         # Now, make sure the user adding to the room is here and not muted.
         for occupant in occupants:
@@ -830,7 +835,24 @@ class MessageService:
         if room.purpose not in {RoomPurpose.ROOM, RoomPurpose.CHAT}:
             raise MessageServiceException("Cannot invite to this room!")
 
-        self.__data.room.grant_room_invite(roomid, inviterid=inviter, invitedid=invited)
+        # Now, check the invitee's privacy settings. Depending on the setting, the invitee should either
+        # auto-join the room, get an invite to the room, or we should reject the invite.
+        prefs = self.__data.user.get_preferences(invited)
+        privacy = InvitePrivacy.CHOOSE if prefs is None else prefs.invite_privacy
+
+        if privacy == InvitePrivacy.AUTO_ACCEPT:
+            # Just join the room immediately.
+            self.__data.room.join_room(roomid, invited, inviter=inviter)
+
+        elif privacy == InvitePrivacy.CHOOSE:
+            # Send an invite that the user can choose to accept or decline.
+            self.__data.room.grant_room_invite(roomid, inviterid=inviter, invitedid=invited)
+
+        else:
+            # Refuse to invite this user. Normally should not happen since they won't show up
+            # on the invitable users search results, but it's possible the user changed their
+            # preferences between the search itself and getting sent an invite.
+            raise MessageServiceException("Cannot invite this user!")
 
     def uninvite_to_room(self, roomid: RoomID, inviter: UserID, invited: UserID) -> None:
         room = self.__data.room.get_room(roomid)

@@ -1,7 +1,6 @@
 TODO Immediate
 ==============
 
- - Preference for invites, including "auto-accept", "let me choose", and "disallow".
  - Another pass to PROTOCOL.md.
 
 TODO For Public Instance

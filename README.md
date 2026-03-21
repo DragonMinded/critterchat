@@ -35,7 +35,7 @@ federation between instances that can be enabled or disabled per-instance.
  - Pinned messages.
  - Sticker support.
  - Moderation tools for network admin (global mute, global ban, etc).
- - Moderation tools for individuals (block user, allow messages, allow in search, etc.).
+ - Moderation tools for individuals (block user, allow direct messages, etc.).
  - Emoji auto-categorization by prefix.
  - Arbitrary file attachments.
  - Sitewide CSS themeing with CSS moved to themes directory.

@@ -703,6 +703,18 @@ class Action:
         }
 
     def _get_details(self) -> dict[str, object]:
+        if self.action == ActionType.JOIN:
+            details = {**self.details}
+            if 'inviter' in details:
+                details["inviter"] = Occupant.from_id(cast(OccupantID, details["inviter"]))
+            return details
+
+        if self.action == ActionType.LEAVE:
+            details = {**self.details}
+            if 'remover' in details:
+                details["remover"] = Occupant.from_id(cast(OccupantID, details["remover"]))
+            return details
+
         if self.action == ActionType.CHANGE_MESSAGE:
             details = {**self.details}
             details["actionid"] = Action.from_id(cast(ActionID, details["actionid"]))

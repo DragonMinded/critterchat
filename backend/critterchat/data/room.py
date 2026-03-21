@@ -540,13 +540,14 @@ class RoomData(BaseData):
             room.iconid = newroom.iconid
             room.last_action_timestamp = timestamp
 
-    def join_room(self, roomid: RoomID, userid: UserID) -> None:
+    def join_room(self, roomid: RoomID, userid: UserID, *, inviter: UserID | None = None) -> None:
         """
         Given a room to join and a user who wants to join, try joining that room.
 
         Parameters:
             roomid - ID of the room we wish to join.
             userid - ID of the user wishing to join.
+            inviter - ID of the user that invited this user to join, if the join was based on an invite.
         """
         if userid == NewUserID or roomid == NewRoomID:
             return None
@@ -572,6 +573,16 @@ class RoomData(BaseData):
             self.execute(sql, {"userid": userid, "roomid": roomid})
 
             if not already_joined:
+                details: dict[str, object] = {}
+                if inviter:
+                    sql = """
+                        SELECT id FROM occupant WHERE `user_id` = :userid AND `room_id` = :roomid AND `inactive` != TRUE
+                    """
+                    cursor = self.execute(sql, {"userid": inviter, "roomid": roomid})
+                    if cursor.rowcount == 1:
+                        result = cursor.mappings().fetchone()
+                        details['inviter'] = OccupantID(result['id'])
+
                 occupant = Occupant(
                     occupantid=NewOccupantID,
                     userid=userid,
@@ -581,7 +592,7 @@ class RoomData(BaseData):
                     timestamp=Time.now(),
                     occupant=occupant,
                     action=ActionType.JOIN,
-                    details={},
+                    details=details,
                 )
                 self.insert_action(roomid, action)
 
@@ -614,16 +625,27 @@ class RoomData(BaseData):
                 """
                 self.execute(sql, {"userid": userid, "roomid": roomid})
 
-    def leave_room(self, roomid: RoomID, userid: UserID) -> None:
+    def leave_room(self, roomid: RoomID, userid: UserID, *, remover: UserID | None = None) -> None:
         """
         Given a room to leave and a user who wants to leave, try leaving that room.
 
         Parameters:
             roomid - ID of the room we wish to leave.
             userid - ID of the user wishing to leave.
+            remover - ID of the user removing this user from the room if this is the case.
         """
         if userid == NewUserID or roomid == NewRoomID:
             return
+
+        details: dict[str, object] = {}
+        if remover:
+            sql = """
+                SELECT id FROM occupant WHERE `user_id` = :userid AND `room_id` = :roomid AND `inactive` != TRUE
+            """
+            cursor = self.execute(sql, {"userid": remover, "roomid": roomid})
+            if cursor.rowcount == 1:
+                result = cursor.mappings().fetchone()
+                details['remover'] = OccupantID(result['id'])
 
         # insert_action will ignore actions for anyone already out of the room.
         occupant = Occupant(
@@ -635,7 +657,7 @@ class RoomData(BaseData):
             timestamp=Time.now(),
             occupant=occupant,
             action=ActionType.LEAVE,
-            details={},
+            details=details,
         )
         self.insert_action(roomid, action)
 
@@ -922,7 +944,7 @@ class RoomData(BaseData):
             iconid=AttachmentID(icon) if icon else None,
         )
 
-    def get_room_occupants(self, roomid: RoomID, include_left: bool = False, include_invited: bool = False) -> list[Occupant]:
+    def get_room_occupants(self, roomid: RoomID, *, include_left: bool = False, include_invited: bool = False) -> list[Occupant]:
         """
         Given a room ID, look up all occupants of that room and their names and avatars.
 
