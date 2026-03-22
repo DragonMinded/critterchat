@@ -152,7 +152,7 @@ class RoomData(BaseData):
         elif purpose == RoomPurpose.DIRECT_MESSAGE:
             return RoomPurpose.DIRECT_MESSAGE
         else:
-            raise Exception("Logic error, can't find purpose!")
+            raise ValueError(f"Logic error, invalid purpose {purpose}!")
 
     def get_joined_rooms(self, userid: UserID, include_left: bool = False) -> list[Room]:
         """
@@ -522,7 +522,7 @@ class RoomData(BaseData):
         """
 
         if room.id != NewRoomID:
-            raise Exception("Logic error, cannot insert already-persisted room as a new room!")
+            raise ValueError("Logic error, cannot insert already-persisted room as a new room!")
 
         timestamp = Time.now()
         sql = """
@@ -1237,16 +1237,16 @@ class RoomData(BaseData):
             action - The action itself that should be added.
         """
         if roomid == NewRoomID:
-            raise Exception("Logic error, should not try to insert an action to a new room ID!")
+            raise ValueError("Logic error, should not try to insert an action to a new room ID!")
 
         if action.id != NewActionID:
-            raise Exception("Logic error, cannot insert already-persisted action as a new action!")
+            raise ValueError("Logic error, cannot insert already-persisted action as a new action!")
 
         if action.occupant:
             if action.occupant.userid == NewUserID:
                 # Cannot insert an action as a fake user. This should be performed as an action without
                 # an occupant.
-                raise Exception("Logic error, cannot insert an action with an empty occupant userid!")
+                raise ValueError("Logic error, cannot insert an action with an empty occupant userid!")
 
             # First, find the occupant ID.
             sql = "SELECT id FROM occupant WHERE room_id = :roomid AND user_id = :userid AND inactive != TRUE LIMIT 1"

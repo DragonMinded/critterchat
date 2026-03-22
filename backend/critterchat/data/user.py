@@ -163,7 +163,7 @@ class UserData(BaseData):
         elif purpose == RoomPurpose.DIRECT_MESSAGE:
             return RoomPurpose.DIRECT_MESSAGE
         else:
-            raise Exception("Logic error, can't find purpose!")
+            raise ValueError(f"Logic error, invalid purpose {purpose}!")
 
     def validate_password(self, userid: UserID, password: str) -> bool:
         """
@@ -197,7 +197,7 @@ class UserData(BaseData):
             password - String, plaintext password that will be hashed
         """
         if userid == NewUserID:
-            raise Exception("Logic error, should not try to update password for a new user ID!")
+            raise ValueError("Logic error, should not try to update password for a new user ID!")
 
         passhash, salt = self.__compute_password(password=password)
         now = Time.now()
@@ -328,7 +328,7 @@ class UserData(BaseData):
             A string that can be used as a password recovery ID.
         """
         if userid == NewUserID:
-            raise Exception("Logic error, should not try to create recovery strings for a new user ID!")
+            raise ValueError("Logic error, should not try to create recovery strings for a new user ID!")
 
         # Create a new recovery string that is unique
         while True:
@@ -412,7 +412,7 @@ class UserData(BaseData):
             A string that can be used as a session ID.
         """
         if userid == NewUserID:
-            raise Exception("Logic error, should not try to create session for a new user ID!")
+            raise ValueError("Logic error, should not try to create session for a new user ID!")
 
         # Create a new session that is unique
         while True:
@@ -497,12 +497,10 @@ class UserData(BaseData):
         if existing_user:
             return None
 
-        sql = "INSERT INTO user (`username`, `password`, `salt`) VALUES (:username, :hash, :salt)"
+        sql = "INSERT INTO user (`username`, `password`, `salt`, `timestamp`) VALUES (:username, :hash, :salt, :ts)"
         passhash, salt = self.__compute_password(password=password)
-        cursor = self.execute(sql, {"hash": passhash, "salt": salt, "username": username})
-        if cursor.rowcount != 1:
-            return None
-        return self.get_user(UserID(cursor.lastrowid))
+        cursor = self.execute(sql, {"hash": passhash, "salt": salt, "username": username, "ts": Time.now()})
+        return self.get_user(UserID(cursor.lastrowid)) if cursor.rowcount == 1 else None
 
     def get_settings(self, session: str) -> UserSettings | None:
         """
@@ -551,7 +549,7 @@ class UserData(BaseData):
             settings - The new settings bundle we should persist.
         """
         if settings.userid == NewUserID:
-            raise Exception("Logic error, should not try to update settings for a new user ID!")
+            raise ValueError("Logic error, should not try to update settings for a new user ID!")
 
         sql = """
             INSERT INTO `settings`
@@ -619,7 +617,7 @@ class UserData(BaseData):
             preferences - The new preferences bundle we should persist.
         """
         if preferences.userid == NewUserID:
-            raise Exception("Logic error, should not try to update preferences for a new user ID!")
+            raise ValueError("Logic error, should not try to update preferences for a new user ID!")
 
         audio_notifs: int = 0
         for an in preferences.audio_notifs:
@@ -764,9 +762,8 @@ class UserData(BaseData):
             result = cursor.mappings().fetchone()
             newer_update = int(result['timestamp']) if result['timestamp'] else None
 
-            if last_update is None:
-                last_update = newer_update
-            elif last_update is not None and newer_update is not None:
+            last_update = newer_update if last_update is None else last_update
+            if last_update is not None and newer_update is not None:
                 last_update = max(last_update, newer_update)
 
         cursor = self.execute("SELECT timestamp FROM preferences ORDER BY timestamp DESC LIMIT 1")
@@ -774,9 +771,8 @@ class UserData(BaseData):
             result = cursor.mappings().fetchone()
             newer_update = int(result['timestamp']) if result['timestamp'] else None
 
-            if last_update is None:
-                last_update = newer_update
-            elif last_update is not None and newer_update is not None:
+            last_update = newer_update if last_update is None else last_update
+            if last_update is not None and newer_update is not None:
                 last_update = max(last_update, newer_update)
 
         return last_update
@@ -786,7 +782,7 @@ class UserData(BaseData):
         Given a valid user, update that user's information.
         """
         if user.id == NewUserID:
-            return
+            raise ValueError("Logic error, should not try to update new user ID!")
 
         if (
             user.iconid is not None and
@@ -824,19 +820,25 @@ class UserData(BaseData):
         """
         self.execute(sql, {"userid": user.id, "perms": permissions, "ts": now})
 
-    def get_users(self, name: str | None = None) -> list[User]:
+    def get_users(self, *, name: str | None = None) -> list[User]:
         """
         Return a list of all users on the network.
         """
 
         sql = """
-            SELECT user.id AS id, user.username AS uname, user.permissions AS permissions, profile.nickname AS pname, profile.about AS about, profile.icon AS icon
+            SELECT
+                user.id AS id,
+                user.username AS uname,
+                user.permissions AS permissions,
+                profile.nickname AS pname,
+                profile.about AS about,
+                profile.icon AS icon
             FROM user
             LEFT JOIN profile ON profile.user_id = user.id
         """
 
         if name is not None:
-            sql += " OR (user.username COLLATE utf8mb4_general_ci LIKE :name OR profile.nickname COLLATE utf8mb4_general_ci LIKE :name)"
+            sql += " WHERE (user.username COLLATE utf8mb4_general_ci LIKE :name OR profile.nickname COLLATE utf8mb4_general_ci LIKE :name)"
 
         cursor = self.execute(sql, {"name": f"%{name}%"})
         users = [self.__to_user(u) for u in cursor.mappings()]
@@ -848,7 +850,7 @@ class UserData(BaseData):
 
         return users
 
-    def get_visible_users(self, userid: UserID, purpose: Literal["search", "invite"], name: str | None = None) -> list[User]:
+    def get_visible_users(self, userid: UserID, purpose: Literal["search", "invite"], *, name: str | None = None) -> list[User]:
         """
         Given a user searching, return a list of visible users (users that haven't blocked the
         user, etc). If the name is specified, returns all users with that name.
@@ -871,6 +873,8 @@ class UserData(BaseData):
             qualifiers.append(fragment("preferences.search_privacy IS NULL OR preferences.search_privacy != %value", SearchPrivacy.HIDDEN))
         elif purpose == "invite":
             qualifiers.append(fragment("preferences.invite_privacy IS NULL OR preferences.invite_privacy != %value", InvitePrivacy.DISALLOW))
+        else:
+            raise ValueError(f"Logic error, unrecognized purpose {purpose}!")
 
         cursor = self.execute(statement(
             """
@@ -958,10 +962,8 @@ class UserData(BaseData):
                 SELECT COUNT(id) AS count FROM action WHERE `room_id` = :roomid AND `id` > :actionid AND `action` IN :types
             """
             cursor = self.execute(sql, {"roomid": roomid, "actionid": actionid, "types": types})
-            if cursor.rowcount != 1:
-                return 0
-            result = cursor.mappings().fetchone()
-            return int(result["count"])
+            result = cursor.mappings().fetchone() if cursor.rowcount == 1 else None
+            return int(result["count"]) if result else 0
 
         # There's probably a SQL way to do this, but I don't want to bang my head against
         # it right now, so it can come in a future improvement.
@@ -995,10 +997,8 @@ class UserData(BaseData):
                 SELECT COUNT(id) AS count FROM action WHERE `room_id` = :roomid AND `action` IN :types
             """
             cursor = self.execute(sql, {"roomid": roomid, "types": types})
-            if cursor.rowcount != 1:
-                return 0
-            result = cursor.mappings().fetchone()
-            return int(result["count"])
+            result = cursor.mappings().fetchone() if cursor.rowcount == 1 else None
+            return int(result["count"]) if result else 0
 
         computed_counts += [(c[0], hydrate_new_count(c[0], c[1])) for c in extra_rooms]
         return computed_counts
