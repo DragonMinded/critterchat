@@ -1015,6 +1015,7 @@ class MessageService:
                 results.append(SearchResult(room.name, handle, room.purpose, True, False, room.id, None, icon))
             else:
                 results.append(SearchResult(room.name, handle, room.purpose, False, invited, room.id, None, icon))
+
         for user in potentialusers:
             icon = user.icon
             if not icon:

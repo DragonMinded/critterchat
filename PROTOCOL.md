@@ -36,6 +36,23 @@ This endpoint lives at `/upload/attachments` and expects an application/json POS
 
 The following data types are objects which are found in multiple packets. They are intentionally kept consistent across those packets and are thus documented here.
 
+### profile
+
+An object representing a user and their profile. In CritterChat a user profile is a global object with a 1:1 map between users and their profile. Note that many packets will use occupant objects instead of profile objects. Profiles have the following attributes:
+
+ - `id` - A string identifier unique to the user that was returned. Can be used to uniquely and permanently refer to a user.
+ - `username` - A string representing the user's username, as they would log in and as other users would mention them.
+ - `nickname` - A string representing the user's currently set nickname. If the user has not set this, it will be defaulted to the same value as the `username`.
+ - `about` - A string representing the user's about section. If the user has not set this, it will be defaulted to the empty string.
+ - `icon` - A string URI pointing at the user's currently set icon. If the user has not set this, this will point at the instance default avatar.
+ - `occupantid` - A string occupant ID that should match the occupant ID used to request this profile. Only included when the profile is looked up via occupant ID and not via user ID.
+ - `moderator` - A boolean representing whether this user is a moderator in the room they belong to. Only included when the profile is looked up via occupant ID, and in that case the flag is relative to the room the occupant exists in.
+ - `muted` - A boolean representing whether this user is muted in the room they belong to. Only included when the profile is looked up via occupant ID, and in that case the flag is relative to the room the occupant exists in.
+ - `invite` - An invite object representing whether this user has a pending invite to the room they are being looked up on behalf of. Only included when the profile is looked up via occupant ID, and in that case the invite is relative to the room the occupant exists in.
+ - `inactive` - A boolean representing whether this user is inactive (true) or if they are active (false). Inactive users are those who have been deactivated by an administrator after they've joined a room.
+ - `full_username` - A string representing the user's username including the instance domain. Not currently used, but will be relevant once 1:1 message federation exists.
+ - `permissions` - A list of strings representing a permission that the user has granted to them. Only returned in the case that the currently logged in user making the request is an instance admin. That means if the currently logged in user is an instance admin, all profile lookups will include this.
+
 ### room
 
 An object representing a room. In CritterChat a room is an object that zero or more occupants can be joined to. All users who are joined to a room can request various things about the room and are sent updates that occur to the room such as chat messages sent, joins, leaves, and the like. Rooms have the following attributes:
@@ -47,6 +64,7 @@ An object representing a room. In CritterChat a room is an object that zero or m
  - `topic` - A string representing the topic of the room. If a topic is not set, this will be an empty string.
  - `public` - A boolean representing whether this room is public or private. Public rooms are visible in search even when a user isn't joined to a room. Private rooms require an invite.
  - `moderated` - A boolean representing whether this room is moderated or free-for-all. Moderated rooms require a moderator to update info, and allow moderators to mute users. Free-for-all rooms allow anyone to update room info, though an administrator can still mute users.
+ - `autojoin` - A boolean representing whether this room is an auto-join room or not. Auto-join rooms are joined by new users automatically. Rooms that are not auto-join need to be explicitly joined by users.
  - `oldest_action` - A string identifier pointing at the very first action in the room, referring to that action by its unique identifier. A client can infer that it has all actions in a room by checking to see if it has received the action identified by this string identifier. This is useful for determining if there is any additional scrollback to request.
  - `newest_action` - A string identifier pointing at the very last action in the room, referring to that action by its unique identifier. A client can infer that it has all actions in a room by checking to see if it has received the action identified by this string identifier. This is useful for determining if there are any newer messages that were missed during a disconnect.
  - `last_action_timestamp` - An integer unix timestamp representing the last action of this room. Rooms which have been modified more recently will have a larger integer than rooms which were modified further back in time. This will match the timestamp of the most recent action associated with a room.
@@ -62,9 +80,23 @@ An occupant who is or was joined to a room. In CritterChat, all rooms have zero 
  - `username` - A string representing the occupant's username, as they would log in and as other occupants of a room would mention them.
  - `nickname` - A string representing the occupant's currently set nickname for this room. If the user has not customized a nickname for the room, this defaults to the user's nickname as found in their profile, and if that isn't set defaults to the user's username.
  - `icon` - A string URI pointing at the user's currently set icon for this room. If the user has not customized an icon for this room, this defaults to the user's configured icon for the instance. If that is not set, the default user avatar will be returned here instead.
- - `inactive` - A boolean representing whether this occupant has left the room (true) or if they are still in the room (false). This is useful because clients need to render names for users who have left when showing their actions in chat history, but need to show only active users in a room's user list.
+ - `present` - A boolean representing whether this occupant is in the room (true) or not (false). This is useful because clients need to render names for users who have left when showing their actions in chat history, but need to show only present uesrs in the room's user list.
+ - `inactive` - A boolean representing whether this occupant is inactive (true) or if they are active (false). Inactive users are those who have been deactivated by an administrator after they've joined a room.
  - `moderator` - A boolean representing whether this occupant is a moderator (true) or not (false) in the room this occupant belongs to. Moderators can edit room info and mute users in rooms that are marked as moderated.
  - `muted` - A boolean representing whether this occupant is muted (true) or unmuted (false) in the room this occupant belongs to. Muted users cannot edit room info or send messages to the room.
+ - `invite` - An invite object representing an invite to the room this occupant is found in. For joined occupants, this will always be `null`. For occupants that have not joined but are invited, this will represent the pending invite to the room. Note that an occupant will never have a valid invite when they are present in a room.
+
+### invite
+
+An invite to a particular room for a particular occupant. In CritterChat, private conversations are invite-only. So, when somebody is invited to the room they get added as an occupant with the `present` boolean set to false, and they are issued an invite that is found on the occupant object itself. Invites have the following attributes:
+
+ - `id` - A string identifier unique to the invite. Can be used to uniquely and permanently refer to a specific invite. Even if the invite is cancelled and later re-issued, the ID remains the same.
+ - `user` - A profile object representing the user who sent the invite. This is a profile object and not an occupant object because invites can be attached to occupants, but can also be returned standalone depending on the request to the server. Clients wishing to match an invite user to a current room occupant can do so by comparing the occupant object's `userid` against this profile object's `id`.
+ - `timestamp` - An integer unix timestamp representing when the invite was issued.
+ - `room` - A room object representing the room that this invite was issued for. Note that this can be null when an invite is attached to an occupant since the room is already known at this point.
+ - `cancellable` - A boolean representing whether the current user can (true) or cannot (false) cancel the invite. Invites are only cancellable by the issuer during the first 72 hours, and then they become cancellable by anyone else in the conversation.
+ - `active` - A boolean representing whether the recipient of the invite has dismissed the invite (false) or the invite is still visible and badged (true). Note that this is not present on invites attached to occupants for privacy reasons.
+ - `seen` - A boolean representing whether the recipient of the invite has seen the invite (true) or has not seen the invite (false). Clients can use this to determine if an invite has been clicked on, but not accepted or dismissed. Note that this is not present on invites attached to occupants for privacy reasons.
 
 ### attachment
 
@@ -82,8 +114,8 @@ An object representing an action in a particular room. In CritterChat, actions a
  - `timestamp` - An integer unix timestamp representing when the action occurred.
  - `order` - An opaque integer specifying the action ordering relative to other actions. Effectively this is a monotonically increasing number, so newer actions will have a larger number than older actions. Aside from ordering, clients should refrain from using this attribute.
  - `occupant` - An occupant object detailing the occupant which performed the action.
- - `action` - A string representing the action type which occurred. Valid values are currently "message" for messages, "join" for occupants joining the chat, "leave" for occupants leaving the chat, "change_info" when an occupant changes room information such as the topic or name, "change_profile" when an occupant changes their own personal information, and "change_users" when one or more users changes attributes such as moderator or muted.
- - `details` - A JSON object that contains different details about the action depending on the action string. For "message" actions, this is an object with the `message` attribute that contains the string message that was sent, and optionally the `sensitive` boolean attribute specifying the message is sensitive and should be spoilered by default. For "join" and "leave" actions, this is an empty object since the `occupant` object contains all relevant details. For "change_info" and "change_profile" messages, this is a JSON object containing details of the change. Currently the JS client does not make use of this info outside of the "message" action. For "change_users" msesages, this is a JSON object containing an `occupants` attribute which is a list of occupant objects fetched at the time this action is sent to a client.
+ - `action` - A string representing the action type which occurred. Valid values are currently "message" for messages, "join" for occupants joining the chat, "leave" for occupants leaving the chat, "change_info" when an occupant changes room information such as the topic or name, "change_profile" when an occupant changes their own personal information, "change_users" when one or more users changes attributes such as moderator or muted, "invite_user" when an occupant invites another user to a room or conversation, and "uninvite_user" when an occupant cancels a pending invite sent to another user for a room or conversation.
+ - `details` - A JSON object that contains different details about the action depending on the action string. For "message" actions, this is an object with the `message` attribute that contains the string message that was sent, optionally the `sensitive` boolean attribute specifying the message is sensitive and should be spoilered by default, and the `reactions` JSON object keyed by emoji/emote text whose value for each key is a list of occupant IDs who chose that reaction. For "join" and "leave" actions, this is normally an empty object since the `occupant` object contains all relevant details, but if the user was added to or removed from a chat by another user, there will be an `actor` string which is the occupant ID of the occupant who took the action. For "change_info" and "change_profile" messages, this is a JSON object containing details of the change. Currently the JS client does not make use of this info outside of the "message" action. For "change_users" messages, this is a JSON object containing an `occupants` attribute which is a list of occupant objects fetched at the time this action is sent to a client. For "invite_user" messages, this is a JSON object containing an `invited` attribute which is a string occupant ID pointing at a room occupant who was invited. For "uninvite_user" messages, this is a JSON object containing an `uninvited` attribute which is a string occupant ID pointing at a room occupant who had their invite cancelled.
  - `attachments` - A list of attachment objects representing any attachments that are associated with this action. Note that right now, only `message` actions can have attachments. This is usually an empty list as most messages do not contain any attachments.
 
 ### room count
@@ -99,18 +131,7 @@ The following packets are client-initiated. For each packet, the client request 
 
 ### profile
 
-The `profile` packet is sent from the client to load or refresh a user's profile. This can take an empty request JSON and looks up the profile of the logged in user. Additionally, it can take a JSON request that includes the `userid` attribute. The `userid` can be either a user ID or an occupant ID. In either case that object will be looked up and returned. Note that CritterChat supports custom icon and nickname per-room so if you want to pull up a user's custom profile for a given room you should provide an Occupant ID. If you only care about the user's generic profile you can instead specify a User ID. The server will respond with a `profile` packet with the user's profile in the response JSON with the following attributes:
-
- - `id` - A string identifier unique to the user that was returned. Can be used to uniquely and permanently refer to a user.
- - `username` - A string representing the user's username, as they would log in and as other users would mention them.
- - `nickname` - A string representing the user's currently set nickname. If the user has not set this, it will be defaulted to the same value as the `username`.
- - `about` - A string representing the user's about section. If the user has not set this, it will be defaulted to the empty string.
- - `icon` - A string URI pointing at the user's currently set icon. If the user has not set this, this will point at the instance default avatar.
- - `occupantid` - A string occupant ID that should match the occupant ID used to request this profile. Only included when the profile is looked up via occupant ID and not via user ID.
- - `moderator` - A boolean representing whether this user is a moderator in the room they belong to. Only included when the profile is looked up via occupant ID, and in that case the flag is relative to the room the occupant exists in.
- - `muted` - A boolean representing whether this user is muted in the room they belong to. Only included when the profile is looke dup via occupant ID, and in that case the flag is relative to the room the occupant exists in.
- - `full_username` - A string representing the user's username including the instance domain. Not currently used, but will be relevant once 1:1 message federation exists.
- - `permissions` - A list of strings representing a permission that the user has granted to them. Only returned in the case that the currently logged in user making the request is an instance admin. That means if the currently logged in user is an instance admin, all profile lookups will include this.
+The `profile` packet is sent from the client to load or refresh a user's profile. This can take an empty request JSON and looks up the profile of the logged in user. Additionally, it can take a JSON request that includes the `userid` attribute. The `userid` can be either a user ID or an occupant ID. In either case that object will be looked up and returned. Note that CritterChat supports custom icon and nickname per-room so if you want to pull up a user's custom profile for a given room you should provide an Occupant ID. If you only care about the user's generic profile you can instead specify a User ID. The server will respond with a `profile` packet with the user's profile in the response JSON. The response JSON will be identical to the profile object documented in the above common data types section.
 
 ### preferences
 
@@ -123,6 +144,8 @@ The `preferences` packet is sent from the client to load or refresh the current 
  - `mobile_size` - A string representing the chosen size of the client when in mobile mode. Valid values are "smallest", "smaller", "normal", "larger" and "largest", defaulting to "normal" if not changed.
  - `admin_controls` A boolean representing whether an instance admin should see admin controls in various spots or not. Only relevant for instance admins. Setting this to true means additional buttons will be available on user profiles and additional settings will be available in the info panel. Setting this to false means additional, admin-only actions will be hidden from the interface.
  - `title_notifs` - A boolean representing whether the user wants notifications to show up in the tab title (true) or not (false).
+ - `search_privacy` - A string representing the user's chosen search privacy. Valid values are "visible" and "hidden", defaulting to "visible" if not changed. Visible users will show up in "searchrooms" responses. Users who are not visible will not show up in "searchrooms" responses except in the case where a user searches for themselves.
+ - `invite_privacy` - A string representing the user's chosen invite privacy. Valid values are "auto_accept", "choose" and "disallow". Users who choose "disallow" will not show up in "searchusers" responses except in the case where the user is already invited or already present in the room.
  - `mobile_audio_notifs` - A boolean representing whether the user wants audio notifications on mobile (true) or whether mobile clients should be silent (false).
  - `audio_notifs` - A list of strings representing which audio notifications are enabled.
  - `notif_sounds` - A JSON object keyed by audio notification type strings whose values are string URIs pointing at an audio file to play for that given notification. Note that the keys will match the list of strings in the `audio_notifs` list and a user may have notification sounds configured for notifications that they have disabled.
@@ -155,6 +178,7 @@ The `info` packet is sent from the client to load or refresh the server info. Th
  - `icon` - A string URL pointing at the instance icon, usually used as a favicon but also displayed next to the instance name in the web client.
  - `administrator` - A string representing the name, nickname or email of the instance administrator.
  - `source` - A string URL pointing at the source code for the instance, or null if the instance does not have a source repo.
+ - `version` - A string representing the version of the server that is running. For non-production instances, the "+debug" suffix will be appended. For instances that have not been deployed to a virtual environment this will be "development". Note that even for alternate clients, this still represents the server version, but for the web client included in this repo this also represents the client version.
  - `info` - A HTML string that the instance owner configured which should be displayed to the user. This often includes server background, rules or other information.
 
 ### roomlist
@@ -187,16 +211,31 @@ The `welcomeaccept` packet is sent from the client to inform the server that the
 
 ### searchrooms
 
-The `searchrooms` packet is sent from the client to request a list of search results given a search criteria. This expects a request JSON that contains the `name` attribute which should be a string name to search. This will cause the server to search for all rooms with a default or custom name containing the search string, and all users with user or nickname containing the search string. Search results will be limited to what rooms and users the current user is allowed to see. Searching for an empty name will return all rooms and users that the current user can see. Note that if a search for a given user is performed and the current user already has a 1:1 chat with that user, the chat will be returned instead of the user. Users will only be returned in the search result list when the current user does not have a 1:1 chat with the user. The server will respond with a `searchrooms` response containing a "rooms" attribute. This attribute is a list of room search result objects. The room search result object has the following attributes:
+The `searchrooms` packet is sent from the client to request a list of search results given a search criteria. This expects a request JSON that contains the `name` attribute which should be a string name to search. This will cause the server to search for all rooms with a default or custom name containing the search string, and all users with user or nickname containing the search string. Search results will be limited to what rooms and users the current user is allowed to see. Searching for an empty name will return all rooms and users that the current user can see. Note that if a search for a given user is performed and the current user already has a 1:1 chat with that user, the chat will be returned instead of the user. Users will only be returned in the search result list when the current user does not have a 1:1 chat with the user. The server will respond with a `searchresults` response containing a "results" attribute. This attribute is a list of room search result objects. The room search result object has the following attributes:
 
  - `name` - The string name of the user or room that was found matching the search criteria.
  - `handle` - The string handle of the user or room. Currently this is the username for users, and nothing for rooms, but in the future when rooms get custom URIs this will be the URI.
- - `type` - The string type of search result. Valid types are "room" for public rooms, and "chat" for private 1:1 chats or users you could chat with but have not yet.
+ - `type` - The string type of search result. Valid types are "room" for public rooms, "chat" for private conversations and "dm" for private 1:1 chats or users you could chat with but have not yet.
  - `icon` - A string URI pointing to the user or room icon. In all cases this will be a valid icon, and will point at the custom icon if set or the default otherwise.
- - `public` - A boolean representing whether this search result is public or not.
+ - `public` - A boolean representing whether this search result represents a public chat or not.
  - `joined` - A boolean representing whether the user has joined the room this search result represents. Useful for clients that wish to prompt an action such as "jump to room" for joined rooms, "join room" for rooms the user has not joined, and "message user" for users.
+ - `invited` - A boolean representing whether the user was invited to the room this search result represents. Useful for clients that wish to prompt an action such as "accept invite" for rooms that the suer has been invited to.
  - `roomid` - A string identifier for the room this search result points to if the result is a room, or set to null if this search result is a user.
  - `userid` - A string identifier for the user this search result points to if the result is a user, or set to null if this search result is a room.
+
+### searchusers
+
+The `searchusers` packet is sent from the client to request a list of users in a room given a search criteria. This expects a request JSON that contains the `name` attribute which should be a string name to search, as well as a string room ID for the room in question. Note that clients who are not joined to a given room will always get empty search results regardless of who is in the room or whether the room exists. Search results will be limited to users who are in the room already or who can be invited to the room but are not in the room presently. The server will respond with a `searchresults` response containing a "results" attribute. This attribute is a list of user search result objects. The user search result object has the following attributes:
+
+ - `name` - The string name of the user that was found matching the search criteria.
+ - `handle` - The string username of the user.
+ - `type` - The string type of search result. Valid types are "room" for users of public rooms, and "chat" for users of private conversations.
+ - `icon` - A string URI pointing to the user icon. In all cases this will be a valid icon, and will point at the custom icon if set or the default otherwise.
+ - `public` - A boolean representing whether this search result represents a public chat or not.
+ - `joined` - A boolean representing whether the user has joined the room this search result was conducted for. Useful for clients that wish to prompt an action such as "invite to room" for users who are not present, or display "already present" for users who are present.
+ - `invited` - A boolean representing whether the user was invited to the room this search result was conducted for. Useful for clients that wish to show a message such as "already invited" for users who are not present but invited.
+ - `roomid` - Always set to null since the search results of user searches represent users.
+ - `userid` - A string identifier for the user this search result points to.
 
 ### updateprofile
 
@@ -220,12 +259,14 @@ The `updatepreferences` packet is sent from the client to request the user's pre
  - `mobile_size` - A string representing the chosen size of the client when in mobile mode. Valid values are "smallest", "smaller", "normal", "larger" and "largest". If present, the preference will be updated to the specified value.
  - `admin_controls` A boolean representing whether an instance admin should see admin controls in various spots or not. If present, the preference will be updated to the specified value.
  - `title_notifs` - A boolean representing whether the user wants notifications to show up in the tab title (true) or not (false). If not present, the preference will not be updated. If present, the preference will be updated to the specified value.
+ - `search_privacy` - A string representing the user's chosen search privacy. Valid values are "visible" and "hidden". If present and valid, the preference will be updated to the specific valid value. If not present, the preference will not be updated.
+ - `invite_privacy` - A string representing the user's chosen invite privacy. Valid values are "auto_accept", "choose" and "disallow". If present and valid, the preference will be updated to the specific valid value. If not present, the preference will not be updated.
  - `mobile_audio_notifs` - A boolean representing whether the user wants audio notifications on mobile (true) or whether mobile clients should be silent (false). If not present, the preference will not be updated. If present, the preference will be updated to the specified value.
  - `audio_notifs` - A list of strings representing which audio notifications are enabled. If not present, individual audio notification enabled settings will be left as-is. If present, the user's audio notification enabled list is updated to match the specified list of notifications.
  - `notif_sounds` - A JSON object keyed by audio notification type strings whose values are string attachment IDs. Note that this JSON object can be obtained from the notification upload endpoint. All audio notifications listed in this JSON object will be updated, overwriting any existing notification and adding new audio for notifications that did not have audio before. If not present, no audio notification sounds will be updated. Audio notifications not present in this JSON object will also be left as-is.
  - `notif_sounds_delete` - A list of strings representing which audio notification files to delete. If not present, nothing will be deleted. If present, all notifications listed will be deleted. Note that the entries in this list are the same as the keys in `notif_sounds` and the values in the `audio_notifs` list.
 
-Upon successful update, the server will send a `preferences` response packet which is identical to the response to a `preferences` request. It will also send an unsolicited `preferences` response packet to all other connected devices belonging to the user.
+Upon successful update, the server will send a `preferences` response packet which is identical to the response to a `preferences` request. It will also send an unsolicited `preferences` response packet to all other connected devices belonging to the user in order to keep their own local preferences copy up to date.
 
 ### updatesettings
 
@@ -247,6 +288,7 @@ The `updateroom` packet is sent when the client requests to update the details o
  - `name` - A new custom room name to set. This can be empty to unset a custom room name and it can contain emoji. It must be 255 unicode code points or less in length. It cannot consist of solely unicode control characters or other non-printable characters. Note that the room name will always be set so clients should round-trip the existing custom room name if the user does not edit it.
  - `topic` - A new custom topic to set. Much like the above `name`, this can be empty to unset the topic, and it can contain emoji. It must also be 255 unicode code points or less and it cannot be only non-printable unicode characters. The topic will always be updated so clients should round-trip the existing topic if the user does not edit it.
  - `moderated` - A boolean specifying whether the room should be set as a moderated room (true) or a free-for-all room (false). The room will be updated to the moderation type specified in this attribute when present, or left as-is if not provided. Note that only instance administrators can modify this setting. If a non-admin attempts to modify the setting it will be silently ignored and not updated.
+ - `autojoin` - A boolean representing whether the room should be an auto-join room (true) or not (false). Auto-join rooms are joined by new users automatically. Rooms that are not auto-join need to be explicitly joined by users. Note that only instance administrators can modify this setting. If a non-admin attempts to modify the setting it will be silently ignored and not updated. Note that if this room attribute is changed from false to true, all activated users on the instance who are not in the room will be joined to the room.
  - `icon` - A string attachment ID that should be used to set the new custom room icon, obtained from the icon upload endpoint. If this is left empty, the room's icon will not be updated. The image must be square and currently cannot exceed 128kb in size.
  - `icon_delete` - An optional boolean specifying that the user wants to delete the custom room icon. If the client leaves this out or sets this to an empty string or `False` then the server will not attempt to delete the custom room icon. Setting this to `True` will cause the room's icon to revert to the instance's default icon.
 
