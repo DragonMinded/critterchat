@@ -120,7 +120,7 @@ class BaseData:
 
         if isinstance(sql, Statement):
             if params:
-                raise Exception("Logic error, cannot provide Statement and params!")
+                raise ValueError("Logic error, cannot provide Statement and params!")
 
             actual, params = sql.to_sqlalchemy()
             result = self.__session.execute(

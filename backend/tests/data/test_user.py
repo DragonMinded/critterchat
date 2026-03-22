@@ -79,7 +79,7 @@ class TestUserData:
             userdata.update_user(user)
 
             # Verify that we catch developer errors.
-            with pytest.raises(ValueError) as ex:
+            with pytest.raises(ValueError):
                 invalid = User(
                     userid=NewUserID,
                     username="does_not_matter",
@@ -151,7 +151,7 @@ class TestUserData:
         assert userdata.validate_password(user.id, 'some_arbitrary_password') is False
 
         # Also verify that we catch when a developer makes a mistake.
-        with pytest.raises(ValueError) as ex:
+        with pytest.raises(ValueError):
             userdata.update_password(NewUserID, 'brand_new_password')
 
     def test_settings_crud(self, tx: Session) -> None:
@@ -179,7 +179,7 @@ class TestUserData:
         userdata.put_settings(sessionid, UserSettings(user.id, RoomID(12345), InfoState.HIDDEN))
 
         # Also verify that we can't create settings for an invalid user.
-        with pytest.raises(ValueError) as ex:
+        with pytest.raises(ValueError):
             userdata.put_settings(sessionid, UserSettings(NewUserID, RoomID(12345), InfoState.HIDDEN))
 
         # Now, attmept to grab those settings.
@@ -231,7 +231,7 @@ class TestUserData:
         assert user is not None
 
         # Verify that we catch when a developer makes a mistake.
-        with pytest.raises(ValueError) as ex:
+        with pytest.raises(ValueError):
             userdata.create_session(NewUserID)
 
         # Create a couple of sessions.
@@ -327,7 +327,7 @@ class TestUserData:
         assert user is not None
 
         # Verify that we catch when a developer makes a mistake.
-        with pytest.raises(ValueError) as ex:
+        with pytest.raises(ValueError):
             userdata.create_recovery(NewUserID)
 
         # Create a couple of recoveries.
@@ -377,7 +377,7 @@ class TestUserData:
         assert userdata.get_preferences(UserID(123456)) is None
 
         # Verify that we catch when a developer makes a mistake.
-        with pytest.raises(ValueError) as ex:
+        with pytest.raises(ValueError):
             invalid = UserPreferences.default(NewUserID)
             userdata.put_preferences(invalid)
 
