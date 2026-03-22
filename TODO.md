@@ -28,3 +28,4 @@ TODO Low Priority
  - When server selects a room for you, ensure that the menu on the left scrolls to make that room visible.
  - Proper history integration for mobile so browser back action works the same as back button.
  - Flesh out tests for attachment, mastodon and room data subsystems, add SQLite as a database option.
+ - Low-motion option for those who are sensitive to motion.
