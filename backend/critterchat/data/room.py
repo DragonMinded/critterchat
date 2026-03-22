@@ -581,7 +581,7 @@ class RoomData(BaseData):
                     cursor = self.execute(sql, {"userid": inviter, "roomid": roomid})
                     if cursor.rowcount == 1:
                         result = cursor.mappings().fetchone()
-                        details['inviter'] = OccupantID(result['id'])
+                        details['actor'] = OccupantID(result['id'])
 
                 occupant = Occupant(
                     occupantid=NewOccupantID,
@@ -645,7 +645,7 @@ class RoomData(BaseData):
             cursor = self.execute(sql, {"userid": remover, "roomid": roomid})
             if cursor.rowcount == 1:
                 result = cursor.mappings().fetchone()
-                details['remover'] = OccupantID(result['id'])
+                details['actor'] = OccupantID(result['id'])
 
         # insert_action will ignore actions for anyone already out of the room.
         occupant = Occupant(

@@ -1298,7 +1298,7 @@ class Messages {
             } else if (this.roomType != "dm" && message.action == "join") {
                 // Handle the case where a user was added to a room instead of joining on their own.
                 this.occupants.forEach((occupant) => {
-                    if (occupant.id == message.details.inviter) {
+                    if (occupant.id == message.details.actor) {
                         otheroccupant = occupant;
                     }
                 });
@@ -1327,7 +1327,7 @@ class Messages {
             } else if (this.roomType != "dm" && message.action == "leave") {
                 // Handle the case where a user was removed from a room instead of leaving on their own.
                 this.occupants.forEach((occupant) => {
-                    if (occupant.id == message.details.remover) {
+                    if (occupant.id == message.details.actor) {
                         otheroccupant = occupant;
                     }
                 });

@@ -705,14 +705,14 @@ class Action:
     def _get_details(self) -> dict[str, object]:
         if self.action == ActionType.JOIN:
             details = {**self.details}
-            if 'inviter' in details:
-                details["inviter"] = Occupant.from_id(cast(OccupantID, details["inviter"]))
+            if 'actor' in details:
+                details["actor"] = Occupant.from_id(cast(OccupantID, details["actor"]))
             return details
 
         if self.action == ActionType.LEAVE:
             details = {**self.details}
-            if 'remover' in details:
-                details["remover"] = Occupant.from_id(cast(OccupantID, details["remover"]))
+            if 'actor' in details:
+                details["actor"] = Occupant.from_id(cast(OccupantID, details["actor"]))
             return details
 
         if self.action == ActionType.CHANGE_MESSAGE:
