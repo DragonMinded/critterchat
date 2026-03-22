@@ -779,7 +779,7 @@ export function manager(socket) {
     });
 
     eventBus.on('selectinvite', (id) => {
-        socket.emit('selectinvite', {'inviteid': id});
+        socket.emit('acknowledgeinvite', {'inviteid': id});
     });
 
     eventBus.on('dismissinvite', (id) => {

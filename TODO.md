@@ -1,8 +1,6 @@
 TODO Immediate
 ==============
 
- - Another pass to PROTOCOL.md.
-
 TODO For Public Instance
 ========================
 

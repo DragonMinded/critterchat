@@ -1039,8 +1039,8 @@ def invites(json: dict[str, object]) -> None:
         }), room=request.sid)
 
 
-@socketio.on('selectinvite')  # type: ignore
-def selectinvite(json: dict[str, object]) -> None:
+@socketio.on('acknowledgeinvite')  # type: ignore
+def acknowledgeinvite(json: dict[str, object]) -> None:
     data = Data(config)
     messageservice = MessageService(config, data)
 
