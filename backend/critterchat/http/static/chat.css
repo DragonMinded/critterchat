@@ -1324,6 +1324,7 @@ div.reactions-controls button.reaction, div.reactions-controls button.custom-rea
 div.reactions-controls button.reaction img {
     display: block;
     margin-bottom: 0.10em;
+    opacity: initial ! important;
 }
 
 div.reactions-controls div.separator {

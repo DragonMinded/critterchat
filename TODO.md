@@ -1,11 +1,18 @@
 TODO Immediate
 ==============
 
+ - Replace <div> with <button> on menu panels for accessibility and tab completion.
+ - Replace <div> with <button> on back buttons for accessibility and tab completion.
+ - Replace <div> with <button> on instance info for accessibility and tab completion.
+ - Aria hidden on menu images, info images, instance info image.
+ - Aria description for back buttons.
+ - Show highlight on reaction buttons when tabbing between them.
+ - Reaction popover shows up sometimes on window switch on mobile.
+
 TODO For Public Instance
 ========================
 
  - Stickers support in some form.
- - Accessibility pass.
 
 TODO Low Priority
 =================

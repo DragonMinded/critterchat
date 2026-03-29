@@ -125,7 +125,7 @@ class Messages {
         });
 
         if (window.reactionsenabled) {
-            $( document ).on("mouseenter", "div.item div.message, div.item div.attachments, div.item div.reactions", (event) => {
+            $( document ).on("mouseenter", "div.item div.message, div.item div.attachments", (event) => {
                 if (this.inputState.current == "search") {
                     // Once a user searches an emoji to react, it should be sticky.
                     return;
@@ -137,7 +137,10 @@ class Messages {
 
                 const jqe = $(event.target);
                 const id = this._getMessageID(jqe);
-                if (id) {
+                const isSpoilered = $(jqe).hasClass('sensitive');
+                if (isSpoilered) {
+                    this.reactions.hide();
+                } else if (id) {
                     this.reactions.show( id );
                 }
             });
@@ -156,7 +159,7 @@ class Messages {
                 });
             }
 
-            $( "div" ).on("mouseenter", () => {
+            $( document ).on("mouseenter", "div", () => {
                 if (this.inputState.current == "search") {
                     // Once a user searches an emoji to react, it should be sticky.
                     return;
