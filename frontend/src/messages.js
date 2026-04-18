@@ -665,7 +665,14 @@ class Messages {
                     this._updateUsers();
                     this._recalculateSendEnabled();
 
-                    $('div.chat > div.conversation-wrapper > div.conversation').empty();
+                    $('div.chat > div.conversation-wrapper > div.conversation').empty().html(
+                        '<div class="loading-wrapper">' +
+                        '    <div class="loading">' +
+                        '        Now loading your chat...' +
+                        '    </div>' +
+                        '</div>'
+                    );
+
                     $( '#message-actions' ).attr('roomid', roomid);
                 }
             }
@@ -744,6 +751,15 @@ class Messages {
         if (roomid != this.roomid) {
             // Must be an out of date lookup, ignore it.
             return;
+        }
+
+        if (this.messages.length == 0) {
+            // This is a first load, so we want to clear out any loading message and
+            // work around a firefox mobile bug where we send spurious mouseenter events.
+            this.loadTime = Date.now();
+            this.reactions.hide( true );
+
+            $('div.chat > div.conversation-wrapper > div.conversation').empty();
         }
 
         this._drawActions( history );
