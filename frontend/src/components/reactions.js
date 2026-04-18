@@ -24,6 +24,7 @@ class Reactions {
         this.emojiSearchOptions = this._getEmojiSearchOptions();
         this.search = new EmojiSearch(this.inputState, '.custom-reaction', $('<div />'), this.emojiSearchOptions, (value) => {
             if (this.id && value) {
+                this._hide();
                 this.callback(this.id, 'reaction', value);
             }
         });
@@ -37,6 +38,7 @@ class Reactions {
             const value = target ? target.attr("data") : undefined;
 
             if (this.id && value) {
+                this._hide();
                 this.callback(this.id, 'reaction', value);
             }
         });
@@ -98,8 +100,7 @@ class Reactions {
 
         if (this.id) {
             // Kill any visible reaction box.
-            $("div.reactions-popover").off();
-            $("div.reactions-popover").remove();
+            this._hide();
         }
 
         // Hide any search, including any from a hover-save.
@@ -159,19 +160,23 @@ class Reactions {
 
             if (this.hovering && !this.id) {
                 // We should have closed, so do that now.
-                this.hide();
+                this._hide();
             }
 
             this.hovering = false;
         });
     }
 
+    _hide() {
+        // Kill any visible reaction box.
+        $("div.reactions-popover").off();
+        $("div.reactions-popover").remove();
+        this.search.hide();
+    }
+
     hide( suppressTracking ) {
         if (!this.hovering) {
-            // Kill any visible reaction box.
-            $("div.reactions-popover").off();
-            $("div.reactions-popover").remove();
-            this.search.hide();
+            this._hide();
         }
 
         if ( suppressTracking ) {

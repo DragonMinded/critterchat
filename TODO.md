@@ -1,7 +1,6 @@
 TODO Immediate
 ==============
 
- - Double-reaction popover when abusing the hoverfix state change.
  - Replace <div> with <button> on menu panels for accessibility and tab completion.
  - Replace <div> with <button> on back buttons for accessibility and tab completion.
  - Replace <div> with <button> on instance info for accessibility and tab completion.
