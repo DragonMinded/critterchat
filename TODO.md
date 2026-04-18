@@ -7,7 +7,6 @@ TODO Immediate
  - Aria hidden on menu images, info images, instance info image.
  - Aria description for back buttons.
  - Show highlight on reaction buttons when tabbing between them.
- - Reaction popover shows up sometimes on window switch on mobile.
 
 TODO For Public Instance
 ========================

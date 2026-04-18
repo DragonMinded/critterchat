@@ -51,6 +51,7 @@ class Messages {
         this.pending = new Map();
         this.pendingroomid = "";
         this.roomid = "";
+        this.loadTime = undefined;
         this.roomType = "chat";
         this.autoscroll = true;
         this.lastAction = {};
@@ -125,10 +126,21 @@ class Messages {
         });
 
         if (window.reactionsenabled) {
+            const touchCapable = ('ontouchstart' in window);
             $( document ).on("mouseenter", "div.item div.message, div.item div.attachments", (event) => {
                 if (this.inputState.current == "search") {
                     // Once a user searches an emoji to react, it should be sticky.
                     return;
+                }
+                if (touchCapable) {
+                    // If we just loaded the room, don't show any popover since this can
+                    // trigger on mobile firefox erroneously.
+                    if (!this.loadTime) {
+                        return;
+                    }
+                    if ((Date.now() - this.loadTime) < 500) {
+                        return;
+                    }
                 }
 
                 event.preventDefault();
@@ -145,7 +157,6 @@ class Messages {
                 }
             });
 
-            const touchCapable = ('ontouchstart' in window);
             if (touchCapable) {
                 $( document ).on("contextmenu", "div.item div.message, div.item div.attachments", (event) => {
                     const id = this._getMessageID(event.target);
@@ -341,10 +352,17 @@ class Messages {
             this._recalculateSendEnabled();
         });
 
-        this.screenState.registerStateChangeCallback(() => {
+        this.screenState.registerStateChangeCallback((newState) => {
             this._updateSize();
             this._sendPendingUpdates();
             this._ensureScrolled(false);
+
+            if (newState == "chat") {
+                // Make sure we track when we were swapped to so we can handle spurious
+                // hover events on mobile.
+                this.loadTime = Date.now();
+                this.reactions.hide( true );
+            }
         });
 
         this._updateSize();
@@ -651,6 +669,10 @@ class Messages {
                     $( '#message-actions' ).attr('roomid', roomid);
                 }
             }
+
+            // Always hide any reactions when swapping screens.
+            this.loadTime = Date.now();
+            this.reactions.hide( true );
         } else {
             this.pendingroomid = roomid;
         }
@@ -672,6 +694,7 @@ class Messages {
         if (roomid == this.roomid) {
             this.message = [];
             this.roomid = "";
+            this.loadTime = undefined;
             this.lastAction = {};
             this.autoscroll = true;
             this.occupants = [];
@@ -680,6 +703,7 @@ class Messages {
             this.lastActionPending = false;
             this._updateUsers();
             this._recalculateSendEnabled();
+            this.reactions.hide( true );
 
             $('div.chat > div.conversation-wrapper > div.conversation').empty();
             $( '#message-actions' ).attr('roomid', '');
