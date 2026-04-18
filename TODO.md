@@ -4,9 +4,10 @@ TODO Immediate
  - Replace <div> with <button> on menu panels for accessibility and tab completion.
  - Replace <div> with <button> on back buttons for accessibility and tab completion.
  - Replace <div> with <button> on instance info for accessibility and tab completion.
+ - Replace <div> with <button> on text input actions for accessibility and tab completion.
+ - Replace <div> with <button> on emoji picker.
  - Aria hidden on menu images, info images, instance info image.
  - Aria description for back buttons.
- - Show highlight on reaction buttons when tabbing between them.
 
 TODO For Public Instance
 ========================

@@ -1285,7 +1285,8 @@ div.reactions button.reaction.chosen {
     background: var(--conversation-selected-reaction-background);
 }
 
-div.reactions button.reaction:hover {
+div.reactions button.reaction:hover, div.reactions button.reaction:focus-visible,
+div.reactions button.add-reaction:hover, div.reactions button.add-reaction:focus-visible {
     border: 1px solid var(--input-button-hover-border);
     background: var(--input-button-hover-background);
     color: var(--input-button-hover-text);
