@@ -165,7 +165,18 @@ class Messages {
                     return;
                 }
 
-                this.reactions.hide();
+                const jqe = $(event.target);
+                const id = this._getMessageID(jqe);
+                if (!id) {
+                    this.reactions.hide();
+                    return;
+                }
+
+                const message = this._getMessage(id);
+                if (!message || message.action != "message") {
+                    this.reactions.hide();
+                    return;
+                }
             });
 
             $( "div.container" ).on("click", () => {
@@ -415,6 +426,21 @@ class Messages {
         }
 
         return jqe.attr('id');
+    }
+
+    /**
+     * Helper to get the message details given its ID. If the ID cannot be found, returns undefined. Otherwise,
+     * returns the message type.
+     */
+    _getMessage( mid ) {
+        var message = undefined;
+        this.messages.forEach((entry) => {
+            if (entry.id == mid) {
+                message = entry;
+            }
+        });
+
+        return message;
     }
 
     /**
