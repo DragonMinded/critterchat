@@ -45,11 +45,20 @@ class Menu {
             this.inputState.setState("empty");
         });
 
-        $( 'div.menu > div.header img.icon, div.menu > div.header div.instance-title' ).on( 'click', () => {
+        $( 'div.menu > div.header img.icon, div.menu > div.header button.instance' ).on( 'click', () => {
             event.preventDefault();
 
             this.inputState.setState("empty");
             this.eventBus.emit('serverinfo');
+        });
+
+        $( 'div.menu > div.header img.icon, div.menu > div.header button.instance' ).on( 'keydown', (event) => {
+            if (event.key == "Enter") {
+                event.preventDefault();
+
+                this.inputState.setState("empty");
+                this.eventBus.emit('serverinfo');
+            }
         });
 
         $( '#edit-profile' ).on( 'click', (event) => {
