@@ -327,8 +327,8 @@ class Info {
                             occupant.icon = entry.occupant.icon;
                         }
                     });
-                    $('div.info > div.occupants div.item#' + entry.occupant.id + ' div.name').html(escapeHtml(entry.occupant.nickname));
-                    $('div.info > div.occupants div.item#' + entry.occupant.id + ' div.icon img').attr('src', entry.occupant.icon);
+                    $('div.info > div.occupants button.item#' + entry.occupant.id + ' div.name').html(escapeHtml(entry.occupant.nickname));
+                    $('div.info > div.occupants button.item#' + entry.occupant.id + ' div.icon img').attr('src', entry.occupant.icon);
                 } else if (
                     entry.action == "change_users" ||
                     entry.action == "invite_user" ||
@@ -549,15 +549,15 @@ class Info {
                 }
             }
 
-            var html = '<div class="' + cls + '" id="' + occupant.id + '">';
+            var html = '<button class="' + cls + '" type="button" id="' + occupant.id + '">';
             html    += '  <div class="icon avatar">';
             html    += '    <img src="' + occupant.icon + '" />';
             html    += '  </div>';
             html    += '  <div class="name-wrapper"><div class="name">' + escapeHtml(occupant.nickname) + '</div></div>';
-            html    += '</div>';
+            html    += '</button>';
             occupantElement.append(html);
 
-            $('div.info > div.occupants div.item#' + occupant.id).on('click', (event) => {
+            $('div.info > div.occupants button.item#' + occupant.id).on('click', (event) => {
                 event.stopPropagation();
                 event.stopImmediatePropagation();
 

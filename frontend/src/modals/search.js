@@ -143,7 +143,7 @@ class Search {
                 handleText = "<span>(" + escapeHtml(result.handle) + ")</span>";
             }
 
-            var html = '<div class="item" id="' + id + '">';
+            var html = '<button class="item" type="button" id="' + id + '">';
             html    += '  <div class="icon ' + type + '">';
             html    += '    <img src="' + result.icon + '" />';
             if (result.type == 'room') {
@@ -157,11 +157,11 @@ class Search {
             if (action) {
                 html    += '  <div class="action-wrapper"><div class="' + actionclass + '">' + action + '</div></div>';
             }
-            html    += '</div>';
+            html    += '</button>';
             resultdom.append(html);
 
             if (this.mode == "search" && hook) {
-                $('div.search > div.results div.item#' + id).on('click', (event) => {
+                $('div.search > div.results button.item#' + id).on('click', (event) => {
                     event.stopPropagation();
                     event.stopImmediatePropagation();
 
@@ -171,7 +171,7 @@ class Search {
             }
 
             if (this.mode == "invite" && hook) {
-                $('div.search > div.results div.item#' + id).on('click', (event) => {
+                $('div.search > div.results button.item#' + id).on('click', (event) => {
                     event.stopPropagation();
                     event.stopImmediatePropagation();
 

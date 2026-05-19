@@ -225,10 +225,10 @@ export function manager(socket) {
     socket.on('welcome', (msg) => {
         var html = "";
         msg.rooms.forEach((result) => {
-            var id = result.roomid;
+            var id = result.id;
             var type = result.type == "room" ? 'room' : 'avatar';
 
-            html += '<div class="item" id="' + id + '">';
+            html += '<button class="item" type="button" id="' + id + '">';
             html += '  <div class="icon ' + type + '">';
             html += '    <img src="' + result.icon + '" />';
             if (result.type == 'room') {
@@ -236,7 +236,7 @@ export function manager(socket) {
             }
             html += '  </div>';
             html += '  <div class="name-wrapper"><div class="name">' + escapeHtml(result.name) + '</div></div>';
-            html += '</div>';
+            html += '</button>';
         });
 
         var source = "";

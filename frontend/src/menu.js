@@ -383,14 +383,14 @@ class Menu {
     _drawRoom( room ) {
         // First, see if this is an update.
         var conversations = $('div.menu > div.rooms');
-        var drawnRoom = conversations.find('div.item#' + room.id);
+        var drawnRoom = conversations.find('button.item#' + room.id);
         if (drawnRoom.length > 0) {
             drawnRoom.find('.icon img').attr('src', room.icon);
             drawnRoom.find('.name').html(escapeHtml(room.name));
         } else {
             // Now, draw it fresh since it's not an update.
             var type = room.type == 'room' ? 'room' : 'avatar';
-            var html = '<div class="item" id="' + room.id + '">';
+            var html = '<button class="item" type="button" id="' + room.id + '">';
             html    += '  <div class="icon ' + type + '">';
             html    += '    <img src="' + room.icon + '" />';
             if (room.count) {
@@ -403,10 +403,10 @@ class Menu {
             }
             html    += '  </div>';
             html    += '  <div class="name-wrapper"><div class="name">' + escapeHtml(room.name) + '</div></div>';
-            html    += '</div>';
+            html    += '</button>';
             conversations.append(html);
 
-            $('div.menu > div.rooms div.item#' + room.id).on('click', (event) => {
+            $('div.menu > div.rooms button.item#' + room.id).on('click', (event) => {
                 event.stopPropagation();
                 event.stopImmediatePropagation();
 
@@ -425,14 +425,14 @@ class Menu {
     _drawInvite( invite ) {
         // First, see if this is an update.
         var conversations = $('div.menu > div.rooms');
-        var drawnInvite = conversations.find('div.item#' + invite.id);
+        var drawnInvite = conversations.find('div.button#' + invite.id);
         if (drawnInvite.length > 0) {
             drawnInvite.find('.icon img').attr('src', invite.room.icon);
             drawnInvite.find('.name').html(escapeHtml(invite.room.name));
         } else {
             // Now, draw it fresh since it's not an update.
             var type = invite.room.type == 'room' ? 'room' : 'avatar';
-            var html = '<div class="item" id="' + invite.id + '">';
+            var html = '<button class="item" type="button" id="' + invite.id + '">';
             html    += '  <div class="icon ' + type + '">';
             html    += '    <img src="' + invite.room.icon + '" />';
             if (!invite.seen) {
@@ -445,10 +445,10 @@ class Menu {
             }
             html    += '  </div>';
             html    += '  <div class="name-wrapper"><div class="name">' + escapeHtml(invite.room.name) + '</div></div>';
-            html    += '</div>';
+            html    += '</button>';
             conversations.append(html);
 
-            $('div.menu > div.rooms div.item#' + invite.id).on('click', (event) => {
+            $('div.menu > div.rooms button.item#' + invite.id).on('click', (event) => {
                 event.stopPropagation();
                 event.stopImmediatePropagation();
 
@@ -566,7 +566,7 @@ class Menu {
             this.selected = "";
 
             var conversations = $('div.menu > div.rooms');
-            conversations.find('div.item#' + roomid).remove();
+            conversations.find('button.item#' + roomid).remove();
 
             this.rooms = this.rooms.filter((room) => room.id != roomid);
 
@@ -581,9 +581,9 @@ class Menu {
      * is tracked via a selected class which is also used for styling via CSS.
      */
     _updateSelected() {
-        $('div.menu > div.rooms div.item').removeClass('selected');
+        $('div.menu > div.rooms button.item').removeClass('selected');
         if (this.selected) {
-            $('div.menu > div.rooms div.item#' + this.selected).addClass('selected');
+            $('div.menu > div.rooms button.item#' + this.selected).addClass('selected');
         }
     }
 
@@ -649,7 +649,7 @@ class Menu {
 
         // Find the room to update
         var conversations = $('div.menu > div.rooms');
-        var drawnRoom = conversations.find('div.item#' + roomid);
+        var drawnRoom = conversations.find('button.item#' + roomid);
         if (drawnRoom.length > 0) {
             drawnRoom.find('.icon .badge').removeClass('empty');
 
@@ -711,7 +711,7 @@ class Menu {
     _clearBadges( roomid ) {
         // Find the room to update
         var conversations = $('div.menu > div.rooms');
-        var drawnRoom = conversations.find('div.item#' + roomid);
+        var drawnRoom = conversations.find('button.item#' + roomid);
         if (drawnRoom.length > 0) {
             drawnRoom.find('.icon .badge').addClass('empty');
             drawnRoom.find('.icon .badge .count').text("");

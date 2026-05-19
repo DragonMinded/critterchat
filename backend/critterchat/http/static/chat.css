@@ -851,26 +851,27 @@ div.menu > div.rooms.scroll {
     padding-right: var(--application-pane-padding);
 }
 
-div.rooms div.item, div.results div.item, div.occupants div.item {
-    flex-direction: row;
+div.rooms button.item, div.results button.item, div.occupants button.item {
     display: flex;
+    flex-direction: row;
     padding: var(--application-item-padding);
     border-radius: var(--button-border-radius);
+    background: transparent;
     cursor: default;
     border: 1px solid transparent;
-    align-items: center;
+    text-align: left;
 }
 
-div.rooms div.item.selected, div.occupants div.item.selected, div.results div.item:hover {
+div.rooms button.item.selected, div.occupants button.item.selected, div.results button.item:hover, div.results button.item:focus-visible {
     background: var(--sidebar-hover-background);
     border: 1px solid var(--sidebar-hover-background);
 }
 
-div.rooms div.item:hover, div.occupants div.item:hover {
+div.rooms button.item:hover, div.occupants button.item:hover, div.rooms button.item:focus-visible, div.occupants button.item:focus-visible {
     border: 1px solid var(--sidebar-hover-background);
 }
 
-div.actions div.item img {
+div.actions button.item img {
     margin-bottom: -0.25em;
     display: inline;
 }
@@ -896,11 +897,11 @@ div.icon div.badge.empty, div.back div.badge.empty {
     display: none;
 }
 
-div.item.faded {
+button.item.faded {
     opacity: 65%;
 }
 
-div.rooms div.item div.icon, div.results div.item div.icon, div.occupants div.item div.icon {
+div.rooms button.item div.icon, div.results button.item div.icon, div.occupants button.item div.icon {
     position: relative;
 }
 
@@ -927,7 +928,7 @@ div.badge > div.count {
     left: var(--badge-text-left);
 }
 
-div.rooms div.item div.icon img, div.results div.item div.icon img, div.occupants div.item div.icon img {
+div.rooms button.item div.icon img, div.results button.item div.icon img, div.occupants button.item div.icon img {
     background: var(--application-icon-background);
     display: block;
     width: var(--icon-width);
@@ -935,7 +936,7 @@ div.rooms div.item div.icon img, div.results div.item div.icon img, div.occupant
     margin: 0px;
 }
 
-div.rooms div.item div.name-wrapper, div.results div.item div.name-wrapper, div.occupants div.item div.name-wrapper {
+div.rooms button.item div.name-wrapper, div.results button.item div.name-wrapper, div.occupants button.item div.name-wrapper {
     flex-grow: 1;
     height: 100%;
     padding-left: var(--application-item-padding);
@@ -956,14 +957,14 @@ div.meta-wrapper span.name {
     cursor: pointer;
 }
 
-div.results div.item div.action-wrapper {
+div.results button.item div.action-wrapper {
     height: 100%;
     display: flex;
     height: var(--icon-height);
     align-items: center;
 }
 
-div.results div.item div.action {
+div.results button.item div.action {
     border-radius: var(--button-border-radius);
     background: var(--action-background);
     color: var(--action-text);
@@ -972,7 +973,7 @@ div.results div.item div.action {
     font-size: var(--application-text-size-12);
 }
 
-div.results div.item div.action.grayed {
+div.results button.item div.action.grayed {
     color: var(--action-text-grayed);
     background: var(--action-background-grayed);
 }
@@ -1416,7 +1417,7 @@ div.info > div.occupants.scroll {
     padding-right: var(--application-pane-padding);
 }
 
-div.occupants div.item {
+div.occupants button.item {
     flex-direction: row;
     display: flex;
     padding: var(--application-item-padding);
@@ -1522,7 +1523,7 @@ div.searchbox input {
     width: 100%;
 }
 
-div.search > div.results {
+div.search > div.results, div.information div.results {
     display: flex;
     flex-direction: column;
     flex-grow: 1;
@@ -1703,7 +1704,7 @@ img.emote, img.emoji {
     width: auto;
 }
 
-div.item img.emote, div.item img.emoji {
+div.item img.emote, div.item img.emoji, button.item img.emote, button.item img.emoji {
     margin-bottom: -0.25em;
 }
 

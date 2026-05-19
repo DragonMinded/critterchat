@@ -42,4 +42,7 @@ export function displayInfo( infoText, confirmText, confirmCallback, sticky ) {
     } else {
         $('#info-form').modal();
     }
+
+    // And pre-select the accept button for accessibility.
+    $('#info-confirm').focus();
 }
