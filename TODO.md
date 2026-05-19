@@ -12,6 +12,7 @@ TODO For Public Instance
 ========================
 
  - Stickers support in some form.
+ - Markdown/code formatter display for text attachments.
 
 TODO Low Priority
 =================
