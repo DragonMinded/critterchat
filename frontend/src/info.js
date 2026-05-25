@@ -40,7 +40,7 @@ class Info {
             this._infoToggle();
         });
 
-        $( 'div.top-info div.info' ).on( 'click', (event) => {
+        $( 'div.top-info button.info' ).on( 'click', (event) => {
             event.preventDefault();
 
             this._infoToggle();
@@ -104,7 +104,7 @@ class Info {
         $( 'div.info div.title-wrapper' ).hide();
         $( 'div.info div.actions' ).hide();
 
-        $( 'div.info div.back' ).on( 'click', (event) => {
+        $( 'div.info button.back' ).on( 'click', (event) => {
             event.preventDefault();
 
             this.inputState.setState("empty");
@@ -145,8 +145,8 @@ class Info {
      */
     _updateSize() {
         if (this.size == "mobile") {
-            $( 'div.info div.back' ).show();
-            $( 'div.top-info div.info' ).show();
+            $( 'div.info button.back' ).show();
+            $( 'div.top-info button.info' ).show();
             $( 'div.chat form.actions div.info' ).hide();
             if (this.screenState.current == "info") {
                 $( 'div.container > div.info' ).removeClass('hidden').addClass('full');
@@ -154,8 +154,8 @@ class Info {
                 $( 'div.container > div.info' ).addClass('hidden').addClass('full');
             }
         } else {
-            $( 'div.info div.back' ).hide();
-            $( 'div.top-info div.info' ).hide();
+            $( 'div.info button.back' ).hide();
+            $( 'div.top-info button.info' ).hide();
             $( 'div.chat form.actions div.info' ).show();
             if (this.lastSettings.info == "shown") {
                 $( 'div.container > div.info' ).removeClass('hidden').removeClass('full');

@@ -1,7 +1,6 @@
 TODO Immediate
 ==============
 
- - Replace <div> with <button> on back buttons for accessibility and tab completion.
  - Replace <div> with <button> on text input actions for accessibility and tab completion.
  - Replace <div> with <button> on emoji picker.
  - Dark theme should make all highlighted buttons lighter instead of some darker.

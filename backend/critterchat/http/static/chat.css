@@ -33,7 +33,7 @@ body.smallest {
     --big-icon-height: 56px;
     --room-icon-border-radius: 8px;
 
-    --badge-top: -1px;
+    --badge-top: 3px;
     --badge-left: 16px;
     --badge-width: 15px;
     --badge-height: 15px;
@@ -123,7 +123,7 @@ body.smaller {
     --big-icon-height: 64px;
     --room-icon-border-radius: 9px;
 
-    --badge-top: -1px;
+    --badge-top: 3px;
     --badge-left: 20px;
     --badge-width: 16px;
     --badge-height: 16px;
@@ -213,7 +213,7 @@ body:not(.smallest):not(.smaller):not(.larger):not(.largest) {
     --big-icon-height: 72px;
     --room-icon-border-radius: 10px;
 
-    --badge-top: -1px;
+    --badge-top: 3px;
     --badge-left: 22px;
     --badge-width: 16px;
     --badge-height: 16px;
@@ -303,7 +303,7 @@ body.larger {
     --big-icon-height: 80px;
     --room-icon-border-radius: 12px;
 
-    --badge-top: -1px;
+    --badge-top: 3px;
     --badge-left: 25px;
     --badge-width: 18px;
     --badge-height: 18px;
@@ -393,7 +393,7 @@ body.largest {
     --big-icon-height: 88px;
     --room-icon-border-radius: 12px;
 
-    --badge-top: -1px;
+    --badge-top: 3px;
     --badge-left: 28px;
     --badge-width: 18px;
     --badge-height: 18px;
@@ -914,7 +914,7 @@ div.icon div.room-indicator {
     justify-content: center
 }
 
-div.icon div.badge.empty, div.back div.badge.empty {
+div.icon div.badge.empty, button.back div.badge.empty {
     display: none;
 }
 
@@ -926,7 +926,7 @@ div.rooms button.item div.icon, div.results button.item div.icon, div.occupants 
     position: relative;
 }
 
-div.icon div.badge, div.back div.badge {
+div.icon div.badge, button.back div.badge {
     position: absolute;
     top: var(--badge-top);
     left: var(--badge-left);
@@ -1057,12 +1057,23 @@ div.chat > div.top-info {
     overflow: hidden;
 }
 
-div.top-info div.back, div.info div.back, div.top-info div.info {
+div.top-info button.back, div.info button.back, div.top-info button.info {
     cursor: default;
     display: none;
     position: relative;
     margin-top: var(--nav-button-top-margin);
     margin-bottom: var(--nav-button-bottom-margin);
+    color: var(--sidebar-text);
+    background: transparent;
+    border: none;
+    padding-left: 0px;
+    padding-right: 0px;
+    margin-left: 0px;
+    margin-right: 0px;
+}
+
+div.top-info button.back:focus-visible, div.info button.back:focus-visible, div.top-info button.info:focus-visible {
+    background: var(--sidebar-hover-background);
 }
 
 div.top-info div.icon {
@@ -1108,7 +1119,7 @@ div.top-info img.emote, div.top-info img.emoji {
     margin-bottom: -0.2em ! important;
 }
 
-div.top-info div.info {
+div.top-info button.info {
     margin-left: auto;
 }
 

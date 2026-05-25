@@ -97,7 +97,7 @@ class Menu {
         });
 
         // Set up the mobile back button.
-        $( 'div.top-info div.back' ).on( 'click', (event) => {
+        $( 'div.top-info button.back' ).on( 'click', (event) => {
             event.preventDefault();
 
             this.inputState.setState("empty");
@@ -161,14 +161,14 @@ class Menu {
      */
     _updateSize() {
         if (this.size == "mobile") {
-            $( 'div.top-info div.back' ).show();
+            $( 'div.top-info button.back' ).show();
             if (this.screenState.current == "menu") {
                 $( 'div.container > div.menu' ).removeClass('hidden').addClass('full');
             } else {
                 $( 'div.container > div.menu' ).addClass('hidden').addClass('full');
             }
         } else {
-            $( 'div.top-info div.back' ).hide();
+            $( 'div.top-info button.back' ).hide();
             $( 'div.container > div.menu' ).removeClass('hidden').removeClass('full');
         }
     }
@@ -773,15 +773,15 @@ class Menu {
 
         // Display notification count badges on various back buttons in mobile.
         if (total > 0) {
-            $('div.back > div.badge').removeClass('empty');
+            $('button.back > div.badge').removeClass('empty');
             if (total > 9) {
-                $('div.back > div.badge div.count').text('!!');
+                $('button.back > div.badge div.count').text('!!');
             } else {
-                $('div.back > div.badge div.count').text(total);
+                $('button.back > div.badge div.count').text(total);
             }
         } else {
-            $('div.back > div.badge').addClass('empty');
-            $('div.back > div.badge div.count').text("");
+            $('button.back > div.badge').addClass('empty');
+            $('button.back > div.badge div.count').text("");
         }
 
         // Only show a title notification if the user asked us to do so.
