@@ -471,6 +471,11 @@ div.preload {
     display: none;
 }
 
+input, button, textarea {
+    font-family: "Atkinson Hyperlegible", Arial, Helvetica, sans-serif;
+    font-weight: normal;
+}
+
 input:not([type=file]):not([type=button]) {
     color: var(--input-text);
     font-size: var(--application-text-size-14);
@@ -500,7 +505,6 @@ form button, form input[type=button], form input::file-selector-button {
 }
 
 textarea {
-    font-family: "Atkinson Hyperlegible", Arial, Helvetica, sans-serif;
     font-size: var(--application-text-size-14);
     background: var(--input-background);
 }
@@ -828,9 +832,11 @@ div.menu > div.header {
 div.menu button.instance {
     display: flex;
     flex-direction: row;
-    padding: var(--application-item-padding);
+    padding: 0px;
+    margin: 0px;
+    color: var(--sidebar-text);
     border-radius: var(--button-border-radius);
-    gap: var(--application-item-padding);
+    gap: var(--application-pane-padding);
     background: transparent;
     cursor: default;
     border: 1px solid transparent;
@@ -868,6 +874,7 @@ div.menu > div.rooms.scroll {
 div.rooms button.item, div.results button.item, div.occupants button.item {
     display: flex;
     flex-direction: row;
+    color: var(--sidebar-text);
     padding: var(--application-item-padding);
     border-radius: var(--button-border-radius);
     background: transparent;
