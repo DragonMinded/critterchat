@@ -33,13 +33,15 @@ body.smallest {
     --big-icon-height: 56px;
     --room-icon-border-radius: 8px;
 
-    --badge-top: 3px;
+    --badge-top: -1px;
     --badge-left: 16px;
     --badge-width: 15px;
     --badge-height: 15px;
     --badge-text-size: 9px;
     --badge-text-top: 2px;
-    --badge-text-left: 5px;
+
+    --nav-button-top-margin: 2px;
+    --nav-button-bottom-margin: -2px;
 
     --room-indicator-top: 16px;
     --room-indocator-left: 15px;
@@ -68,8 +70,6 @@ body.smallest {
 
     --nav-button-width: 32px;
     --nav-button-height: 32px;
-    --nav-button-top-margin: 2px;
-    --nav-button-bottom-margin: -2px;
 
     --conversation-panel-height: 34px;
     --conversation-topic-max-height: 26px;
@@ -123,13 +123,12 @@ body.smaller {
     --big-icon-height: 64px;
     --room-icon-border-radius: 9px;
 
-    --badge-top: 3px;
+    --badge-top: -1px;
     --badge-left: 20px;
     --badge-width: 16px;
     --badge-height: 16px;
     --badge-text-size: 10px;
     --badge-text-top: 2px;
-    --badge-text-left: 5px;
 
     --room-indicator-top: 20px;
     --room-indocator-left: 19px;
@@ -158,8 +157,6 @@ body.smaller {
 
     --nav-button-width: 32px;
     --nav-button-height: 32px;
-    --nav-button-top-margin: 2px;
-    --nav-button-bottom-margin: -2px;
 
     --conversation-panel-height: 36px;
     --conversation-topic-max-height: 26px;
@@ -213,13 +210,12 @@ body:not(.smallest):not(.smaller):not(.larger):not(.largest) {
     --big-icon-height: 72px;
     --room-icon-border-radius: 10px;
 
-    --badge-top: 3px;
+    --badge-top: -1px;
     --badge-left: 22px;
     --badge-width: 16px;
     --badge-height: 16px;
     --badge-text-size: 10px;
     --badge-text-top: 2px;
-    --badge-text-left: 5px;
 
     --room-indicator-top: 22px;
     --room-indocator-left: 21px;
@@ -248,8 +244,6 @@ body:not(.smallest):not(.smaller):not(.larger):not(.largest) {
 
     --nav-button-width: 36px;
     --nav-button-height: 36px;
-    --nav-button-top-margin: 2px;
-    --nav-button-bottom-margin: -2px;
 
     --conversation-panel-height: 38px;
     --conversation-topic-max-height: 28px;
@@ -303,13 +297,12 @@ body.larger {
     --big-icon-height: 80px;
     --room-icon-border-radius: 12px;
 
-    --badge-top: 3px;
+    --badge-top: -1px;
     --badge-left: 25px;
     --badge-width: 18px;
     --badge-height: 18px;
     --badge-text-size: 10px;
     --badge-text-top: 3px;
-    --badge-text-left: 6px;
 
     --room-indicator-top: 25px;
     --room-indocator-left: 24px;
@@ -338,8 +331,6 @@ body.larger {
 
     --nav-button-width: 40px;
     --nav-button-height: 40px;
-    --nav-button-top-margin: 2px;
-    --nav-button-bottom-margin: -2px;
 
     --conversation-panel-height: 42px;
     --conversation-topic-max-height: 34px;
@@ -393,13 +384,12 @@ body.largest {
     --big-icon-height: 88px;
     --room-icon-border-radius: 12px;
 
-    --badge-top: 3px;
+    --badge-top: -1px;
     --badge-left: 28px;
     --badge-width: 18px;
     --badge-height: 18px;
     --badge-text-size: 10px;
     --badge-text-top: 3px;
-    --badge-text-left: 6px;
 
     --room-indicator-top: 28px;
     --room-indocator-left: 27px;
@@ -428,8 +418,6 @@ body.largest {
 
     --nav-button-width: 44px;
     --nav-button-height: 44px;
-    --nav-button-top-margin: 2px;
-    --nav-button-bottom-margin: -2px;
 
     --conversation-panel-height: 46px;
     --conversation-topic-max-height: 40px;
@@ -946,7 +934,9 @@ div.badge > div.count {
     font-size: var(--badge-text-size);
     position: absolute;
     top: var(--badge-text-top);
-    left: var(--badge-text-left);
+    display: flex;
+    align-content: center;
+    justify-content: center;
 }
 
 div.rooms button.item div.icon img, div.results button.item div.icon img, div.occupants button.item div.icon img {
@@ -1066,8 +1056,7 @@ div.top-info button.back, div.info button.back, div.top-info button.info {
     color: var(--sidebar-text);
     background: transparent;
     border: none;
-    padding-left: 0px;
-    padding-right: 0px;
+    padding: 0px;
     margin-left: 0px;
     margin-right: 0px;
 }
