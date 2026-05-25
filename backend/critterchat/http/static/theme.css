@@ -11,6 +11,7 @@
     --sidebar-background: light-dark(#dddddd, #222222);
     --sidebar-text: light-dark(#000000, #e1e1e1);
     --sidebar-hover-background: light-dark(#bcbcbc, #444444);
+    --sidebar-selected-background: light-dark(#a8a8a8, #636363);
 
     --conversation-background: light-dark(#efefef, #373737);
     --conversation-text: light-dark(#000000, #dddddd);
@@ -24,10 +25,10 @@
     --edit-icon-text: light-dark(#000000, #ffffff);
 
     --button-background: light-dark(#dddddd, #555555);
-    --button-border: light-dark(#bcbcbc, #424242);
+    --button-border: light-dark(#bcbcbc, #6d6d6d);
     --button-text: light-dark(#000000, #ffffff);
-    --button-hover-background: light-dark(#bcbcbc, #424242);
-    --button-hover-border: light-dark(#bcbcbc, #424242);
+    --button-hover-background: light-dark(#bcbcbc, #6d6d6d);
+    --button-hover-border: light-dark(#bcbcbc, #6d6d6d);
     --button-hover-text: light-dark(#000000, #ffffff);
 
     --input-background: light-dark(#ffffff, #1c1c1c);

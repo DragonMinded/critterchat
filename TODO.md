@@ -1,8 +1,6 @@
 TODO Immediate
 ==============
 
- - Dark theme should make all highlighted buttons lighter instead of some darker.
-
 TODO For Public Instance
 ========================
 

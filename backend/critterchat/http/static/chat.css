@@ -889,6 +889,11 @@ div.rooms button.item:hover, div.occupants button.item:hover, div.rooms button.i
     border: 1px solid var(--sidebar-hover-background);
 }
 
+div.rooms button.item.selected:focus-visible, div.rooms button.item.selected:hover {
+    background: var(--sidebar-selected-background);
+    border: 1px solid var(--sidebar-selected-background);
+}
+
 div.actions button.item img {
     margin-bottom: -0.25em;
     display: inline;
