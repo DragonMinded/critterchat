@@ -233,6 +233,61 @@ you forget this step it won't result in an old version being served to clients
 but it will leave extra files laying around. Then, run `npm run build` in the
 same `frontend/` directory.
 
+## Convenience Scripts
+
+CritterChat uses `just` as a command runner to give developers a convenient way
+to remember common actions when developing. This is purely optional, but if you
+want to use the commands that are saved in the repo you can install the `just`
+command runner tool by following the instructions on [the just repo](https://github.com/casey/just#installation).
+Various available commands are documented here.
+
+Many just commands which run backend operations require a configuration file
+for your database setup and other local development server config. Make a copy
+of the example bare metal file by running `just init` and then edit the copy
+which has been placed in `backend/.config.yaml`. This config will be used by
+all of the backend just commands that need a config.
+
+```
+just setup
+```
+
+Creates a `.venv` directory in the backend which is used for all other backend-related
+commands. Installs all needed python dependencies into that `.venv` directory.
+Then, runs the npm install process in the frontend. The result of running
+`just setup` is that you should have a locally-configured enviroinment to run
+a debug version of CritterChat as well as the various test and lint utilities.
+
+```
+just run
+```
+
+Ensures that the frontend is compiled for debug and then starts a development
+server that can be reached at `http://localhost:5678`. Reads configuration from
+`backend/.config.yaml` which you should have either copied manually or edited
+after running `just init`. That configuration should point at your MySQL database
+and have your customizations for various server options.
+
+```
+just manage
+```
+
+Invoke the backend instance management utility using the config file for development.
+You can use this to perform any management operations, such as `just manage user list`
+to list all users in the development instance you're operating on. You can also run
+like `just manage --help` to see the instance management utility's help.
+
+```
+just lint
+```
+
+Runs all lint and type-checking verifications against both the backend and frontend.
+
+```
+just test
+```
+
+Runs all tests against both the backend and frontend.
+
 ### Submitting a PR
 
 CritterChat welcomes contributors! Open source software would not work if each

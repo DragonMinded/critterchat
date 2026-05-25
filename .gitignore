@@ -13,3 +13,5 @@ backend/.env/
 backend/.venv/
 backend/tests/.testdb.toml
 backend/.coverage
+backend/.config.yaml
+backend/.info.txt

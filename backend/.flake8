@@ -3,3 +3,5 @@ extend-ignore = E501
 exclude =
     critterchat/data/migrations
     build
+    .venv
+    .env
