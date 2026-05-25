@@ -579,7 +579,7 @@ li.info {
     background: var(--error-info);
 }
 
-div.maskable {
+div.maskable, button.maskable {
     display: inline-block;
     background-color: currentColor;
     mask-size: contain;
@@ -649,7 +649,7 @@ div.maskable.delete {
     mask-image: url('delete.svg');
 }
 
-div.maskable.attachment-picker {
+button.maskable.attachment-picker {
     width: 1.2em;
     height: 1.2em;
     margin-top: var(--attachment-picker-top);
@@ -670,7 +670,7 @@ div.maskable.info-button-svg {
     mask-image: url('info.svg');
 }
 
-div.maskable.message-visible {
+button.maskable.message-visible {
     width: 1.2em;
     height: 1.2em;
     margin-top: var(--message-visible-top);
@@ -679,7 +679,7 @@ div.maskable.message-visible {
     right: 2.6em;
 }
 
-div.maskable.message-sensitive {
+button.maskable.message-sensitive {
     width: 1.2em;
     height: 1.2em;
     margin-top: var(--message-sensitive-top);
@@ -688,30 +688,39 @@ div.maskable.message-sensitive {
     right: 2.6em;
 }
 
-div.maskable.attachment-visible {
+button.maskable.attachment-visible, div.maskable.attachment-visible {
     width: 1.2em;
     height: 1.2em;
     margin-bottom: -0.25em;
     mask-image: url('visible.svg');
 }
 
-div.maskable.attachment-sensitive {
+button.maskable.attachment-sensitive, div.maskable.attachment-sensitive {
     width: 1.2em;
     height: 1.2em;
     margin-bottom: -0.25em;
     mask-image: url('sensitive.svg');
 }
 
-div.attachment-picker.disabled {
-    color: var(--input-button-disabled-text);
+button.attachment-picker, button.message-visibility, button.emoji-search {
+    margin: 0px;
+    padding: 0px;
+    color: var(--conversation-text);
+    font-size: var(--application-text-size-16);
+    border: none;
+    display: inline-block;
 }
 
-div.attachment-picker:hover:not(.disabled) {
-    color: var(--attachment-picker-hover);
+button.attachment-picker:disabled {
+    background-color: var(--input-button-disabled-text);
 }
 
-div.message-visibility:hover {
-    color: var(--message-visibility-hover);
+button.attachment-picker:hover:not(:disabled), button.attachment-picker:focus-visible:not(:disabled) {
+    background-color: var(--attachment-picker-hover);
+}
+
+button.message-visibility:hover, button.message-visibility:focus-visible {
+    background-color: var(--message-visibility-hover);
 }
 
 div.uploadpicker-container {
@@ -1735,16 +1744,19 @@ img.emote-big, img.emoji-big {
     width: auto;
 }
 
-div.emoji-search {
+button.emoji-search {
     font-size: var(--application-text-size-14);
     position: absolute;
     right: 0.3em;
     padding-top: var(--emoji-search-picker-top);
     filter: grayscale(100%);
+    background: transparent;
 }
 
-div.emoji-search:hover, div.emoji-search.opened {
+button.emoji-search:hover, button.emoji-search:focus-visible, button.emoji-search.opened {
     filter: none;
+    background: transparent;
+    border: none;
 }
 
 .name-highlight {

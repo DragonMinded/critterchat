@@ -104,7 +104,7 @@ class Messages {
                             {
                                 'roomid': roomid,
                                 'message': message,
-                                'sensitive': $( 'div.message-visibility' ).hasClass('message-sensitive'),
+                                'sensitive': $( 'button.message-visibility' ).hasClass('message-sensitive'),
                                 'attachments': files,
                             },
                         );
@@ -282,24 +282,24 @@ class Messages {
 
         // Don't allow attachments if they're disabled.
         if (window.maxattachments <= 0) {
-            $( 'div.attachment-picker' ).addClass( 'disabled' );
+            $( 'button.attachment-picker' ).prop('disabled', true);
         } else {
-            $( 'div.attachment-picker' ).on( 'click', () => {
+            $( 'button.attachment-picker' ).on( 'click', () => {
                 if (this.roomid && this.rooms.has(this.roomid)) {
                     this.uploadPicker.selectFiles(this.roomid, "image/*");
                 }
             });
         }
 
-        $( 'div.message-visibility' ).on( 'click', () => {
+        $( 'button.message-visibility' ).on( 'click', () => {
             event.preventDefault();
             event.stopPropagation();
             event.stopImmediatePropagation();
 
-            if ($( 'div.message-visibility' ).hasClass('message-sensitive')) {
-                $( 'div.message-visibility' ).addClass('message-visible').removeClass('message-sensitive');
+            if ($( 'button.message-visibility' ).hasClass('message-sensitive')) {
+                $( 'button.message-visibility' ).addClass('message-visible').removeClass('message-sensitive');
             } else {
-                $( 'div.message-visibility' ).addClass('message-sensitive').removeClass('message-visible');
+                $( 'button.message-visibility' ).addClass('message-sensitive').removeClass('message-visible');
             }
         });
 
@@ -326,7 +326,7 @@ class Messages {
                 if (info.roomid == this.roomid) {
                     // Now reset the input.
                     $( 'input#message' ).val( '' );
-                    $( 'div.message-visibility' ).addClass('message-visible').removeClass('message-sensitive');
+                    $( 'button.message-visibility' ).addClass('message-visible').removeClass('message-sensitive');
                 }
 
                 // Always clear the attachment store for the room.
@@ -631,7 +631,7 @@ class Messages {
                         this.roomid,
                         {
                             "message": $( 'input#message' ).val(),
-                            "sensitive": $( 'div.message-visibility' ).hasClass('message-sensitive'),
+                            "sensitive": $( 'button.message-visibility' ).hasClass('message-sensitive'),
                         },
                     );
                     this.uploadPicker.hideRoom( this.roomid );
@@ -641,13 +641,13 @@ class Messages {
                 if (this.pending.has(roomid)) {
                     $( 'input#message' ).val(this.pending.get(roomid).message);
                     if ( this.pending.get(roomid).sensitive ) {
-                        $( 'div.message-visibility' ).addClass('message-sensitive').removeClass('message-visible');
+                        $( 'button.message-visibility' ).addClass('message-sensitive').removeClass('message-visible');
                     } else {
-                        $( 'div.message-visibility' ).addClass('message-visible').removeClass('message-sensitive');
+                        $( 'button.message-visibility' ).addClass('message-visible').removeClass('message-sensitive');
                     }
                 } else {
                     $( 'input#message' ).val('');
-                    $( 'div.message-visibility' ).addClass('message-visible').removeClass('message-sensitive');
+                    $( 'button.message-visibility' ).addClass('message-visible').removeClass('message-sensitive');
                 }
                 this.uploadPicker.showRoom( roomid );
 
@@ -694,7 +694,7 @@ class Messages {
     closeRoom( roomid ) {
         // Nuke pending message since we're closing the room.
         this.pending.set(roomid, {'message': '', 'sensitive': false});
-        $( 'div.message-visibility' ).addClass('message-visible').removeClass('message-sensitive');
+        $( 'button.message-visibility' ).addClass('message-visible').removeClass('message-sensitive');
 
         this.uploadPicker.hideRoom( roomid );
 
