@@ -97,8 +97,10 @@ def db() -> Engine:
 def tx(db: Engine) -> Generator[Session, None, None]:
     session = Session(db, autoflush=True)
 
-    # Create a transaction for this test.
+    # Create a transaction for this test, make sure lock bugs don't take forever to time out.
     session.begin()
+    session.execute(text("SET SESSION innodb_lock_wait_timeout = 1;"))
+
     try:
         # Yield it for use.
         yield session
