@@ -152,6 +152,9 @@ class AttachmentData(BaseData):
         Note that this completely overwrites the metadata with new metadata.
         """
 
+        if attachmentid == NewAttachmentID:
+            return
+
         sql = """
             UPDATE attachment
             SET metadata = :metadata
@@ -167,6 +170,9 @@ class AttachmentData(BaseData):
         does not update any metadata not explicitly specified in the incoming metadata
         dictionary, so it's safe to only update the values you want to change.
         """
+
+        if attachmentid == NewAttachmentID:
+            return
 
         with self.transaction():
             sql = "SELECT metadata FROM attachment WHERE id = :id"
@@ -190,6 +196,10 @@ class AttachmentData(BaseData):
         """
         Given an attachment ID, remove the reference to it in the DB.
         """
+
+        if attachmentid == NewAttachmentID:
+            return
+
         sql = """
             DELETE FROM attachment WHERE `id` = :attachmentid LIMIT 1
         """
