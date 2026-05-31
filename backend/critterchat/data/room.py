@@ -530,7 +530,8 @@ class RoomData(BaseData):
         """
         cursor = self.execute(sql, {"name": room.name, "topic": room.topic, "moderated": room.moderated, "purpose": room.purpose, "timestamp": timestamp, "icon": room.iconid})
         if cursor.rowcount != 1:
-            return None
+            return
+
         newroom = self.get_room(RoomID(cursor.lastrowid))
         if newroom:
             room.id = newroom.id

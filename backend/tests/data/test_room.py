@@ -2,6 +2,7 @@ import pytest
 from sqlalchemy.orm import Session
 
 from critterchat.data import ActionType, Room, RoomPurpose, RoomID, NewRoomID, NewUserID, UserPermission
+from critterchat.data.attachment import AttachmentData
 from critterchat.data.room import RoomData
 from critterchat.data.user import UserData
 
@@ -16,7 +17,9 @@ class TestRoomData:
         """
 
         config = MockConfig()
+        attachmentdata = AttachmentData(config, tx)
         roomdata = RoomData(config, tx)
+        userdata = UserData(config, tx)
 
         # First, create a room
         room = Room(
@@ -55,11 +58,76 @@ class TestRoomData:
         assert by_id is not None
         assert by_id.name == "test room crud updated"
         assert by_id.topic == "test room crud topic updated"
+        assert by_id.iconid is None
 
         # Ensure that reading actions for this room shows the updated action from updating the room.
         history = roomdata.get_room_history(room.id)
         assert len(history) == 1
         assert history[0].action == ActionType.CHANGE_INFO
+        assert history[0].occupant is None
+        old_action_id = history[0].id
+
+        # And verify that the action ID we detect on the network is correct.
+        assert old_action_id == roomdata.get_last_action()
+
+        # Now, join the room as a user and then make a change again.
+        user = userdata.create_account("room_crud_user", "amazing_password")
+        assert user is not None
+        roomdata.join_room(room.id, user.id)
+
+        # Make sure the action was recorded.
+        history = roomdata.get_room_history(room.id, types=[ActionType.JOIN])
+        assert len(history) == 1
+        assert history[0].action == ActionType.JOIN
+        assert history[0].occupant is not None
+        assert history[0].occupant.userid == user.id
+
+        # And verify that the action ID we detect on the network is correct.
+        assert history[0].id == roomdata.get_last_action()
+
+        # Now, edit the room as the user.
+        aid = attachmentdata.insert_attachment('local', 'image/png', 'testing.png', {})
+        assert aid is not None
+        room.iconid = aid
+        room.name = "test room updated by user"
+        roomdata.update_room(room, user.id)
+
+        # And make sure the data reflects.
+        by_id = roomdata.get_room(room.id)
+        assert by_id is not None
+        assert by_id.name == "test room updated by user"
+        assert by_id.topic == "test room crud topic updated"
+        assert by_id.iconid == aid
+
+        # And make sure we can find this info.
+        history = roomdata.get_room_history(room.id, types=[ActionType.CHANGE_INFO], after=old_action_id)
+        assert len(history) == 1
+        assert history[0].action == ActionType.CHANGE_INFO
+        assert history[0].occupant is not None
+        assert history[0].occupant.userid == user.id
+        new_action_id = history[0].id
+
+        # And verify that the action ID we detect on the network is correct.
+        assert new_action_id == roomdata.get_last_action()
+
+        # Also make sure we can find the info by limiting the response to the last few actions.
+        history = roomdata.get_room_history(room.id, limit=1)
+        assert len(history) == 1
+        assert history[0].action == ActionType.CHANGE_INFO
+        assert history[0].occupant is not None
+        assert history[0].occupant.userid == user.id
+
+        # And make sure we can find the old events as well, ordered by newest to oldest.
+        history = roomdata.get_room_history(room.id, before=new_action_id)
+        assert len(history) == 2
+        assert history[0].action == ActionType.JOIN
+        assert history[0].occupant is not None
+        assert history[0].occupant.userid == user.id
+        assert history[1].action == ActionType.CHANGE_INFO
+        assert history[1].occupant is None
+
+        # And verify that the action ID we detect on the network is correct.
+        assert new_action_id == roomdata.get_last_action()
 
         # No delete because we do not delete rooms currently.
 
