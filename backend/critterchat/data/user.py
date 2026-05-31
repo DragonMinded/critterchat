@@ -93,6 +93,7 @@ preferences = Table(
     Column("invite_privacy", String(14)),
     Column("title_notifs", Boolean),
     Column("mobile_audio_notifs", Boolean),
+    Column("tabbable_chat_elements", Boolean),
     Column("audio_notifs", Integer),
     Column("timestamp", Integer, index=True),
     mysql_charset="utf8mb4",
@@ -594,6 +595,7 @@ class UserData(BaseData):
             invite_privacy=coerce_enum(InvitePrivacy, result['invite_privacy'], InvitePrivacy.CHOOSE),
             title_notifs=bool(result['title_notifs']),
             mobile_audio_notifs=bool(result['mobile_audio_notifs']),
+            tabbable_chat_elements=bool(result['tabbable_chat_elements']) if result['tabbable_chat_elements'] is not None else True,
             audio_notifs=notifications,
         )
 
@@ -637,6 +639,7 @@ class UserData(BaseData):
                 `audio_notifs`,
                 `search_privacy`,
                 `invite_privacy`,
+                `tabbable_chat_elements`,
                 `timestamp`
             )
             VALUES (
@@ -652,6 +655,7 @@ class UserData(BaseData):
                 :audio_notifs,
                 :search_privacy,
                 :invite_privacy,
+                :tabbable_chat_elements,
                 :ts
             )
             ON DUPLICATE KEY UPDATE
@@ -666,6 +670,7 @@ class UserData(BaseData):
                 `audio_notifs` = :audio_notifs,
                 `search_privacy` = :search_privacy,
                 `invite_privacy` = :invite_privacy,
+                `tabbable_chat_elements` = :tabbable_chat_elements,
                 `timestamp` = :ts
         """
         self.execute(sql, {
@@ -681,6 +686,7 @@ class UserData(BaseData):
             "audio_notifs": audio_notifs,
             "search_privacy": preferences.search_privacy,
             "invite_privacy": preferences.invite_privacy,
+            "tabbable_chat_elements": preferences.tabbable_chat_elements,
             "ts": Time.now()
         })
 

@@ -553,6 +553,9 @@ def updatepreferences(json: dict[str, object]) -> None:
             notif_delete = {str(x) for x in notif_delete}
         else:
             notif_delete = None
+    new_tabbable_chat_elements = json.get('tabbable_chat_elements', None)
+    if new_tabbable_chat_elements is not None:
+        new_tabbable_chat_elements = bool(new_tabbable_chat_elements)
 
     new_notif_sounds: dict[str, AttachmentID] = {}
     notif_dict = json.get('notif_sounds', {}) or {}
@@ -579,6 +582,7 @@ def updatepreferences(json: dict[str, object]) -> None:
             invite_privacy=new_invite_privacy,
             mobile_audio_notifs=new_mobile_audio_notifs,
             audio_notifs=new_audio_notifs,
+            tabbable_chat_elements=new_tabbable_chat_elements,
             notif_sounds=new_notif_sounds,
             notif_sounds_delete=notif_delete,
         )

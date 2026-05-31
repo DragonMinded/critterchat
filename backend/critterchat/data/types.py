@@ -221,6 +221,7 @@ class UserPreferences:
         invite_privacy: InvitePrivacy,
         title_notifs: bool,
         mobile_audio_notifs: bool,
+        tabbable_chat_elements: bool,
         audio_notifs: set[UserNotification],
     ) -> None:
         self.userid = userid
@@ -235,6 +236,7 @@ class UserPreferences:
         self.invite_privacy = invite_privacy
         self.mobile_audio_notifs = mobile_audio_notifs
         self.audio_notifs = audio_notifs
+        self.tabbable_chat_elements = tabbable_chat_elements
 
         # Only ever filled in by the user service before returning to the client.
         self.notif_sounds: dict[str, str] = {}
@@ -251,6 +253,7 @@ class UserPreferences:
             "search_privacy": self.search_privacy,
             "invite_privacy": self.invite_privacy,
             "mobile_audio_notifs": self.mobile_audio_notifs,
+            "tabbable_chat_elements": self.tabbable_chat_elements,
             "audio_notifs": [str(an.name) for an in self.audio_notifs],
             "notif_sounds": self.notif_sounds,
         }
@@ -261,6 +264,7 @@ class UserPreferences:
             userid=userid,
             rooms_on_top=False,
             combined_messages=False,
+            tabbable_chat_elements=True,
             color_scheme=ColorScheme.SYSTEM,
             desktop_size=UISize.NORMAL,
             mobile_size=UISize.NORMAL,

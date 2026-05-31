@@ -544,6 +544,7 @@ class Messages {
     setPreferences( preferences ) {
         this.preferences = preferences;
         this._combineMessages(true);
+        this._updateTabOrder();
         this.uploadPicker.resizeRooms();
     }
 
@@ -1087,6 +1088,7 @@ class Messages {
         this._combineMessages(false);
         this._drawOlderMessagesLoader();
         this._scrollToMessage();
+        this._updateTabOrder();
 
         if (this.lastAction.id != oldactionid) {
             const update = {"roomid": this.roomid, "actionid": this.lastAction.id};
@@ -1546,6 +1548,25 @@ class Messages {
         }
 
         this._updateLastAction(message);
+    }
+
+    /**
+     * Function responsible for ensuring that individual elements in the chat pane either are
+     * reachable using the tab button or are skipped by tab order, depending on the user's
+     * preferences.
+     */
+    _updateTabOrder() {
+        var messages = $('div.chat > div.conversation-wrapper > div.conversation');
+
+        if (this.preferences.tabbable_chat_elements) {
+            messages.find('a, button').each((_idx, elem) => {
+                $(elem).removeAttr('tabindex');
+            });
+        } else {
+            messages.find('a, button').each((_idx, elem) => {
+                $(elem).attr('tabindex', -1);
+            });
+        }
     }
 
     /**

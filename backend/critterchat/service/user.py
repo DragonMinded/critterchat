@@ -105,6 +105,7 @@ class UserService:
         invite_privacy: InvitePrivacy | None = None,
         title_notifs: bool | None = None,
         mobile_audio_notifs: bool | None = None,
+        tabbable_chat_elements: bool | None = None,
         audio_notifs: set[str] | None = None,
         notif_sounds: dict[str, AttachmentID] | None = None,
         notif_sounds_delete: set[str] | None = None,
@@ -134,6 +135,8 @@ class UserService:
             prefs.title_notifs = title_notifs
         if mobile_audio_notifs is not None:
             prefs.mobile_audio_notifs = mobile_audio_notifs
+        if tabbable_chat_elements is not None:
+            prefs.tabbable_chat_elements = tabbable_chat_elements
         if audio_notifs is not None:
             try:
                 prefs.audio_notifs = {UserNotification[an] for an in audio_notifs}
