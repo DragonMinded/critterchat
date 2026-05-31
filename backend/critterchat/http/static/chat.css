@@ -130,6 +130,9 @@ body.smaller {
     --badge-text-size: 10px;
     --badge-text-top: 2px;
 
+    --nav-button-top-margin: 2px;
+    --nav-button-bottom-margin: -2px;
+
     --room-indicator-top: 20px;
     --room-indocator-left: 19px;
     --room-indicator-width: 15px;
@@ -216,6 +219,9 @@ body:not(.smallest):not(.smaller):not(.larger):not(.largest) {
     --badge-height: 16px;
     --badge-text-size: 10px;
     --badge-text-top: 2px;
+
+    --nav-button-top-margin: 2px;
+    --nav-button-bottom-margin: -2px;
 
     --room-indicator-top: 22px;
     --room-indocator-left: 21px;
@@ -304,6 +310,9 @@ body.larger {
     --badge-text-size: 10px;
     --badge-text-top: 3px;
 
+    --nav-button-top-margin: 2px;
+    --nav-button-bottom-margin: -2px;
+
     --room-indicator-top: 25px;
     --room-indocator-left: 24px;
     --room-indicator-width: 18px;
@@ -390,6 +399,9 @@ body.largest {
     --badge-height: 18px;
     --badge-text-size: 10px;
     --badge-text-top: 3px;
+
+    --nav-button-top-margin: 2px;
+    --nav-button-bottom-margin: -2px;
 
     --room-indicator-top: 28px;
     --room-indocator-left: 27px;
