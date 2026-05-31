@@ -45,7 +45,7 @@ federation between instances that can be enabled or disabled per-instance.
  - Link auto-sanitization to remove tracking info.
  - Multi-account support in the web frontend.
  - Inter-instance direct messages and private conversations, inter-instance OIDC-based authentication.
- - REST API for bot integration.
+ - REST API for bot integration, discord-compatible webhook support.
 
 ## Needed Help
 
@@ -56,9 +56,10 @@ get in touch so we can work out the direction you plan to take.
  - Containerization and simplifying deployment/updates.
  - UX design work and help with themes.
  - Accessibility help, audits and fixes.
- - Testing and support for non-standard browsers such as Safari.
+ - Testing and support for non-standard browsers and operating systems.
  - SVGs for graphics for default avatar/room pictures, iconography on the frontend.
  - Documentation clarification or correction, both in code and related markdown files.
+ - User's guide and administrator's guide.
  - Support for more attachment backends.
  - Support for more authentication provider flows.
  - Native clients for mobile or desktop operating systems.
