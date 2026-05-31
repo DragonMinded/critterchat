@@ -3,7 +3,7 @@ from sqlalchemy.schema import UniqueConstraint
 from sqlalchemy.types import String, Integer, Boolean
 
 from .base import BaseData, metadata
-from .types import MastodonInstance, MastodonInstanceID, NewMastodonInstanceID, UserID
+from .types import MastodonInstance, MastodonInstanceID, NewMastodonInstanceID, NewUserID, UserID
 
 """
 Table representing a mastodon instance that we auth against.

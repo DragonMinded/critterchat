@@ -29,5 +29,5 @@ TODO Low Priority
  - Better autocomplete that lets you scroll down past the first 10 entries.
  - When server selects a room for you, ensure that the menu on the left scrolls to make that room visible.
  - Proper history integration for mobile so browser back action works the same as back button.
- - Flesh out tests for mastodon and room data subsystems, add SQLite as a database option.
+ - Flesh out tests for room data subsystem, add SQLite as a database option.
  - Low-motion option for those who are sensitive to motion.
