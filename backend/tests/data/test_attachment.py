@@ -1,11 +1,22 @@
 import pytest
 from sqlalchemy.orm import Session
 
+from critterchat.common import Time
 from critterchat.data import (
+    NewActionID,
     NewAttachmentID,
+    NewOccupantID,
+    NewRoomID,
+    Action,
+    ActionType,
     MetadataType,
+    Occupant,
+    Room,
+    RoomPurpose,
 )
 from critterchat.data.attachment import AttachmentData
+from critterchat.data.room import RoomData
+from critterchat.data.user import UserData
 
 from ..mocks import MockConfig
 
@@ -153,3 +164,178 @@ class TestAttachmentData:
         assert emote is None
         emotes = attachmentdata.get_emotes()
         assert emotes == []
+
+    def test_notification_crud(self, tx: Session) -> None:
+        """
+        Tests basic create, retrieve, update, delete for notifications in the system.
+        """
+
+        config = MockConfig()
+        attachmentdata = AttachmentData(config, tx)
+        userdata = UserData(config, tx)
+
+        # We need a couple users to test notifications with.
+        user1 = userdata.create_account('notification_test_1', 'best_password')
+        user2 = userdata.create_account('notification_test_2', 'best_password')
+        assert user1 is not None
+        assert user2 is not None
+
+        # Ensure that neither user has notifications.
+        notifications = attachmentdata.get_notifications(user1.id)
+        assert notifications == {}
+        notifications = attachmentdata.get_notifications(user2.id)
+        assert notifications == {}
+
+        # Add a notification to the first user, ensure we can fetch it.
+        aid = attachmentdata.insert_attachment('local', 'audio/mpeg', 'testing.mp3', {})
+        assert aid is not None
+        attachmentdata.set_notification(user1.id, 'testing', aid)
+
+        notifications = attachmentdata.get_notifications(user1.id)
+        assert set(notifications.keys()) == {'testing'}
+        assert notifications['testing'].id == aid
+        assert notifications['testing'].system == "local"
+        assert notifications['testing'].content_type == "audio/mpeg"
+        assert notifications['testing'].original_filename == "testing.mp3"
+        assert notifications['testing'].metadata == {}
+        notification = attachmentdata.get_notification(user1.id, 'testing')
+        assert notification is not None
+        assert notification.id == aid
+        assert notification.system == "local"
+        assert notification.content_type == "audio/mpeg"
+        assert notification.original_filename == "testing.mp3"
+        assert notification.metadata == {}
+
+        # Also be sure that the other user is not affected, and that other notifications aren't either.
+        notification = attachmentdata.get_notification(user1.id, 'another')
+        assert notification is None
+        notification = attachmentdata.get_notification(user2.id, 'testing')
+        assert notification is None
+        notifications = attachmentdata.get_notifications(user2.id)
+        assert notifications == {}
+
+        # Ensure removing isn't cross-coupled.
+        attachmentdata.remove_notification(user2.id, 'testing')
+        notification = attachmentdata.get_notification(user1.id, 'testing')
+        assert notification is not None
+
+        # Now, remove the notification, ensure we can't find it anymore.
+        attachmentdata.remove_notification(user1.id, 'testing')
+        attachmentdata.remove_attachment(aid)
+        notification = attachmentdata.get_notification(user1.id, 'testing')
+        assert notification is None
+
+        notifications = attachmentdata.get_notifications(user1.id)
+        assert notifications == {}
+        notifications = attachmentdata.get_notifications(user2.id)
+        assert notifications == {}
+
+    def test_action_attachment_linking(self, tx: Session) -> None:
+        """
+        Tests linking, unlinking and fetching attachments for an action in the system.
+        """
+
+        config = MockConfig()
+        attachmentdata = AttachmentData(config, tx)
+        userdata = UserData(config, tx)
+        roomdata = RoomData(config, tx)
+
+        # To link an attachment to an action, we need so many things. We need an action,
+        # which necessitates a room and an occupant, which then necessitates a user.
+        user = userdata.create_account('action_link_test', 'best_password')
+        assert user is not None
+
+        room = Room(
+            NewRoomID,
+            "action link room",
+            "action link room topic",
+            RoomPurpose.ROOM,
+            False,
+            False,
+            None,
+            None,
+        )
+        roomdata.create_room(room)
+        assert room.id != NewRoomID
+
+        roomdata.join_room(room.id, user.id)
+
+        # Create two actions so we can differentiate later.
+        occupant = Occupant(
+            occupantid=NewOccupantID,
+            userid=user.id,
+        )
+        action = Action(
+            actionid=NewActionID,
+            timestamp=Time.now(),
+            occupant=occupant,
+            action=ActionType.MESSAGE,
+            details={"message": "this is a test"},
+        )
+        roomdata.insert_action(room.id, action)
+        assert action.id != NewActionID
+        action1 = action.id
+
+        occupant = Occupant(
+            occupantid=NewOccupantID,
+            userid=user.id,
+        )
+        action = Action(
+            actionid=NewActionID,
+            timestamp=Time.now(),
+            occupant=occupant,
+            action=ActionType.MESSAGE,
+            details={"message": "this is a second test"},
+        )
+        roomdata.insert_action(room.id, action)
+        assert action.id != NewActionID
+        action2 = action.id
+
+        # Now, we need an attachment to link.
+        aid = attachmentdata.insert_attachment('local', 'image/png', 'testing.png', {})
+        assert aid is not None
+
+        # First, ensure that neither action has any detected attachments.
+        attachments = attachmentdata.get_action_attachments(action1)
+        assert attachments == {action1: []}
+        attachments = attachmentdata.get_action_attachments(action2)
+        assert attachments == {action2: []}
+        attachments = attachmentdata.get_action_attachments([action1, action2])
+        assert attachments == {action1: [], action2: []}
+
+        # Now, link an attachment to the first action.
+        with attachmentdata.lock_action_attachments():
+            attachmentdata.link_action_attachment(action1, aid)
+
+        # Now, verify that we can reach this attachment.
+        attachments = attachmentdata.get_action_attachments(action1)
+        assert set(attachments.keys()) == {action1}
+        assert len(attachments[action1]) == 1
+        assert attachments[action1][0].actionid == action1
+        assert attachments[action1][0].attachmentid == aid
+        assert attachments[action1][0].content_type == "image/png"
+        assert attachments[action1][0].original_filename == "testing.png"
+        assert attachments[action1][0].metadata == {}
+
+        attachments = attachmentdata.get_action_attachments(action2)
+        assert attachments == {action2: []}
+        attachments = attachmentdata.get_action_attachments([action1, action2])
+        assert set(attachments.keys()) == {action1, action2}
+        assert len(attachments[action1]) == 1
+        assert attachments[action1][0].actionid == action1
+        assert attachments[action1][0].attachmentid == aid
+        assert attachments[action1][0].content_type == "image/png"
+        assert attachments[action1][0].original_filename == "testing.png"
+        assert attachments[action1][0].metadata == {}
+        assert len(attachments[action2]) == 0
+
+        # Now, unlink that attachment and verify again.
+        with attachmentdata.lock_action_attachments():
+            attachmentdata.unlink_action_attachment(action1, aid)
+
+        attachments = attachmentdata.get_action_attachments(action1)
+        assert attachments == {action1: []}
+        attachments = attachmentdata.get_action_attachments(action2)
+        assert attachments == {action2: []}
+        attachments = attachmentdata.get_action_attachments([action1, action2])
+        assert attachments == {action1: [], action2: []}

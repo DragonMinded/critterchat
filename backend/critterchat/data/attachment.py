@@ -431,9 +431,6 @@ class AttachmentData(BaseData):
         """
         Look up all action attachments for a given action or actions in the system.
         """
-        if actionid == NewActionID:
-            return {}
-
         ids: list[ActionID] = []
         try:
             ids = [x for x in actionid]  # type: ignore
@@ -458,6 +455,8 @@ class AttachmentData(BaseData):
 
         retval: dict[ActionID, list[ActionAttachment]] = {}
         for aid in ids:
+            if aid == NewActionID:
+                continue
             retval[aid] = []
 
         for result in cursor.mappings():
@@ -469,6 +468,8 @@ class AttachmentData(BaseData):
                 metadata=json.loads(str(result["metadata"] or "{}")),
             )
 
+            if attachment.actionid == NewActionID:
+                continue
             retval[attachment.actionid].append(attachment)
 
         return retval

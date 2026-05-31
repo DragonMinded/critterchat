@@ -104,6 +104,9 @@ def tx(db: Engine) -> Generator[Session, None, None]:
         yield session
 
     finally:
+        # Ensure any locks are committed.
+        session.commit()
+
         # Nuke all test data so we don't pollute other tests.
         cursor = session.execute(
             text("""
