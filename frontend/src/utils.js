@@ -128,11 +128,21 @@ const isInViewport = function( el ) {
  * through and ensures that those are also closeable.
  */
 const flashHook = function() {
+    // Ensure that all visible flashes can be closed.
+    $( 'ul.errors li button' ).off();
     $( 'ul.errors li button' ).on('click', function(event) {
         event.preventDefault();
         const id = $( this ).attr('pid');
         $( 'ul.errors li#' + id ).remove();
+        flashHook();
     });
+
+    // Ensures that the flash container is behind other clickable elements if there is nothing to click.
+    if ($( 'ul.errors' ).children().length == 0) {
+        $( 'ul.errors' ).hide();
+    } else {
+        $( 'ul.errors' ).show();
+    }
 };
 
 /**

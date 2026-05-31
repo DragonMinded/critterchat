@@ -92,7 +92,7 @@ export function manager(socket) {
     // searching for users to invite to a private chat.
     var search = new Search(eventBus, inputState);
 
-    // Ensure any server-generated messages are closeable.
+    // Ensure any server-generated messages are closeable, container is not foregrounded.
     flashHook();
 
     // Check for application updates. The only thing this manages is a little info flash that

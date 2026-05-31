@@ -1,8 +1,6 @@
 TODO Immediate
 ==============
 
- - Put flash container div behind other elements when it has nothing inside it.
-
 TODO For Public Instance
 ========================
 
