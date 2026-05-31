@@ -145,6 +145,9 @@ class MastodonData(BaseData):
         between the mastodon user and the local account for authentication purposes.
         """
 
+        if user_id == NewUserID:
+            raise Exception("Logic error, should not try to link an account to a new user ID!")
+
         instance = self.lookup_instance(base_url)
         if not instance:
             return
