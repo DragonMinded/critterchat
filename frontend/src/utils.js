@@ -199,7 +199,10 @@ const containsStandaloneText = function( haystack, needle ) {
                 beforeChar != "(" &&
                 beforeChar != "[" &&
                 beforeChar != "{" &&
-                beforeChar != ">"
+                beforeChar != ">" &&
+                beforeChar != ";" &&
+                beforeChar != "'" &&
+                beforeChar != '"'
             ) {
                 pos ++;
                 continue;
@@ -219,7 +222,10 @@ const containsStandaloneText = function( haystack, needle ) {
                 afterChar != ";" &&
                 afterChar != ":" &&
                 afterChar != "," &&
-                afterChar != "."
+                afterChar != "." &&
+                afterChar != "&" &&
+                afterChar != "'" &&
+                afterChar != '"'
             ) {
                 pos ++;
                 continue;
@@ -261,7 +267,10 @@ const highlightStandaloneText = function( haystack, needle, before, after ) {
                 beforeChar != "(" &&
                 beforeChar != "[" &&
                 beforeChar != "{" &&
-                beforeChar != ">"
+                beforeChar != ">" &&
+                beforeChar != ";" &&
+                beforeChar != "'" &&
+                beforeChar != '"'
             ) {
                 pos ++;
                 continue;
@@ -281,7 +290,10 @@ const highlightStandaloneText = function( haystack, needle, before, after ) {
                 afterChar != ";" &&
                 afterChar != ":" &&
                 afterChar != "," &&
-                afterChar != "."
+                afterChar != "." &&
+                afterChar != "&" &&
+                afterChar != "'" &&
+                afterChar != '"'
             ) {
                 pos ++;
                 continue;

@@ -68,4 +68,30 @@ test('containsStandaloneText containing string punctuation', () => {
     // Specifically for upcoming feature where names are clickable to go to profiles even if they're not your mention.
     expect(containsStandaloneText("hello >@test< how are you?", "@test")).toBe(true);
     expect(highlightStandaloneText("hello >@test< how are you?", "@test", "[[", "]]")).toBe("hello >[[@test]]< how are you?");
+
+    // Make sure that a user with a dot in their name can be recognized.
+    expect(containsStandaloneText("hello @test.dotted.", "@test.dotted")).toBe(true);
+    expect(highlightStandaloneText("hello @test.dotted.", "@test.dotted", "[[", "]]")).toBe("hello [[@test.dotted]].");
+});
+
+test('containsStandaloneText containing quote punctuation', () => {
+    // Make sure that somebody can use apostrophes around names.
+    expect(containsStandaloneText("thanks to @test's post", "@test")).toBe(true);
+    expect(highlightStandaloneText("thanks to @test's post", "@test", "[[", "]]")).toBe("thanks to [[@test]]'s post");
+    expect(containsStandaloneText("thanks to @test&apos;s post", "@test")).toBe(true);
+    expect(highlightStandaloneText("thanks to @test&apos;s post", "@test", "[[", "]]")).toBe("thanks to [[@test]]&apos;s post");
+
+    // Make sure we can quote around names as well.
+    expect(containsStandaloneText("quoting \"@test\" here", "@test")).toBe(true);
+    expect(highlightStandaloneText("quoting \"@test\" here", "@test", "[[", "]]")).toBe("quoting \"[[@test]]\" here");
+    expect(containsStandaloneText("quoting '@test' here", "@test")).toBe(true);
+    expect(highlightStandaloneText("quoting '@test' here", "@test", "[[", "]]")).toBe("quoting '[[@test]]' here");
+    expect(containsStandaloneText("quoting \"thing with @test\" here", "@test")).toBe(true);
+    expect(highlightStandaloneText("quoting \"thing with @test\" here", "@test", "[[", "]]")).toBe("quoting \"thing with [[@test]]\" here");
+    expect(containsStandaloneText("quoting \"@test with thing\" here", "@test")).toBe(true);
+    expect(highlightStandaloneText("quoting \"@test with thing\" here", "@test", "[[", "]]")).toBe("quoting \"[[@test]] with thing\" here");
+
+    // Make sure things also work with escaped text.
+    expect(containsStandaloneText("quoting &quot;@test&quot; here", "@test")).toBe(true);
+    expect(highlightStandaloneText("quoting &quot;@test&quot; here", "@test", "[[", "]]")).toBe("quoting &quot;[[@test]]&quot; here");
 });
