@@ -1,11 +1,16 @@
 import pytest
 
+from critterchat.common import Time
 from critterchat.data import (
     ConnectionLike,
+    Action,
     ActionType,
+    Occupant,
     Room,
     RoomPurpose,
     RoomID,
+    NewActionID,
+    NewOccupantID,
     NewRoomID,
     NewUserID,
     UserPermission,
@@ -418,3 +423,72 @@ class TestRoomData:
         assert users2[user2.id].invite is None
         assert not users2[user2.id].inactive
         assert not users2[user2.id].present
+
+    def test_edit_action(self, tx: ConnectionLike) -> None:
+        """
+        Tests that we can fetch and edit actions, for the purpose of edits and reactions.
+        """
+
+        config = MockConfig()
+        roomdata = RoomData(config, tx)
+        userdata = UserData(config, tx)
+
+        # First, create a room
+        room = Room(
+            NewRoomID,
+            "test edit action",
+            "",
+            RoomPurpose.ROOM,
+            False,
+            False,
+            None,
+            None,
+        )
+        roomdata.create_room(room)
+        assert room.id != NewRoomID
+
+        # Now, join the room as a user and then add a message.
+        user = userdata.create_account("room_edit_action_user", "amazing_password")
+        assert user is not None
+        roomdata.join_room(room.id, user.id)
+
+        occupant = Occupant(
+            occupantid=NewOccupantID,
+            userid=user.id,
+        )
+        newaction = Action(
+            actionid=NewActionID,
+            timestamp=Time.now(),
+            occupant=occupant,
+            action=ActionType.MESSAGE,
+            details={"message": "this is a test"},
+        )
+        roomdata.insert_action(room.id, newaction)
+        assert newaction.id != NewActionID
+        actionid = newaction.id
+
+        # Now, try to fetch that action directly.
+        action = roomdata.get_action(actionid)
+        assert action is not None
+        assert action.id == actionid
+        assert action.action == ActionType.MESSAGE
+        assert action.details == {"message": "this is a test"}
+        assert action.occupant is not None
+        assert action.occupant.userid == user.id
+        assert action.occupant.username == "room_edit_action_user"
+
+        # Now, attempt to modify the action. Lock the table to test the locking flow, even
+        # though we don't really need to lock here.
+        with roomdata.lock_actions():
+            action.details = {"message": "this is an edit"}
+            roomdata.update_action(action)
+
+        # Now, try to fetch that action again.
+        action = roomdata.get_action(actionid)
+        assert action is not None
+        assert action.id == actionid
+        assert action.action == ActionType.MESSAGE
+        assert action.details == {"message": "this is an edit"}
+        assert action.occupant is not None
+        assert action.occupant.userid == user.id
+        assert action.occupant.username == "room_edit_action_user"
