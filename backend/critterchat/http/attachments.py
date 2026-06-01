@@ -18,16 +18,16 @@ attachments = Blueprint(
 def get_attachment(attachment: str) -> Response:
     # Look up and return data for attachment. Manually instantiate data here because
     # we intentionally skipped that for static endpoints in app.py.
-    data = Data(g.config)
-    attachmentservice = AttachmentService(g.config, data)
+    with Data.spawn(g.config) as data:
+        attachmentservice = AttachmentService(g.config, data)
 
-    # This is a debug endpoint only, not meant for production use. So, it's fine
-    # to pull a little shenanigans here.
-    attachmentid = attachmentservice.id_from_path(attachment)
-    if attachmentid is not None:
-        response = attachmentservice.get_attachment_data(attachmentid)
-        if response:
-            mime_type, attachmentbytes = response
-            return Response(attachmentbytes, content_type=mime_type)
+        # This is a debug endpoint only, not meant for production use. So, it's fine
+        # to pull a little shenanigans here.
+        attachmentid = attachmentservice.id_from_path(attachment)
+        if attachmentid is not None:
+            response = attachmentservice.get_attachment_data(attachmentid)
+            if response:
+                mime_type, attachmentbytes = response
+                return Response(attachmentbytes, content_type=mime_type)
 
     return Response("Attachment not found", 404)

@@ -2,12 +2,11 @@ import os
 import pytest
 import tomllib
 from sqlalchemy.engine import Engine
-from sqlalchemy.orm import Session
 from sqlalchemy.sql import text
 from typing import Generator
 
 from critterchat.config import Config
-from critterchat.data import Data
+from critterchat.data import Data, ConnectionLike
 
 
 TESTS_PATH = os.path.dirname(os.path.realpath(__file__))
@@ -66,53 +65,11 @@ def config() -> Config:
 
 @pytest.fixture(scope="session")
 def db() -> Engine:
-    session = Session(config().database.engine)
-
-    # Now, need to drop all existing tables and recreate so we ensure the test DB is in a known state.
-    cursor = session.execute(
-        text("""
-            SELECT concat('DROP TABLE IF EXISTS `', table_name, '`;') AS cmd
-            FROM information_schema.tables
-            WHERE table_schema = :schema;
-        """),
-        {'schema': config().database.database},
-    )
-    cmds = "SET FOREIGN_KEY_CHECKS = 0;"
-    for result in cursor.mappings():
-        cmd = result['cmd']
-        cmds += cmd
-    session.execute(text(cmds))
-    session.commit()
-
-    data = Data(config(), session)
-    data.create()
-
-    session.commit()
-    session.close()
-
-    return config().database.engine
-
-
-@pytest.fixture(scope="function")
-def tx(db: Engine) -> Generator[Session, None, None]:
-    session = Session(db, autoflush=True)
-
-    # Create a transaction for this test, make sure lock bugs don't take forever to time out.
-    session.begin()
-    session.execute(text("SET SESSION innodb_lock_wait_timeout = 1;"))
-
-    try:
-        # Yield it for use.
-        yield session
-
-    finally:
-        # Ensure any locks are committed.
-        session.commit()
-
-        # Nuke all test data so we don't pollute other tests.
-        cursor = session.execute(
+    with config().database.engine.connect() as conn:
+        # Now, need to drop all existing tables and recreate so we ensure the test DB is in a known state.
+        cursor = conn.execute(
             text("""
-                SELECT concat('`', table_name, '`') AS table_name
+                SELECT concat('DROP TABLE IF EXISTS `', table_name, '`;') AS cmd
                 FROM information_schema.tables
                 WHERE table_schema = :schema;
             """),
@@ -120,8 +77,46 @@ def tx(db: Engine) -> Generator[Session, None, None]:
         )
         cmds = "SET FOREIGN_KEY_CHECKS = 0;"
         for result in cursor.mappings():
-            cmds += f"DELETE FROM {result['table_name']};"
+            cmd = result['cmd']
+            cmds += cmd
+        conn.execute(text(cmds))
+        conn.commit()
 
-        session.execute(text(cmds))
-        session.commit()
-        session.close()
+        data = Data(config(), conn)
+        data.create()
+
+        conn.commit()
+        conn.close()
+
+    return config().database.engine
+
+
+@pytest.fixture(scope="function")
+def tx(db: Engine) -> Generator[ConnectionLike, None, None]:
+    with db.connect() as conn:
+        # Create a transaction for this test, make sure lock bugs don't take forever to time out.
+        conn.execute(text("SET SESSION innodb_lock_wait_timeout = 1;"))
+
+        try:
+            # Yield it for use.
+            yield conn
+
+        finally:
+            # Ensure any locks are committed.
+            conn.commit()
+
+            # Nuke all test data so we don't pollute other tests.
+            cursor = conn.execute(
+                text("""
+                    SELECT concat('`', table_name, '`') AS table_name
+                    FROM information_schema.tables
+                    WHERE table_schema = :schema;
+                """),
+                {'schema': config().database.database},
+            )
+            cmds = "SET FOREIGN_KEY_CHECKS = 0;"
+            for result in cursor.mappings():
+                cmds += f"DELETE FROM {result['table_name']};"
+
+            conn.execute(text(cmds))
+            conn.commit()

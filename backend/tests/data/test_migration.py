@@ -1,7 +1,6 @@
 import pytest
-from sqlalchemy.orm import Session
 
-from critterchat.data import Migration
+from critterchat.data import ConnectionLike, Migration
 from critterchat.data.migration import MigrationData
 
 from ..mocks import MockConfig
@@ -9,7 +8,7 @@ from ..mocks import MockConfig
 
 @pytest.mark.integration
 class TestMigrationData:
-    def test_migration_mark_and_retrieve(self, tx: Session) -> None:
+    def test_migration_mark_and_retrieve(self, tx: ConnectionLike) -> None:
         """
         Tests basic marking and retrieval of previously marked migrations.
         """

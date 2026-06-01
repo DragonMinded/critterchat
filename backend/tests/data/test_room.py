@@ -1,7 +1,15 @@
 import pytest
-from sqlalchemy.orm import Session
 
-from critterchat.data import ActionType, Room, RoomPurpose, RoomID, NewRoomID, NewUserID, UserPermission
+from critterchat.data import (
+    ConnectionLike,
+    ActionType,
+    Room,
+    RoomPurpose,
+    RoomID,
+    NewRoomID,
+    NewUserID,
+    UserPermission,
+)
 from critterchat.data.attachment import AttachmentData
 from critterchat.data.room import RoomData
 from critterchat.data.user import UserData
@@ -11,7 +19,7 @@ from ..mocks import MockConfig
 
 @pytest.mark.integration
 class TestRoomData:
-    def test_room_crud(self, tx: Session) -> None:
+    def test_room_crud(self, tx: ConnectionLike) -> None:
         """
         Tests basic create, retrieve, update, delete for rooms in the system.
         """
@@ -131,7 +139,7 @@ class TestRoomData:
 
         # No delete because we do not delete rooms currently.
 
-    def test_get_joined_rooms(self, tx: Session) -> None:
+    def test_get_joined_rooms(self, tx: ConnectionLike) -> None:
         """
         Verifies that get_joined_rooms operates properly.
         """
@@ -201,7 +209,7 @@ class TestRoomData:
         rooms = {room.id for room in roomdata.get_joined_rooms(user2.id, include_left=True)}
         assert rooms == {room1.id, room2.id}
 
-    def test_get_room_occupants(self, tx: Session) -> None:
+    def test_get_room_occupants(self, tx: ConnectionLike) -> None:
         """
         Verifies that get_room_occupants operates properly.
         """

@@ -1,7 +1,6 @@
 import pytest
-from sqlalchemy.orm import Session
 
-from critterchat.data import MastodonInstance, NewMastodonInstanceID
+from critterchat.data import ConnectionLike, MastodonInstance, NewMastodonInstanceID
 from critterchat.data.mastodon import MastodonData
 from critterchat.data.user import UserData
 
@@ -10,7 +9,7 @@ from ..mocks import MockConfig
 
 @pytest.mark.integration
 class TestMastodonData:
-    def test_instance_crud(self, tx: Session) -> None:
+    def test_instance_crud(self, tx: ConnectionLike) -> None:
         """
         Tests basic create, retrieve, update and delete of mastodon OAuth data tracking.
         """
@@ -79,7 +78,7 @@ class TestMastodonData:
         instance = mastodondata.lookup_instance("https://example.com/")
         assert instance is None
 
-    def test_instance_user_linking(self, tx: Session) -> None:
+    def test_instance_user_linking(self, tx: ConnectionLike) -> None:
         """
         Tests setting and retrieving user links for remote OAuth accounts.
         """

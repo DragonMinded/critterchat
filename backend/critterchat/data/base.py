@@ -1,14 +1,15 @@
 import json
 import random
 from contextlib import contextmanager
-from typing import Iterator, cast
+from typing import Any, Iterator, Protocol, cast
 
 from sqlfragments import Statement, Fragment, statement, fragment
 
 from sqlalchemy import MetaData
-from sqlalchemy.orm import Session
-from sqlalchemy.engine import CursorResult  # type: ignore
+from sqlalchemy.engine.base import Transaction
+from sqlalchemy.engine.cursor import CursorResult
 from sqlalchemy.sql import text
+from sqlalchemy.sql.expression import TextClause
 
 from ..config import Config
 
@@ -25,6 +26,26 @@ __all__ = [
 metadata = MetaData()
 
 
+class ConnectionLike(Protocol):
+    def commit(self) -> None:
+        ...
+
+    def rollback(self) -> None:
+        ...
+
+    def begin(self) -> Transaction:
+        ...
+
+    def begin_nested(self) -> Transaction:
+        ...
+
+    def execute(self, text: TextClause, params: dict[str, object] = {}) -> CursorResult[Any]:
+        ...
+
+    def close(self) -> None:
+        ...
+
+
 class _BytesEncoder(json.JSONEncoder):
     def default(self, obj: object) -> object:
         if isinstance(obj, bytes):
@@ -34,7 +55,7 @@ class _BytesEncoder(json.JSONEncoder):
 
 
 class BaseData:
-    def __init__(self, config: Config, session: Session) -> None:
+    def __init__(self, config: Config, connection: ConnectionLike) -> None:
         """
         Initializes any DB singleton.
 
@@ -42,10 +63,10 @@ class BaseData:
 
         Parameters:
             config - Global application configuration structure.
-            session - An established DB session which will be used for all queries.
+            connection - An established DB connection which will be used for all queries.
         """
         self.__config = config
-        self.__session = session
+        self.__connection = connection
         self.__depth: list[int] = []
 
     @property
@@ -90,22 +111,24 @@ class BaseData:
 
     @contextmanager
     def transaction(self) -> Iterator[None]:
-        with self.__session.begin(nested=True):
+        with self.__connection.begin_nested() as txn:
             nonce = random.randint(0, 2 ** 31)
             self.__depth.append(nonce)
 
-            yield
+            try:
+                yield
+                txn.commit()
 
-            newnonce = self.__depth.pop()
-            if nonce != newnonce:
-                raise Exception("Logic error, nonce order issue!")
+            except Exception:
+                txn.rollback()
+                raise
 
-            if self.__depth:
-                self.__session.flush()
-            else:
-                self.__session.commit()
+            finally:
+                newnonce = self.__depth.pop()
+                if nonce != newnonce:
+                    raise Exception("Logic error, nonce order issue!")
 
-    def execute(self, sql: Statement | str, params: dict[str, object] | None = None) -> CursorResult:
+    def execute(self, sql: Statement | str, params: dict[str, object] | None = None) -> CursorResult[Any]:
         """
         Given a SQL statement, execute the query and return the result.
 
@@ -115,24 +138,22 @@ class BaseData:
         Returns:
             A SQLAlchemy CursorResult object.
         """
-        if self.__session is None:
-            raise Exception("Logic error, our database connection was not created!")
-
         if isinstance(sql, Statement):
             if params:
                 raise ValueError("Logic error, cannot provide Statement and params!")
 
             actual, params = sql.to_sqlalchemy()
-            result = self.__session.execute(
+            result = self.__connection.execute(
                 text(actual),
                 params or {},
             )
         else:
-            result = self.__session.execute(
+            result = self.__connection.execute(
                 text(sql),
                 params or {},
             )
 
         if not self.__depth:
-            self.__session.commit()
+            self.__connection.commit()
+
         return result

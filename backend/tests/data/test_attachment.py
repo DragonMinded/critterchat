@@ -1,8 +1,8 @@
 import pytest
-from sqlalchemy.orm import Session
 
 from critterchat.common import Time
 from critterchat.data import (
+    ConnectionLike,
     NewActionID,
     NewAttachmentID,
     NewOccupantID,
@@ -23,7 +23,7 @@ from ..mocks import MockConfig
 
 @pytest.mark.integration
 class TestAttachmentData:
-    def test_attachment_crud(self, tx: Session) -> None:
+    def test_attachment_crud(self, tx: ConnectionLike) -> None:
         """
         Tests basic create, retrieve, update, delete for generic attachments in the system.
         """
@@ -119,7 +119,7 @@ class TestAttachmentData:
         attachments = attachmentdata.get_attachments()
         assert attachments == []
 
-    def test_emote_crud(self, tx: Session) -> None:
+    def test_emote_crud(self, tx: ConnectionLike) -> None:
         """
         Tests basic create, retrieve, update, delete for emotes in the system.
         """
@@ -165,7 +165,7 @@ class TestAttachmentData:
         emotes = attachmentdata.get_emotes()
         assert emotes == []
 
-    def test_notification_crud(self, tx: Session) -> None:
+    def test_notification_crud(self, tx: ConnectionLike) -> None:
         """
         Tests basic create, retrieve, update, delete for notifications in the system.
         """
@@ -230,7 +230,7 @@ class TestAttachmentData:
         notifications = attachmentdata.get_notifications(user2.id)
         assert notifications == {}
 
-    def test_action_attachment_linking(self, tx: Session) -> None:
+    def test_action_attachment_linking(self, tx: ConnectionLike) -> None:
         """
         Tests linking, unlinking and fetching attachments for an action in the system.
         """

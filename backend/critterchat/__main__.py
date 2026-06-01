@@ -27,26 +27,25 @@ logger = logging.getLogger(__name__)
 
 
 def perform_initialization_work(config: Config) -> None:
-    data = Data(config)
+    with Data.spawn(config) as data:
+        # Ensure that the default avatars are copied to the attachment storage system.
+        attachmentservice = AttachmentService(config, data)
+        logger.info("Creating any default attachments required.")
+        attachmentservice.create_default_attachments()
+        logger.info("Migrating any legacy attachments to current system.")
+        attachmentservice.migrate_legacy_attachments()
 
-    # Ensure that the default avatars are copied to the attachment storage system.
-    attachmentservice = AttachmentService(config, data)
-    logger.info("Creating any default attachments required.")
-    attachmentservice.create_default_attachments()
-    logger.info("Migrating any legacy attachments to current system.")
-    attachmentservice.migrate_legacy_attachments()
+        # Ensure that any nickname loopholes are fixed.
+        userservice = UserService(config, data)
+        logger.info("Migrating any legacy names to current rules.")
+        userservice.migrate_legacy_names()
 
-    # Ensure that any nickname loopholes are fixed.
-    userservice = UserService(config, data)
-    logger.info("Migrating any legacy names to current rules.")
-    userservice.migrate_legacy_names()
+        # Ensure any per-room nicknames loopholes are fixed.
+        messageservice = MessageService(config, data)
+        logger.info("Migrating any per-room legacy names to current rules.")
+        messageservice.migrate_legacy_names()
 
-    # Ensure any per-room nicknames loopholes are fixed.
-    messageservice = MessageService(config, data)
-    logger.info("Migrating any per-room legacy names to current rules.")
-    messageservice.migrate_legacy_names()
-
-    logger.info("Done with initialization.")
+        logger.info("Done with initialization.")
 
 
 if __name__ == '__main__':

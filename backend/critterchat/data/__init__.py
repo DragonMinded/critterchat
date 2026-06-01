@@ -1,3 +1,4 @@
+from .base import ConnectionLike
 from .data import Data, RequestCache, DBCreateException
 from .types import (
     Action,
@@ -44,6 +45,7 @@ from .types import (
 
 
 __all__ = [
+    "ConnectionLike",
     "Data",
     "DBCreateException",
     "RequestCache",

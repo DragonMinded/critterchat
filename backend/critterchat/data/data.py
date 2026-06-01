@@ -1,17 +1,17 @@
 import os
-from typing import Final
+from contextlib import contextmanager
+from typing import Final, Iterator, cast
 
 import alembic.config
 from alembic.migration import MigrationContext
 from alembic.autogenerate import compare_metadata
 from sqlalchemy import create_engine
-from sqlalchemy.orm import Session, scoped_session, sessionmaker
-from sqlalchemy.engine import Engine
+from sqlalchemy.engine import Connection, Engine
 from sqlalchemy.sql import text
 from sqlalchemy.exc import ProgrammingError
 
 from ..config import Config
-from .base import metadata
+from .base import ConnectionLike, metadata
 from .user import UserData
 from .room import RoomData
 from .attachment import AttachmentData
@@ -44,38 +44,41 @@ class Data:
     info and provide a set of functions for querying and storing data.
     """
 
-    def __init__(self, config: Config, session: Session | None = None) -> None:
+    def __init__(self, config: Config, connection: ConnectionLike | Connection) -> None:
         """
         Initializes the data object.
 
         Parameters:
-            config - A config structure with a 'database' section which is used
-                     to initialize an internal DB connection.
+            config - A config structure used for various limits.
+            connection - A valid SQLAlchemy core connection to the DB.
         """
-        if session is None:
-            session_factory = sessionmaker(
-                bind=config.database.engine,
-                autoflush=True,
-            )
-            self.__session: Session | None = scoped_session(session_factory)
-        else:
-            self.__session = session
-
         self.__config = config
+        self.__connection: ConnectionLike = cast(ConnectionLike, connection)
         self.__url = Data.sqlalchemy_url(config)
+        self._valid = True
 
-        self.user = UserData(config, self.__session)
-        self.room = RoomData(config, self.__session)
-        self.attachment = AttachmentData(config, self.__session)
-        self.migration = MigrationData(config, self.__session)
-        self.mastodon = MastodonData(config, self.__session)
+        self.user = UserData(config, self.__connection)
+        self.room = RoomData(config, self.__connection)
+        self.attachment = AttachmentData(config, self.__connection)
+        self.migration = MigrationData(config, self.__connection)
+        self.mastodon = MastodonData(config, self.__connection)
         self.requestcache = RequestCache()
 
     def clone(self) -> "Data":
-        if self.__session is None:
-            raise Exception("Logic error, our database connection was not created or we were cloned after closing!")
+        data = Data(self.__config, self.__connection)
+        data._valid = self._valid
+        return data
 
-        return Data(self.__config, self.__session)
+    @contextmanager
+    @staticmethod
+    def spawn(config: Config) -> Iterator["Data"]:
+        with config.database.engine.connect() as connection:
+            data = Data(config, connection)
+
+            try:
+                yield data
+            finally:
+                data.close()
 
     @classmethod
     def sqlalchemy_url(cls, config: Config) -> str:
@@ -90,11 +93,8 @@ class Data:
 
     def __exists(self) -> bool:
         # See if the DB was already created
-        if self.__session is None:
-            raise Exception("Logic error, our database connection was not created!")
-
         try:
-            cursor = self.__session.execute(text("SELECT count(*) AS count FROM information_schema.TABLES WHERE (TABLE_SCHEMA = :schema) AND (TABLE_NAME = 'alembic_version')"), {"schema": self.__config.database.database})
+            cursor = self.__connection.execute(text("SELECT count(*) AS count FROM information_schema.TABLES WHERE (TABLE_SCHEMA = :schema) AND (TABLE_NAME = 'alembic_version')"), {"schema": self.__config.database.database})
             return bool(cursor.mappings().fetchone()['count'] == 1)
         except ProgrammingError:
             return False
@@ -182,11 +182,18 @@ class Data:
             tag,
         )
 
+    def commit(self) -> None:
+        """
+        Commit any pending transactions to the DB.
+        """
+        if self._valid:
+            self.__connection.commit()
+
     def close(self) -> None:
         """
         Close any open data connection.
         """
         # Make sure we don't leak connections between web requests
-        if self.__session is not None:
-            self.__session.close()
-            self.__session = None
+        if self._valid:
+            self.__connection.close()
+            self._valid = False

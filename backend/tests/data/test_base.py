@@ -1,14 +1,13 @@
 import pytest
-from sqlalchemy.orm import Session
 
-from critterchat.data.base import BaseData
+from critterchat.data.base import BaseData, ConnectionLike
 
 from ..mocks import MockConfig
 
 
 @pytest.mark.integration
 class TestBase:
-    def test_base_serdes(self, tx: Session) -> None:
+    def test_base_serdes(self, tx: ConnectionLike) -> None:
         """
         Tests basic serialization and deserialization including bytes.
         """

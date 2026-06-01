@@ -1,9 +1,9 @@
 import pytest
 from freezegun import freeze_time
-from sqlalchemy.orm import Session
 
 from critterchat.common import Time
 from critterchat.data import (
+    ConnectionLike,
     NewActionID,
     NewUserID,
     NewOccupantID,
@@ -35,7 +35,7 @@ from ..mocks import MockConfig
 
 @pytest.mark.integration
 class TestUserData:
-    def test_user_crud(self, tx: Session) -> None:
+    def test_user_crud(self, tx: ConnectionLike) -> None:
         """
         Tests basic create, retrieve, update, delete for users in the system.
         """
@@ -125,7 +125,7 @@ class TestUserData:
             assert userdata.has_updated_user(user.id, Time.now() + 5) is False
             assert userdata.get_last_user_update() == Time.now()
 
-    def test_user_password(self, tx: Session) -> None:
+    def test_user_password(self, tx: ConnectionLike) -> None:
         """
         Tests password verification and update functionality.
         """
@@ -154,7 +154,7 @@ class TestUserData:
         with pytest.raises(ValueError):
             userdata.update_password(NewUserID, 'brand_new_password')
 
-    def test_settings_crud(self, tx: Session) -> None:
+    def test_settings_crud(self, tx: ConnectionLike) -> None:
         """
         Tests basic create, retrieve, update, delete for user settings in the system.
         """
@@ -218,7 +218,7 @@ class TestUserData:
         assert settings.roomid == new_settings.roomid
         assert settings.info == new_settings.info
 
-    def test_session_crud(self, tx: Session) -> None:
+    def test_session_crud(self, tx: ConnectionLike) -> None:
         """
         Tests session handling create, retrieve, update and delete.
         """
@@ -259,7 +259,7 @@ class TestUserData:
         assert user2 is not None
         assert user2.id == user.id
 
-    def test_invite_crud(self, tx: Session) -> None:
+    def test_invite_crud(self, tx: ConnectionLike) -> None:
         """
         Tests invite handling create, retrieve, update and delete.
         """
@@ -314,7 +314,7 @@ class TestUserData:
         assert userdata.validate_invite(invite2) is True
         assert userdata.validate_invite(invite3) is True
 
-    def test_recovery_crud(self, tx: Session) -> None:
+    def test_recovery_crud(self, tx: ConnectionLike) -> None:
         """
         Tests recovery handling create, retrieve, update and delete.
         """
@@ -354,7 +354,7 @@ class TestUserData:
         user2 = userdata.from_recovery(recovery2)
         assert user2 is None
 
-    def test_preferences_crud(self, tx: Session) -> None:
+    def test_preferences_crud(self, tx: ConnectionLike) -> None:
         """
         Tests basic create, retrieve, update, delete for user preferences in the system.
         """
@@ -431,7 +431,7 @@ class TestUserData:
         assert userdata.has_updated_preferences(user.id, Time.now() - 5) is True
         assert userdata.has_updated_preferences(user.id, Time.now() + 5) is False
 
-    def test_get_visible_users(self, tx: Session) -> None:
+    def test_get_visible_users(self, tx: ConnectionLike) -> None:
         """
         Verifies that get_visible_users understands and respects privacy settings given a purpose, and
         can properly filter out users when requested to by name match.
@@ -553,7 +553,7 @@ class TestUserData:
         assert set() == {u.id for u in userdata.get_visible_users(user3.id, "search", name="nobody")}
         assert set() == {u.id for u in userdata.get_visible_users(user3.id, "invite", name="nobody")}
 
-    def test_seen_counts(self, tx: Session) -> None:
+    def test_seen_counts(self, tx: ConnectionLike) -> None:
         """
         Verifies that users can track the last seen action in a given room properly.
         """

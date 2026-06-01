@@ -49,9 +49,8 @@ def create_db(config: Config, exist_okay: bool) -> None:
     Given a config pointing at a valid MySQL DB, initializes that DB by creating all required tables.
     """
 
-    data = Data(config)
-    data.create(exist_okay=exist_okay)
-    data.close()
+    with Data.spawn(config) as data:
+        data.create(exist_okay=exist_okay)
 
 
 def upgrade_db(config: Config) -> None:
@@ -60,9 +59,8 @@ def upgrade_db(config: Config) -> None:
     that were checked in since you last ran create or migrate.
     """
 
-    data = Data(config)
-    data.upgrade()
-    data.close()
+    with Data.spawn(config) as data:
+        data.upgrade()
 
 
 def downgrade_db(config: Config, tag: str) -> None:
@@ -71,9 +69,8 @@ def downgrade_db(config: Config, tag: str) -> None:
     to the given tag.
     """
 
-    data = Data(config)
-    data.downgrade(tag)
-    data.close()
+    with Data.spawn(config) as data:
+        data.downgrade(tag)
 
 
 def generate_migration(config: Config, message: str, allow_empty: bool) -> None:
@@ -84,9 +81,8 @@ def generate_migration(config: Config, message: str, allow_empty: bool) -> None:
     auto-upgrade their DB to mirror your changes.
     """
 
-    data = Data(config)
-    data.generate(message, allow_empty)
-    data.close()
+    with Data.spawn(config) as data:
+        data.generate(message, allow_empty)
 
 
 def mastodon_register_all(config: Config, filter_url: str | None = None) -> None:
@@ -95,27 +91,25 @@ def mastodon_register_all(config: Config, filter_url: str | None = None) -> None
     we can perform OAuth and network lookups against it.
     """
 
-    data = Data(config)
-    try:
-        mastodonservice = MastodonService(config, data)
-        found = False
-        for instance in config.authentication.mastodon:
-            if filter_url and instance.base_url != filter_url:
-                continue
+    with Data.spawn(config) as data:
+        try:
+            mastodonservice = MastodonService(config, data)
+            found = False
+            for instance in config.authentication.mastodon:
+                if filter_url and instance.base_url != filter_url:
+                    continue
 
-            print(f"Registering with {instance.base_url}")
-            mastodonservice.register_instance(instance.base_url)
-            found = True
+                print(f"Registering with {instance.base_url}")
+                mastodonservice.register_instance(instance.base_url)
+                found = True
 
-        if filter_url and not found:
-            raise CommandException(f"Could not find Mastodon instance {filter_url} in config!")
-        else:
-            print("Registered with all configured Mastodon instances.")
+            if filter_url and not found:
+                raise CommandException(f"Could not find Mastodon instance {filter_url} in config!")
+            else:
+                print("Registered with all configured Mastodon instances.")
 
-    except MastodonServiceException as e:
-        raise CommandException(str(e))
-    finally:
-        data.close()
+        except MastodonServiceException as e:
+            raise CommandException(str(e))
 
 
 def mastodon_list_all(config: Config, filter_url: str | None = None) -> None:
@@ -124,32 +118,30 @@ def mastodon_list_all(config: Config, filter_url: str | None = None) -> None:
     are working.
     """
 
-    data = Data(config)
-    try:
-        mastodonservice = MastodonService(config, data)
-        found = False
-        for instance in mastodonservice.get_all_instances():
-            if filter_url and instance.base_url != filter_url:
-                continue
+    with Data.spawn(config) as data:
+        try:
+            mastodonservice = MastodonService(config, data)
+            found = False
+            for instance in mastodonservice.get_all_instances():
+                if filter_url and instance.base_url != filter_url:
+                    continue
 
-            details = mastodonservice.get_instance_details(instance)
+                details = mastodonservice.get_instance_details(instance)
 
-            print(f"Base URL: {details.base_url}")
-            print(f"Connected: {details.connected}")
-            if details.connected:
-                print(f"Domain: {details.domain}")
-                print(f"Title: {details.title}")
+                print(f"Base URL: {details.base_url}")
+                print(f"Connected: {details.connected}")
+                if details.connected:
+                    print(f"Domain: {details.domain}")
+                    print(f"Title: {details.title}")
 
-            print("")
-            found = True
+                print("")
+                found = True
 
-        if filter_url and not found:
-            raise CommandException(f"Could not find Mastodon instance {filter_url} in config!")
+            if filter_url and not found:
+                raise CommandException(f"Could not find Mastodon instance {filter_url} in config!")
 
-    except MastodonServiceException as e:
-        raise CommandException(str(e))
-    finally:
-        data.close()
+        except MastodonServiceException as e:
+            raise CommandException(str(e))
 
 
 def mastodon_unregister(config: Config, base_url: str) -> None:
@@ -157,21 +149,19 @@ def mastodon_unregister(config: Config, base_url: str) -> None:
     Given a configured Mastodon instance in our config, ensure that the specified one is unregistered
     so that we can no longer perform OAuth nand network lookups against it.
     """
-    data = Data(config)
-    try:
-        mastodonservice = MastodonService(config, data)
-        instance = mastodonservice.lookup_instance(base_url)
-        if not instance:
-            raise CommandException(f"Instance {base_url} does not exist or is already unregistered!")
+    with Data.spawn(config) as data:
+        try:
+            mastodonservice = MastodonService(config, data)
+            instance = mastodonservice.lookup_instance(base_url)
+            if not instance:
+                raise CommandException(f"Instance {base_url} does not exist or is already unregistered!")
 
-        mastodonservice.unregister_instance(instance.base_url)
+            mastodonservice.unregister_instance(instance.base_url)
 
-        print(f"Unregistered Mastodon instance {instance.base_url}")
+            print(f"Unregistered Mastodon instance {instance.base_url}")
 
-    except MastodonServiceException as e:
-        raise CommandException(str(e))
-    finally:
-        data.close()
+        except MastodonServiceException as e:
+            raise CommandException(str(e))
 
 
 def list_users(config: Config) -> None:
@@ -179,9 +169,8 @@ def list_users(config: Config) -> None:
     List all users on the instance.
     """
 
-    data = Data(config)
-    users = data.user.get_users()
-    data.close()
+    with Data.spawn(config) as data:
+        users = data.user.get_users()
 
     for user in users:
         print(f"ID: {User.from_id(user.id)}")
@@ -210,17 +199,15 @@ def create_user(config: Config, username: str, password: str | None) -> None:
             raise CommandException("Passwords do not match!")
         password = password1
 
-    data = Data(config)
-    try:
-        userservice = UserService(config, data)
-        new_user = userservice.create_user(username, password)
-        userservice.add_permission(new_user.id, UserPermission.ACTIVATED)
+    with Data.spawn(config) as data:
+        try:
+            userservice = UserService(config, data)
+            new_user = userservice.create_user(username, password)
+            userservice.add_permission(new_user.id, UserPermission.ACTIVATED)
 
-        print(f"User created with username {new_user.username}")
-    except UserServiceException as e:
-        raise CommandException(str(e))
-    finally:
-        data.close()
+            print(f"User created with username {new_user.username}")
+        except UserServiceException as e:
+            raise CommandException(str(e))
 
 
 def change_user_password(config: Config, username: str, password: str | None) -> None:
@@ -237,19 +224,17 @@ def change_user_password(config: Config, username: str, password: str | None) ->
             raise CommandException("Passwords do not match!")
         password = password1
 
-    data = Data(config)
-    try:
-        userservice = UserService(config, data)
-        existing_user = userservice.find_user(username)
-        if not existing_user:
-            raise CommandException("User does not exist in the database!")
-        userservice.change_user_password(existing_user.id, password)
+    with Data.spawn(config) as data:
+        try:
+            userservice = UserService(config, data)
+            existing_user = userservice.find_user(username)
+            if not existing_user:
+                raise CommandException("User does not exist in the database!")
+            userservice.change_user_password(existing_user.id, password)
 
-        print(f"User with username {username} updated with new password")
-    except UserServiceException as e:
-        raise CommandException(str(e))
-    finally:
-        data.close()
+            print(f"User with username {username} updated with new password")
+        except UserServiceException as e:
+            raise CommandException(str(e))
 
 
 def generate_password_recovery(config: Config, username: str) -> None:
@@ -258,20 +243,17 @@ def generate_password_recovery(config: Config, username: str) -> None:
     that can be given to that user on another platform so they can recover their password.
     """
 
-    data = Data(config)
+    with Data.spawn(config) as data:
+        try:
+            userservice = UserService(config, data)
+            existing_user = userservice.find_user(username)
+            if not existing_user:
+                raise CommandException("User does not exist in the database!")
+            url = userservice.create_user_recovery(existing_user.id)
 
-    try:
-        userservice = UserService(config, data)
-        existing_user = userservice.find_user(username)
-        if not existing_user:
-            raise CommandException("User does not exist in the database!")
-        url = userservice.create_user_recovery(existing_user.id)
-
-        print(f"Generated recovery URL for user with username {username}: {url}")
-    except UserServiceException as e:
-        raise CommandException(str(e))
-    finally:
-        data.close()
+            print(f"Generated recovery URL for user with username {username}: {url}")
+        except UserServiceException as e:
+            raise CommandException(str(e))
 
 
 def generate_user_invite(config: Config) -> None:
@@ -280,17 +262,14 @@ def generate_user_invite(config: Config) -> None:
     activation, and bypassing any disabled activation settings.
     """
 
-    data = Data(config)
+    with Data.spawn(config) as data:
+        try:
+            userservice = UserService(config, data)
+            url = userservice.create_user_invite(NewUserID)
 
-    try:
-        userservice = UserService(config, data)
-        url = userservice.create_user_invite(NewUserID)
-
-        print(f"Generated invite URL for new user sign-up: {url}")
-    except UserServiceException as e:
-        raise CommandException(str(e))
-    finally:
-        data.close()
+            print(f"Generated invite URL for new user sign-up: {url}")
+        except UserServiceException as e:
+            raise CommandException(str(e))
 
 
 def activate_user(config: Config, username: str) -> None:
@@ -299,20 +278,17 @@ def activate_user(config: Config, username: str) -> None:
     state, allowing them to login and use the account normally.
     """
 
-    data = Data(config)
+    with Data.spawn(config) as data:
+        try:
+            userservice = UserService(config, data)
+            existing_user = userservice.find_user(username)
+            if not existing_user:
+                raise CommandException("User does not exist in the database!")
+            userservice.add_permission(existing_user.id, UserPermission.ACTIVATED)
 
-    try:
-        userservice = UserService(config, data)
-        existing_user = userservice.find_user(username)
-        if not existing_user:
-            raise CommandException("User does not exist in the database!")
-        userservice.add_permission(existing_user.id, UserPermission.ACTIVATED)
-
-        print(f"User with username {username} activated")
-    except UserServiceException as e:
-        raise CommandException(str(e))
-    finally:
-        data.close()
+            print(f"User with username {username} activated")
+        except UserServiceException as e:
+            raise CommandException(str(e))
 
 
 def deactivate_user(config: Config, username: str) -> None:
@@ -321,20 +297,17 @@ def deactivate_user(config: Config, username: str) -> None:
     inactive state, kicking them out of any active sessions and disallowing login.
     """
 
-    data = Data(config)
+    with Data.spawn(config) as data:
+        try:
+            userservice = UserService(config, data)
+            existing_user = userservice.find_user(username)
+            if not existing_user:
+                raise CommandException("User does not exist in the database!")
+            userservice.remove_permission(existing_user.id, UserPermission.ACTIVATED)
 
-    try:
-        userservice = UserService(config, data)
-        existing_user = userservice.find_user(username)
-        if not existing_user:
-            raise CommandException("User does not exist in the database!")
-        userservice.remove_permission(existing_user.id, UserPermission.ACTIVATED)
-
-        print(f"User with username {username} deactivated")
-    except UserServiceException as e:
-        raise CommandException(str(e))
-    finally:
-        data.close()
+            print(f"User with username {username} deactivated")
+        except UserServiceException as e:
+            raise CommandException(str(e))
 
 
 def admin_user(config: Config, username: str) -> None:
@@ -343,20 +316,17 @@ def admin_user(config: Config, username: str) -> None:
     as an administrator, allowing them to take additional administration actions on the UI.
     """
 
-    data = Data(config)
+    with Data.spawn(config) as data:
+        try:
+            userservice = UserService(config, data)
+            existing_user = userservice.find_user(username)
+            if not existing_user:
+                raise CommandException("User does not exist in the database!")
+            userservice.add_permission(existing_user.id, UserPermission.ADMINISTRATOR)
 
-    try:
-        userservice = UserService(config, data)
-        existing_user = userservice.find_user(username)
-        if not existing_user:
-            raise CommandException("User does not exist in the database!")
-        userservice.add_permission(existing_user.id, UserPermission.ADMINISTRATOR)
-
-        print(f"User with username {username} set as administrator")
-    except UserServiceException as e:
-        raise CommandException(str(e))
-    finally:
-        data.close()
+            print(f"User with username {username} set as administrator")
+        except UserServiceException as e:
+            raise CommandException(str(e))
 
 
 def deadmin_user(config: Config, username: str) -> None:
@@ -365,20 +335,17 @@ def deadmin_user(config: Config, username: str) -> None:
     marked as an administrator, taking away any permissions they had to administer.
     """
 
-    data = Data(config)
+    with Data.spawn(config) as data:
+        try:
+            userservice = UserService(config, data)
+            existing_user = userservice.find_user(username)
+            if not existing_user:
+                raise CommandException("User does not exist in the database!")
+            userservice.remove_permission(existing_user.id, UserPermission.ADMINISTRATOR)
 
-    try:
-        userservice = UserService(config, data)
-        existing_user = userservice.find_user(username)
-        if not existing_user:
-            raise CommandException("User does not exist in the database!")
-        userservice.remove_permission(existing_user.id, UserPermission.ADMINISTRATOR)
-
-        print(f"User with username {username} unset as administrator")
-    except UserServiceException as e:
-        raise CommandException(str(e))
-    finally:
-        data.close()
+            print(f"User with username {username} unset as administrator")
+        except UserServiceException as e:
+            raise CommandException(str(e))
 
 
 def list_emotes(config: Config, only_broken: bool) -> None:
@@ -386,14 +353,12 @@ def list_emotes(config: Config, only_broken: bool) -> None:
     List all of the custom emotes enabled on this instance right now.
     """
 
-    data = Data(config)
-    try:
-        emoteservice = EmoteService(config, data)
-        emotes = emoteservice.get_all_emotes()
-    except EmoteServiceException as e:
-        raise CommandException(str(e))
-    finally:
-        data.close()
+    with Data.spawn(config) as data:
+        try:
+            emoteservice = EmoteService(config, data)
+            emotes = emoteservice.get_all_emotes()
+        except EmoteServiceException as e:
+            raise CommandException(str(e))
 
     names = sorted([e for e in emotes])
     for name in names:
@@ -409,50 +374,48 @@ def import_emote(config: Config, alias: str | None, filename_or_directory: str) 
     Given a filename or a directory, and optionally an alias, import emotes to the system.
     """
 
-    data = Data(config)
-    try:
-        emoteservice = EmoteService(config, data)
+    with Data.spawn(config) as data:
+        try:
+            emoteservice = EmoteService(config, data)
 
-        if os.path.isdir(filename_or_directory):
-            if alias:
-                raise CommandException("Cannot provide an alias when importing an entire directory!")
+            if os.path.isdir(filename_or_directory):
+                if alias:
+                    raise CommandException("Cannot provide an alias when importing an entire directory!")
 
-            # Add all files in this directory.
-            for filename in os.listdir(filename_or_directory):
-                alias, ext = os.path.splitext(filename)
+                # Add all files in this directory.
+                for filename in os.listdir(filename_or_directory):
+                    alias, ext = os.path.splitext(filename)
+                    if ext.lower() not in {".apng", ".png", ".gif", ".jpg", ".jpeg", ".webp"}:
+                        print(f"Skipping {filename} because it is not a recognized image type!")
+
+                    full_file = os.path.join(filename_or_directory, filename)
+                    with open(full_file, "rb") as bfp:
+                        emotedata = bfp.read()
+
+                    try:
+                        emoteservice.add_emote(alias, emotedata)
+                        print(f"Emote added to system with alias '{alias}'")
+                    except EmoteServiceException:
+                        print(f"Emote with alias '{alias}' not added to system")
+
+            else:
+                potential_alias, ext = os.path.splitext(os.path.basename(filename_or_directory))
+                if not alias:
+                    alias = potential_alias
                 if ext.lower() not in {".apng", ".png", ".gif", ".jpg", ".jpeg", ".webp"}:
-                    print(f"Skipping {filename} because it is not a recognized image type!")
+                    raise CommandException(f"Cannot add {filename_or_directory} because it is not a recognized image type!")
 
-                full_file = os.path.join(filename_or_directory, filename)
-                with open(full_file, "rb") as bfp:
+                with open(filename_or_directory, "rb") as bfp:
                     emotedata = bfp.read()
 
                 try:
                     emoteservice.add_emote(alias, emotedata)
                     print(f"Emote added to system with alias '{alias}'")
-                except EmoteServiceException:
-                    print(f"Emote with alias '{alias}' not added to system")
+                except EmoteServiceException as e:
+                    raise CommandException(str(e))
 
-        else:
-            potential_alias, ext = os.path.splitext(os.path.basename(filename_or_directory))
-            if not alias:
-                alias = potential_alias
-            if ext.lower() not in {".apng", ".png", ".gif", ".jpg", ".jpeg", ".webp"}:
-                raise CommandException(f"Cannot add {filename_or_directory} because it is not a recognized image type!")
-
-            with open(filename_or_directory, "rb") as bfp:
-                emotedata = bfp.read()
-
-            try:
-                emoteservice.add_emote(alias, emotedata)
-                print(f"Emote added to system with alias '{alias}'")
-            except EmoteServiceException as e:
-                raise CommandException(str(e))
-
-    except EmoteServiceException as e:
-        raise CommandException(str(e))
-    finally:
-        data.close()
+        except EmoteServiceException as e:
+            raise CommandException(str(e))
 
 
 def export_emote(config: Config, directory: str) -> None:
@@ -460,27 +423,25 @@ def export_emote(config: Config, directory: str) -> None:
     Given a directory, export emotes from the system.
     """
 
-    data = Data(config)
-    try:
-        emoteservice = EmoteService(config, data)
-        emotes = emoteservice.get_all_emotes()
+    with Data.spawn(config) as data:
+        try:
+            emoteservice = EmoteService(config, data)
+            emotes = emoteservice.get_all_emotes()
 
-        names = sorted([e for e in emotes])
-        for alias in names:
-            name_and_data = emoteservice.fetch_emote(alias)
-            if name_and_data:
-                os.makedirs(directory, exist_ok=True)
+            names = sorted([e for e in emotes])
+            for alias in names:
+                name_and_data = emoteservice.fetch_emote(alias)
+                if name_and_data:
+                    os.makedirs(directory, exist_ok=True)
 
-                filename = os.path.join(directory, name_and_data[0])
-                with open(filename, "wb") as bfp:
-                    bfp.write(name_and_data[1])
+                    filename = os.path.join(directory, name_and_data[0])
+                    with open(filename, "wb") as bfp:
+                        bfp.write(name_and_data[1])
 
-                print(f"Emote with alias '{alias}' written to file {filename!r}")
+                    print(f"Emote with alias '{alias}' written to file {filename!r}")
 
-    except EmoteServiceException as e:
-        raise CommandException(str(e))
-    finally:
-        data.close()
+        except EmoteServiceException as e:
+            raise CommandException(str(e))
 
 
 def remove_emote(config: Config, alias: str) -> None:
@@ -488,16 +449,14 @@ def remove_emote(config: Config, alias: str) -> None:
     Given an alias of an existing emote, remove it from the instance.
     """
 
-    data = Data(config)
-    emoteservice = EmoteService(config, data)
-    try:
-        emoteservice.drop_emote(alias)
+    with Data.spawn(config) as data:
+        emoteservice = EmoteService(config, data)
+        try:
+            emoteservice.drop_emote(alias)
 
-        print(f"Emote with alias '{alias}' removed from system")
-    except EmoteServiceException as e:
-        raise CommandException(str(e))
-    finally:
-        data.close()
+            print(f"Emote with alias '{alias}' removed from system")
+        except EmoteServiceException as e:
+            raise CommandException(str(e))
 
 
 def update_attachment(config: Config, attachment: str, file: str) -> None:
@@ -526,24 +485,22 @@ def update_attachment(config: Config, attachment: str, file: str) -> None:
     with open(file, "rb") as bfp:
         attachmentdata = bfp.read()
 
-    data = Data(config)
-    try:
-        attachmentservice = AttachmentService(config, data)
-        attachmentdata, width, height, content_type = attachmentservice.prepare_attachment_image(
-            attachmentdata,
-            AttachmentService.MAX_ICON_WIDTH,
-            AttachmentService.MAX_ICON_HEIGHT,
-        )
-        if width != height:
-            raise CommandException(f"Image for {attachment} is not square.")
+    with Data.spawn(config) as data:
+        try:
+            attachmentservice = AttachmentService(config, data)
+            attachmentdata, width, height, content_type = attachmentservice.prepare_attachment_image(
+                attachmentdata,
+                AttachmentService.MAX_ICON_WIDTH,
+                AttachmentService.MAX_ICON_HEIGHT,
+            )
+            if width != height:
+                raise CommandException(f"Image for {attachment} is not square.")
 
-        attachmentservice.put_attachment_data(actual, attachmentdata)
+            attachmentservice.put_attachment_data(actual, attachmentdata)
 
-        print(f"Updated {attachment} image with new data from {file}.")
-    except AttachmentServiceException as e:
-        raise CommandException(str(e))
-    finally:
-        data.close()
+            print(f"Updated {attachment} image with new data from {file}.")
+        except AttachmentServiceException as e:
+            raise CommandException(str(e))
 
 
 def list_public_rooms(config: Config) -> None:
@@ -551,21 +508,19 @@ def list_public_rooms(config: Config) -> None:
     List all public rooms on the instance.
     """
 
-    data = Data(config)
-    try:
-        messageservice = MessageService(config, data)
-        rooms = messageservice.get_public_rooms(NewUserID)
+    with Data.spawn(config) as data:
+        try:
+            messageservice = MessageService(config, data)
+            rooms = messageservice.get_public_rooms(NewUserID)
 
-        for room in rooms:
-            print(f"ID: {Room.from_id(room.id)}")
-            print(f"Name: {room.name}")
-            print(f"Topic: {room.topic}")
-            print(f"Autojoin: {'on' if room.autojoin else 'off'}")
-            print("")
-    except MessageServiceException as e:
-        raise CommandException(str(e))
-    finally:
-        data.close()
+            for room in rooms:
+                print(f"ID: {Room.from_id(room.id)}")
+                print(f"Name: {room.name}")
+                print(f"Topic: {room.topic}")
+                print(f"Autojoin: {'on' if room.autojoin else 'off'}")
+                print("")
+        except MessageServiceException as e:
+            raise CommandException(str(e))
 
 
 def create_public_room(
@@ -581,49 +536,47 @@ def create_public_room(
     accounts are created and joining existing users to the room.
     """
 
-    data = Data(config)
-    try:
-        attachmentid: AttachmentID | None = None
-        if icon:
-            with open(icon, "rb") as bfp:
-                icondata = bfp.read()
+    with Data.spawn(config) as data:
+        try:
+            attachmentid: AttachmentID | None = None
+            if icon:
+                with open(icon, "rb") as bfp:
+                    icondata = bfp.read()
 
-            attachmentservice = AttachmentService(config, data)
-            try:
-                icondata, width, height, content_type = attachmentservice.prepare_attachment_image(
-                    icondata,
-                    AttachmentService.MAX_ICON_WIDTH,
-                    AttachmentService.MAX_ICON_HEIGHT,
+                attachmentservice = AttachmentService(config, data)
+                try:
+                    icondata, width, height, content_type = attachmentservice.prepare_attachment_image(
+                        icondata,
+                        AttachmentService.MAX_ICON_WIDTH,
+                        AttachmentService.MAX_ICON_HEIGHT,
+                    )
+                except AttachmentServiceUnsupportedImageException:
+                    raise CommandException("Room image is an unrecognized format.")
+                except AttachmentServiceInvalidSizeException:
+                    raise CommandException(f"Invalid image size for room. Roomss must be a maximum of {AttachmentService.MAX_ICON_WIDTH}x{AttachmentService.MAX_ICON_HEIGHT}")
+
+                if width != height:
+                    raise CommandException("Room image is not square.")
+
+                attachmentid = attachmentservice.create_attachment(
+                    content_type,
+                    None,
+                    {MetadataType.WIDTH: width, MetadataType.HEIGHT: height}
                 )
-            except AttachmentServiceUnsupportedImageException:
-                raise CommandException("Room image is an unrecognized format.")
-            except AttachmentServiceInvalidSizeException:
-                raise CommandException(f"Invalid image size for room. Roomss must be a maximum of {AttachmentService.MAX_ICON_WIDTH}x{AttachmentService.MAX_ICON_HEIGHT}")
+                if attachmentid is None:
+                    raise CommandException("Could not insert new room icon.")
+                attachmentservice.put_attachment_data(attachmentid, icondata)
 
-            if width != height:
-                raise CommandException("Room image is not square.")
+            messageservice = MessageService(config, data)
+            room = messageservice.create_public_room(name or "", topic or "", attachmentid, autojoin == "on", moderated == "on")
 
-            attachmentid = attachmentservice.create_attachment(
-                content_type,
-                None,
-                {MetadataType.WIDTH: width, MetadataType.HEIGHT: height}
-            )
-            if attachmentid is None:
-                raise CommandException("Could not insert new room icon.")
-            attachmentservice.put_attachment_data(attachmentid, icondata)
+            if autojoin == "on":
+                print(f"Room created with ID {Room.from_id(room.id)} and all activated users joined to the room.")
+            else:
+                print(f"Room created with ID {Room.from_id(room.id)}.")
 
-        messageservice = MessageService(config, data)
-        room = messageservice.create_public_room(name or "", topic or "", attachmentid, autojoin == "on", moderated == "on")
-
-        if autojoin == "on":
-            print(f"Room created with ID {Room.from_id(room.id)} and all activated users joined to the room.")
-        else:
-            print(f"Room created with ID {Room.from_id(room.id)}.")
-
-    except MessageServiceException as e:
-        raise CommandException(str(e))
-    finally:
-        data.close()
+        except MessageServiceException as e:
+            raise CommandException(str(e))
 
 
 def modify_public_room_info(config: Config, roomid: str, name: str | None, topic: str | None, icon: str | None) -> None:
@@ -631,58 +584,56 @@ def modify_public_room_info(config: Config, roomid: str, name: str | None, topic
     Modify an existing room by ID, optionally setting a new name, title, or icon (or sometimes multiple).
     """
 
-    data = Data(config)
-    try:
-        actual_id = Room.to_id(roomid)
-        if actual_id is None:
-            raise CommandException("Room ID is not valid!")
-        messageservice = MessageService(config, data)
-        room = messageservice.lookup_room(actual_id, NewUserID)
-        if not room:
-            raise CommandException("Room ID is not valid!")
-        if room.purpose != RoomPurpose.ROOM:
-            raise CommandException("Room is not public!")
+    with Data.spawn(config) as data:
+        try:
+            actual_id = Room.to_id(roomid)
+            if actual_id is None:
+                raise CommandException("Room ID is not valid!")
+            messageservice = MessageService(config, data)
+            room = messageservice.lookup_room(actual_id, NewUserID)
+            if not room:
+                raise CommandException("Room ID is not valid!")
+            if room.purpose != RoomPurpose.ROOM:
+                raise CommandException("Room is not public!")
 
-        attachmentid: AttachmentID | None = None
-        icon_delete = False
-        if icon and icon != "default":
-            with open(icon, "rb") as bfp:
-                icondata = bfp.read()
+            attachmentid: AttachmentID | None = None
+            icon_delete = False
+            if icon and icon != "default":
+                with open(icon, "rb") as bfp:
+                    icondata = bfp.read()
 
-            attachmentservice = AttachmentService(config, data)
-            try:
-                icondata, width, height, content_type = attachmentservice.prepare_attachment_image(
-                    icondata,
-                    AttachmentService.MAX_ICON_WIDTH,
-                    AttachmentService.MAX_ICON_HEIGHT,
+                attachmentservice = AttachmentService(config, data)
+                try:
+                    icondata, width, height, content_type = attachmentservice.prepare_attachment_image(
+                        icondata,
+                        AttachmentService.MAX_ICON_WIDTH,
+                        AttachmentService.MAX_ICON_HEIGHT,
+                    )
+                except AttachmentServiceUnsupportedImageException:
+                    raise CommandException("Room image is an unrecognized format.")
+                except AttachmentServiceInvalidSizeException:
+                    raise CommandException(f"Invalid image size for room. Roomss must be a maximum of {AttachmentService.MAX_ICON_WIDTH}x{AttachmentService.MAX_ICON_HEIGHT}")
+
+                if width != height:
+                    raise CommandException("Room image is not square.")
+
+                attachmentid = attachmentservice.create_attachment(
+                    content_type,
+                    None,
+                    {MetadataType.WIDTH: width, MetadataType.HEIGHT: height}
                 )
-            except AttachmentServiceUnsupportedImageException:
-                raise CommandException("Room image is an unrecognized format.")
-            except AttachmentServiceInvalidSizeException:
-                raise CommandException(f"Invalid image size for room. Roomss must be a maximum of {AttachmentService.MAX_ICON_WIDTH}x{AttachmentService.MAX_ICON_HEIGHT}")
+                if attachmentid is None:
+                    raise CommandException("Could not insert new room icon.")
+                attachmentservice.put_attachment_data(attachmentid, icondata)
+            elif icon == "default":
+                icon_delete = True
 
-            if width != height:
-                raise CommandException("Room image is not square.")
+            messageservice.update_room(actual_id, NewUserID, name=name, topic=topic, icon=attachmentid, icon_delete=icon_delete)
 
-            attachmentid = attachmentservice.create_attachment(
-                content_type,
-                None,
-                {MetadataType.WIDTH: width, MetadataType.HEIGHT: height}
-            )
-            if attachmentid is None:
-                raise CommandException("Could not insert new room icon.")
-            attachmentservice.put_attachment_data(attachmentid, icondata)
-        elif icon == "default":
-            icon_delete = True
+            print(f"Room with ID {Room.from_id(actual_id)} updated information.")
 
-        messageservice.update_room(actual_id, NewUserID, name=name, topic=topic, icon=attachmentid, icon_delete=icon_delete)
-
-        print(f"Room with ID {Room.from_id(actual_id)} updated information.")
-
-    except MessageServiceException as e:
-        raise CommandException(str(e))
-    finally:
-        data.close()
+        except MessageServiceException as e:
+            raise CommandException(str(e))
 
 
 def modify_public_room_autojoin(config: Config, roomid: str, autojoin: str) -> None:
@@ -692,23 +643,21 @@ def modify_public_room_autojoin(config: Config, roomid: str, autojoin: str) -> N
     the room.
     """
 
-    data = Data(config)
-    try:
-        actual_id = Room.to_id(roomid)
-        if actual_id is None:
-            raise CommandException("Room ID is not valid!")
-        messageservice = MessageService(config, data)
-        messageservice.update_public_room_autojoin(actual_id, NewUserID, autojoin == "on")
+    with Data.spawn(config) as data:
+        try:
+            actual_id = Room.to_id(roomid)
+            if actual_id is None:
+                raise CommandException("Room ID is not valid!")
+            messageservice = MessageService(config, data)
+            messageservice.update_public_room_autojoin(actual_id, NewUserID, autojoin == "on")
 
-        if autojoin == "on":
-            print(f"Room with ID {Room.from_id(actual_id)} set to auto join new users.")
-        else:
-            print(f"Room with ID {Room.from_id(actual_id)} set to not auto join new users.")
+            if autojoin == "on":
+                print(f"Room with ID {Room.from_id(actual_id)} set to auto join new users.")
+            else:
+                print(f"Room with ID {Room.from_id(actual_id)} set to not auto join new users.")
 
-    except MessageServiceException as e:
-        raise CommandException(str(e))
-    finally:
-        data.close()
+        except MessageServiceException as e:
+            raise CommandException(str(e))
 
 
 def modify_public_room_moderated(config: Config, roomid: str, moderated: str) -> None:
@@ -716,23 +665,21 @@ def modify_public_room_moderated(config: Config, roomid: str, moderated: str) ->
     Modify an existing room by ID, setting it's moderated property.
     """
 
-    data = Data(config)
-    try:
-        actual_id = Room.to_id(roomid)
-        if actual_id is None:
-            raise CommandException("Room ID is not valid!")
-        messageservice = MessageService(config, data)
-        messageservice.update_public_room_moderated(actual_id, NewUserID, moderated == "on")
+    with Data.spawn(config) as data:
+        try:
+            actual_id = Room.to_id(roomid)
+            if actual_id is None:
+                raise CommandException("Room ID is not valid!")
+            messageservice = MessageService(config, data)
+            messageservice.update_public_room_moderated(actual_id, NewUserID, moderated == "on")
 
-        if moderated == "on":
-            print(f"Room with ID {Room.from_id(actual_id)} set to moderated.")
-        else:
-            print(f"Room with ID {Room.from_id(actual_id)} set to free-for-all.")
+            if moderated == "on":
+                print(f"Room with ID {Room.from_id(actual_id)} set to moderated.")
+            else:
+                print(f"Room with ID {Room.from_id(actual_id)} set to free-for-all.")
 
-    except MessageServiceException as e:
-        raise CommandException(str(e))
-    finally:
-        data.close()
+        except MessageServiceException as e:
+            raise CommandException(str(e))
 
 
 def grant_public_room_moderator(config: Config, roomid: str, username: str) -> None:
@@ -741,28 +688,26 @@ def grant_public_room_moderator(config: Config, roomid: str, username: str) -> N
     the user must be in the room and will not be added if they are not.
     """
 
-    data = Data(config)
-    try:
-        userservice = UserService(config, data)
-        existing_user = userservice.find_user(username)
-        if not existing_user:
-            raise CommandException("User does not exist in the database!")
+    with Data.spawn(config) as data:
+        try:
+            userservice = UserService(config, data)
+            existing_user = userservice.find_user(username)
+            if not existing_user:
+                raise CommandException("User does not exist in the database!")
 
-        actual_id = Room.to_id(roomid)
-        if actual_id is None:
-            raise CommandException("Room ID is not valid!")
+            actual_id = Room.to_id(roomid)
+            if actual_id is None:
+                raise CommandException("Room ID is not valid!")
 
-        messageservice = MessageService(config, data)
-        messageservice.grant_room_moderator(actual_id, existing_user.id)
+            messageservice = MessageService(config, data)
+            messageservice.grant_room_moderator(actual_id, existing_user.id)
 
-        print(f"User with username {username} granted moderator role for room with ID {Room.from_id(actual_id)}.")
+            print(f"User with username {username} granted moderator role for room with ID {Room.from_id(actual_id)}.")
 
-    except MessageServiceException as e:
-        raise CommandException(str(e))
-    except UserServiceException as e:
-        raise CommandException(str(e))
-    finally:
-        data.close()
+        except MessageServiceException as e:
+            raise CommandException(str(e))
+        except UserServiceException as e:
+            raise CommandException(str(e))
 
 
 def revoke_public_room_moderator(config: Config, roomid: str, username: str) -> None:
@@ -771,28 +716,26 @@ def revoke_public_room_moderator(config: Config, roomid: str, username: str) -> 
     the user must be in the room and will not be ejected, just the moderator role revoked.
     """
 
-    data = Data(config)
-    try:
-        userservice = UserService(config, data)
-        existing_user = userservice.find_user(username)
-        if not existing_user:
-            raise CommandException("User does not exist in the database!")
+    with Data.spawn(config) as data:
+        try:
+            userservice = UserService(config, data)
+            existing_user = userservice.find_user(username)
+            if not existing_user:
+                raise CommandException("User does not exist in the database!")
 
-        actual_id = Room.to_id(roomid)
-        if actual_id is None:
-            raise CommandException("Room ID is not valid!")
+            actual_id = Room.to_id(roomid)
+            if actual_id is None:
+                raise CommandException("Room ID is not valid!")
 
-        messageservice = MessageService(config, data)
-        messageservice.revoke_room_moderator(actual_id, existing_user.id)
+            messageservice = MessageService(config, data)
+            messageservice.revoke_room_moderator(actual_id, existing_user.id)
 
-        print(f"User with username {username} revoked moderator role for room with ID {Room.from_id(actual_id)}.")
+            print(f"User with username {username} revoked moderator role for room with ID {Room.from_id(actual_id)}.")
 
-    except MessageServiceException as e:
-        raise CommandException(str(e))
-    except UserServiceException as e:
-        raise CommandException(str(e))
-    finally:
-        data.close()
+        except MessageServiceException as e:
+            raise CommandException(str(e))
+        except UserServiceException as e:
+            raise CommandException(str(e))
 
 
 def mute_public_room_user(config: Config, roomid: str, username: str) -> None:
@@ -801,28 +744,26 @@ def mute_public_room_user(config: Config, roomid: str, username: str) -> None:
     update info anymore.
     """
 
-    data = Data(config)
-    try:
-        userservice = UserService(config, data)
-        existing_user = userservice.find_user(username)
-        if not existing_user:
-            raise CommandException("User does not exist in the database!")
+    with Data.spawn(config) as data:
+        try:
+            userservice = UserService(config, data)
+            existing_user = userservice.find_user(username)
+            if not existing_user:
+                raise CommandException("User does not exist in the database!")
 
-        actual_id = Room.to_id(roomid)
-        if actual_id is None:
-            raise CommandException("Room ID is not valid!")
+            actual_id = Room.to_id(roomid)
+            if actual_id is None:
+                raise CommandException("Room ID is not valid!")
 
-        messageservice = MessageService(config, data)
-        messageservice.mute_room_user(actual_id, existing_user.id)
+            messageservice = MessageService(config, data)
+            messageservice.mute_room_user(actual_id, existing_user.id)
 
-        print(f"User with username {username} muted in room with ID {Room.from_id(actual_id)}.")
+            print(f"User with username {username} muted in room with ID {Room.from_id(actual_id)}.")
 
-    except MessageServiceException as e:
-        raise CommandException(str(e))
-    except UserServiceException as e:
-        raise CommandException(str(e))
-    finally:
-        data.close()
+        except MessageServiceException as e:
+            raise CommandException(str(e))
+        except UserServiceException as e:
+            raise CommandException(str(e))
 
 
 def unmute_public_room_user(config: Config, roomid: str, username: str) -> None:
@@ -831,28 +772,26 @@ def unmute_public_room_user(config: Config, roomid: str, username: str) -> None:
     update info anymore.
     """
 
-    data = Data(config)
-    try:
-        userservice = UserService(config, data)
-        existing_user = userservice.find_user(username)
-        if not existing_user:
-            raise CommandException("User does not exist in the database!")
+    with Data.spawn(config) as data:
+        try:
+            userservice = UserService(config, data)
+            existing_user = userservice.find_user(username)
+            if not existing_user:
+                raise CommandException("User does not exist in the database!")
 
-        actual_id = Room.to_id(roomid)
-        if actual_id is None:
-            raise CommandException("Room ID is not valid!")
+            actual_id = Room.to_id(roomid)
+            if actual_id is None:
+                raise CommandException("Room ID is not valid!")
 
-        messageservice = MessageService(config, data)
-        messageservice.unmute_room_user(actual_id, existing_user.id)
+            messageservice = MessageService(config, data)
+            messageservice.unmute_room_user(actual_id, existing_user.id)
 
-        print(f"User with username {username} unmuted in room with ID {Room.from_id(actual_id)}.")
+            print(f"User with username {username} unmuted in room with ID {Room.from_id(actual_id)}.")
 
-    except MessageServiceException as e:
-        raise CommandException(str(e))
-    except UserServiceException as e:
-        raise CommandException(str(e))
-    finally:
-        data.close()
+        except MessageServiceException as e:
+            raise CommandException(str(e))
+        except UserServiceException as e:
+            raise CommandException(str(e))
 
 
 def main() -> None:
