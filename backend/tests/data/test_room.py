@@ -453,6 +453,11 @@ class TestRoomData:
         assert occupant.nickname == "per_room_nickname"
         assert occupant.iconid == aid2
 
+        # Finally, verify that if we have an occupant, we can look backwards and get the room they're in.
+        fetched = roomdata.get_occupant_room(occupant.id)
+        assert fetched is not None
+        assert fetched.id == room1.id
+
     def test_edit_action(self, tx: ConnectionLike) -> None:
         """
         Tests that we can fetch and edit actions, for the purpose of edits and reactions.
