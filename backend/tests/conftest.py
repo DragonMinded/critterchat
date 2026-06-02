@@ -102,9 +102,6 @@ def tx(db: Engine) -> Generator[ConnectionLike, None, None]:
             yield conn
 
         finally:
-            # Ensure any locks are committed.
-            conn.commit()
-
             # Nuke all test data so we don't pollute other tests.
             cursor = conn.execute(
                 text("""

@@ -111,26 +111,26 @@ class BaseData:
 
     @contextmanager
     def transaction(self) -> Iterator[None]:
-        try:
-            with self.__connection.begin_nested() as txn:
-                nonce = random.randint(0, 2 ** 31)
-                self.__depth.append(nonce)
+        with self.__connection.begin_nested() as txn:
+            nonce = random.randint(0, 2 ** 31)
+            self.__depth.append(nonce)
 
-                try:
-                    yield
-                    txn.commit()
+            try:
+                yield
+                txn.commit()
 
-                except Exception:
-                    txn.rollback()
-                    raise
+            except Exception:
+                txn.rollback()
+                raise
 
-                finally:
-                    newnonce = self.__depth.pop()
-                    if nonce != newnonce:
-                        raise Exception("Logic error, nonce order issue!")
-        finally:
-            if not self.__depth:
-                self.__connection.commit()
+            finally:
+                newnonce = self.__depth.pop()
+                if nonce != newnonce:
+                    raise Exception("Logic error, nonce order issue!")
+
+        # Only commit if we didn't throw an exception, otherwise let SQLAlchemy rollback.
+        if not self.__depth:
+            self.__connection.commit()
 
     def execute(self, sql: Statement | str, params: dict[str, object] | None = None) -> CursorResult[Any]:
         """
