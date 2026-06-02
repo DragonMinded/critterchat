@@ -839,6 +839,82 @@ class RoomData(BaseData):
             )
             self.insert_action(roomid, action)
 
+    def update_room_occupant(self, roomid: RoomID, userid: UserID, nickname: str | None, iconid: AttachmentID | None) -> None:
+        """
+        Given a room and a user who should be edited, update the occupant's per-room nickname and icon.
+
+        Parameters:
+            roomid - ID of the room we wish to update.
+            userid - ID of the user wishing to be updated.
+            nickname - A string to set the nickname to, or None to unset the per-room nickname.
+            iconid - An attachment ID to set the icon to, or None to unset the per-room icon.
+        """
+        if userid == NewUserID or roomid == NewRoomID:
+            return
+
+        if (
+            iconid is not None and
+            iconid != NewAttachmentID
+        ):
+            actual = iconid
+        else:
+            actual = None
+
+        nickname = nickname or None
+
+        with self.transaction():
+            sql = """
+                SELECT id FROM occupant WHERE `user_id` = :userid AND `room_id` = :roomid
+            """
+            cursor = self.execute(sql, {"userid": userid, "roomid": roomid})
+            if cursor.rowcount != 1:
+                # Not in room, can't modify.
+                return
+
+            sql = """
+                UPDATE occupant SET nickname = :nickname, icon = :icon WHERE `user_id` = :userid AND `room_id` = :roomid
+            """
+            self.execute(sql, {"userid": userid, "roomid": roomid, "nickname": nickname, "icon": actual})
+
+            # Look occupant back up so we can grab the correct nickname and icon ID after change.
+            cursor = self.execute(
+                """
+                    SELECT
+                        occupant.id AS id,
+                        occupant.user_id AS user_id,
+                        occupant.nickname AS onick,
+                        occupant.inactive AS inactive,
+                        occupant.moderator AS moderator,
+                        occupant.muted AS muted,
+                        occupant.icon AS oicon,
+                        profile.nickname AS pnick,
+                        profile.icon AS picon,
+                        user.username AS unick,
+                        user.permissions AS permissions,
+                        invite.id AS invite_id,
+                        invite.timestamp AS invite_timestamp,
+                        invite.inviter_user_id AS invite_user,
+                        invite.ignored AS invite_ignored,
+                        invite.seen AS invite_seen,
+                        invite.revoked AS invite_revoked
+                    FROM occupant
+                    LEFT JOIN profile ON occupant.user_id = profile.user_id
+                    LEFT JOIN user ON occupant.user_id = user.id
+                    LEFT JOIN invite ON occupant.room_id = invite.room_id AND occupant.user_id = invite.invited_user_id
+                    WHERE occupant.user_id = :userid AND occupant.room_id = :roomid
+                """,
+                {"userid": userid, "roomid": roomid},
+            )
+            occupant = self.__to_occupant(cursor.mappings().fetchone())
+            action = Action(
+                actionid=NewActionID,
+                timestamp=Time.now(),
+                occupant=occupant,
+                action=ActionType.CHANGE_PROFILE,
+                details={"nickname": occupant.nickname, "iconid": occupant.iconid}
+            )
+            self.insert_action(roomid, action)
+
     def update_room(self, room: Room, userid: UserID) -> None:
         """
         Given a valid room, update its details to match the given object.

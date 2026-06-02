@@ -222,6 +222,7 @@ class TestRoomData:
         config = MockConfig()
         roomdata = RoomData(config, tx)
         userdata = UserData(config, tx)
+        attachmentdata = AttachmentData(config, tx)
 
         # First, create a few rooms for users to be in or not be in.
         room1 = Room(
@@ -423,6 +424,34 @@ class TestRoomData:
         assert users2[user2.id].invite is None
         assert not users2[user2.id].inactive
         assert not users2[user2.id].present
+
+        # Verify that nickname resolution for occupants is performed correctly.
+        occupant = [o for o in roomdata.get_room_occupants(room1.id) if o.username == "test_user_1"][0]
+        assert occupant.username == "test_user_1"
+        assert occupant.nickname == "test_user_1"
+        assert occupant.iconid is None
+
+        # Set the user's nickname and make sure it shows up in occupants.
+        aid1 = attachmentdata.insert_attachment('local', 'image/png', 'testing1.png', {})
+        user = userdata.from_username("test_user_1")
+        assert user is not None
+        user.nickname = "test_nickname"
+        user.iconid = aid1
+        userdata.update_user(user)
+
+        occupant = [o for o in roomdata.get_room_occupants(room1.id) if o.username == "test_user_1"][0]
+        assert occupant.username == "test_user_1"
+        assert occupant.nickname == "test_nickname"
+        assert occupant.iconid == aid1
+
+        # Set the user's per-room nickname and make sure it shows up.
+        aid2 = attachmentdata.insert_attachment('local', 'image/png', 'testing2.png', {})
+        roomdata.update_room_occupant(room1.id, user.id, "per_room_nickname", aid2)
+
+        occupant = [o for o in roomdata.get_room_occupants(room1.id) if o.username == "test_user_1"][0]
+        assert occupant.username == "test_user_1"
+        assert occupant.nickname == "per_room_nickname"
+        assert occupant.iconid == aid2
 
     def test_edit_action(self, tx: ConnectionLike) -> None:
         """
