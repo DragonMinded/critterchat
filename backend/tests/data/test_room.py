@@ -526,3 +526,90 @@ class TestRoomData:
         assert action.occupant is not None
         assert action.occupant.userid == user.id
         assert action.occupant.username == "room_edit_action_user"
+
+    def test_occupant_room_properties(self, tx: ConnectionLike) -> None:
+        """
+        Tests that we can fetch and update occupant properties in rooms.
+        """
+
+        config = MockConfig()
+        roomdata = RoomData(config, tx)
+        userdata = UserData(config, tx)
+
+        # First, create a room
+        room = Room(
+            NewRoomID,
+            "test edit action",
+            "",
+            RoomPurpose.ROOM,
+            False,
+            False,
+            None,
+            None,
+        )
+        roomdata.create_room(room)
+        assert room.id != NewRoomID
+
+        # Now, join the room as a user.
+        user = userdata.create_account("room_properties_user", "amazing_password")
+        assert user is not None
+        roomdata.join_room(room.id, user.id)
+
+        # First, verify that they default to not muted and not moderator.
+        occupant = [o for o in roomdata.get_room_occupants(room.id) if o.username == "room_properties_user"][0]
+        assert occupant.inactive is True
+        assert occupant.present is True
+        assert occupant.moderator is False
+        assert occupant.muted is False
+
+        # Now, make sure they show up activated once we activate them.
+        user.permissions.add(UserPermission.ACTIVATED)
+        userdata.update_user(user)
+        occupant = [o for o in roomdata.get_room_occupants(room.id) if o.username == "room_properties_user"][0]
+        assert occupant.inactive is False
+        assert occupant.present is True
+        assert occupant.moderator is False
+        assert occupant.muted is False
+
+        # Now, mute the user.
+        roomdata.mute_room_occupant(room.id, occupant.userid)
+        occupant = [o for o in roomdata.get_room_occupants(room.id) if o.username == "room_properties_user"][0]
+        assert occupant.inactive is False
+        assert occupant.present is True
+        assert occupant.moderator is False
+        assert occupant.muted is True
+
+        # Now moderate them.
+        roomdata.grant_room_moderator(room.id, occupant.userid)
+        occupant = [o for o in roomdata.get_room_occupants(room.id) if o.username == "room_properties_user"][0]
+        assert occupant.inactive is False
+        assert occupant.present is True
+        assert occupant.moderator is True
+        assert occupant.muted is True
+
+        # Now, unmute them.
+        roomdata.unmute_room_occupant(room.id, occupant.userid)
+        occupant = [o for o in roomdata.get_room_occupants(room.id) if o.username == "room_properties_user"][0]
+        assert occupant.inactive is False
+        assert occupant.present is True
+        assert occupant.moderator is True
+        assert occupant.muted is False
+
+        # Now unmoderate them.
+        roomdata.revoke_room_moderator(room.id, occupant.userid)
+        occupant = [o for o in roomdata.get_room_occupants(room.id) if o.username == "room_properties_user"][0]
+        assert occupant.inactive is False
+        assert occupant.present is True
+        assert occupant.moderator is False
+        assert occupant.muted is False
+
+        # Finally, leave the room and make sure they're not present.
+        roomdata.leave_room(room.id, occupant.userid)
+        occupant = [o for o in roomdata.get_room_occupants(room.id, include_left=True) if o.username == "room_properties_user"][0]
+        assert occupant.inactive is False
+        assert occupant.present is False
+        assert occupant.moderator is False
+        assert occupant.muted is False
+
+        # And, ensure that they don't show up in the list without specifically requesting them.
+        assert [] == [o for o in roomdata.get_room_occupants(room.id) if o.username == "room_properties_user"]
