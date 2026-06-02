@@ -17,8 +17,8 @@ build:
     cd frontend && npm run debug
 
 # Build everything that needs to be built and then run critterchat using config from init
-run: build
-    cd backend && ./.venv/bin/python3 -m critterchat --config .config.yaml --debug
+run *ARGS: build
+    cd backend && ./.venv/bin/python3 -m critterchat --config .config.yaml --debug "$@"
 
 # Run critterchat.manage using config from init
 manage *ARGS:
