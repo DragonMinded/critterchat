@@ -850,3 +850,70 @@ class TestRoomData:
         assert history[0].occupant is not None
         assert history[0].occupant.userid == invitee.id
         assert history[0].details == {"actor": inviter_occupant.id}
+
+    def test_autojoin_rooms(self, tx: ConnectionLike) -> None:
+        """
+        Verifies that we can set a room to be autojoin and list autojoin rooms.
+        """
+
+        config = MockConfig()
+        roomdata = RoomData(config, tx)
+
+        # First, create a few rooms for users to be in or not be in.
+        room1 = Room(
+            NewRoomID,
+            "test room 1",
+            "",
+            RoomPurpose.ROOM,
+            False,
+            False,
+            None,
+            None,
+        )
+        roomdata.create_room(room1)
+
+        room2 = Room(
+            NewRoomID,
+            "test room 2",
+            "",
+            RoomPurpose.ROOM,
+            False,
+            False,
+            None,
+            None,
+        )
+        roomdata.create_room(room2)
+
+        # Ensure that nothing starts autojoined.
+        fetched = roomdata.get_room(room1.id)
+        assert fetched is not None
+        assert not fetched.autojoin
+        fetched = roomdata.get_room(room2.id)
+        assert fetched is not None
+        assert not fetched.autojoin
+
+        assert [] == roomdata.get_autojoin_rooms()
+
+        # Set a room as autojoin and verify its details.
+        roomdata.set_room_autojoin(room1.id, True)
+        fetched = roomdata.get_room(room1.id)
+        assert fetched is not None
+        assert fetched.autojoin
+        fetched = roomdata.get_room(room2.id)
+        assert fetched is not None
+        assert not fetched.autojoin
+
+        rooms = roomdata.get_autojoin_rooms()
+        assert len(rooms) == 1
+        assert rooms[0].id == room1.id
+
+        # Unset that room and verify we don't get a list anymore.
+        roomdata.set_room_autojoin(room1.id, False)
+        fetched = roomdata.get_room(room1.id)
+        assert fetched is not None
+        assert not fetched.autojoin
+        fetched = roomdata.get_room(room2.id)
+        assert fetched is not None
+        assert not fetched.autojoin
+
+        assert [] == roomdata.get_autojoin_rooms()

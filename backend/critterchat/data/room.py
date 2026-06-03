@@ -452,9 +452,9 @@ class RoomData(BaseData):
             return
 
         sql = """
-            UPDATE room SET `autojoin` = :autojoin WHERE `id` = :roomid
+            UPDATE room SET `autojoin` = :autojoin WHERE `id` = :roomid AND purpose = :purpose
         """
-        self.execute(sql, {'roomid': roomid, 'autojoin': autojoin})
+        self.execute(sql, {'roomid': roomid, 'autojoin': autojoin, 'purpose': RoomPurpose.ROOM})
 
     def get_room(self, roomid: RoomID) -> Room | None:
         """
