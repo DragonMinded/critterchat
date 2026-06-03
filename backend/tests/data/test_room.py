@@ -144,6 +144,75 @@ class TestRoomData:
 
         # No delete because we do not delete rooms currently.
 
+    def test_shadow_join_room(self, tx: ConnectionLike) -> None:
+        """
+        Tests that we can shadow join a room properly.
+        """
+
+        config = MockConfig()
+        roomdata = RoomData(config, tx)
+        userdata = UserData(config, tx)
+
+        # First, create a room
+        room = Room(
+            NewRoomID,
+            "test shadow join",
+            "",
+            RoomPurpose.ROOM,
+            False,
+            False,
+            None,
+            None,
+        )
+        roomdata.create_room(room)
+        assert room.id != NewRoomID
+
+        # Create a user that we can use.
+        user = userdata.create_account("shadow_join_user", "amazing_password")
+        assert user is not None
+
+        # Make sure they're not actually in the room.
+        assert [] == roomdata.get_room_occupants(room.id, include_left=False)
+        assert [] == roomdata.get_room_occupants(room.id, include_left=True)
+
+        # Shadow-join the room, verify that we're in but not present.
+        roomdata.shadow_join_room(room.id, user.id)
+        assert [] == roomdata.get_room_occupants(room.id, include_left=False)
+        occupants = roomdata.get_room_occupants(room.id, include_left=True)
+        assert len(occupants) == 1
+        assert occupants[0].userid == user.id
+        assert occupants[0].present is False
+
+        # Now, regular join the room, verify that we're in and present.
+        roomdata.join_room(room.id, user.id)
+        occupants = roomdata.get_room_occupants(room.id, include_left=False)
+        assert len(occupants) == 1
+        assert occupants[0].userid == user.id
+        assert occupants[0].present is True
+        occupants = roomdata.get_room_occupants(room.id, include_left=True)
+        assert len(occupants) == 1
+        assert occupants[0].userid == user.id
+        assert occupants[0].present is True
+
+        # Now, try shadow-joining again, make sure that it doesn't override the join.
+        roomdata.shadow_join_room(room.id, user.id)
+        occupants = roomdata.get_room_occupants(room.id, include_left=False)
+        assert len(occupants) == 1
+        assert occupants[0].userid == user.id
+        assert occupants[0].present is True
+        occupants = roomdata.get_room_occupants(room.id, include_left=True)
+        assert len(occupants) == 1
+        assert occupants[0].userid == user.id
+        assert occupants[0].present is True
+
+        # Now, leave the room, ensure we're back to where we were after shadow-joining.
+        roomdata.leave_room(room.id, user.id)
+        assert [] == roomdata.get_room_occupants(room.id, include_left=False)
+        occupants = roomdata.get_room_occupants(room.id, include_left=True)
+        assert len(occupants) == 1
+        assert occupants[0].userid == user.id
+        assert occupants[0].present is False
+
     def test_get_joined_rooms(self, tx: ConnectionLike) -> None:
         """
         Verifies that get_joined_rooms operates properly.
