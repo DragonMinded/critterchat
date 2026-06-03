@@ -548,7 +548,7 @@ class RoomData(BaseData):
         Parameters:
             roomid - ID of the room we wish to join.
             userid - ID of the user wishing to join.
-            inviter - ID of the user that invited this user to join, if the join was based on an invite.
+            inviter - ID of the user that invited this user to join, if the join was automatic based on an invite.
         """
         if userid == NewUserID or roomid == NewRoomID:
             return None

@@ -613,3 +613,156 @@ class TestRoomData:
 
         # And, ensure that they don't show up in the list without specifically requesting them.
         assert [] == [o for o in roomdata.get_room_occupants(room.id) if o.username == "room_properties_user"]
+
+    def test_room_invites(self, tx: ConnectionLike) -> None:
+        """
+        Tests room invite infrastructure.
+        """
+
+        config = MockConfig()
+        roomdata = RoomData(config, tx)
+        userdata = UserData(config, tx)
+
+        # First, create a room
+        room = Room(
+            NewRoomID,
+            "test edit action",
+            "",
+            RoomPurpose.ROOM,
+            False,
+            False,
+            None,
+            None,
+        )
+        roomdata.create_room(room)
+        assert room.id != NewRoomID
+
+        # Now, join that room as a user who will be giving invites.
+        inviter = userdata.create_account("room_invites_inviter", "amazing_password")
+        assert inviter is not None
+        roomdata.join_room(room.id, inviter.id)
+
+        # And create somebody who will be receiving invites.
+        invitee = userdata.create_account("room_invites_invitee", "amazing_password")
+        assert invitee is not None
+
+        # Make sure neither can see any room invites since there are none outstanding.
+        assert [] == roomdata.get_room_invites(inviter.id)
+        assert [] == roomdata.get_room_invites(invitee.id)
+        assert not roomdata.is_invited_to_room(room.id, inviter.id)
+        assert not roomdata.is_invited_to_room(room.id, invitee.id)
+
+        # Verify that we haven't gotten any invite updates.
+        ts_and_cnt = roomdata.get_last_invite_update()
+        assert ts_and_cnt is None
+
+        # Now, send an invite from the inviter to the invitee.
+        roomdata.grant_room_invite(room.id, invitee.id, inviter.id)
+
+        # Verify that they got the invite.
+        assert [] == roomdata.get_room_invites(inviter.id)
+        invites = roomdata.get_room_invites(invitee.id)
+        assert len(invites) == 1
+        assert invites[0].active is True
+        assert invites[0].seen is False
+        assert invites[0].room is not None
+        assert invites[0].room.id == room.id
+        assert invites[0].userid == inviter.id
+
+        assert not roomdata.is_invited_to_room(room.id, inviter.id)
+        assert roomdata.is_invited_to_room(room.id, invitee.id)
+
+        # We should get an invite update now.
+        ts_and_cnt = roomdata.get_last_invite_update()
+        assert ts_and_cnt is not None
+        ts, cnt = ts_and_cnt
+
+        assert cnt == 1
+        assert not roomdata.has_updated_invites(inviter.id, ts, 0)
+        assert roomdata.has_updated_invites(invitee.id, ts, 0)
+
+        # Now, revoke the invite (uninvite the user).
+        roomdata.revoke_room_invite(room.id, invitee.id, inviter.id)
+
+        # Make sure we're back to not having any invites.
+        assert [] == roomdata.get_room_invites(inviter.id)
+        assert [] == roomdata.get_room_invites(invitee.id)
+        assert not roomdata.is_invited_to_room(room.id, inviter.id)
+        assert not roomdata.is_invited_to_room(room.id, invitee.id)
+
+        # And make sure we get updates for this.
+        assert not roomdata.has_updated_invites(inviter.id, ts, 0)
+        assert roomdata.has_updated_invites(invitee.id, ts, 1)
+
+        ts_and_cnt = roomdata.get_last_invite_update()
+        assert ts_and_cnt is not None
+        ts, cnt = ts_and_cnt
+        assert cnt == 1
+
+        # Make sure we can't invite if we're not in the room.
+        roomdata.grant_room_invite(room.id, inviter.id, invitee.id)
+        assert [] == roomdata.get_room_invites(inviter.id)
+        assert [] == roomdata.get_room_invites(invitee.id)
+        assert not roomdata.is_invited_to_room(room.id, inviter.id)
+        assert not roomdata.is_invited_to_room(room.id, invitee.id)
+
+        # Make sure invites didn't actually change.
+        nts_and_ncnt = roomdata.get_last_invite_update()
+        assert nts_and_ncnt is not None
+        assert nts_and_ncnt[0] == ts
+        assert nts_and_ncnt[1] == cnt
+
+        # Make sure we can't invite somebody who's already in the room.
+        roomdata.join_room(room.id, invitee.id)
+        roomdata.grant_room_invite(room.id, inviter.id, invitee.id)
+        assert [] == roomdata.get_room_invites(inviter.id)
+        assert [] == roomdata.get_room_invites(invitee.id)
+        assert not roomdata.is_invited_to_room(room.id, inviter.id)
+        assert not roomdata.is_invited_to_room(room.id, invitee.id)
+
+        # Now, leave again and test acknowledging and dismissing invites.
+        roomdata.leave_room(room.id, invitee.id)
+        roomdata.grant_room_invite(room.id, invitee.id, inviter.id)
+        assert not roomdata.is_invited_to_room(room.id, inviter.id)
+        assert roomdata.is_invited_to_room(room.id, invitee.id)
+
+        invites = roomdata.get_room_invites(invitee.id)
+        assert len(invites) == 1
+        assert invites[0].active is True
+        assert invites[0].seen is False
+
+        # Acknowledge the invite so we can mark it as seen.
+        roomdata.acknowledge_room_invite(invites[0].id)
+        assert not roomdata.is_invited_to_room(room.id, inviter.id)
+        assert roomdata.is_invited_to_room(room.id, invitee.id)
+
+        invites = roomdata.get_room_invites(invitee.id)
+        assert len(invites) == 1
+        assert invites[0].active is True
+        assert invites[0].seen is True
+
+        # Now, dismiss the invite so we can test it as inactive.
+        roomdata.dismiss_room_invite(invites[0].id)
+        assert not roomdata.is_invited_to_room(room.id, inviter.id)
+        assert roomdata.is_invited_to_room(room.id, invitee.id)
+
+        invites = roomdata.get_room_invites(invitee.id)
+        assert len(invites) == 1
+        assert invites[0].active is False
+        assert invites[0].seen is True
+
+        # Now, join the room, verifying that the invite goes away.
+        roomdata.join_room(room.id, invitee.id, inviter=inviter.id)
+        assert [] == roomdata.get_room_invites(inviter.id)
+        assert [] == roomdata.get_room_invites(invitee.id)
+        assert not roomdata.is_invited_to_room(room.id, inviter.id)
+        assert not roomdata.is_invited_to_room(room.id, invitee.id)
+
+        # And verify that the inviter was recorded as having added the user.
+        history = roomdata.get_room_history(room.id, limit=1)
+        inviter_occupant = [o for o in roomdata.get_room_occupants(room.id) if o.userid == inviter.id][0]
+        assert len(history) == 1
+        assert history[0].action == ActionType.JOIN
+        assert history[0].occupant is not None
+        assert history[0].occupant.userid == invitee.id
+        assert history[0].details == {"actor": inviter_occupant.id}
