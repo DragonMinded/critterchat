@@ -192,7 +192,7 @@ class TestAttachmentData:
         attachmentdata.set_notification(user1.id, 'testing', aid)
 
         notifications = attachmentdata.get_notifications(user1.id)
-        assert set(notifications.keys()) == {'testing'}
+        assert notifications.keys() == {'testing'}
         assert notifications['testing'].id == aid
         assert notifications['testing'].system == "local"
         assert notifications['testing'].content_type == "audio/mpeg"
@@ -309,7 +309,7 @@ class TestAttachmentData:
 
         # Now, verify that we can reach this attachment.
         attachments = attachmentdata.get_action_attachments(action1)
-        assert set(attachments.keys()) == {action1}
+        assert attachments.keys() == {action1}
         assert len(attachments[action1]) == 1
         assert attachments[action1][0].actionid == action1
         assert attachments[action1][0].attachmentid == aid
@@ -320,7 +320,7 @@ class TestAttachmentData:
         attachments = attachmentdata.get_action_attachments(action2)
         assert attachments == {action2: []}
         attachments = attachmentdata.get_action_attachments([action1, action2])
-        assert set(attachments.keys()) == {action1, action2}
+        assert attachments.keys() == {action1, action2}
         assert len(attachments[action1]) == 1
         assert attachments[action1][0].actionid == action1
         assert attachments[action1][0].attachmentid == aid

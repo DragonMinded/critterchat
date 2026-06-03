@@ -375,6 +375,21 @@ class TestRoomData:
         assert not users2[user1.id].inactive
         assert users2[user1.id].present
 
+        # And verify that we get our occupants back for a given user.
+        roomdata.update_room_occupant(room1.id, user1.id, "user1_room1_nick", None)
+        roomdata.update_room_occupant(room2.id, user1.id, "user1_room2_nick", None)
+        occupant_by_room = roomdata.get_joined_room_occupants(user1.id)
+        assert occupant_by_room.keys() == {room1.id, room2.id}
+        assert occupant_by_room[room1.id].id != occupant_by_room[room2.id].id
+        assert occupant_by_room[room1.id].userid == user1.id
+        assert occupant_by_room[room1.id].nickname == "user1_room1_nick"
+        assert occupant_by_room[room2.id].userid == user1.id
+        assert occupant_by_room[room2.id].nickname == "user1_room2_nick"
+
+        # Put the nickname back for the rest of the test.
+        roomdata.update_room_occupant(room1.id, user1.id, None, None)
+        roomdata.update_room_occupant(room2.id, user1.id, None, None)
+
         # Now, verify that we get all users back for each room when specifying include left.
         users1 = {occupant.userid: occupant for occupant in roomdata.get_room_occupants(room1.id, include_left=True)}
         assert users1.keys() == {user1.id, user2.id, user3.id}
