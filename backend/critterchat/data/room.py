@@ -307,41 +307,11 @@ class RoomData(BaseData):
             for result in cursor.mappings()
         ])
 
-    def get_rooms(self, name: str | None = None) -> list[Room]:
-        """
-        Look up all existing rooms, potentially matching any that match the name.
-
-        Parameters:
-            name - The name of the room we want to match.
-
-        Returns:
-            list of Room objects representing the rooms on the network
-        """
-        sql = """
-            SELECT id, name, topic, icon, purpose, moderated, autojoin, last_action FROM room
-        """
-        if name is not None:
-            sql += " WHERE (name IS NULL OR name = '' OR name COLLATE utf8mb4_general_ci LIKE :name)"
-
-        cursor = self.execute(sql, {"name": f"%{name}%"})
-        return self._hydrate_actions([
-            Room(
-                roomid=RoomID(result['id']),
-                name=result['name'],
-                topic=result['topic'],
-                purpose=self._get_purpose(str(result['purpose'])),
-                moderated=bool(result['moderated']),
-                autojoin=bool(result['autojoin']),
-                last_action_timestamp=result['last_action'],
-                iconid=AttachmentID(result['icon']) if result['icon'] else None,
-                deficonid=None,
-            )
-            for result in cursor.mappings()
-        ])
-
     def get_public_rooms(self, name: str | None = None) -> list[Room]:
         """
-        Look up all public rooms, potentially matching any that match the name.
+        Look up all public rooms, potentially matching any that match the name. Note that this will return public
+        rooms that are role-based for access and visibility, since those are technically public. Per-user room
+        searches do not run through this function.
 
         Parameters:
             name - The name of the room we want to match.
@@ -375,7 +345,9 @@ class RoomData(BaseData):
         """
         Given a user ID, look up the rooms that user can see that match the search criteria.
         Note that this will also return rooms with unset names if you specify the name,
-        because the calling layer will infer the room name.
+        because the calling layer will infer the room name. Note that currently this is identical
+        to get_public_rooms, but once there is a role-based access system this could potentially
+        show rooms that aren't listed in get_public_rooms that the user has access to.
 
         Parameters:
             userid - The ID of the user that we want rooms for.

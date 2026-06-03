@@ -24,6 +24,9 @@ from ..mocks import MockConfig
 
 @pytest.mark.integration
 class TestRoomData:
+    # TODO: There's a decent amount of edge cases that aren't covered in this function. At
+    # some point, we should do a coverage pass and try to get the coverage into the 90s.
+
     def test_room_crud(self, tx: ConnectionLike) -> None:
         """
         Tests basic create, retrieve, update, delete for rooms in the system.
@@ -859,7 +862,7 @@ class TestRoomData:
         config = MockConfig()
         roomdata = RoomData(config, tx)
 
-        # First, create a few rooms for users to be in or not be in.
+        # First, create a few rooms.
         room1 = Room(
             NewRoomID,
             "test room 1",
@@ -917,3 +920,110 @@ class TestRoomData:
         assert not fetched.autojoin
 
         assert [] == roomdata.get_autojoin_rooms()
+
+    def test_room_fetches(self, tx: ConnectionLike) -> None:
+        """
+        Verifies that our various room fetch funtions work as intended.
+        """
+
+        config = MockConfig()
+        roomdata = RoomData(config, tx)
+        userdata = UserData(config, tx)
+
+        # First, create a few rooms.
+        public_ids: list[RoomID] = []
+        private_ids: list[RoomID] = []
+        dm_ids: list[RoomID] = []
+        for i in range(10):
+            room = Room(
+                NewRoomID,
+                f"public room {i}",
+                "",
+                RoomPurpose.ROOM,
+                False,
+                False,
+                None,
+                None,
+            )
+            roomdata.create_room(room)
+            public_ids.append(room.id)
+
+        for i in range(5):
+            room = Room(
+                NewRoomID,
+                f"private room {i}",
+                "",
+                RoomPurpose.CHAT,
+                False,
+                False,
+                None,
+                None,
+            )
+            roomdata.create_room(room)
+            private_ids.append(room.id)
+
+        for i in range(5):
+            room = Room(
+                NewRoomID,
+                f"direct message {i}",
+                "",
+                RoomPurpose.DIRECT_MESSAGE,
+                False,
+                False,
+                None,
+                None,
+            )
+            roomdata.create_room(room)
+            dm_ids.append(room.id)
+
+        # Now, create a user and join them to various rooms.
+        user = userdata.create_account("room_fetches_user", "amazing_password")
+        assert user is not None
+
+        for i in range(2):
+            roomdata.join_room(public_ids[i], user.id)
+            roomdata.join_room(private_ids[i], user.id)
+            roomdata.join_room(dm_ids[i], user.id)
+
+        # Now, test getting public rooms.
+        rooms = roomdata.get_public_rooms()
+        assert len(rooms) == 10
+        assert all(room.id in public_ids for room in rooms)
+
+        rooms = roomdata.get_public_rooms(name="public room")
+        assert len(rooms) == 10
+        assert all(room.id in public_ids for room in rooms)
+
+        rooms = roomdata.get_public_rooms(name="public room 3")
+        assert len(rooms) == 1
+        assert rooms[0].id == public_ids[3]
+
+        assert [] == roomdata.get_public_rooms(name="doesn't exist")
+
+        # And test matching rooms (rooms that we're in).
+        expected = {public_ids[0], public_ids[1], private_ids[0], private_ids[1], dm_ids[0], dm_ids[1]}
+        rooms = roomdata.get_matching_rooms(user.id)
+        assert len(rooms) == 6
+        assert all(room.id in expected for room in rooms)
+        rooms = roomdata.get_matching_rooms(user.id, name="private room")
+        assert len(rooms) == 2
+        assert all(room.id in {private_ids[0], private_ids[1]} for room in rooms)
+        rooms = roomdata.get_matching_rooms(user.id, name="direct message 1")
+        assert len(rooms) == 1
+        assert rooms[0].id == dm_ids[1]
+        assert [] == roomdata.get_matching_rooms(user.id, name="doesn't exist")
+
+        # Now, test getting visible rooms (rooms that we can see through our permissions and roles).
+        rooms = roomdata.get_visible_rooms(user.id)
+        assert len(rooms) == 10
+        assert all(room.id in public_ids for room in rooms)
+
+        rooms = roomdata.get_visible_rooms(user.id, name="public room")
+        assert len(rooms) == 10
+        assert all(room.id in public_ids for room in rooms)
+
+        rooms = roomdata.get_visible_rooms(user.id, name="public room 3")
+        assert len(rooms) == 1
+        assert rooms[0].id == public_ids[3]
+
+        assert [] == roomdata.get_visible_rooms(user.id, name="doesn't exist")
