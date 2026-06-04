@@ -5,25 +5,25 @@ from typing import Final, Iterator, cast
 import alembic.config
 from alembic.migration import MigrationContext
 from alembic.autogenerate import compare_metadata
-from sqlalchemy import create_engine
+from sqlalchemy import MetaData, create_engine
 from sqlalchemy.engine import Connection, Engine
 from sqlalchemy.sql import text
 from sqlalchemy.exc import ProgrammingError
+from sqlfragments import statement
 
 from ..config import Config
-from .base import ConnectionLike, metadata
-from .user import UserData
-from .room import RoomData
-from .attachment import AttachmentData
-from .migration import MigrationData
-from .mastodon import MastodonData
+from .base import ConnectionLike
+from .user import UserData, tables as user_tables
+from .room import RoomData, tables as room_tables
+from .attachment import AttachmentData, tables as attachment_tables
+from .migration import MigrationData, tables as migration_tables
+from .mastodon import MastodonData, tables as mastodon_tables
 from .types import ActionID, RoomID, UserID, Action, Occupant, User
 
 
 __all__ = [
     "DBCreateException",
     "Data",
-    "metadata",
 ]
 
 
@@ -36,6 +36,23 @@ class RequestCache:
         self.actions: Final[dict[ActionID, Action | None]] = {}
         self.occupants: Final[dict[RoomID, list[Occupant] | None]] = {}
         self.users: Final[dict[UserID, User | None]] = {}
+
+
+__metadata: MetaData | None = None
+
+
+def metadata(dialect: str) -> MetaData:
+    global __metadata
+
+    if __metadata:
+        return __metadata
+
+    metadata = MetaData()
+    for tables in [user_tables, room_tables, attachment_tables, migration_tables, mastodon_tables]:
+        tables(dialect, metadata)
+
+    __metadata = metadata
+    return metadata
 
 
 class Data:
@@ -55,6 +72,7 @@ class Data:
         self.__config = config
         self.__connection: ConnectionLike = cast(ConnectionLike, connection)
         self.__url = Data.sqlalchemy_url(config)
+        self.__metadata: MetaData | None = None
         self._valid = True
 
         self.user = UserData(config, self.__connection)
@@ -82,7 +100,11 @@ class Data:
 
     @classmethod
     def sqlalchemy_url(cls, config: Config) -> str:
-        return f"mysql://{config.database.user}:{config.database.password}@{config.database.address}/{config.database.database}?charset=utf8mb4"
+        if config.database.backend == "mysql":
+            return f"mysql://{config.database.user}:{config.database.password}@{config.database.address}/{config.database.database}?charset=utf8mb4"
+        if config.database.backend == "sqlite":
+            return f"sqlite:///{config.database.file}"
+        raise NotImplementedError(f"Unsupported data backend {config.database.backend}")
 
     @classmethod
     def create_engine(cls, config: Config) -> Engine:
@@ -94,7 +116,20 @@ class Data:
     def __exists(self) -> bool:
         # See if the DB was already created
         try:
-            cursor = self.__connection.execute(text("SELECT count(*) AS count FROM information_schema.TABLES WHERE (TABLE_SCHEMA = :schema) AND (TABLE_NAME = 'alembic_version')"), {"schema": self.__config.database.database})
+            if self.__config.database.backend == "mysql":
+                query = statement(
+                    "SELECT count(*) AS count FROM information_schema.TABLES WHERE (TABLE_SCHEMA = %value:schema) AND (TABLE_NAME = 'alembic_version')",
+                    schema=self.__config.database.database,
+                )
+            elif self.__config.database.backend == "sqlite":
+                query = statement(
+                    "SELECT count(name) AS count FROM sqlite_master WHERE type='table' AND name='alembic_version'",
+                )
+            else:
+                raise NotImplementedError(f"Unsupported data backend {self.__config.database.backend}")
+
+            stmt, args = query.to_sqlalchemy()
+            cursor = self.__connection.execute(text(stmt), args)
             return bool(cursor.mappings().fetchone()['count'] == 1)
         except ProgrammingError:
             return False
@@ -108,6 +143,8 @@ class Data:
             f'script_location={base_dir}',
             '-x',
             f'sqlalchemy.url={self.__url}',
+            '-x',
+            f'database_dialect={self.__config.database.backend}',
             command,
         ]
         alembicArgs.extend(args)
@@ -127,7 +164,7 @@ class Data:
             else:
                 raise DBCreateException('Tables already created, use upgrade to upgrade schema!')
 
-        metadata.create_all(
+        metadata(self.__config.database.backend).create_all(
             self.__config.database.engine.connect(),
             checkfirst=True,
         )
@@ -147,7 +184,7 @@ class Data:
 
         # Verify that there are actual changes, and refuse to create empty migration scripts
         context = MigrationContext.configure(self.__config.database.engine.connect(), opts={'compare_type': True})
-        diff = compare_metadata(context, metadata)
+        diff = compare_metadata(context, metadata(self.__config.database.backend))
         if (not allow_empty) and (len(diff) == 0):
             raise DBCreateException('There is nothing different between code and the DB, refusing to create migration!')
 

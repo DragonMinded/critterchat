@@ -1,65 +1,67 @@
 import contextlib
 import json
-from sqlalchemy import Table, Column
+from sqlalchemy import MetaData, Table, Column
 from sqlalchemy.schema import UniqueConstraint
 from sqlalchemy.types import String, Integer, JSON
 from typing import Iterable, Iterator
 
-from .base import BaseData, metadata
+from .base import BaseData
 from .types import MetadataType, ActionID, AttachmentID, NewActionID, NewAttachmentID, UserID, NewUserID
 
-"""
-Table representing an attachment.
-"""
-attachment = Table(
-    "attachment",
-    metadata,
-    Column("id", Integer, nullable=False, primary_key=True, autoincrement=True),
-    Column("system", String(32), nullable=False),
-    Column("content_type", String(128), nullable=False),
-    Column("original_filename", String(256), nullable=True),
-    Column("metadata", JSON),
-    mysql_charset="utf8mb4",
-)
 
-"""
-Table representing a custom emote.
-"""
-emote = Table(
-    "emote",
-    metadata,
-    Column("id", Integer, nullable=False, primary_key=True, autoincrement=True),
-    Column("alias", String(64), nullable=False, unique=True),
-    Column("attachment_id", Integer),
-    mysql_charset="utf8mb4",
-)
+def tables(dialect: str, metadata: MetaData) -> None:
+    """
+    Table representing an attachment.
+    """
+    Table(
+        "attachment",
+        metadata,
+        Column("id", Integer, nullable=False, primary_key=True, autoincrement=True),
+        Column("system", String(32), nullable=False),
+        Column("content_type", String(128), nullable=False),
+        Column("original_filename", String(256), nullable=True),
+        Column("metadata", JSON),
+        mysql_charset="utf8mb4",
+    )
 
-"""
-Table representing a user's custom notification sounds.
-"""
-notification = Table(
-    "notification",
-    metadata,
-    Column("id", Integer, nullable=False, primary_key=True, autoincrement=True),
-    Column("user_id", Integer, nullable=False, index=True),
-    Column("type", String(64), nullable=False),
-    Column("attachment_id", Integer),
-    UniqueConstraint("user_id", "type", name="user_id_type"),
-    mysql_charset="utf8mb4",
-)
+    """
+    Table representing a custom emote.
+    """
+    Table(
+        "emote",
+        metadata,
+        Column("id", Integer, nullable=False, primary_key=True, autoincrement=True),
+        Column("alias", String(64), nullable=False, unique=True),
+        Column("attachment_id", Integer),
+        mysql_charset="utf8mb4",
+    )
 
-"""
-Table representing an action's attachments, such as images or files.
-"""
-action_attachment = Table(
-    "action_attachment",
-    metadata,
-    Column("id", Integer, nullable=False, primary_key=True, autoincrement=True),
-    Column("action_id", Integer, nullable=False, index=True),
-    Column("attachment_id", Integer, nullable=False),
-    UniqueConstraint("action_id", "attachment_id", name="action_id_attachment_id"),
-    mysql_charset="utf8mb4",
-)
+    """
+    Table representing a user's custom notification sounds.
+    """
+    Table(
+        "notification",
+        metadata,
+        Column("id", Integer, nullable=False, primary_key=True, autoincrement=True),
+        Column("user_id", Integer, nullable=False, index=True),
+        Column("type", String(64), nullable=False),
+        Column("attachment_id", Integer),
+        UniqueConstraint("user_id", "type", name="user_id_type"),
+        mysql_charset="utf8mb4",
+    )
+
+    """
+    Table representing an action's attachments, such as images or files.
+    """
+    Table(
+        "action_attachment",
+        metadata,
+        Column("id", Integer, nullable=False, primary_key=True, autoincrement=True),
+        Column("action_id", Integer, nullable=False, index=True),
+        Column("attachment_id", Integer, nullable=False),
+        UniqueConstraint("action_id", "attachment_id", name="action_id_attachment_id"),
+        mysql_charset="utf8mb4",
+    )
 
 
 class Attachment:

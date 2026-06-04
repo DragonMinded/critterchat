@@ -2,15 +2,15 @@ import random
 import string
 
 from sqlfragments import Fragment, fragment, statement
-from sqlalchemy import Table, Column
+from sqlalchemy import MetaData, Table, Column
 from sqlalchemy.schema import UniqueConstraint
-from sqlalchemy.types import Boolean, String, Integer
+from sqlalchemy.types import Boolean, String, Integer, Text
 from sqlalchemy.dialects.mysql import MEDIUMTEXT as MediumText
 from typing import Any, Final, Literal
 from passlib.hash import pbkdf2_sha512  # type: ignore
 
 from ..common import Time, coerce_enum
-from .base import BaseData, metadata
+from .base import BaseData
 from .types import (
     ActionType,
     RoomPurpose,
@@ -34,98 +34,114 @@ from .types import (
     UserID,
 )
 
-"""
-Table representing a user.
-"""
-user = Table(
-    "user",
-    metadata,
-    Column("id", Integer, nullable=False, primary_key=True, autoincrement=True),
-    Column("username", String(255), unique=True, index=True),
-    Column("password", String(1024)),
-    Column("salt", String(64)),
-    Column("permissions", Integer),
-    Column("timestamp", Integer, index=True),
-    mysql_charset="utf8mb4",
-)
 
-"""
-Table representing a user's login session.
-"""
-session = Table(
-    "session",
-    metadata,
-    Column("id", Integer, nullable=False),
-    Column("type", String(32), nullable=False),
-    Column("session", String(32), nullable=False, unique=True, index=True),
-    Column("expiration", Integer),
-    mysql_charset="utf8mb4",
-)
+def tables(dialect: str, metadata: MetaData) -> None:
+    """
+    Table representing a user.
+    """
+    Table(
+        "user",
+        metadata,
+        Column("id", Integer, nullable=False, primary_key=True, autoincrement=True),
+        Column("username", String(255), unique=True, index=True),
+        Column("password", String(1024)),
+        Column("salt", String(64)),
+        Column("permissions", Integer),
+        Column("timestamp", Integer, index=True),
+        mysql_charset="utf8mb4",
+    )
 
-"""
-Table representing a user's profile.
-"""
-profile = Table(
-    "profile",
-    metadata,
-    Column("user_id", Integer, nullable=False, unique=True, index=True),
-    Column("nickname", String(255)),
-    Column("about", MediumText),
-    Column("icon", Integer),
-    Column("timestamp", Integer, index=True),
-    mysql_charset="utf8mb4",
-)
+    """
+    Table representing a user's login session.
+    """
+    Table(
+        "session",
+        metadata,
+        Column("id", Integer, nullable=False),
+        Column("type", String(32), nullable=False),
+        Column("session", String(32), nullable=False, unique=True, index=True),
+        Column("expiration", Integer),
+        mysql_charset="utf8mb4",
+    )
 
-"""
-Table representing a user's instance-wide preferences.
-"""
-preferences = Table(
-    "preferences",
-    metadata,
-    Column("user_id", Integer, nullable=False, unique=True, index=True),
-    Column("rooms_on_top", Boolean),
-    Column("combined_messages", Boolean),
-    Column("color_scheme", String(8)),
-    Column("desktop_size", String(10)),
-    Column("mobile_size", String(10)),
-    Column("admin_controls", String(10)),
-    Column("search_privacy", String(10)),
-    Column("invite_privacy", String(14)),
-    Column("title_notifs", Boolean),
-    Column("mobile_audio_notifs", Boolean),
-    Column("tabbable_chat_elements", Boolean),
-    Column("audio_notifs", Integer),
-    Column("timestamp", Integer, index=True),
-    mysql_charset="utf8mb4",
-)
+    """
+    Table representing a user's profile.
+    """
+    if dialect == "mysql":
+        Table(
+            "profile",
+            metadata,
+            Column("user_id", Integer, nullable=False, unique=True, index=True),
+            Column("nickname", String(255)),
+            Column("about", MediumText),
+            Column("icon", Integer),
+            Column("timestamp", Integer, index=True),
+            mysql_charset="utf8mb4",
+        )
+    elif dialect == "sqlite":
+        Table(
+            "profile",
+            metadata,
+            Column("user_id", Integer, nullable=False, unique=True, index=True),
+            Column("nickname", String(255)),
+            Column("about", Text),
+            Column("icon", Integer),
+            Column("timestamp", Integer, index=True),
+            mysql_charset="utf8mb4",
+        )
+    else:
+        raise NotImplementedError(f"Unsupported database backend {dialect}")
 
-"""
-Table representing a user's per-session settings.
-"""
-settings = Table(
-    "settings",
-    metadata,
-    Column("session", String(32), nullable=False, unique=True, index=True),
-    Column("user_id", Integer, nullable=False, index=True),
-    Column("last_room", Integer),
-    Column("info", String(8)),
-    Column("timestamp", Integer, index=True),
-    mysql_charset="utf8mb4",
-)
+    """
+    Table representing a user's instance-wide preferences.
+    """
+    Table(
+        "preferences",
+        metadata,
+        Column("user_id", Integer, nullable=False, unique=True, index=True),
+        Column("rooms_on_top", Boolean),
+        Column("combined_messages", Boolean),
+        Column("color_scheme", String(8)),
+        Column("desktop_size", String(10)),
+        Column("mobile_size", String(10)),
+        Column("admin_controls", String(10)),
+        Column("search_privacy", String(10)),
+        Column("invite_privacy", String(14)),
+        Column("title_notifs", Boolean),
+        Column("mobile_audio_notifs", Boolean),
+        Column("tabbable_chat_elements", Boolean),
+        Column("audio_notifs", Integer),
+        Column("timestamp", Integer, index=True),
+        mysql_charset="utf8mb4",
+    )
 
-"""
-Table representing a user's last seen message/action for a given room they're in.
-"""
-lastseen = Table(
-    "lastseen",
-    metadata,
-    Column("id", Integer, nullable=False, primary_key=True, autoincrement=True),
-    Column("user_id", Integer, nullable=False),
-    Column("room_id", Integer, nullable=False),
-    Column("action_id", Integer, nullable=False),
-    UniqueConstraint("user_id", "room_id", name='uidrid'),
-    mysql_charset="utf8mb4",
-)
+    """
+    Table representing a user's per-session settings.
+    """
+    Table(
+        "settings",
+        metadata,
+        Column("session", String(32), nullable=False, unique=True, index=True),
+        Column("user_id", Integer, nullable=False, index=True),
+        Column("last_room", Integer),
+        Column("info", String(8)),
+        Column("timestamp", Integer, index=True),
+        mysql_charset="utf8mb4",
+    )
+
+    """
+    Table representing a user's last seen message/action for a given room they're in.
+    """
+    Table(
+        "lastseen",
+        metadata,
+        Column("id", Integer, nullable=False, primary_key=True, autoincrement=True),
+        Column("user_id", Integer, nullable=False),
+        Column("room_id", Integer, nullable=False),
+        Column("action_id", Integer, nullable=False),
+        UniqueConstraint("user_id", "room_id", name='uidrid'),
+        mysql_charset="utf8mb4",
+    )
 
 
 class UserData(BaseData):

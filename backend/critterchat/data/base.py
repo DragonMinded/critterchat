@@ -5,7 +5,6 @@ from typing import Any, Iterator, Protocol, cast
 
 from sqlfragments import Statement, Fragment, statement, fragment
 
-from sqlalchemy import MetaData
 from sqlalchemy.engine.base import Transaction
 from sqlalchemy.engine.cursor import CursorResult
 from sqlalchemy.sql import text
@@ -18,12 +17,9 @@ __all__ = [
     "BaseData",
     "Statement",
     "Fragment",
-    "metadata",
     "statement",
     "fragment",
 ]
-
-metadata = MetaData()
 
 
 class ConnectionLike(Protocol):

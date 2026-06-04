@@ -1,38 +1,40 @@
-from sqlalchemy import Table, Column
+from sqlalchemy import MetaData, Table, Column
 from sqlalchemy.schema import UniqueConstraint
 from sqlalchemy.types import String, Integer, Boolean
 
-from .base import BaseData, metadata
+from .base import BaseData
 from .types import MastodonInstance, MastodonInstanceID, NewMastodonInstanceID, NewUserID, UserID
 
-"""
-Table representing a mastodon instance that we auth against.
-"""
-mastodon_instance = Table(
-    "mastodon_instance",
-    metadata,
-    Column("id", Integer, nullable=False, primary_key=True, autoincrement=True),
-    Column("base_url", String(512), nullable=False, unique=True, index=True),
-    Column("client_id", String(256), nullable=False),
-    Column("client_secret", String(256), nullable=False),
-    Column("inactive", Boolean, default=False),
-    mysql_charset="utf8mb4",
-)
 
-"""
-Table representing a link between a user in our system and a Mastodon account
-on a remote instance. This is used for authentication/login.
-"""
-mastodon_account_link = Table(
-    "mastodon_account_link",
-    metadata,
-    Column("id", Integer, nullable=False, primary_key=True, autoincrement=True),
-    Column("user_id", Integer, nullable=False, index=True),
-    Column("instance_id", Integer, nullable=False, index=True),
-    Column("username", String(128), nullable=False),
-    UniqueConstraint("instance_id", "username", name='instance_id_username'),
-    mysql_charset="utf8mb4",
-)
+def tables(dialect: str, metadata: MetaData) -> None:
+    """
+    Table representing a mastodon instance that we auth against.
+    """
+    Table(
+        "mastodon_instance",
+        metadata,
+        Column("id", Integer, nullable=False, primary_key=True, autoincrement=True),
+        Column("base_url", String(512), nullable=False, unique=True, index=True),
+        Column("client_id", String(256), nullable=False),
+        Column("client_secret", String(256), nullable=False),
+        Column("inactive", Boolean, default=False),
+        mysql_charset="utf8mb4",
+    )
+
+    """
+    Table representing a link between a user in our system and a Mastodon account
+    on a remote instance. This is used for authentication/login.
+    """
+    Table(
+        "mastodon_account_link",
+        metadata,
+        Column("id", Integer, nullable=False, primary_key=True, autoincrement=True),
+        Column("user_id", Integer, nullable=False, index=True),
+        Column("instance_id", Integer, nullable=False, index=True),
+        Column("username", String(128), nullable=False),
+        UniqueConstraint("instance_id", "username", name='instance_id_username'),
+        mysql_charset="utf8mb4",
+    )
 
 
 class MastodonData(BaseData):

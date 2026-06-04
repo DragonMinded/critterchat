@@ -34,14 +34,10 @@ base_url: "http://localhost:5678/"
 upload_url: ~
 
 database:
-  # IP or DNS entry for MySQL instance
-  address: "localhost"
-  # Database that will be used
-  database: "critterchat"
-  # User who has full credentials to the above DB
-  user: "critterchat"
-  # Password of said user
-  password: "critterchat"
+  # Specify that we're going to use SQLite backend.
+  backend: "sqlite"
+  # Location of the SQLite database file, either relative or absolute.
+  file: "sqlite.db"
 
 attachments:
   # The URL prefix of the attachment store. This can be a full URL such as "https://attachments.example.com/"

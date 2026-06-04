@@ -1,12 +1,12 @@
 import contextlib
 from typing import Any, Iterable, Iterator
 
-from sqlalchemy import Table, Column
+from sqlalchemy import MetaData, Table, Column
 from sqlalchemy.schema import UniqueConstraint
 from sqlalchemy.types import String, Integer, Boolean, JSON
 
 from ..common import Time
-from .base import BaseData, Fragment, fragment, statement, metadata
+from .base import BaseData, Fragment, fragment, statement
 from .types import (
     Action,
     ActionType,
@@ -28,75 +28,76 @@ from .types import (
     UserID,
 )
 
-"""
-Table representing a chat room.
-"""
-room = Table(
-    "room",
-    metadata,
-    Column("id", Integer, nullable=False, primary_key=True, autoincrement=True),
-    Column("name", String(255)),
-    Column("topic", String(255)),
-    Column("autojoin", Boolean, default=False),
-    Column("moderated", Boolean, default=False),
-    Column("icon", Integer),
-    Column("purpose", String(10), nullable=False),
-    Column("last_action", Integer, nullable=False),
-    mysql_charset="utf8mb4",
-)
 
-"""
-Table representing a chat room's occupants.
-"""
-occupant = Table(
-    "occupant",
-    metadata,
-    Column("id", Integer, nullable=False, primary_key=True, autoincrement=True),
-    Column("user_id", Integer, nullable=False),
-    Column("room_id", Integer, nullable=False, index=True),
-    Column("inactive", Boolean, default=False),
-    Column("moderator", Boolean, default=False),
-    Column("muted", Boolean, default=False),
-    Column("nickname", String(255)),
-    Column("icon", Integer),
-    UniqueConstraint("user_id", "room_id", name='uidrid'),
-    mysql_charset="utf8mb4",
-)
+def tables(dialect: str, metadata: MetaData) -> None:
+    """
+    Table representing a chat room.
+    """
+    Table(
+        "room",
+        metadata,
+        Column("id", Integer, nullable=False, primary_key=True, autoincrement=True),
+        Column("name", String(255)),
+        Column("topic", String(255)),
+        Column("autojoin", Boolean, default=False),
+        Column("moderated", Boolean, default=False),
+        Column("icon", Integer),
+        Column("purpose", String(10), nullable=False),
+        Column("last_action", Integer, nullable=False),
+        mysql_charset="utf8mb4",
+    )
 
-"""
-Table representing a chat room's actions taken by occupants.
-"""
-action = Table(
-    "action",
-    metadata,
-    Column("id", Integer, nullable=False, primary_key=True, autoincrement=True),
-    Column("timestamp", Integer, nullable=False),
-    Column("room_id", Integer, nullable=False, index=True),
-    Column("occupant_id", Integer),
-    Column("action", String(32)),
-    Column("details", JSON),
-    mysql_charset="utf8mb4",
-)
+    """
+    Table representing a chat room's occupants.
+    """
+    Table(
+        "occupant",
+        metadata,
+        Column("id", Integer, nullable=False, primary_key=True, autoincrement=True),
+        Column("user_id", Integer, nullable=False),
+        Column("room_id", Integer, nullable=False, index=True),
+        Column("inactive", Boolean, default=False),
+        Column("moderator", Boolean, default=False),
+        Column("muted", Boolean, default=False),
+        Column("nickname", String(255)),
+        Column("icon", Integer),
+        UniqueConstraint("user_id", "room_id", name='uidrid'),
+        mysql_charset="utf8mb4",
+    )
 
+    """
+    Table representing a chat room's actions taken by occupants.
+    """
+    Table(
+        "action",
+        metadata,
+        Column("id", Integer, nullable=False, primary_key=True, autoincrement=True),
+        Column("timestamp", Integer, nullable=False),
+        Column("room_id", Integer, nullable=False, index=True),
+        Column("occupant_id", Integer),
+        Column("action", String(32)),
+        Column("details", JSON),
+        mysql_charset="utf8mb4",
+    )
 
-"""
-Table representing a chat room's invite from one user to another. This
-works as somewhat of a "ticket" or "token" to joining a private chat.
-"""
-invite = Table(
-    "invite",
-    metadata,
-    Column("id", Integer, nullable=False, primary_key=True, autoincrement=True),
-    Column("timestamp", Integer, nullable=False, index=True),
-    Column("room_id", Integer, nullable=False, index=True),
-    Column("invited_user_id", Integer, nullable=False),
-    Column("inviter_user_id", Integer, nullable=False),
-    Column("ignored", Boolean, nullable=False, default=False),
-    Column("revoked", Boolean, nullable=False, default=False),
-    Column("seen", Boolean, nullable=False, default=False),
-    UniqueConstraint("room_id", "invited_user_id", name='ridiuid'),
-    mysql_charset="utf8mb4",
-)
+    """
+    Table representing a chat room's invite from one user to another. This
+    works as somewhat of a "ticket" or "token" to joining a private chat.
+    """
+    Table(
+        "invite",
+        metadata,
+        Column("id", Integer, nullable=False, primary_key=True, autoincrement=True),
+        Column("timestamp", Integer, nullable=False, index=True),
+        Column("room_id", Integer, nullable=False, index=True),
+        Column("invited_user_id", Integer, nullable=False),
+        Column("inviter_user_id", Integer, nullable=False),
+        Column("ignored", Boolean, nullable=False, default=False),
+        Column("revoked", Boolean, nullable=False, default=False),
+        Column("seen", Boolean, nullable=False, default=False),
+        UniqueConstraint("room_id", "invited_user_id", name='ridiuid'),
+        mysql_charset="utf8mb4",
+    )
 
 
 class RoomData(BaseData):

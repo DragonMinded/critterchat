@@ -12,27 +12,40 @@ def _bool(val: Any, default: bool) -> bool:
 
 class Database:
     def __init__(self, parent_config: "Config") -> None:
-        self.__config = parent_config
+        self._config = parent_config
+
+    @property
+    def backend(self) -> str:
+        return str(self._config.get("database", {}).get("backend") or "mysql")
+
+    @property
+    def file(self) -> str:
+        db_file = self._config.get("database", {}).get("file")
+        if db_file:
+            if self._config._path:
+                db_file = os.path.normpath(os.path.join(self._config._path, db_file))
+
+        return db_file or "sqlite.db"
 
     @property
     def address(self) -> str:
-        return str(self.__config.get("database", {}).get("address") or "localhost")
+        return str(self._config.get("database", {}).get("address") or "localhost")
 
     @property
     def database(self) -> str:
-        return str(self.__config.get("database", {}).get("database") or "critterchat")
+        return str(self._config.get("database", {}).get("database") or "critterchat")
 
     @property
     def user(self) -> str:
-        return str(self.__config.get("database", {}).get("user") or "critterchat")
+        return str(self._config.get("database", {}).get("user") or "critterchat")
 
     @property
     def password(self) -> str:
-        return str(self.__config.get("database", {}).get("password") or "critterchat")
+        return str(self._config.get("database", {}).get("password") or "critterchat")
 
     @property
     def engine(self) -> Engine:
-        engine = self.__config.get("database", {}).get("engine")
+        engine = self._config.get("database", {}).get("engine")
         if engine is None:
             raise Exception("Config object is not instantiated properly, no SQLAlchemy engine present!")
         if not isinstance(engine, Engine):
@@ -42,58 +55,58 @@ class Database:
 
 class Attachments:
     def __init__(self, parent_config: "Config") -> None:
-        self.__config = parent_config
+        self._config = parent_config
 
     @property
     def prefix(self) -> str:
-        return str(self.__config.get("attachments", {}).get("prefix") or "/attachments/")
+        return str(self._config.get("attachments", {}).get("prefix") or "/attachments/")
 
     @property
     def system(self) -> str:
-        return str(self.__config.get("attachments", {}).get("system") or "local")
+        return str(self._config.get("attachments", {}).get("system") or "local")
 
     @property
     def directory(self) -> str | None:
-        directory = self.__config.get("attachments", {}).get("directory")
+        directory = self._config.get("attachments", {}).get("directory")
         return str(directory) if directory else None
 
     @property
     def attachment_key(self) -> str:
-        return str(self.__config.get("attachments", {}).get("attachment_key") or "youalsoreallyshouldhavechangedthistoo")
+        return str(self._config.get("attachments", {}).get("attachment_key") or "youalsoreallyshouldhavechangedthistoo")
 
 
 class Limits:
     def __init__(self, parent_config: "Config") -> None:
-        self.__config = parent_config
+        self._config = parent_config
 
     @property
     def about_length(self) -> int:
-        return int(self.__config.get("limits", {}).get("about_length") or 64000)
+        return int(self._config.get("limits", {}).get("about_length") or 64000)
 
     @property
     def message_length(self) -> int:
-        return int(self.__config.get("limits", {}).get("message_length") or 64000)
+        return int(self._config.get("limits", {}).get("message_length") or 64000)
 
     @property
     def alt_text_length(self) -> int:
-        return int(self.__config.get("limits", {}).get("alt_text_length") or 64000)
+        return int(self._config.get("limits", {}).get("alt_text_length") or 64000)
 
     @property
     def icon_size(self) -> int:
-        return int(self.__config.get("limits", {}).get("icon_size") or 128)
+        return int(self._config.get("limits", {}).get("icon_size") or 128)
 
     @property
     def notification_size(self) -> int:
-        return int(self.__config.get("limits", {}).get("notification_size") or 128)
+        return int(self._config.get("limits", {}).get("notification_size") or 128)
 
     @property
     def attachment_size(self) -> int:
-        return int(self.__config.get("limits", {}).get("attachment_size") or 2048)
+        return int(self._config.get("limits", {}).get("attachment_size") or 2048)
 
     @property
     def attachment_max(self) -> int:
         # Specifically allow 0 as an attachment_max so operators can disable attachments.
-        attachment_max = self.__config.get("limits", {}).get("attachment_max")
+        attachment_max = self._config.get("limits", {}).get("attachment_max")
         if attachment_max is None:
             attachment_max = 4
         return int(attachment_max)
@@ -101,19 +114,19 @@ class Limits:
 
 class AccountRegistration:
     def __init__(self, parent_config: "Config") -> None:
-        self.__config = parent_config
+        self._config = parent_config
 
     @property
     def enabled(self) -> bool:
-        return _bool(self.__config.get("account_registration", {}).get("enabled"), True)
+        return _bool(self._config.get("account_registration", {}).get("enabled"), True)
 
     @property
     def invites(self) -> bool:
-        return _bool(self.__config.get("account_registration", {}).get("invites"), False)
+        return _bool(self._config.get("account_registration", {}).get("invites"), False)
 
     @property
     def auto_approve(self) -> bool:
-        return _bool(self.__config.get("account_registration", {}).get("auto_approve"), False)
+        return _bool(self._config.get("account_registration", {}).get("auto_approve"), False)
 
 
 class MastodonConfig:
@@ -124,15 +137,15 @@ class MastodonConfig:
 
 class Authentication:
     def __init__(self, parent_config: "Config") -> None:
-        self.__config = parent_config
+        self._config = parent_config
 
     @property
     def local(self) -> bool:
-        return _bool(self.__config.get("authentication", {}).get("local"), True)
+        return _bool(self._config.get("authentication", {}).get("local"), True)
 
     @property
     def mastodon(self) -> list[MastodonConfig]:
-        instances = self.__config.get("authentication", {}).get("mastodon", [])
+        instances = self._config.get("authentication", {}).get("mastodon", [])
         if not isinstance(instances, list):
             return []
 
@@ -153,17 +166,17 @@ class Authentication:
 
 class Reactions:
     def __init__(self, parent_config: "Config") -> None:
-        self.__config = parent_config
+        self._config = parent_config
 
     @property
     def enabled(self) -> bool:
-        return _bool(self.__config.get("reactions", {}).get("enabled"), True)
+        return _bool(self._config.get("reactions", {}).get("enabled"), True)
 
     @property
     def defaults(self) -> list[str]:
         defaults = ["thumbs_up", "thumbs_down", "heart", "laughing", "cry", "angry"]
 
-        vals = self.__config.get("reactions", {}).get("defaults", [])
+        vals = self._config.get("reactions", {}).get("defaults", [])
         if not isinstance(vals, list):
             return defaults
 
@@ -189,9 +202,9 @@ class Config(dict[str, Any]):
     def __init__(self, existing_contents: dict[str, Any] = {}, filename: str | None = None) -> None:
         super().__init__(existing_contents or {})
 
-        self.__path: str | None = None
+        self._path: str | None = None
         if filename:
-            self.__path = os.path.dirname(filename)
+            self._path = os.path.dirname(filename)
 
         self.database = Database(self)
         self.attachments = Attachments(self)
@@ -213,11 +226,11 @@ class Config(dict[str, Any]):
             self["database"]["engine"] = engine
             clone["database"]["engine"] = engine
 
-        clone.__path = self.__path
+        clone._path = self._path
         return clone
 
     def set_filename(self, filename: str) -> None:
-        self.__path = os.path.dirname(filename)
+        self._path = os.path.dirname(filename)
 
     @property
     def cookie_key(self) -> str:
@@ -247,8 +260,8 @@ class Config(dict[str, Any]):
 
         if info_file:
             try:
-                if self.__path:
-                    info_file = os.path.normpath(os.path.join(self.__path, info_file))
+                if self._path:
+                    info_file = os.path.normpath(os.path.join(self._path, info_file))
 
                 with open(info_file, "r", encoding="utf-8") as fp:
                     info = fp.read()

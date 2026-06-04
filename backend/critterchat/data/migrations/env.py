@@ -15,11 +15,15 @@ if config.config_file_name is None:
     raise Exception("Logic error, config file name is not set!")
 fileConfig(config.config_file_name)
 
+dialect = context.get_x_argument(as_dictionary=True).get('database_dialect')
+if dialect is None:
+    raise Exception("Logic error, dialect is not set!")
+
 # add your model's MetaData object here
 # for 'autogenerate' support
 # from myapp import mymodel
 # target_metadata = mymodel.Base.metadata
-target_metadata = metadata
+target_metadata = metadata(dialect)
 
 # other values from the config, defined by the needs of env.py,
 # can be acquired:

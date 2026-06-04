@@ -1,19 +1,21 @@
-from sqlalchemy import Table, Column
+from sqlalchemy import MetaData, Table, Column
 from sqlalchemy.types import String, Integer
 
-from .base import BaseData, metadata
+from .base import BaseData
 from .types import Migration
 
-"""
-Table representing a particular data migration.
-"""
-migration = Table(
-    "migration",
-    metadata,
-    Column("id", Integer, nullable=False, primary_key=True, autoincrement=True),
-    Column("name", String(32), nullable=False),
-    mysql_charset="utf8mb4",
-)
+
+def tables(dialect: str, metadata: MetaData) -> None:
+    """
+    Table representing a particular data migration.
+    """
+    Table(
+        "migration",
+        metadata,
+        Column("id", Integer, nullable=False, primary_key=True, autoincrement=True),
+        Column("name", String(32), nullable=False),
+        mysql_charset="utf8mb4",
+    )
 
 
 class MigrationData(BaseData):
