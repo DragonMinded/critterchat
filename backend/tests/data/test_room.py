@@ -1,6 +1,7 @@
 import pytest
 
 from critterchat.common import Time
+from critterchat.config import Config
 from critterchat.data import (
     ConnectionLike,
     Action,
@@ -19,20 +20,17 @@ from critterchat.data.attachment import AttachmentData
 from critterchat.data.room import RoomData
 from critterchat.data.user import UserData
 
-from ..mocks import MockConfig
-
 
 @pytest.mark.integration
 class TestRoomData:
     # TODO: There's a decent amount of edge cases that aren't covered in this function. At
     # some point, we should do a coverage pass and try to get the coverage into the 90s.
 
-    def test_room_crud(self, tx: ConnectionLike) -> None:
+    def test_room_crud(self, config: Config, tx: ConnectionLike) -> None:
         """
         Tests basic create, retrieve, update, delete for rooms in the system.
         """
 
-        config = MockConfig()
         attachmentdata = AttachmentData(config, tx)
         roomdata = RoomData(config, tx)
         userdata = UserData(config, tx)
@@ -147,12 +145,11 @@ class TestRoomData:
 
         # No delete because we do not delete rooms currently.
 
-    def test_shadow_join_room(self, tx: ConnectionLike) -> None:
+    def test_shadow_join_room(self, config: Config, tx: ConnectionLike) -> None:
         """
         Tests that we can shadow join a room properly.
         """
 
-        config = MockConfig()
         roomdata = RoomData(config, tx)
         userdata = UserData(config, tx)
 
@@ -216,12 +213,11 @@ class TestRoomData:
         assert occupants[0].userid == user.id
         assert occupants[0].present is False
 
-    def test_get_joined_rooms(self, tx: ConnectionLike) -> None:
+    def test_get_joined_rooms(self, config: Config, tx: ConnectionLike) -> None:
         """
         Verifies that get_joined_rooms operates properly.
         """
 
-        config = MockConfig()
         roomdata = RoomData(config, tx)
         userdata = UserData(config, tx)
 
@@ -286,12 +282,11 @@ class TestRoomData:
         rooms = {room.id for room in roomdata.get_joined_rooms(user2.id, include_left=True)}
         assert rooms == {room1.id, room2.id}
 
-    def test_get_room_occupants(self, tx: ConnectionLike) -> None:
+    def test_get_room_occupants(self, config: Config, tx: ConnectionLike) -> None:
         """
         Verifies that get_room_occupants operates properly.
         """
 
-        config = MockConfig()
         roomdata = RoomData(config, tx)
         userdata = UserData(config, tx)
         attachmentdata = AttachmentData(config, tx)
@@ -545,12 +540,11 @@ class TestRoomData:
         assert fetched is not None
         assert fetched.id == room1.id
 
-    def test_edit_action(self, tx: ConnectionLike) -> None:
+    def test_edit_action(self, config: Config, tx: ConnectionLike) -> None:
         """
         Tests that we can fetch and edit actions, for the purpose of edits and reactions.
         """
 
-        config = MockConfig()
         roomdata = RoomData(config, tx)
         userdata = UserData(config, tx)
 
@@ -614,12 +608,11 @@ class TestRoomData:
         assert action.occupant.userid == user.id
         assert action.occupant.username == "room_edit_action_user"
 
-    def test_occupant_room_properties(self, tx: ConnectionLike) -> None:
+    def test_occupant_room_properties(self, config: Config, tx: ConnectionLike) -> None:
         """
         Tests that we can fetch and update occupant properties in rooms.
         """
 
-        config = MockConfig()
         roomdata = RoomData(config, tx)
         userdata = UserData(config, tx)
 
@@ -701,12 +694,11 @@ class TestRoomData:
         # And, ensure that they don't show up in the list without specifically requesting them.
         assert [] == [o for o in roomdata.get_room_occupants(room.id) if o.username == "room_properties_user"]
 
-    def test_room_invites(self, tx: ConnectionLike) -> None:
+    def test_room_invites(self, config: Config, tx: ConnectionLike) -> None:
         """
         Tests room invite infrastructure.
         """
 
-        config = MockConfig()
         roomdata = RoomData(config, tx)
         userdata = UserData(config, tx)
 
@@ -854,12 +846,11 @@ class TestRoomData:
         assert history[0].occupant.userid == invitee.id
         assert history[0].details == {"actor": inviter_occupant.id}
 
-    def test_autojoin_rooms(self, tx: ConnectionLike) -> None:
+    def test_autojoin_rooms(self, config: Config, tx: ConnectionLike) -> None:
         """
         Verifies that we can set a room to be autojoin and list autojoin rooms.
         """
 
-        config = MockConfig()
         roomdata = RoomData(config, tx)
 
         # First, create a few rooms.
@@ -921,12 +912,11 @@ class TestRoomData:
 
         assert [] == roomdata.get_autojoin_rooms()
 
-    def test_room_fetches(self, tx: ConnectionLike) -> None:
+    def test_room_fetches(self, config: Config, tx: ConnectionLike) -> None:
         """
         Verifies that our various room fetch funtions work as intended.
         """
 
-        config = MockConfig()
         roomdata = RoomData(config, tx)
         userdata = UserData(config, tx)
 

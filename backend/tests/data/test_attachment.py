@@ -1,6 +1,7 @@
 import pytest
 
 from critterchat.common import Time
+from critterchat.config import Config
 from critterchat.data import (
     ConnectionLike,
     NewActionID,
@@ -18,17 +19,14 @@ from critterchat.data.attachment import AttachmentData
 from critterchat.data.room import RoomData
 from critterchat.data.user import UserData
 
-from ..mocks import MockConfig
-
 
 @pytest.mark.integration
 class TestAttachmentData:
-    def test_attachment_crud(self, tx: ConnectionLike) -> None:
+    def test_attachment_crud(self, config: Config, tx: ConnectionLike) -> None:
         """
         Tests basic create, retrieve, update, delete for generic attachments in the system.
         """
 
-        config = MockConfig()
         attachmentdata = AttachmentData(config, tx)
 
         # Verify that we have no attachments in the system.
@@ -119,12 +117,11 @@ class TestAttachmentData:
         attachments = attachmentdata.get_attachments()
         assert attachments == []
 
-    def test_emote_crud(self, tx: ConnectionLike) -> None:
+    def test_emote_crud(self, config: Config, tx: ConnectionLike) -> None:
         """
         Tests basic create, retrieve, update, delete for emotes in the system.
         """
 
-        config = MockConfig()
         attachmentdata = AttachmentData(config, tx)
 
         # First ensure that the DB is actually empty, as expected.
@@ -165,12 +162,11 @@ class TestAttachmentData:
         emotes = attachmentdata.get_emotes()
         assert emotes == []
 
-    def test_notification_crud(self, tx: ConnectionLike) -> None:
+    def test_notification_crud(self, config: Config, tx: ConnectionLike) -> None:
         """
         Tests basic create, retrieve, update, delete for notifications in the system.
         """
 
-        config = MockConfig()
         attachmentdata = AttachmentData(config, tx)
         userdata = UserData(config, tx)
 
@@ -230,12 +226,11 @@ class TestAttachmentData:
         notifications = attachmentdata.get_notifications(user2.id)
         assert notifications == {}
 
-    def test_action_attachment_linking(self, tx: ConnectionLike) -> None:
+    def test_action_attachment_linking(self, config: Config, tx: ConnectionLike) -> None:
         """
         Tests linking, unlinking and fetching attachments for an action in the system.
         """
 
-        config = MockConfig()
         attachmentdata = AttachmentData(config, tx)
         userdata = UserData(config, tx)
         roomdata = RoomData(config, tx)

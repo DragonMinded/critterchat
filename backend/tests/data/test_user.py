@@ -2,6 +2,7 @@ import pytest
 from freezegun import freeze_time
 
 from critterchat.common import Time
+from critterchat.config import Config
 from critterchat.data import (
     ConnectionLike,
     NewActionID,
@@ -30,17 +31,14 @@ from critterchat.data import (
 from critterchat.data.user import UserData
 from critterchat.data.room import RoomData
 
-from ..mocks import MockConfig
-
 
 @pytest.mark.integration
 class TestUserData:
-    def test_user_crud(self, tx: ConnectionLike) -> None:
+    def test_user_crud(self, config: Config, tx: ConnectionLike) -> None:
         """
         Tests basic create, retrieve, update, delete for users in the system.
         """
 
-        config = MockConfig()
         userdata = UserData(config, tx)
 
         with freeze_time("2026-01-01 6:00:00"):
@@ -125,12 +123,11 @@ class TestUserData:
             assert userdata.has_updated_user(user.id, Time.now() + 5) is False
             assert userdata.get_last_user_update() == Time.now()
 
-    def test_user_password(self, tx: ConnectionLike) -> None:
+    def test_user_password(self, config: Config, tx: ConnectionLike) -> None:
         """
         Tests password verification and update functionality.
         """
 
-        config = MockConfig()
         userdata = UserData(config, tx)
 
         # First, create the user
@@ -154,12 +151,11 @@ class TestUserData:
         with pytest.raises(ValueError):
             userdata.update_password(NewUserID, 'brand_new_password')
 
-    def test_settings_crud(self, tx: ConnectionLike) -> None:
+    def test_settings_crud(self, config: Config, tx: ConnectionLike) -> None:
         """
         Tests basic create, retrieve, update, delete for user settings in the system.
         """
 
-        config = MockConfig()
         userdata = UserData(config, tx)
 
         # First, create a user so we can have settings against it.
@@ -218,12 +214,11 @@ class TestUserData:
         assert settings.roomid == new_settings.roomid
         assert settings.info == new_settings.info
 
-    def test_session_crud(self, tx: ConnectionLike) -> None:
+    def test_session_crud(self, config: Config, tx: ConnectionLike) -> None:
         """
         Tests session handling create, retrieve, update and delete.
         """
 
-        config = MockConfig()
         userdata = UserData(config, tx)
 
         # First, create a user so we can have sessions against it.
@@ -259,12 +254,11 @@ class TestUserData:
         assert user2 is not None
         assert user2.id == user.id
 
-    def test_invite_crud(self, tx: ConnectionLike) -> None:
+    def test_invite_crud(self, config: Config, tx: ConnectionLike) -> None:
         """
         Tests invite handling create, retrieve, update and delete.
         """
 
-        config = MockConfig()
         userdata = UserData(config, tx)
 
         # First, create a user so we can have invites against it.
@@ -314,12 +308,11 @@ class TestUserData:
         assert userdata.validate_invite(invite2) is True
         assert userdata.validate_invite(invite3) is True
 
-    def test_recovery_crud(self, tx: ConnectionLike) -> None:
+    def test_recovery_crud(self, config: Config, tx: ConnectionLike) -> None:
         """
         Tests recovery handling create, retrieve, update and delete.
         """
 
-        config = MockConfig()
         userdata = UserData(config, tx)
 
         # First, create a user so we can have recoveries against it.
@@ -354,12 +347,11 @@ class TestUserData:
         user2 = userdata.from_recovery(recovery2)
         assert user2 is None
 
-    def test_preferences_crud(self, tx: ConnectionLike) -> None:
+    def test_preferences_crud(self, config: Config, tx: ConnectionLike) -> None:
         """
         Tests basic create, retrieve, update, delete for user preferences in the system.
         """
 
-        config = MockConfig()
         userdata = UserData(config, tx)
 
         # First, create a user so we can have settings against it.
@@ -431,13 +423,12 @@ class TestUserData:
         assert userdata.has_updated_preferences(user.id, Time.now() - 5) is True
         assert userdata.has_updated_preferences(user.id, Time.now() + 5) is False
 
-    def test_get_visible_users(self, tx: ConnectionLike) -> None:
+    def test_get_visible_users(self, config: Config, tx: ConnectionLike) -> None:
         """
         Verifies that get_visible_users understands and respects privacy settings given a purpose, and
         can properly filter out users when requested to by name match.
         """
 
-        config = MockConfig()
         userdata = UserData(config, tx)
 
         # First, create some user accounts so we can test searching.
@@ -553,12 +544,11 @@ class TestUserData:
         assert set() == {u.id for u in userdata.get_visible_users(user3.id, "search", name="nobody")}
         assert set() == {u.id for u in userdata.get_visible_users(user3.id, "invite", name="nobody")}
 
-    def test_seen_counts(self, tx: ConnectionLike) -> None:
+    def test_seen_counts(self, config: Config, tx: ConnectionLike) -> None:
         """
         Verifies that users can track the last seen action in a given room properly.
         """
 
-        config = MockConfig()
         userdata = UserData(config, tx)
         roomdata = RoomData(config, tx)
 
@@ -579,6 +569,8 @@ class TestUserData:
             None,
         )
         roomdata.create_room(room1)
+        assert room1.id != NewRoomID
+
         room2 = Room(
             NewRoomID,
             "test room counts 2",
@@ -590,6 +582,8 @@ class TestUserData:
             None,
         )
         roomdata.create_room(room2)
+        assert room2.id != NewRoomID
+
         room3 = Room(
             NewRoomID,
             "test room counts 3",
@@ -601,6 +595,7 @@ class TestUserData:
             None,
         )
         roomdata.create_room(room3)
+        assert room3.id != NewRoomID
 
         roomdata.join_room(room1.id, user.id)
         roomdata.join_room(room2.id, user.id)

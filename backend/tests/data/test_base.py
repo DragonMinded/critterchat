@@ -3,19 +3,17 @@ from typing import cast
 
 from sqlalchemy.engine import Engine
 
+from critterchat.config import Config
 from critterchat.data.base import BaseData, ConnectionLike
-
-from ..mocks import MockConfig
 
 
 @pytest.mark.integration
 class TestBase:
-    def test_base_serdes(self, tx: ConnectionLike) -> None:
+    def test_base_serdes(self, config: Config, tx: ConnectionLike) -> None:
         """
         Tests basic serialization and deserialization including bytes.
         """
 
-        config = MockConfig()
         basedata = BaseData(config, tx)
 
         # First, test round-tripping including bytes which JSON cannot normally serialize.
@@ -33,12 +31,10 @@ class TestBase:
         # Ensure that if null values get into the DB, we deserialize it to an empty JSON object.
         assert {} == basedata.deserialize(None)
 
-    def test_commit_basic(self, db: Engine) -> None:
+    def test_commit_basic(self, config: Config, db: Engine) -> None:
         """
         Tests that we emulate auto-commit behavior with the base connection and no transactions.
         """
-
-        config = MockConfig()
 
         # Create a table and add some rows to it.
         firstconn = db.connect()
@@ -61,12 +57,10 @@ class TestBase:
         final.execute("DROP TABLE IF EXISTS test_basic")
         finalconn.close()
 
-    def test_commit_txn_basic(self, db: Engine) -> None:
+    def test_commit_txn_basic(self, config: Config, db: Engine) -> None:
         """
         Tests that we commit inside transactions as expected.
         """
-
-        config = MockConfig()
 
         # Create a test table to operate on.
         firstconn = db.connect()
@@ -99,12 +93,10 @@ class TestBase:
         final.execute("DROP TABLE IF EXISTS test_txn")
         finalconn.close()
 
-    def test_commit_txn_rollback(self, db: Engine) -> None:
+    def test_commit_txn_rollback(self, config: Config, db: Engine) -> None:
         """
         Tests that we rollback inside transactions as expected.
         """
-
-        config = MockConfig()
 
         # Create a test table to operate on.
         firstconn = db.connect()
@@ -140,12 +132,10 @@ class TestBase:
         final.execute("DROP TABLE IF EXISTS test_rollback")
         finalconn.close()
 
-    def test_commit_txn_nested_commit(self, db: Engine) -> None:
+    def test_commit_txn_nested_commit(self, config: Config, db: Engine) -> None:
         """
         Tests that we commit inside transactions as expected.
         """
-
-        config = MockConfig()
 
         # Create a test table to operate on.
         firstconn = db.connect()
@@ -183,12 +173,10 @@ class TestBase:
         final.execute("DROP TABLE IF EXISTS test_nested_commit")
         finalconn.close()
 
-    def test_commit_txn_nested_inner_rollback(self, db: Engine) -> None:
+    def test_commit_txn_nested_inner_rollback(self, config: Config, db: Engine) -> None:
         """
         Tests that we roll back inside transactions as expected.
         """
-
-        config = MockConfig()
 
         # Create a test table to operate on.
         firstconn = db.connect()
@@ -229,12 +217,10 @@ class TestBase:
         final.execute("DROP TABLE IF EXISTS test_nested_inner_rollback")
         finalconn.close()
 
-    def test_commit_txn_nested_outer_rollback(self, db: Engine) -> None:
+    def test_commit_txn_nested_outer_rollback(self, config: Config, db: Engine) -> None:
         """
         Tests that we roll back inside transactions as expected.
         """
-
-        config = MockConfig()
 
         # Create a test table to operate on.
         firstconn = db.connect()

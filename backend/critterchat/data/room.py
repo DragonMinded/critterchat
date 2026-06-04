@@ -109,7 +109,7 @@ class RoomData(BaseData):
             """
                 SELECT room_id, MIN(id) AS action_id
                 FROM action
-                WHERE room_id IN %value:ids
+                WHERE room_id IN (%inlist:ids)
                 GROUP BY room_id
             """,
             ids=room_ids,
@@ -127,7 +127,7 @@ class RoomData(BaseData):
             """
                 SELECT room_id, MAX(id) AS action_id
                 FROM action
-                WHERE room_id IN %value:ids
+                WHERE room_id IN (%inlist:ids)
                 GROUP BY room_id
             """,
             ids=room_ids,
@@ -444,9 +444,9 @@ class RoomData(BaseData):
             SELECT * FROM room WHERE id = :roomid
         """
         cursor = self.execute(sql, {"roomid": roomid})
-        if cursor.rowcount != 1:
-            return None
         result = cursor.mappings().fetchone()
+        if not result:
+            return None
         room_id = RoomID(result['id'])
         oldest_actions = self._get_oldest_action([room_id])
         newest_actions = self._get_newest_action([room_id])
@@ -480,9 +480,9 @@ class RoomData(BaseData):
             SELECT room_id FROM occupant WHERE id = :occupantid
         """
         cursor = self.execute(sql, {"occupantid": occupantid})
-        if cursor.rowcount != 1:
-            return None
         result = cursor.mappings().fetchone()
+        if not result:
+            return None
         room_id = RoomID(result['room_id'])
         return self.get_room(room_id)
 
@@ -532,13 +532,17 @@ class RoomData(BaseData):
                 SELECT id FROM occupant WHERE `user_id` = :userid AND `room_id` = :roomid AND `inactive` != TRUE
             """
             cursor = self.execute(sql, {"userid": userid, "roomid": roomid})
-            already_joined = cursor.rowcount > 0
+            already_joined = cursor.mappings().fetchone() is not None
 
-            sql = """
-                INSERT INTO occupant (`user_id`, `room_id`, `inactive`) VALUES (:userid, :roomid, FALSE)
-                ON DUPLICATE KEY UPDATE `inactive` = FALSE
-            """
-            self.execute(sql, {"userid": userid, "roomid": roomid})
+            self.execute(statement(
+                """
+                    INSERT INTO occupant (`user_id`, `room_id`, `inactive`) VALUES (%value:userid, %value:roomid, FALSE)
+                    %fragment:upsert `inactive` = FALSE
+                """,
+                upsert=self.upsert_fragment,
+                userid=userid,
+                roomid=roomid,
+            ))
 
             # Also delete any invites for this user associated with this room since we joined.
             sql = """
@@ -553,8 +557,8 @@ class RoomData(BaseData):
                         SELECT id FROM occupant WHERE `user_id` = :userid AND `room_id` = :roomid AND `inactive` != TRUE
                     """
                     cursor = self.execute(sql, {"userid": inviter, "roomid": roomid})
-                    if cursor.rowcount == 1:
-                        result = cursor.mappings().fetchone()
+                    result = cursor.mappings().fetchone()
+                    if result:
                         details['actor'] = OccupantID(result['id'])
 
                 occupant = Occupant(
@@ -590,7 +594,7 @@ class RoomData(BaseData):
                 SELECT id FROM occupant WHERE `user_id` = :userid AND `room_id` = :roomid
             """
             cursor = self.execute(sql, {"userid": userid, "roomid": roomid})
-            already_joined = cursor.rowcount > 0
+            already_joined = cursor.mappings().fetchone() is not None
 
             # Now, if we're not, then shadow-join it.
             if not already_joined:
@@ -617,8 +621,8 @@ class RoomData(BaseData):
                 SELECT id FROM occupant WHERE `user_id` = :userid AND `room_id` = :roomid AND `inactive` != TRUE
             """
             cursor = self.execute(sql, {"userid": remover, "roomid": roomid})
-            if cursor.rowcount == 1:
-                result = cursor.mappings().fetchone()
+            result = cursor.mappings().fetchone()
+            if result:
                 details['actor'] = OccupantID(result['id'])
 
         # insert_action will ignore actions for anyone already out of the room.
@@ -656,10 +660,10 @@ class RoomData(BaseData):
                 SELECT moderator FROM occupant WHERE `user_id` = :userid AND `room_id` = :roomid
             """
             cursor = self.execute(sql, {"userid": userid, "roomid": roomid})
-            if cursor.rowcount != 1:
+            result = cursor.mappings().fetchone()
+            if not result:
                 # Not in room, can't modify.
                 return
-            result = cursor.mappings().fetchone()
             moderator = bool(result['moderator'])
             if moderator:
                 # Already a moderator.
@@ -699,10 +703,10 @@ class RoomData(BaseData):
                 SELECT moderator FROM occupant WHERE `user_id` = :userid AND `room_id` = :roomid
             """
             cursor = self.execute(sql, {"userid": userid, "roomid": roomid})
-            if cursor.rowcount != 1:
+            result = cursor.mappings().fetchone()
+            if not result:
                 # Not in room, can't modify.
                 return
-            result = cursor.mappings().fetchone()
             moderator = bool(result['moderator'])
             if not moderator:
                 # Already not a moderator.
@@ -742,10 +746,10 @@ class RoomData(BaseData):
                 SELECT muted FROM occupant WHERE `user_id` = :userid AND `room_id` = :roomid
             """
             cursor = self.execute(sql, {"userid": userid, "roomid": roomid})
-            if cursor.rowcount != 1:
+            result = cursor.mappings().fetchone()
+            if not result:
                 # Not in room, cannot modify.
                 return
-            result = cursor.mappings().fetchone()
             muted = bool(result['muted'])
             if muted:
                 # Alredy muted.
@@ -785,10 +789,10 @@ class RoomData(BaseData):
                 SELECT muted FROM occupant WHERE `user_id` = :userid AND `room_id` = :roomid
             """
             cursor = self.execute(sql, {"userid": userid, "roomid": roomid})
-            if cursor.rowcount != 1:
+            result = cursor.mappings().fetchone()
+            if not result:
                 # Not in room, cannot modify.
                 return
-            result = cursor.mappings().fetchone()
             muted = bool(result['muted'])
             if not muted:
                 # Already unmuted.
@@ -840,7 +844,8 @@ class RoomData(BaseData):
                 SELECT id FROM occupant WHERE `user_id` = :userid AND `room_id` = :roomid
             """
             cursor = self.execute(sql, {"userid": userid, "roomid": roomid})
-            if cursor.rowcount != 1:
+            result = cursor.mappings().fetchone()
+            if not result:
                 # Not in room, can't modify.
                 return
 
@@ -1082,11 +1087,8 @@ class RoomData(BaseData):
             WHERE occupant.id = :occupantid
         """
         cursor = self.execute(sql, {"occupantid": occupantid})
-        if cursor.rowcount != 1:
-            return None
-
         result = cursor.mappings().fetchone()
-        return self.__to_occupant(result)
+        return self.__to_occupant(result) if result else None
 
     def get_last_action(self) -> ActionID | None:
         """
@@ -1097,11 +1099,8 @@ class RoomData(BaseData):
             SELECT id FROM action ORDER BY id DESC LIMIT 1
         """
         cursor = self.execute(sql)
-        if cursor.rowcount != 1:
-            return None
-
         result = cursor.mappings().fetchone()
-        return ActionID(result['id'])
+        return ActionID(result['id']) if result else None
 
     def get_room_history(
         self,
@@ -1131,7 +1130,7 @@ class RoomData(BaseData):
         if after is not None:
             filters.append(fragment("id > %value", after))
         if types is not None:
-            filters.append(fragment("action IN %inlist", [str(t) for t in types]))
+            filters.append(fragment("action IN (%inlist)", [str(t) for t in types]))
 
         querylimit: Fragment | None = None
         if limit is not None:
@@ -1156,32 +1155,35 @@ class RoomData(BaseData):
         occupantids = {x['occupant_id'] for x in data if x['occupant_id'] is not None}
 
         if occupantids:
-            sql = """
-                SELECT
-                    occupant.id AS id,
-                    occupant.user_id AS user_id,
-                    occupant.nickname AS onick,
-                    occupant.inactive AS inactive,
-                    occupant.moderator AS moderator,
-                    occupant.muted AS muted,
-                    occupant.icon AS oicon,
-                    profile.nickname AS pnick,
-                    profile.icon AS picon,
-                    user.username AS unick,
-                    user.permissions AS permissions,
-                    invite.id AS invite_id,
-                    invite.timestamp AS invite_timestamp,
-                    invite.inviter_user_id AS invite_user,
-                    invite.ignored AS invite_ignored,
-                    invite.seen AS invite_seen,
-                    invite.revoked AS invite_revoked
-                FROM occupant
-                LEFT JOIN profile ON occupant.user_id = profile.user_id
-                LEFT JOIN user ON occupant.user_id = user.id
-                LEFT JOIN invite ON occupant.room_id = invite.room_id AND occupant.user_id = invite.invited_user_id
-                WHERE occupant.id IN :occupantids
-            """
-            cursor = self.execute(sql, {"occupantids": list(occupantids)})
+            sql = statement(
+                """
+                    SELECT
+                        occupant.id AS id,
+                        occupant.user_id AS user_id,
+                        occupant.nickname AS onick,
+                        occupant.inactive AS inactive,
+                        occupant.moderator AS moderator,
+                        occupant.muted AS muted,
+                        occupant.icon AS oicon,
+                        profile.nickname AS pnick,
+                        profile.icon AS picon,
+                        user.username AS unick,
+                        user.permissions AS permissions,
+                        invite.id AS invite_id,
+                        invite.timestamp AS invite_timestamp,
+                        invite.inviter_user_id AS invite_user,
+                        invite.ignored AS invite_ignored,
+                        invite.seen AS invite_seen,
+                        invite.revoked AS invite_revoked
+                    FROM occupant
+                    LEFT JOIN profile ON occupant.user_id = profile.user_id
+                    LEFT JOIN user ON occupant.user_id = user.id
+                    LEFT JOIN invite ON occupant.room_id = invite.room_id AND occupant.user_id = invite.invited_user_id
+                    WHERE occupant.id IN (%inlist:occupantids)
+                """,
+                occupantids=occupantids,
+            )
+            cursor = self.execute(sql)
             occupants = [self.__to_occupant(o) for o in cursor.mappings()]
         else:
             occupants = []
@@ -1205,13 +1207,19 @@ class RoomData(BaseData):
         Locks the actions table for exclusive write, when needing to attach data to a new
         attachment without other clients polling incomplete actions. Use in a with block.
         """
-        sql = "LOCK TABLES room WRITE, action WRITE, occupant READ, invite READ, profile READ, user READ"
-        self.execute(sql)
-        try:
-            yield
-        finally:
-            sql = "UNLOCK TABLES"
+        if self.config.database.backend == "mysql":
+            sql = "LOCK TABLES room WRITE, action WRITE, occupant READ, invite READ, profile READ, user READ"
             self.execute(sql)
+            try:
+                yield
+            finally:
+                sql = "UNLOCK TABLES"
+                self.execute(sql)
+        elif self.config.database.backend == "sqlite":
+            with self.transaction():
+                yield
+        else:
+            raise NotImplementedError(f"Unsupported database backend {self.config.database.backend}")
 
     def get_action(self, actionid: ActionID) -> Action | None:
         """
@@ -1229,11 +1237,10 @@ class RoomData(BaseData):
             WHERE id = :actionid
         """
         cursor = self.execute(sql, {"actionid": actionid})
-        if cursor.rowcount != 1:
+        result = cursor.mappings().fetchone()
+        if not result:
             # This action doesn't exist.
             return None
-
-        result = cursor.mappings().fetchone()
 
         # Now, scoop up the occupant that goes with this action.
         occupantid = result['occupant_id']
@@ -1301,11 +1308,11 @@ class RoomData(BaseData):
             # First, find the occupant ID.
             sql = "SELECT id FROM occupant WHERE room_id = :roomid AND user_id = :userid AND inactive != TRUE LIMIT 1"
             cursor = self.execute(sql, {"roomid": roomid, "userid": action.occupant.userid})
-            if cursor.rowcount != 1:
+            result = cursor.mappings().fetchone()
+            if not result:
                 # Trying to insert an action and we're not in the room?
                 return
 
-            result = cursor.mappings().fetchone()
             occupant = result['id']
 
             if action.occupant.id != NewOccupantID:
@@ -1323,11 +1330,11 @@ class RoomData(BaseData):
         # Now, figure out the room type for last action calculations.
         sql = "SELECT purpose FROM room WHERE id = :roomid"
         cursor = self.execute(sql, {"roomid": roomid})
-        if cursor.rowcount != 1:
+        result = cursor.mappings().fetchone()
+        if not result:
             # Trying to insert an action and the room doesn't exist?
             return
 
-        result = cursor.mappings().fetchone()
         purpose = self._get_purpose(result['purpose'])
 
         # Now, attempt to insert the action itself.
@@ -1403,12 +1410,16 @@ class RoomData(BaseData):
 
         with self.transaction():
             # First, figure out if the inviter is present and the invitee is in already.
-            sql = """
-                SELECT id, user_id
-                FROM occupant
-                WHERE `user_id` IN :userids AND `room_id` = :roomid AND `inactive` != TRUE
-            """
-            cursor = self.execute(sql, {"userids": [invitedid, inviterid], "roomid": roomid})
+            stmt = statement(
+                """
+                    SELECT id, user_id
+                    FROM occupant
+                    WHERE `user_id` IN (%inlist:userids) AND `room_id` = %value:roomid AND `inactive` != TRUE
+                """,
+                userids=[invitedid, inviterid],
+                roomid=roomid,
+            )
+            cursor = self.execute(stmt)
             user_to_occupant: dict[UserID, OccupantID] = {
                 UserID(result['user_id']): OccupantID(result['id'])
                 for result in cursor.mappings()
@@ -1422,14 +1433,21 @@ class RoomData(BaseData):
 
             # Grant the invite.
             now = Time.now()
-            sql = """
-                INSERT INTO invite
-                    (`room_id`, `inviter_user_id`, `invited_user_id`, `timestamp`, `ignored`, `revoked`, `seen`)
-                VALUES
-                    (:roomid, :inviter, :invited, :ts, FALSE, FALSE, FALSE)
-                ON DUPLICATE KEY UPDATE `invited_user_id` = :invited, `timestamp` = :ts, `ignored` = FALSE, `revoked` = FALSE, `seen` = FALSE
-            """
-            self.execute(sql, {"roomid": roomid, "inviter": inviterid, "invited": invitedid, 'ts': now})
+            stmt = statement(
+                """
+                    INSERT INTO invite
+                        (`room_id`, `inviter_user_id`, `invited_user_id`, `timestamp`, `ignored`, `revoked`, `seen`)
+                    VALUES
+                        (%value:roomid, %value:inviter, %value:invited, %value:ts, FALSE, FALSE, FALSE)
+                    %fragment:upsert `invited_user_id` = %value:invited, `timestamp` = %value:ts, `ignored` = FALSE, `revoked` = FALSE, `seen` = FALSE
+                """,
+                upsert=self.upsert_fragment,
+                roomid=roomid,
+                inviter=inviterid,
+                invited=invitedid,
+                ts=now,
+            )
+            self.execute(stmt)
 
             # Now, shadow-join the user so we can get the occupant ID.
             self.shadow_join_room(roomid, invitedid)
@@ -1479,12 +1497,16 @@ class RoomData(BaseData):
 
         with self.transaction():
             # First, figure out if the inviter is present and the invitee is in already.
-            sql = """
-                SELECT id, user_id
-                FROM occupant
-                WHERE `user_id` IN :userids AND `room_id` = :roomid AND `inactive` != TRUE
-            """
-            cursor = self.execute(sql, {"userids": [invitedid, inviterid], "roomid": roomid})
+            stmt = statement(
+                """
+                    SELECT id, user_id
+                    FROM occupant
+                    WHERE `user_id` IN (%inlist:userids) AND `room_id` = %value:roomid AND `inactive` != TRUE
+                """,
+                userids=[invitedid, inviterid],
+                roomid=roomid,
+            )
+            cursor = self.execute(stmt)
             user_to_occupant: dict[UserID, OccupantID] = {
                 UserID(result['user_id']): OccupantID(result['id'])
                 for result in cursor.mappings()
@@ -1549,7 +1571,7 @@ class RoomData(BaseData):
             LIMIT 1
         """
         cursor = self.execute(sql, {"roomid": roomid, "invited": invitedid})
-        return bool(cursor.rowcount == 1)
+        return cursor.mappings().fetchone() is not None
 
     def get_room_invites(self, userid: UserID) -> list[Invite]:
         """
@@ -1641,8 +1663,8 @@ class RoomData(BaseData):
         with self.transaction():
             last_update: int | None = None
             cursor = self.execute("SELECT timestamp FROM invite ORDER BY timestamp DESC LIMIT 1")
-            if cursor.rowcount == 1:
-                result = cursor.mappings().fetchone()
+            result = cursor.mappings().fetchone()
+            if result:
                 last_update = int(result['timestamp']) if result['timestamp'] else None
 
             if last_update is None:
@@ -1650,11 +1672,11 @@ class RoomData(BaseData):
                 return None
 
             cursor = self.execute("SELECT COUNT(id) AS count FROM invite")
-            if cursor.rowcount != 1:
+            result = cursor.mappings().fetchone()
+            if not result:
                 # Shouldn't be possible, but return nothing since the above query should have returned nothing.
                 return None
 
-            result = cursor.mappings().fetchone()
             count = int(result['count'])
 
             return (last_update, count)
@@ -1669,16 +1691,17 @@ class RoomData(BaseData):
             SELECT invited_user_id FROM invite WHERE invited_user_id = :userid AND timestamp >= :ts
         """
         cursor = self.execute(sql, {"userid": userid, "ts": last_checked})
-        if cursor.rowcount > 0:
+        result = cursor.mappings().fetchone()
+        if result:
             return True
 
         sql = """
             SELECT COUNT(id) AS count FROM invite WHERE invited_user_id = :userid
         """
         cursor = self.execute(sql, {"userid": userid})
-        if cursor.rowcount != 1:
+        result = cursor.mappings().fetchone()
+        if not result:
             return False
 
-        result = cursor.mappings().fetchone()
         actual = int(result['count'])
         return actual != last_count

@@ -1,19 +1,17 @@
 import pytest
 
+from critterchat.config import Config
 from critterchat.data import ConnectionLike, Migration
 from critterchat.data.migration import MigrationData
-
-from ..mocks import MockConfig
 
 
 @pytest.mark.integration
 class TestMigrationData:
-    def test_migration_mark_and_retrieve(self, tx: ConnectionLike) -> None:
+    def test_migration_mark_and_retrieve(self, config: Config, tx: ConnectionLike) -> None:
         """
         Tests basic marking and retrieval of previously marked migrations.
         """
 
-        config = MockConfig()
         migrationdata = MigrationData(config, tx)
 
         # First, ensure that an empty DB returns an empty list of migrations.

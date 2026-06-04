@@ -5,7 +5,7 @@ from sqlalchemy.schema import UniqueConstraint
 from sqlalchemy.types import String, Integer, JSON
 from typing import Iterable, Iterator
 
-from .base import BaseData
+from .base import BaseData, statement
 from .types import MetadataType, ActionID, AttachmentID, NewActionID, NewAttachmentID, UserID, NewUserID
 
 
@@ -179,10 +179,10 @@ class AttachmentData(BaseData):
         with self.transaction():
             sql = "SELECT metadata FROM attachment WHERE id = :id"
             cursor = self.execute(sql, {"id": attachmentid})
-            if cursor.rowcount != 1:
+            result = cursor.mappings().fetchone()
+            if not result:
                 existing = {}
             else:
-                result = cursor.mappings().fetchone()
                 existing = json.loads(str(result["metadata"] or "{}"))
 
             existing = {**existing, **metadata}
@@ -222,10 +222,10 @@ class AttachmentData(BaseData):
             SELECT `system`, `content_type`, `original_filename`, `metadata` FROM attachment WHERE id = :id
         """
         cursor = self.execute(sql, {"id": attachmentid})
-        if cursor.rowcount != 1:
+        result = cursor.mappings().fetchone()
+        if not result:
             return None
 
-        result = cursor.mappings().fetchone()
         return Attachment(
             attachmentid,
             str(result["system"] or ""),
@@ -297,10 +297,10 @@ class AttachmentData(BaseData):
             WHERE emote.alias = :alias
         """
         cursor = self.execute(sql, {"alias": alias})
-        if cursor.rowcount != 1:
+        result = cursor.mappings().fetchone()
+        if not result:
             return None
 
-        result = cursor.mappings().fetchone()
         return Emote(
             result['alias'],
             AttachmentID(result['attachment_id']),
@@ -379,10 +379,10 @@ class AttachmentData(BaseData):
             WHERE notification.user_id = :userid AND notification.type = :type
         """
         cursor = self.execute(sql, {"userid": userid, "type": notificationtype})
-        if cursor.rowcount != 1:
+        result = cursor.mappings().fetchone()
+        if not result:
             return None
 
-        result = cursor.mappings().fetchone()
         return Attachment(
             AttachmentID(result['attachment_id']),
             str(result['system'] or ""),
@@ -398,12 +398,17 @@ class AttachmentData(BaseData):
         if userid == NewUserID:
             return
 
-        sql = """
-            INSERT INTO notification (`user_id`, `type`, `attachment_id`)
-            VALUES (:userid, :type, :aid)
-            ON DUPLICATE KEY UPDATE `attachment_id` = :aid
-        """
-        self.execute(sql, {"userid": userid, "type": notificationtype, "aid": attachmentid})
+        self.execute(statement(
+            """
+                INSERT INTO notification (`user_id`, `type`, `attachment_id`)
+                VALUES (%value:userid, %value:ntype, %value:aid)
+                %fragment:upsert `attachment_id` = %value:aid
+            """,
+            upsert=self.upsert_fragment,
+            userid=userid,
+            ntype=notificationtype,
+            aid=attachmentid,
+        ))
 
     def remove_notification(self, userid: UserID, notificationtype: str) -> None:
         """
@@ -423,11 +428,17 @@ class AttachmentData(BaseData):
         Locks the action attachments table for exclusive write, when needing to attach data to a new
         attachment without other clients polling incomplete actions. Use in a with block.
         """
-        self.execute("LOCK TABLES attachment WRITE, action_attachment WRITE")
-        try:
-            yield
-        finally:
-            self.execute("UNLOCK TABLES")
+        if self.config.database.backend == "mysql":
+            self.execute("LOCK TABLES attachment WRITE, action_attachment WRITE")
+            try:
+                yield
+            finally:
+                self.execute("UNLOCK TABLES")
+        elif self.config.database.backend == "sqlite":
+            with self.transaction():
+                yield
+        else:
+            raise NotImplementedError(f"Unsupported database backend {self.config.database.backend}")
 
     def get_action_attachments(self, actionid: ActionID | Iterable[ActionID]) -> dict[ActionID, list[ActionAttachment]]:
         """
@@ -442,18 +453,21 @@ class AttachmentData(BaseData):
         if not ids:
             return {}
 
-        sql = """
-            SELECT
-                action_attachment.action_id AS action_id,
-                attachment.id AS attachment_id,
-                attachment.content_type AS content_type,
-                attachment.original_filename AS original_filename,
-                attachment.metadata AS metadata
-            FROM action_attachment
-            JOIN attachment ON attachment.id = action_attachment.attachment_id
-            WHERE action_attachment.action_id IN :ids
-        """
-        cursor = self.execute(sql, {"ids": ids})
+        stmt = statement(
+            """
+                SELECT
+                    action_attachment.action_id AS action_id,
+                    attachment.id AS attachment_id,
+                    attachment.content_type AS content_type,
+                    attachment.original_filename AS original_filename,
+                    attachment.metadata AS metadata
+                FROM action_attachment
+                JOIN attachment ON attachment.id = action_attachment.attachment_id
+                WHERE action_attachment.action_id IN (%inlist:ids)
+            """,
+            ids=ids,
+        )
+        cursor = self.execute(stmt)
 
         retval: dict[ActionID, list[ActionAttachment]] = {}
         for aid in ids:

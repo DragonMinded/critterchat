@@ -105,6 +105,15 @@ class BaseData:
 
         return cast(dict[str, object], fix(json.loads(data)))
 
+    @property
+    def upsert_fragment(self) -> Fragment:
+        if self.__config.database.backend == "mysql":
+            return fragment("ON DUPLICATE KEY UPDATE")
+        if self.__config.database.backend == "sqlite":
+            return fragment("ON CONFLICT DO UPDATE SET")
+
+        raise NotImplementedError(f"Unsupported database backend {self.__config.database.backend}")
+
     @contextmanager
     def transaction(self) -> Iterator[None]:
         with self.__connection.begin_nested() as txn:

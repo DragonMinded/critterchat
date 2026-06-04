@@ -198,11 +198,11 @@ class UserData(BaseData):
 
         sql = "SELECT password, salt FROM user WHERE id = :userid"
         cursor = self.execute(sql, {"userid": userid})
-        if cursor.rowcount != 1:
+        result = cursor.mappings().fetchone()
+        if not result:
             # User doesn't exist, but we have a reference?
             return False
 
-        result = cursor.mappings().fetchone()
         return self.__verify_password(passhash=result["password"], salt=result["salt"], password=password)
 
     def update_password(self, userid: UserID, password: str) -> None:
@@ -240,11 +240,8 @@ class UserData(BaseData):
         now = Time.now()
         sql = "SELECT id FROM session WHERE session = :invite AND type = :type AND expiration > :timestamp"
         cursor = self.execute(sql, {"invite": invite, "type": self.SESSION_TYPE_INVITE, "timestamp": now})
-        if cursor.rowcount != 1:
-            # Couldn't find an invite with this type.
-            return False
-
-        return True
+        result = cursor.mappings().fetchone()
+        return result is not None
 
     def from_username(self, username: str) -> User | None:
         """
@@ -258,12 +255,8 @@ class UserData(BaseData):
         """
         sql = "SELECT id FROM user WHERE username = :username"
         cursor = self.execute(sql, {"username": username})
-        if cursor.rowcount != 1:
-            # Couldn't find this username
-            return None
-
         result = cursor.mappings().fetchone()
-        return self.get_user(UserID(result["id"]))
+        return self.get_user(UserID(result["id"])) if result else None
 
     def from_session(self, session: str) -> User | None:
         """
@@ -279,14 +272,14 @@ class UserData(BaseData):
         now = Time.now()
         sql = "SELECT id FROM session WHERE session = :session AND type = :type AND expiration > :timestamp"
         cursor = self.execute(sql, {"session": session, "type": self.SESSION_TYPE_LOGIN, "timestamp": now})
-        if cursor.rowcount != 1:
+        result = cursor.mappings().fetchone()
+        if not result:
             # Possibly expired, so let's delete any expired ones.
             self.__cleanup_sessions()
 
             # Couldn't find a user with this session
             return None
 
-        result = cursor.mappings().fetchone()
         return self.get_user(UserID(result["id"]))
 
     def from_recovery(self, recovery: str) -> User | None:
@@ -303,11 +296,11 @@ class UserData(BaseData):
         now = Time.now()
         sql = "SELECT id FROM session WHERE session = :recovery AND type = :type AND expiration > :timestamp"
         cursor = self.execute(sql, {"recovery": recovery, "type": self.SESSION_TYPE_RECOVERY, "timestamp": now})
-        if cursor.rowcount != 1:
+        result = cursor.mappings().fetchone()
+        if not result:
             # Couldn't find a user with this recovery.
             return None
 
-        result = cursor.mappings().fetchone()
         return self.get_user(UserID(result["id"]))
 
     def from_invite(self, invite: str) -> User | None:
@@ -326,11 +319,11 @@ class UserData(BaseData):
         now = Time.now()
         sql = "SELECT id FROM session WHERE session = :invite AND type = :type AND expiration > :timestamp"
         cursor = self.execute(sql, {"invite": invite, "type": self.SESSION_TYPE_INVITE, "timestamp": now})
-        if cursor.rowcount != 1:
+        result = cursor.mappings().fetchone()
+        if not result:
             # Couldn't find a user with this recovery.
             return None
 
-        result = cursor.mappings().fetchone()
         return self.get_user(UserID(result["id"]))
 
     def create_recovery(self, userid: UserID, expiration: int = (1 * 86400)) -> str:
@@ -355,7 +348,7 @@ class UserData(BaseData):
             )
             sql = "SELECT session FROM session WHERE session = :recovery"
             cursor = self.execute(sql, {"recovery": recovery})
-            if cursor.rowcount == 0:
+            if not cursor.mappings().fetchone():
                 # Make sure recovery strings expire in a reasonable amount of time
                 expiration = Time.now() + expiration
 
@@ -396,7 +389,7 @@ class UserData(BaseData):
             )
             sql = "SELECT session FROM session WHERE session = :invite"
             cursor = self.execute(sql, {"invite": invite})
-            if cursor.rowcount == 0:
+            if not cursor.mappings().fetchone():
                 # Make sure invite strings expire in a reasonable amount of time
                 expiration = Time.now() + expiration
 
@@ -439,7 +432,7 @@ class UserData(BaseData):
             )
             sql = "SELECT session FROM session WHERE session = :session"
             cursor = self.execute(sql, {"session": session})
-            if cursor.rowcount == 0:
+            if not cursor.mappings().fetchone():
                 # Make sure sessions expire in a reasonable amount of time
                 expiration = Time.now() + expiration
 
@@ -528,10 +521,10 @@ class UserData(BaseData):
         """
         sql = "SELECT * FROM settings WHERE session = :session"
         cursor = self.execute(sql, {"session": session})
-        if cursor.rowcount != 1:
+        result = cursor.mappings().fetchone()
+        if not result:
             return None
 
-        result = cursor.mappings().fetchone()
         return UserSettings(
             userid=UserID(result['user_id']),
             roomid=RoomID(result['last_room']) if result['last_room'] is not None else None,
@@ -547,10 +540,10 @@ class UserData(BaseData):
         """
         sql = "SELECT * FROM settings WHERE user_id = :userid ORDER BY timestamp DESC, session DESC LIMIT 1"
         cursor = self.execute(sql, {"userid": userid})
-        if cursor.rowcount != 1:
+        result = cursor.mappings().fetchone()
+        if not result:
             return None
 
-        result = cursor.mappings().fetchone()
         return UserSettings(
             userid=UserID(result['user_id']),
             roomid=RoomID(result['last_room']) if result['last_room'] is not None else None,
@@ -568,14 +561,21 @@ class UserData(BaseData):
         if settings.userid == NewUserID:
             raise ValueError("Logic error, should not try to update settings for a new user ID!")
 
-        sql = """
-            INSERT INTO `settings`
-                (`session`, `user_id`, `last_room`, `info`, `timestamp`)
-            VALUES (:session, :userid, :roomid, :info, :ts)
-            ON DUPLICATE KEY UPDATE
-            `last_room` = :roomid, `info` = :info, `timestamp` = :ts
-        """
-        self.execute(sql, {"session": session, "roomid": settings.roomid, "info": settings.info, "userid": settings.userid, 'ts': Time.now()})
+        sql = statement(
+            """
+                INSERT INTO `settings`
+                    (`session`, `user_id`, `last_room`, `info`, `timestamp`)
+                VALUES (%value:session, %value:userid, %value:roomid, %value:info, %value:ts)
+                %fragment:upsert `last_room` = %value:roomid, `info` = %value:info, `timestamp` = %value:ts
+            """,
+            upsert=self.upsert_fragment,
+            session=session,
+            userid=settings.userid,
+            roomid=settings.roomid,
+            info=settings.info,
+            ts=Time.now(),
+        )
+        self.execute(sql)
 
     def get_preferences(self, userid: UserID) -> UserPreferences | None:
         """
@@ -589,10 +589,10 @@ class UserData(BaseData):
 
         sql = "SELECT * FROM preferences WHERE user_id = :userid"
         cursor = self.execute(sql, {"userid": userid})
-        if cursor.rowcount != 1:
+        result = cursor.mappings().fetchone()
+        if not result:
             return None
 
-        result = cursor.mappings().fetchone()
         notifications = set()
         bitmask = int(result['audio_notifs'] or 0)
         for notif in UserNotification:
@@ -625,7 +625,7 @@ class UserData(BaseData):
             SELECT user_id FROM preferences WHERE user_id = :userid AND timestamp >= :ts
         """
         cursor = self.execute(sql, {"userid": userid, "ts": last_checked})
-        return bool(cursor.rowcount == 1)
+        return cursor.mappings().fetchone() is not None
 
     def put_preferences(self, preferences: UserPreferences) -> None:
         """
@@ -641,70 +641,71 @@ class UserData(BaseData):
         for an in preferences.audio_notifs:
             audio_notifs |= an
 
-        sql = """
-            INSERT INTO `preferences` (
-                `user_id`,
-                `rooms_on_top`,
-                `combined_messages`,
-                `color_scheme`,
-                `desktop_size`,
-                `mobile_size`,
-                `admin_controls`,
-                `title_notifs`,
-                `mobile_audio_notifs`,
-                `audio_notifs`,
-                `search_privacy`,
-                `invite_privacy`,
-                `tabbable_chat_elements`,
-                `timestamp`
-            )
-            VALUES (
-                :userid,
-                :rooms_on_top,
-                :combined_messages,
-                :color_scheme,
-                :desktop_size,
-                :mobile_size,
-                :admin_controls,
-                :title_notifs,
-                :mobile_audio_notifs,
-                :audio_notifs,
-                :search_privacy,
-                :invite_privacy,
-                :tabbable_chat_elements,
-                :ts
-            )
-            ON DUPLICATE KEY UPDATE
-                `rooms_on_top` = :rooms_on_top,
-                `combined_messages` = :combined_messages,
-                `color_scheme` = :color_scheme,
-                `desktop_size` = :desktop_size,
-                `mobile_size` = :mobile_size,
-                `admin_controls` = :admin_controls,
-                `title_notifs` = :title_notifs,
-                `mobile_audio_notifs` = :mobile_audio_notifs,
-                `audio_notifs` = :audio_notifs,
-                `search_privacy` = :search_privacy,
-                `invite_privacy` = :invite_privacy,
-                `tabbable_chat_elements` = :tabbable_chat_elements,
-                `timestamp` = :ts
-        """
-        self.execute(sql, {
-            "userid": preferences.userid,
-            "rooms_on_top": preferences.rooms_on_top,
-            "combined_messages": preferences.combined_messages,
-            "color_scheme": preferences.color_scheme,
-            "desktop_size": preferences.desktop_size,
-            "mobile_size": preferences.mobile_size,
-            "admin_controls": preferences.admin_controls,
-            "title_notifs": preferences.title_notifs,
-            "mobile_audio_notifs": preferences.mobile_audio_notifs,
-            "audio_notifs": audio_notifs,
-            "search_privacy": preferences.search_privacy,
-            "invite_privacy": preferences.invite_privacy,
-            "tabbable_chat_elements": preferences.tabbable_chat_elements,
-            "ts": Time.now()
-        })
+        self.execute(statement(
+            """
+                INSERT INTO `preferences` (
+                    `user_id`,
+                    `rooms_on_top`,
+                    `combined_messages`,
+                    `color_scheme`,
+                    `desktop_size`,
+                    `mobile_size`,
+                    `admin_controls`,
+                    `title_notifs`,
+                    `mobile_audio_notifs`,
+                    `audio_notifs`,
+                    `search_privacy`,
+                    `invite_privacy`,
+                    `tabbable_chat_elements`,
+                    `timestamp`
+                )
+                VALUES (
+                    %value:userid,
+                    %value:rooms_on_top,
+                    %value:combined_messages,
+                    %value:color_scheme,
+                    %value:desktop_size,
+                    %value:mobile_size,
+                    %value:admin_controls,
+                    %value:title_notifs,
+                    %value:mobile_audio_notifs,
+                    %value:audio_notifs,
+                    %value:search_privacy,
+                    %value:invite_privacy,
+                    %value:tabbable_chat_elements,
+                    %value:ts
+                )
+                %fragment:upsert
+                    `rooms_on_top` = %value:rooms_on_top,
+                    `combined_messages` = %value:combined_messages,
+                    `color_scheme` = %value:color_scheme,
+                    `desktop_size` = %value:desktop_size,
+                    `mobile_size` = %value:mobile_size,
+                    `admin_controls` = %value:admin_controls,
+                    `title_notifs` = %value:title_notifs,
+                    `mobile_audio_notifs` = %value:mobile_audio_notifs,
+                    `audio_notifs` = %value:audio_notifs,
+                    `search_privacy` = %value:search_privacy,
+                    `invite_privacy` = %value:invite_privacy,
+                    `tabbable_chat_elements` = %value:tabbable_chat_elements,
+                    `timestamp` = %value:ts
+            """,
+            upsert=self.upsert_fragment,
+            userid=preferences.userid,
+            rooms_on_top=preferences.rooms_on_top,
+            combined_messages=preferences.combined_messages,
+            color_scheme=preferences.color_scheme,
+            desktop_size=preferences.desktop_size,
+            mobile_size=preferences.mobile_size,
+            admin_controls=preferences.admin_controls,
+            title_notifs=preferences.title_notifs,
+            mobile_audio_notifs=preferences.mobile_audio_notifs,
+            audio_notifs=audio_notifs,
+            search_privacy=preferences.search_privacy,
+            invite_privacy=preferences.invite_privacy,
+            tabbable_chat_elements=preferences.tabbable_chat_elements,
+            ts=Time.now()
+        ))
 
     def __to_user(self, result: Any) -> User:
         """
@@ -743,11 +744,8 @@ class UserData(BaseData):
             WHERE user.id = :userid
         """
         cursor = self.execute(sql, {"userid": userid})
-        if cursor.rowcount != 1:
-            return None
-
         result = cursor.mappings().fetchone()
-        return self.__to_user(result)
+        return self.__to_user(result) if result else None
 
     def has_updated_user(self, userid: UserID, last_checked: int) -> bool:
         """
@@ -759,14 +757,14 @@ class UserData(BaseData):
             SELECT user_id FROM profile WHERE user_id = :userid AND timestamp >= :ts
         """
         cursor = self.execute(sql, {"userid": userid, "ts": last_checked})
-        if cursor.rowcount == 1:
+        if cursor.mappings().fetchone():
             return True
 
         sql = """
             SELECT id FROM user WHERE id = :userid AND timestamp >= :ts
         """
         cursor = self.execute(sql, {"userid": userid, "ts": last_checked})
-        if cursor.rowcount == 1:
+        if cursor.mappings().fetchone():
             return True
 
         return False
@@ -775,13 +773,13 @@ class UserData(BaseData):
         last_update: int | None = None
 
         cursor = self.execute("SELECT timestamp FROM profile ORDER BY timestamp DESC LIMIT 1")
-        if cursor.rowcount == 1:
-            result = cursor.mappings().fetchone()
+        result = cursor.mappings().fetchone()
+        if result:
             last_update = int(result['timestamp']) if result['timestamp'] else None
 
         cursor = self.execute("SELECT timestamp FROM user ORDER BY timestamp DESC LIMIT 1")
-        if cursor.rowcount == 1:
-            result = cursor.mappings().fetchone()
+        result = cursor.mappings().fetchone()
+        if result:
             newer_update = int(result['timestamp']) if result['timestamp'] else None
 
             last_update = newer_update if last_update is None else last_update
@@ -789,8 +787,8 @@ class UserData(BaseData):
                 last_update = max(last_update, newer_update)
 
         cursor = self.execute("SELECT timestamp FROM preferences ORDER BY timestamp DESC LIMIT 1")
-        if cursor.rowcount == 1:
-            result = cursor.mappings().fetchone()
+        result = cursor.mappings().fetchone()
+        if result:
             newer_update = int(result['timestamp']) if result['timestamp'] else None
 
             last_update = newer_update if last_update is None else last_update
@@ -823,24 +821,33 @@ class UserData(BaseData):
             nickname = user.nickname
 
         now = Time.now()
-        sql = """
-            INSERT INTO `profile`
-                (`user_id`, `nickname`, `about`, `icon`, `timestamp`)
-            VALUES
-                (:userid, :name, :about, :iconid, :ts)
-            ON DUPLICATE KEY UPDATE
-            `nickname` = :name, `about` = :about, `icon` = :iconid, `timestamp` = :ts
-        """
-        self.execute(sql, {"userid": user.id, "name": nickname, "about": user.about, "iconid": iconid, "ts": now})
+        self.execute(statement(
+            """
+                INSERT INTO `profile`
+                    (`user_id`, `nickname`, `about`, `icon`, `timestamp`)
+                VALUES
+                    (%value:userid, %value:name, %value:about, %value:iconid, %value:ts)
+                %fragment:upsert
+                `nickname` = %value:name, `about` = %value:about, `icon` = %value:iconid, `timestamp` = %value:ts
+            """,
+            upsert=self.upsert_fragment,
+            userid=user.id,
+            name=nickname,
+            about=user.about,
+            iconid=iconid,
+            ts=now,
+        ))
 
         permissions: int = 0
         for perm in user.permissions:
             permissions |= perm
 
-        sql = """
-            UPDATE `user` SET `permissions` = :perms, timestamp = :ts WHERE `id` = :userid
-        """
-        self.execute(sql, {"userid": user.id, "perms": permissions, "ts": now})
+        self.execute(statement(
+            "UPDATE `user` SET `permissions` = %value:perms, timestamp = %value:ts WHERE `id` = %value:userid",
+            userid=user.id,
+            perms=permissions,
+            ts=now,
+        ))
 
     def get_users(self, *, name: str | None = None) -> list[User]:
         """
@@ -936,23 +943,27 @@ class UserData(BaseData):
                 SELECT action_id FROM lastseen WHERE user_id = :userid AND room_id = :roomid LIMIT 1
             """
             cursor = self.execute(sql, {"userid": userid, "roomid": roomid})
-            if cursor.rowcount != 1:
+            result = cursor.mappings().fetchone()
+            if not result:
                 last = ActionID(0)
             else:
-                result = cursor.mappings().fetchone()
                 last = ActionID(result['action_id'])
 
             if actionid <= last:
                 # Nothing to do, this is older than our newest message.
                 return
 
-            sql = """
-                INSERT INTO lastseen (`user_id`, `room_id`, `action_id`)
-                VALUES (:userid, :roomid, :actionid)
-                ON DUPLICATE KEY UPDATE
-                `action_id` = :actionid
-            """
-            self.execute(sql, {"userid": userid, "roomid": roomid, "actionid": actionid})
+            self.execute(statement(
+                """
+                    INSERT INTO lastseen (`user_id`, `room_id`, `action_id`)
+                    VALUES (%value:userid, %value:roomid, %value:actionid)
+                    %fragment:upsert `action_id` = %value:actionid
+                """,
+                upsert=self.upsert_fragment,
+                userid=userid,
+                roomid=roomid,
+                actionid=actionid,
+            ))
 
     def get_last_seen_counts(self, userid: UserID) -> list[tuple[RoomID, int]]:
         """
@@ -980,11 +991,16 @@ class UserData(BaseData):
             else:
                 types = list(ActionType.unread_types())
 
-            sql = """
-                SELECT COUNT(id) AS count FROM action WHERE `room_id` = :roomid AND `id` > :actionid AND `action` IN :types
-            """
-            cursor = self.execute(sql, {"roomid": roomid, "actionid": actionid, "types": types})
-            result = cursor.mappings().fetchone() if cursor.rowcount == 1 else None
+            sql = statement(
+                """
+                    SELECT COUNT(id) AS count FROM action WHERE `room_id` = %value:roomid AND `id` > %value:actionid AND `action` IN (%inlist:types)
+                """,
+                roomid=roomid,
+                actionid=actionid,
+                types=types,
+            )
+            cursor = self.execute(sql)
+            result = cursor.mappings().fetchone()
             return int(result["count"]) if result else 0
 
         # There's probably a SQL way to do this, but I don't want to bang my head against
@@ -995,18 +1011,25 @@ class UserData(BaseData):
         # that we still count the actions for that room or chat as well.
         seen = [c[0] for c in computed_counts]
         if seen:
-            sql = """
-                SELECT id, purpose FROM room WHERE id NOT IN :seen AND id IN (
-                    SELECT room_id FROM occupant WHERE user_id = :userid AND inactive != TRUE
-                )
-            """
+            stmt = statement(
+                """
+                    SELECT id, purpose FROM room WHERE id NOT IN (%inlist:seen) AND id IN (
+                        SELECT room_id FROM occupant WHERE user_id = %value:userid AND inactive != TRUE
+                    )
+                """,
+                seen=seen,
+                userid=userid,
+            )
         else:
-            sql = """
-                SELECT id, purpose FROM room WHERE id IN (
-                    SELECT room_id FROM occupant WHERE user_id = :userid AND inactive != TRUE
-                )
-            """
-        cursor = self.execute(sql, {"seen": seen, "userid": userid})
+            stmt = statement(
+                """
+                    SELECT id, purpose FROM room WHERE id IN (
+                        SELECT room_id FROM occupant WHERE user_id = %value:userid AND inactive != TRUE
+                    )
+                """,
+                userid=userid,
+            )
+        cursor = self.execute(stmt)
         extra_rooms = [(RoomID(result['id']), self._get_purpose(result['purpose'])) for result in cursor.mappings()]
 
         def hydrate_new_count(roomid: RoomID, purpose: RoomPurpose) -> int:
@@ -1015,11 +1038,15 @@ class UserData(BaseData):
             else:
                 types = list(ActionType.unread_types())
 
-            sql = """
-                SELECT COUNT(id) AS count FROM action WHERE `room_id` = :roomid AND `action` IN :types
-            """
-            cursor = self.execute(sql, {"roomid": roomid, "types": types})
-            result = cursor.mappings().fetchone() if cursor.rowcount == 1 else None
+            sql = statement(
+                """
+                    SELECT COUNT(id) AS count FROM action WHERE `room_id` = %value:roomid AND `action` IN (%inlist:types)
+                """,
+                roomid=roomid,
+                types=types,
+            )
+            cursor = self.execute(sql)
+            result = cursor.mappings().fetchone()
             return int(result["count"]) if result else 0
 
         computed_counts += [(c[0], hydrate_new_count(c[0], c[1])) for c in extra_rooms]

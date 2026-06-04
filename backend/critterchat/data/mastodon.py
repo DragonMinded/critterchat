@@ -2,7 +2,7 @@ from sqlalchemy import MetaData, Table, Column
 from sqlalchemy.schema import UniqueConstraint
 from sqlalchemy.types import String, Integer, Boolean
 
-from .base import BaseData
+from .base import BaseData, statement
 from .types import MastodonInstance, MastodonInstanceID, NewMastodonInstanceID, NewUserID, UserID
 
 
@@ -62,10 +62,10 @@ class MastodonData(BaseData):
 
         sql = "SELECT * FROM mastodon_instance WHERE base_url = :base_url AND inactive != TRUE LIMIT 1"
         cursor = self.execute(sql, {"base_url": base_url})
-        if cursor.rowcount != 1:
+        result = cursor.mappings().fetchone()
+        if not result:
             return None
 
-        result = cursor.mappings().fetchone()
         return MastodonInstance(
             instanceid=MastodonInstanceID(result['id']),
             base_url=str(result['base_url']),
@@ -79,18 +79,20 @@ class MastodonData(BaseData):
         the client ID and secret.
         """
 
-        sql = """
-            INSERT INTO `mastodon_instance`
-                (`base_url`, `client_id`, `client_secret`, `inactive`)
-            VALUES (:base_url, :client_id, :client_secret, FALSE)
-            ON DUPLICATE KEY UPDATE
-                `client_id` = :client_id, `client_secret` = :client_secret, `inactive` = FALSE
-        """
-        cursor = self.execute(sql, {
-            "base_url": instance.base_url,
-            "client_id": instance.client_id,
-            "client_secret": instance.client_secret,
-        })
+        sql = statement(
+            """
+                INSERT INTO `mastodon_instance`
+                    (`base_url`, `client_id`, `client_secret`, `inactive`)
+                VALUES (%value:base_url, %value:client_id, %value:client_secret, FALSE)
+                %fragment:upsert
+                    `client_id` = %value:client_id, `client_secret` = %value:client_secret, `inactive` = FALSE
+            """,
+            upsert=self.upsert_fragment,
+            base_url=instance.base_url,
+            client_id=instance.client_id,
+            client_secret=instance.client_secret,
+        )
+        cursor = self.execute(sql)
         if cursor.rowcount != 1:
             return
 
@@ -110,7 +112,7 @@ class MastodonData(BaseData):
         with self.transaction():
             sql = "SELECT id FROM mastodon_instance WHERE id = :id AND inactive != TRUE LIMIT 1"
             cursor = self.execute(sql, {"id": instance.id})
-            if cursor.rowcount != 1:
+            if not cursor.mappings().fetchone():
                 return None
 
             sql = """
@@ -135,11 +137,8 @@ class MastodonData(BaseData):
             LIMIT 1
         """
         cursor = self.execute(sql, {"base_url": base_url, "username": username})
-        if cursor.rowcount != 1:
-            return None
-
         result = cursor.mappings().fetchone()
-        return UserID(result['user_id'])
+        return UserID(result['user_id']) if result else None
 
     def store_account_link(self, base_url: str, username: str, user_id: UserID) -> None:
         """
