@@ -38,20 +38,18 @@ class RequestCache:
         self.users: Final[dict[UserID, User | None]] = {}
 
 
-__metadata: MetaData | None = None
+__metadata: dict[str, MetaData] = {}
 
 
 def metadata(dialect: str) -> MetaData:
-    global __metadata
-
-    if __metadata:
-        return __metadata
+    if dialect in __metadata:
+        return __metadata[dialect]
 
     metadata = MetaData()
     for tables in [user_tables, room_tables, attachment_tables, migration_tables, mastodon_tables]:
         tables(dialect, metadata)
 
-    __metadata = metadata
+    __metadata[dialect] = metadata
     return metadata
 
 
