@@ -1,6 +1,6 @@
 import os
 from contextlib import contextmanager
-from typing import Final, Iterator, cast
+from typing import Any, Final, Iterator, cast
 
 import alembic.config
 from alembic.migration import MigrationContext
@@ -85,10 +85,27 @@ class Data:
         data._valid = self._valid
         return data
 
+    @staticmethod
+    def __configure(backend: str, connection: Any) -> None:
+        if backend == "sqlite":
+            connection.execute(text("PRAGMA encoding = 'UTF-8';"))
+            connection.execute(text("PRAGMA foreign_keys = ON;"))
+            connection.execute(text("PRAGMA journal_mode = WAL;"))
+            connection.execute(text("PRAGMA synchronous = NORMAL;"))
+            connection.commit()
+
+    @staticmethod
+    def connection(config: Config) -> "Data":
+        connection = config.database.engine.connect()
+        Data.__configure(config.database.backend, connection)
+        data = Data(config, connection)
+        return data
+
     @contextmanager
     @staticmethod
     def spawn(config: Config) -> Iterator["Data"]:
         with config.database.engine.connect() as connection:
+            Data.__configure(config.database.backend, connection)
             data = Data(config, connection)
 
             try:
@@ -162,10 +179,13 @@ class Data:
             else:
                 raise DBCreateException('Tables already created, use upgrade to upgrade schema!')
 
+        connection = self.__config.database.engine.connect()
+        Data.__configure(self.__config.database.backend, connection)
         metadata(self.__config.database.backend).create_all(
-            self.__config.database.engine.connect(),
+            connection,
             checkfirst=True,
         )
+        connection.close()
 
         # Stamp the end revision as if alembic had created it, so it can take off after this.
         self.__alembic_cmd(
@@ -181,8 +201,12 @@ class Data:
             raise DBCreateException('Tables have not been created yet, use create to create them!')
 
         # Verify that there are actual changes, and refuse to create empty migration scripts
-        context = MigrationContext.configure(self.__config.database.engine.connect(), opts={'compare_type': True})
+        connection = self.__config.database.engine.connect()
+        Data.__configure(self.__config.database.backend, connection)
+        context = MigrationContext.configure(connection, opts={'compare_type': True})
         diff = compare_metadata(context, metadata(self.__config.database.backend))
+        connection.close()
+
         if (not allow_empty) and (len(diff) == 0):
             raise DBCreateException('There is nothing different between code and the DB, refusing to create migration!')
 

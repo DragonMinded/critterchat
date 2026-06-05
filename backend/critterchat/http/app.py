@@ -113,7 +113,7 @@ def before_request() -> None:
         # This is just serving cached compiled frontends, skip loading from DB
         return
 
-    g.data = Data(config, config.database.engine.connect())
+    g.data = Data.connection(config)
 
     # Try to look up the session if there is one.
     ciphered_session = request.cookies.get("SessionID")
