@@ -230,7 +230,7 @@ class Config(dict[str, Any]):
         return clone
 
     def set_filename(self, filename: str) -> None:
-        self._path = os.path.dirname(filename)
+        self._path = os.path.dirname(os.path.abspath(filename))
 
     @property
     def cookie_key(self) -> str:

@@ -4,7 +4,8 @@ set positional-arguments
 init backend="sqlite":
     cp example/baremetal.{{backend}}.config.yaml backend/.config.yaml
     cp example/baremetal-info.txt backend/.info.txt
-    sed -i 's/baremetal-info.txt/.info.txt/g' backend/.config.yaml
+    sed -i 's/"baremetal-info.txt"/".info.txt"/g' backend/.config.yaml
+    sed -i 's/"sqlite.db"/".sqlite.db"/g' backend/.config.yaml
 
 # Set up both backend and frontend package management to run locally
 setup:
