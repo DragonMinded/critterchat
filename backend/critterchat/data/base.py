@@ -122,7 +122,6 @@ class BaseData:
 
             try:
                 yield
-                txn.commit()
 
             except Exception:
                 txn.rollback()

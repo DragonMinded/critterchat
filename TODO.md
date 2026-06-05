@@ -1,7 +1,6 @@
 TODO Immediate
 ==============
 
- - Fix attachment uploads committing but not acknowledging with SQLite.
  - Add rollback and roll forward tests for migrations so they don't diverge between SQLite and MySQL.
 
 TODO For Public Instance
