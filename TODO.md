@@ -1,7 +1,6 @@
 TODO Immediate
 ==============
 
- - Add rollback and roll forward tests for migrations so they don't diverge between SQLite and MySQL.
  - Quick start guide and SQLite documentation.
 
 TODO For Public Instance

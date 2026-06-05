@@ -75,7 +75,13 @@ def sqlite_config() -> Config:
         return __sqlite_config
 
     db = os.path.join(TESTS_PATH, ".testdb.db")
-    os.remove(db)
+
+    try:
+        os.remove(db)
+    except FileNotFoundError:
+        # This is non-fatal, it just means the DB isn't here yet.
+        pass
+
     configdict: dict[str, object] = {
         **MockConfig(),
         **{
