@@ -1,8 +1,8 @@
 set positional-arguments
 
 # Initialize backend config by copying from example directory
-init:
-    cp example/baremetal.config.yaml backend/.config.yaml
+init backend="sqlite":
+    cp example/baremetal.{{backend}}.config.yaml backend/.config.yaml
     cp example/baremetal-info.txt backend/.info.txt
     sed -i 's/baremetal-info.txt/.info.txt/g' backend/.config.yaml
 
