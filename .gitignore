@@ -16,4 +16,4 @@ backend/tests/.testdb.db
 backend/.coverage
 backend/.config.yaml
 backend/.info.txt
-backend/.sqlite.db
+backend/.sqlite.db*

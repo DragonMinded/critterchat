@@ -518,6 +518,7 @@ def list_public_rooms(config: Config) -> None:
                 print(f"Name: {room.name}")
                 print(f"Topic: {room.topic}")
                 print(f"Autojoin: {'on' if room.autojoin else 'off'}")
+                print(f"Moderated: {'on' if room.moderated else 'off'}")
                 print("")
         except MessageServiceException as e:
             raise CommandException(str(e))
