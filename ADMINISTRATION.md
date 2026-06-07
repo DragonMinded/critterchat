@@ -450,3 +450,18 @@ change the maximum size in kilobytes of a user's custom notification sound by ch
 the "notification_size" setting which defaults to 128 KB if not modified. You can
 change the maximum size in kilobytes of a given message attachment by modifying the
 "attachment_size" setting which defaults to 2048 KB (2 MB) if not modified.
+
+## Instance Reactions Administration
+
+All reaction settings are administered through the config yaml that you've customized
+in previous sections. You can find all the below documented settings underneath the
+"reactions" section in your configuration file. If you want to disable message reactions
+you can do so by setting the "enabled" setting to "false". By default this is enabled
+if you do not edit the config or do not specify a value. To customize the default
+reactions that can be used without searching for a specific one you can add to or
+remove any valid emoji or emote from the list found under the "defaults" setting. So,
+if you've added a custom emote that users can access via ":spraybottle:" you might
+add it to the list of default reactions by adding "spraybottle" to the "defaults" list.
+Note that when reactions are enabled, anyone can still search through the default
+emojis as well as any custom emotes on the instance to react with what they want.
+The default list simply allows an instance administrator to select defaults.

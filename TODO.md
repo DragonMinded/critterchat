@@ -1,8 +1,6 @@
 TODO Immediate
 ==============
 
- - Quick start guide and SQLite documentation.
-
 TODO For Public Instance
 ========================
 

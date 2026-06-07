@@ -22,6 +22,7 @@ sudo systemctl stop "${SERVICE}"
 # Now, make sure the backend is installed into the venv.
 cd ../backend/
 source "${VENV}/bin/activate"
+python3 -m pip install --upgrade pip -r requirements.txt
 python3 -m pip install --upgrade .
 python3 -m critterchat.manage --config "${CONFIG}" database upgrade
 deactivate
