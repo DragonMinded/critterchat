@@ -1246,6 +1246,10 @@ div.conversation div.item div.message.sensitive img {
     opacity: 0%;
 }
 
+div.conversation div.item div.message.sensitive a {
+    opacity: 0%;
+}
+
 div.conversation div.item div.attachments a {
     overflow: hidden;
     position: relative;
