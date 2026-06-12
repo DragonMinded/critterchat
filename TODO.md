@@ -1,11 +1,14 @@
 TODO Immediate
 ==============
 
+ - Markdown/code formatter display for text attachments.
+   - highlight.js for code, marked for markdown.
+ - Binary attachment support with allowlist.
+
 TODO For Public Instance
 ========================
 
  - Stickers support in some form.
- - Markdown/code formatter display for text attachments.
 
 TODO Low Priority
 =================
