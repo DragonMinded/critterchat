@@ -57,6 +57,14 @@ attachments:
   # The key that will be used when hashing attachment names to ensure they are not enumerable.
   attachment_key: "you_should_additionally_change_this_to_something_long_and_random"
 
+  # List of allowed binary attachment types. Note that attachments detected as images or plain
+  # text will always be allowed unless attachments are disabled. However, you may wish to allow
+  # or disallow different binary attachment types here to prevent malicious executables being
+  # shared.
+  allowed_mime_types:
+    - "application/json"
+    - "application/pdf"
+
 limits:
   # The maximum number of unicode characters in a user's profile about section.
   about_length: 64000

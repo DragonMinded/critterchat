@@ -780,13 +780,12 @@ def message(json: dict[str, object]) -> dict[str, object]:
             # Add any sensitivity tag.
             sensitive = bool(json.get('sensitive'))
 
-            if represents_real_text(message) or attachments:
-                try:
-                    # Now, send the message itself.
-                    messageservice.add_message(roomid, user.id, message, sensitive, attachments)
-                    return {'status': 'success'}
-                except MessageServiceException as e:
-                    error(str(e), room=request.sid)
+            try:
+                # Now, send the message itself.
+                messageservice.add_message(roomid, user.id, message, sensitive, attachments)
+                return {'status': 'success'}
+            except MessageServiceException as e:
+                error(str(e), room=request.sid)
 
         # Failed somehow, either got an exception or invalid room ID.
         return {'status': 'failed'}

@@ -18,7 +18,7 @@ federation between instances that can be enabled or disabled per-instance.
  - Custom emoji support controlled by the instance administrator.
  - Message reactions, with custom emoji support and multiple reactions per message.
  - Preferences for most appearance settings and optional notification sounds.
- - Image attachment support so images can be sent with messages.
+ - Image, text and binary attachment support so attachments can be sent with messages.
  - Ability to spoiler a message or an attachment, alt text for attachments.
  - Various sign-up modes such as open registration, admin-approval and invite codes.
  - Integration with Mastodon's OAuth for account creation and member authentication.
@@ -37,7 +37,6 @@ federation between instances that can be enabled or disabled per-instance.
  - Moderation tools for network admin (global mute, global ban, etc).
  - Moderation tools for individuals (block user, allow direct messages, etc.).
  - Emoji auto-categorization by prefix.
- - Arbitrary file attachments.
  - Sitewide CSS themeing with CSS moved to themes directory.
  - Per-chat CSS themeing for direct messages, private conversations and rooms.
  - Ability to set a personal nickname for a user that only you can see in a direct message or private conversation.

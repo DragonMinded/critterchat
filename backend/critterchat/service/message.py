@@ -1,7 +1,7 @@
 from typing import Final, Literal, cast
 
 from ..config import Config
-from ..common import Time, emojize
+from ..common import Time, emojize, represents_real_text
 from ..data import (
     Data,
     Action,
@@ -124,6 +124,8 @@ class MessageService:
         message = emojize(message)
         if len(message) > self.__config.limits.message_length:
             raise MessageServiceException("You're trying to send a message that is too long!")
+        if not (represents_real_text(message) or attachments):
+            raise MessageServiceException("You're trying to send an empty message!")
 
         # Now, make sure the room is valid.
         room = self.__data.room.get_room(roomid)
@@ -168,7 +170,7 @@ class MessageService:
                 # Skip adding this attachment.
                 continue
 
-            if adata.content_type not in AttachmentService.SUPPORTED_IMAGE_TYPES:
+            if not self.__attachments.is_allowed_content_type(adata.content_type):
                 # Trying to sneak a bad attachment in.
                 continue
 
@@ -184,6 +186,9 @@ class MessageService:
 
         if len(attachmentids) != len(response_attachments):
             raise Exception("Logic error, mismatched message attachment structures!")
+
+        if not (represents_real_text(message) or attachmentids):
+            raise MessageServiceException("You're trying to send an empty message!")
 
         # Locking a bunch of tables is expensive, so only do it when we really need to be atomic.
         if attachmentids:

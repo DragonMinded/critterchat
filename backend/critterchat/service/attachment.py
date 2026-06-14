@@ -1,5 +1,6 @@
 import io
 import hashlib
+import magic
 import mimetypes
 import os
 from PIL import Image, ImageOps
@@ -48,6 +49,7 @@ _emotes_initialized: bool = False
 class AttachmentService:
     MAX_ICON_WIDTH: Final[int] = 512
     MAX_ICON_HEIGHT: Final[int] = 512
+    GENERIC_MIME_TYPE: Final[str] = "application/octet-stream"
     SUPPORTED_IMAGE_TYPES = {"image/apng", "image/gif", "image/jpeg", "image/png", "image/webp"}
     CONVERTIBLE_IMAGE_TYPES = {"image/bmp"}
 
@@ -66,14 +68,51 @@ class AttachmentService:
 
             _emotes_initialized = True
 
-    def get_content_type(self, filename: str) -> str:
-        try:
-            return mimetypes.types_map[os.path.splitext(filename.lower())[1]]
-        except Exception:
-            return "application/octet-stream"
+    def get_content_type(self, name_or_content: str | bytes) -> str:
+        if isinstance(name_or_content, str):
+            try:
+                return mimetypes.types_map[os.path.splitext(name_or_content.lower())[1]]
+            except Exception:
+                return self.GENERIC_MIME_TYPE
+        else:
+            try:
+                return magic.from_buffer(name_or_content, mime=True)
+            except Exception:
+                return self.GENERIC_MIME_TYPE
+
+    def is_allowed_content_type(self, content_type: str, *, allow_convertible: bool = False) -> bool:
+        content_type = content_type.lower()
+
+        if content_type[:5] == "text/":
+            return True
+        if content_type[:6] == "image/":
+            return (
+                content_type in self.SUPPORTED_IMAGE_TYPES or
+                (allow_convertible and content_type in self.CONVERTIBLE_IMAGE_TYPES)
+            )
+
+        # Don't check prefixes, which allows admins to list things such as audio/* and video/*
+        # mime types in the interim until we support those upload types.
+        return content_type in self.__config.attachments.allowed_mime_types
+
+        # Unrecognized so unsupported.
+        return False
+
+    def get_content_category(self, content_type: str) -> str:
+        content_type = content_type.lower()
+
+        if not content_type or "/" not in content_type:
+            return "application"
+        return content_type.split("/", 1)[0]
 
     def get_extension(self, content_type: str) -> str:
         content_type = content_type.lower()
+
+        # Generic extension for text mimetype.
+        if content_type[:5] == "text/":
+            return ".txt"
+
+        # Correct extension for each known mimetype.
         return {
             "audio/mpeg": ".mp3",
             "image/apng": ".apng",
@@ -81,6 +120,8 @@ class AttachmentService:
             "image/jpeg": ".jpg",
             "image/png": ".png",
             "image/webp": ".webp",
+            "application/json": ".json",
+            "application/pdf": ".pdf",
         }.get(content_type, "")
 
     def _get_hashed_attachment_name(self, aid: AttachmentID, content_type: str, original_filename: str | None) -> str:
@@ -279,7 +320,7 @@ class AttachmentService:
         if attachmentid == DefaultAvatarID or attachmentid == DefaultRoomID or attachmentid == FaviconID:
             if self.__config.attachments.system == "local":
                 # Local storage, look up the storage directory and return that data.
-                path = self._get_local_attachment_path(attachmentid, "application/octet-stream", None)
+                path = self._get_local_attachment_path(attachmentid, self.GENERIC_MIME_TYPE, None)
                 try:
                     with open(path, "rb") as bfp:
                         data = bfp.read()
@@ -313,7 +354,7 @@ class AttachmentService:
         if attachmentid == DefaultAvatarID or attachmentid == DefaultRoomID or attachmentid == FaviconID:
             if self.__config.attachments.system == "local":
                 # Local storage, look up the storage directory and return that data.
-                path = self._get_local_attachment_path(attachmentid, "application/octet-stream", None)
+                path = self._get_local_attachment_path(attachmentid, self.GENERIC_MIME_TYPE, None)
                 with open(path, "wb") as bfp:
                     bfp.write(data)
             else:
@@ -460,13 +501,13 @@ class AttachmentService:
             return _id_to_hash_lut[attachmentid]
 
         if attachmentid in {DefaultAvatarID, DefaultRoomID, FaviconID}:
-            _id_to_hash_lut[attachmentid] = self._get_hashed_attachment_name(attachmentid, 'application/octet-stream', None)
+            _id_to_hash_lut[attachmentid] = self._get_hashed_attachment_name(attachmentid, self.GENERIC_MIME_TYPE, None)
             return _id_to_hash_lut[attachmentid]
 
         attachment = self.__data.attachment.lookup_attachment(attachmentid)
         if not attachment:
             # We can't find the attachment, so assume that it has no extension and try that.
-            _id_to_hash_lut[attachmentid] = self._get_hashed_attachment_name(attachmentid, 'application/octet-stream', None)
+            _id_to_hash_lut[attachmentid] = self._get_hashed_attachment_name(attachmentid, self.GENERIC_MIME_TYPE, None)
             return _id_to_hash_lut[attachmentid]
 
         _id_to_hash_lut[attachmentid] = self._get_hashed_attachment_name(attachment.id, attachment.content_type, attachment.original_filename)

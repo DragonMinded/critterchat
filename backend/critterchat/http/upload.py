@@ -1,4 +1,5 @@
 import logging
+import os
 import tempfile
 import urllib.request
 from flask import Blueprint, request
@@ -204,17 +205,10 @@ def attachments_upload() -> dict[str, object]:
         if len(alt_text) > g.config.limits.alt_text_length:
             raise UserException(f'Chosen attachment {filename} alt text is too long! Alt text cannot be longer than {g.config.limits.alt_text_length} characters.')
 
-        # Remember the old content type, because if we detect that it's wrong, or we convert the image
-        # we will want to update the filename with the new correct extension.
-        presumed_content_type = attachmentservice.get_content_type(filename)
-
         if "\\" in filename:
             _, filename = filename.rsplit("\\", 1)
         if "/" in filename:
             _, filename = filename.rsplit("/", 1)
-
-        # TODO: At some point we'll support arbitrary attachments, but for now limit
-        # to known image types.
 
         header, b64data = rawdata.split(",", 1)
         if not header.startswith("data:") or not header.endswith("base64"):
@@ -227,30 +221,84 @@ def attachments_upload() -> dict[str, object]:
         with urllib.request.urlopen(rawdata) as fp:
             attachmentdata = fp.read()
 
-        # Now, verify the image is actually loadable and the right mimetype. Stop
-        # people from trying to abuse uploads to store executables or zip files.
-        try:
-            attachmentdata, width, height, content_type = attachmentservice.prepare_attachment_image(attachmentdata)
-        except AttachmentServiceUnsupportedImageException:
-            raise UserException(f'Chosen attachment {filename} is not a supported image.')
+        # Remember the old content type, because if we detect that it's wrong, or we convert the image
+        # we will want to update the filename with the new correct extension.
+        presumed_content_type = attachmentservice.get_content_type(filename)
+        content_type = attachmentservice.get_content_type(attachmentdata)
+        if (
+            not attachmentservice.is_allowed_content_type(presumed_content_type, allow_convertible=True) and
+            not attachmentservice.is_allowed_content_type(content_type, allow_convertible=True)
+        ):
+            logger.info(f"Client {username} denied upload attachment with filename {filename} and detected type {content_type}")
+            raise UserException(f'Chosen attachment {filename} is not a supported file type.')
 
-        if content_type != presumed_content_type:
-            # Gotta add a new extension to the file.
-            filename = filename + attachmentservice.get_extension(content_type)
+        presumed_content_category = attachmentservice.get_content_category(presumed_content_type)
+        content_category = attachmentservice.get_content_category(content_type)
 
-        # The image is validated at this point, so we can attach it and return the ID.
-        attachmentid = attachmentservice.create_attachment(
-            content_type,
-            filename,
-            {
-                MetadataType.WIDTH: width,
-                MetadataType.HEIGHT: height,
-                MetadataType.ALT_TEXT: alt_text,
-                MetadataType.SENSITIVE: sensitive,
-            },
-        )
+        if presumed_content_category == "image" or content_category == "image":
+            # Now, verify the image is actually loadable and the right mimetype. Stop
+            # people from trying to abuse uploads to store executables or zip files.
+            try:
+                attachmentdata, width, height, content_type = attachmentservice.prepare_attachment_image(attachmentdata)
+            except AttachmentServiceUnsupportedImageException:
+                raise UserException(f'Chosen attachment {filename} is not a supported image.')
+
+            if content_type != presumed_content_type:
+                # Gotta add a new extension to the file.
+                filename = filename + attachmentservice.get_extension(content_type)
+
+            # The attachment is validated at this point, so we can attach it and return the ID.
+            attachmentid = attachmentservice.create_attachment(
+                content_type,
+                filename,
+                {
+                    MetadataType.WIDTH: width,
+                    MetadataType.HEIGHT: height,
+                    MetadataType.ALT_TEXT: alt_text,
+                    MetadataType.SENSITIVE: sensitive,
+                },
+            )
+
+        elif presumed_content_category == "text" or content_category == "text":
+            _, ext = os.path.splitext(filename)
+            if not ext:
+                # Gotta add a new extension to the file, it was possibly extensionless.
+                filename = filename + attachmentservice.get_extension(content_type)
+
+            # The attachment is effectively validated at this point, not much we can do with text.
+            attachmentid = attachmentservice.create_attachment(
+                content_type,
+                filename,
+                {
+                    MetadataType.ALT_TEXT: alt_text,
+                    MetadataType.SENSITIVE: sensitive,
+                },
+            )
+
+        elif presumed_content_category == "application" or content_category == "application":
+            _, ext = os.path.splitext(filename)
+            if not ext:
+                # Gotta add a new extension to the file, it was possibly extensionless.
+                filename = filename + attachmentservice.get_extension(content_type)
+
+            # Binary file that passed our configuration.
+            attachmentid = attachmentservice.create_attachment(
+                content_type,
+                filename,
+                {
+                    MetadataType.ALT_TEXT: alt_text,
+                    MetadataType.SENSITIVE: sensitive,
+                },
+            )
+
+        else:
+            raise UserException(f'Chosen attachment {filename} is not a supported file type.')
+
+        # We should always have gotten a valid ID back at this point.
         if attachmentid is None:
             raise Exception("Could not insert message attachment!")
+
+        # Store the generic attachment at this point.
         attachmentservice.put_attachment_data(attachmentid, attachmentdata)
         attachmentids.append(Attachment.from_id(attachmentid))
 

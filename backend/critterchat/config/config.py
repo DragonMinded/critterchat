@@ -74,6 +74,20 @@ class Attachments:
     def attachment_key(self) -> str:
         return str(self._config.get("attachments", {}).get("attachment_key") or "youalsoreallyshouldhavechangedthistoo")
 
+    @property
+    def allowed_mime_types(self) -> list[str]:
+        defaults = ["application/json", "application/pdf"]
+
+        vals = self._config.get("attachments", {}).get("allowed_mime_types", defaults)
+        if not isinstance(vals, list):
+            return []
+
+        listvals = [str(v) for v in vals]
+        listvals = [v.lower() for v in vals if v]
+
+        # We specifically allow an empty list here, so admins can turn off binary attachments.
+        return listvals
+
 
 class Limits:
     def __init__(self, parent_config: "Config") -> None:

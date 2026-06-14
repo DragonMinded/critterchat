@@ -64,6 +64,9 @@
     --attachment-picker-alt-text-missing-foreground: light-dark(#505050, #b8b8b8);
 
     --message-visibility-hover: light-dark(#111bf2, #2b34ed);
+    --message-attachment-text: light-dark(#000000, #ffffff);
+    --message-attachment-background: light-dark(#dddddd, #888888);
+    --message-attachment-border: light-dark(#222222, #dfdfdf);
 
     --error-border: light-dark(#b3b3b3, #1c1c1c);
     --error-error: light-dark(#e4a7a7, #d77575);

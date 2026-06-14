@@ -1,5 +1,5 @@
 import $ from "jquery";
-import { flash } from "../utils.js";
+import { flash, getExt } from "../utils.js";
 import { displayAltTextEditor } from "../modals/alttextmodal.js";
 
 class UploadPicker {
@@ -193,6 +193,7 @@ class UploadPicker {
                     fr.onload = () => {
                         room.files.push({
                             filename: file.name,
+                            mimetype: file.type,
                             data: fr.result,
                             alt_text: '',
                             sensitive: false,
@@ -229,19 +230,30 @@ class UploadPicker {
 
         const room = this.rooms.get(roomid);
         room.files.forEach((upload, idx) => {
+            const isImage = upload.mimetype.startsWith("image/");
+            const ext = getExt(upload.filename);
+
+            // The item itself.
             const item = $('<div class="upload"></div>')
                 .attr('id', roomid + '-upload-' + idx)
                 .appendTo(container);
-            $('<img />')
-                .attr('src', upload.data)
-                .appendTo(item);
-            const altcontainer = $('<div />')
-                .attr('class', 'alt-text-container' + (upload.alt_text ? " present" : ""))
-                .attr('id', roomid + '-alt-' + idx)
-                .appendTo(item);
-            $('<div />')
-                .text('alt')
-                .appendTo(altcontainer);
+
+            // The rendered preview of the item.
+            if (isImage) {
+                $('<img />')
+                    .attr('src', upload.data)
+                    .appendTo(item);
+            } else {
+                const outerFile = $('<div />')
+                    .attr('class', 'file')
+                    .appendTo(item);
+                $('<div />')
+                    .attr('class', 'name')
+                    .text(ext)
+                    .appendTo(outerFile);
+            }
+
+            // Sensitive (should display by default) control.
             const sensitivecontainer = $('<div />')
                 .attr('class', 'sensitive-container')
                 .attr('id', roomid + '-sensitive-' + idx)
@@ -250,6 +262,19 @@ class UploadPicker {
             $('<div />')
                 .attr('class', 'maskable attachment-visibility ' + visibilityClass)
                 .appendTo(sensitivecontainer);
+
+            // Alt text control, only makes sense for media types.
+            if (isImage) {
+                const altcontainer = $('<div />')
+                    .attr('class', 'alt-text-container' + (upload.alt_text ? " present" : ""))
+                    .attr('id', roomid + '-alt-' + idx)
+                    .appendTo(item);
+                $('<div />')
+                    .text('alt')
+                    .appendTo(altcontainer);
+            }
+
+            // Delete control in upper right corner.
             const delcontainer = $('<div />')
                 .attr('class', 'delete-container')
                 .attr('id', roomid + '-upload-' + idx)

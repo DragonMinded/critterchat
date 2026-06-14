@@ -18,6 +18,7 @@ sqlalchemy-stubs
 sql-fragments
 python-dateutil
 pydub
+python-magic-standalone
 
 types-emoji
 types-gevent

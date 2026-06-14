@@ -331,6 +331,18 @@ as image files in that directory, named after the emote alias. You can use this,
 instance, to export all emotes from one instance you administer and then import them
 all on another instance.
 
+### Whitelisting Binary Attachment Types
+
+Control over what binary attachment types are allowed is done through the config
+yaml. Inside your configuration you should find an "attachments" section which
+contains an "allowed_mime_types" list. All recognized image types are automatically
+allowed as long as you have enabled attachments by setting the attachment limit
+to something greater than 0. Similarly, all recognized text types are automatically
+allowed as well. Everything else is treated as a binary attachment and requires a
+specific whitelisted entry. Each entry in this list is a mime type as recognized
+by the Linux "magic" utility. Any binary file type that does not show up on this
+list will be disallowed.
+
 ## Authentication Administration
 
 Authentication is mostly controlled via your configuration file. Inside your

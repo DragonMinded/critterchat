@@ -58,15 +58,17 @@ body.smallest {
     --attachment-picker-top: 3.5px;
     --attachment-picker-padding: 8px;
     --attachment-picker-item-height: 100px;
-    --attachment-picker-alt-text-left: 4px;
+    --attachment-picker-alt-text-left: 35px;
     --attachment-picker-alt-text-bottom: 4px;
     --attachment-picker-alt-text-image-size: 300px;
-    --attachment-picker-visible-left: 35px;
+    --attachment-picker-visible-left: 4px;
     --attachment-picker-visible-bottom: 4px;
     --attachment-picker-visible-top: -2.5px;
 
     --message-visible-top: 3.5px;
     --message-sensitive-top: 3.5px;
+    --message-attachment-width: 100px;
+    --message-attachment-height: 100px;
 
     --nav-button-width: 32px;
     --nav-button-height: 32px;
@@ -148,15 +150,17 @@ body.smaller {
     --attachment-picker-top: 3.5px;
     --attachment-picker-padding: 9px;
     --attachment-picker-item-height: 115px;
-    --attachment-picker-alt-text-left: 4px;
+    --attachment-picker-alt-text-left: 38px;
     --attachment-picker-alt-text-bottom: 4px;
     --attachment-picker-alt-text-image-size: 325px;
-    --attachment-picker-visible-left: 38px;
+    --attachment-picker-visible-left: 4px;
     --attachment-picker-visible-bottom: 4px;
     --attachment-picker-visible-top: -2.5px;
 
     --message-visible-top: 3.5px;
     --message-sensitive-top: 3.5px;
+    --message-attachment-width: 100px;
+    --message-attachment-height: 100px;
 
     --nav-button-width: 32px;
     --nav-button-height: 32px;
@@ -238,15 +242,17 @@ body:not(.smallest):not(.smaller):not(.larger):not(.largest) {
     --attachment-picker-top: 3.5px;
     --attachment-picker-padding: 10px;
     --attachment-picker-item-height: 130px;
-    --attachment-picker-alt-text-left: 4px;
+    --attachment-picker-alt-text-left: 40px;
     --attachment-picker-alt-text-bottom: 4px;
     --attachment-picker-alt-text-image-size: 350px;
-    --attachment-picker-visible-left: 40px;
+    --attachment-picker-visible-left: 4px;
     --attachment-picker-visible-bottom: 4px;
     --attachment-picker-visible-top: -2.5px;
 
     --message-visible-top: 3.5px;
     --message-sensitive-top: 3.5px;
+    --message-attachment-width: 100px;
+    --message-attachment-height: 100px;
 
     --nav-button-width: 36px;
     --nav-button-height: 36px;
@@ -328,15 +334,17 @@ body.larger {
     --attachment-picker-top: 3.5px;
     --attachment-picker-padding: 10px;
     --attachment-picker-item-height: 145px;
-    --attachment-picker-alt-text-left: 4px;
+    --attachment-picker-alt-text-left: 44px;
     --attachment-picker-alt-text-bottom: 4px;
     --attachment-picker-alt-text-image-size: 375px;
-    --attachment-picker-visible-left: 44px;
+    --attachment-picker-visible-left: 4px;
     --attachment-picker-visible-bottom: 4px;
     --attachment-picker-visible-top: -2.5px;
 
     --message-visible-top: 3.5px;
     --message-sensitive-top: 3.5px;
+    --message-attachment-width: 100px;
+    --message-attachment-height: 100px;
 
     --nav-button-width: 40px;
     --nav-button-height: 40px;
@@ -418,15 +426,17 @@ body.largest {
     --attachment-picker-top: 3.5px;
     --attachment-picker-padding: 10px;
     --attachment-picker-item-height: 160px;
-    --attachment-picker-alt-text-left: 4px;
+    --attachment-picker-alt-text-left: 48px;
     --attachment-picker-alt-text-bottom: 4px;
     --attachment-picker-alt-text-image-size: 400px;
-    --attachment-picker-visible-left: 48px;
+    --attachment-picker-visible-left: 4px;
     --attachment-picker-visible-bottom: 4px;
     --attachment-picker-visible-top: -2.5px;
 
     --message-visible-top: 3.5px;
     --message-sensitive-top: 3.5px;
+    --message-attachment-width: 100px;
+    --message-attachment-height: 100px;
 
     --nav-button-width: 44px;
     --nav-button-height: 44px;
@@ -750,6 +760,30 @@ div.uploadpicker-container div.upload {
 
 div.uploadpicker-container div.upload > img {
     height: var(--attachment-picker-item-height);
+}
+
+div.uploadpicker-container div.upload > div.file {
+    width: var(--attachment-picker-item-height);
+    height: var(--attachment-picker-item-height);
+    display: flex;
+    border: 1px solid var(--button-border);
+    border-radius: var(--button-border-radius);
+    background: var(--button-background);
+    justify-content: center;
+    align-items: center;
+}
+
+div.uploadpicker-container div.upload > div.file div.name {
+    display: flex;
+    width: 45%;
+    height: 45%;
+    justify-content: center;
+    align-items: center;
+    border-radius: var(--button-border-radius);
+    border: 1px solid var(--message-attachment-border);
+    background: var(--message-attachment-background);
+    color: var(--message-attachment-text);
+    filter: drop-shadow(2px 2px 1px);
 }
 
 div.uploadpicker-container div.upload div.delete-container {
@@ -1253,6 +1287,36 @@ div.conversation div.item div.message.sensitive a {
 div.conversation div.item div.attachments a {
     overflow: hidden;
     position: relative;
+    text-decoration: none;
+}
+
+div.conversation div.item div.attachments div.file {
+    width: var(--message-attachment-width);
+    height: var(--message-attachment-height);
+    display: flex;
+    border: 1px solid var(--button-border);
+    border-radius: var(--button-border-radius);
+    background: var(--button-background);
+    justify-content: center;
+    align-items: center;
+}
+
+div.conversation div.item div.attachments div.file:hover, div.conversation div.item div.attachments a:focus-visible div.file {
+    border: 1px solid var(--button-hover-border);
+    background: var(--button-hover-background);
+}
+
+div.conversation div.item div.attachments div.file div.name {
+    display: flex;
+    width: 45%;
+    height: 45%;
+    justify-content: center;
+    align-items: center;
+    border-radius: var(--button-border-radius);
+    border: 1px solid var(--message-attachment-border);
+    background: var(--message-attachment-background);
+    color: var(--message-attachment-text);
+    filter: drop-shadow(2px 2px 1px);
 }
 
 div.conversation div.item div.attachments a div.blurred {

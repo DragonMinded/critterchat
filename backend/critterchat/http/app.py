@@ -22,7 +22,7 @@ from flask import (
 )
 from flask.ctx import _AppCtxGlobals
 from flask_socketio import SocketIO  # type: ignore
-from flask_cors import CORS  # type: ignore
+from flask_cors import CORS
 
 from ..common import AESCipher
 from ..config import Config

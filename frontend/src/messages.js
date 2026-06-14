@@ -10,6 +10,7 @@ import {
     containsStandaloneText,
     highlightStandaloneText,
     findElement,
+    getExt,
 } from "./utils.js";
 import { EmojiSearch } from "./components/emojisearch.js";
 import { autocomplete } from "./components/autocomplete.js";
@@ -286,7 +287,9 @@ class Messages {
         } else {
             $( 'button.attachment-picker' ).on( 'click', () => {
                 if (this.roomid && this.rooms.has(this.roomid)) {
-                    this.uploadPicker.selectFiles(this.roomid, "image/*");
+                    var supportedList = ["image/*", "text/*"];
+                    supportedList.push.apply(supportedList, window.mimetypes);
+                    this.uploadPicker.selectFiles(this.roomid, supportedList.join(","));
                 }
             });
         }
@@ -1221,6 +1224,58 @@ class Messages {
     }
 
     /**
+     * Draws the attachments for a given message.
+     */
+    _drawAttachments( message, attachments ) {
+        const mimetypes = [];
+        attachments.forEach((attachment) => {
+            mimetypes.push(attachment.mimetype);
+        });
+        const allImages = mimetypes.every((mt) => mt.startsWith("image/"));
+        const desiredHeight = (attachments.length == 1 && allImages) ? 300 : 100;
+
+        var html = '<div class="attachments" id="' + message.id + '">';
+
+        attachments.forEach((attachment) => {
+            if (attachment.mimetype.startsWith("image/")) {
+                // Image attachment.
+                var attachImg = $(
+                    '<img class="attachment" src="' + attachment.uri + '"' + this._getDims(attachment, desiredHeight) + '/>'
+                ).attr('alt', attachment.metadata.alt_text || "message attachment");
+
+                if (attachment.metadata.sensitive) {
+                    attachImg = attachImg.addClass('blurred');
+                }
+
+                if (attachment.metadata.alt_text) {
+                    attachImg = attachImg.attr('title', attachment.metadata.alt_text);
+                }
+
+                html += '<a target="_blank" href="' + attachment.uri + '">';
+                html += '  ' + attachImg.prop('outerHTML');
+
+                if (attachment.metadata.sensitive) {
+                    html += '  <div class="blurred"><div class="maskable attachment-sensitive"></div></div>';
+                }
+
+                html += '</a>';
+            } else {
+                // Arbitrary attachment.
+                const ext = getExt(new URL(attachment.uri).pathname);
+
+                html += '<a target="_blank" href="' + attachment.uri + '">';
+                html += '  <div class="file"><div class="name">';
+                html += '    ' + escapeHtml(ext);
+                html += '  </div></div>';
+                html += '</a>';
+            }
+        });
+
+        html += '</div>';
+        return html;
+    }
+
+    /**
      * Draws the reactions for a given message.
      */
     _drawReactions( reactions, ordering ) {
@@ -1336,32 +1391,7 @@ class Messages {
                 html += '    <div class="message' + (highlighted ? " highlighted" : "") + (message.details.sensitive ? " sensitive" : "") + '" dir="auto" id="' + message.id + '">' + content + '</div>';
 
                 if (message.attachments.length) {
-                    const desiredHeight = message.attachments.length == 1 ? 300 : 100;
-
-                    html += '    <div class="attachments" id="' + message.id + '">';
-                    message.attachments.forEach((attachment) => {
-                        var attachImg = $(
-                            '<img class="attachment" src="' + attachment.uri + '"' + this._getDims(attachment, desiredHeight) + '/>'
-                        ).attr('alt', attachment.metadata.alt_text || "message attachment");
-
-                        if (attachment.metadata.sensitive) {
-                            attachImg = attachImg.addClass('blurred');
-                        }
-
-                        if (attachment.metadata.alt_text) {
-                            attachImg = attachImg.attr('title', attachment.metadata.alt_text);
-                        }
-
-                        html += '      <a target="_blank" href="' + attachment.uri + '">';
-                        html += '        ' + attachImg.prop('outerHTML');
-
-                        if (attachment.metadata.sensitive) {
-                            html += '        <div class="blurred"><div class="maskable attachment-sensitive"></div></div>';
-                        }
-
-                        html += '      </a>';
-                    });
-                    html += '    </div>';
+                    html += this._drawAttachments(message, message.attachments);
                 }
                 html += '    <div class="reactions" id="' + message.id + '">' + this._drawReactions(message.details.reactions, message.details.reactions_order) + '</div>';
                 html += '  </div>';

@@ -363,6 +363,20 @@ const findElement = function( elem, tag, prop, hasClass ) {
     }
 }
 
+/**
+ * Given an absolute or relative file path (unix or windows), get the extension, or
+ * the word "file" if there is no valid extension.
+ */
+const getExt = function(path) {
+    const parts = path.includes("\\") ? path.split("\\") : path.split("/");
+    const filename = parts[parts.length - 1];
+    const fileparts = filename.split(".");
+    fileparts.shift();
+
+    // Form an extension to display, or display generic if empty.
+    return fileparts.length > 0 ? fileparts.join(".") : "file";
+}
+
 export {
     escapeHtml,
     formatTime,
@@ -377,4 +391,5 @@ export {
     containsStandaloneText,
     highlightStandaloneText,
     findElement,
+    getExt,
 };
