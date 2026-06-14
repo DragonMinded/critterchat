@@ -3,6 +3,7 @@ TODO Immediate
 
  - Markdown/code formatter display for text attachments.
    - highlight.js for code, marked for markdown.
+ - Add SSL support to critterchat main executable so it can be used without nginx.
 
 TODO For Public Instance
 ========================
