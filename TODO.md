@@ -4,11 +4,6 @@ TODO Immediate
  - Markdown/code formatter display for text attachments.
    - highlight.js for code, marked for markdown.
 
-TODO For Public Instance
-========================
-
- - Stickers support in some form.
-
 TODO Low Priority
 =================
 
