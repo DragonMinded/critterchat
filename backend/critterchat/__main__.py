@@ -4,6 +4,7 @@ monkey.patch_all()
 import argparse  # noqa
 import logging  # noqa
 from flask.logging import default_handler  # noqa
+from gevent.ssl import Purpose, create_default_context  # noqa
 from werkzeug.middleware.proxy_fix import ProxyFix  # noqa
 
 from critterchat.http import app, config, socketio  # noqa
@@ -55,6 +56,8 @@ if __name__ == '__main__':
     parser.add_argument("-s", "--sql-query-log", help="Enable logging of SQL queries. Defaults to off", action="store_true")
     parser.add_argument("-n", "--nginx-proxy", help="Number of nginx proxies in front of this server. Defaults to 0", type=int, default=0)
     parser.add_argument("-c", "--config", help="Config file to parse for instance settings. Defaults to config.yaml", type=str, default="config.yaml")
+    parser.add_argument("-e", "--cert", help="Certificate fullchain to use when directly hosting SSL traffic", type=str, default=None)
+    parser.add_argument("-k", "--cert-key", help="Certificate key to use with the fullchain when directly hosting SSL traffic", type=str, default=None)
     args = parser.parse_args()
 
     load_config(args.config, config)
@@ -80,6 +83,13 @@ if __name__ == '__main__':
     if config.attachments.system == "local":
         app.register_blueprint(attachments)
 
+    # If we're directly serving SSL, set that up here.
+    extra_args: dict[str, object] = {}
+    if args.cert and args.cert_key:
+        ssl_context = create_default_context(Purpose.CLIENT_AUTH)
+        ssl_context.load_cert_chain(args.cert, args.cert_key)
+        extra_args['ssl_context'] = ssl_context
+
     # Perform any one-time initialization that needs to happen.
     perform_initialization_work(config)
 
@@ -87,4 +97,4 @@ if __name__ == '__main__':
         logger.info(f"Fixing proxy headers with a depth of {args.nginx_proxy}")
         app.wsgi_app = ProxyFix(app.wsgi_app, x_host=args.nginx_proxy, x_proto=args.nginx_proxy, x_for=args.nginx_proxy, x_prefix=args.nginx_proxy)  # type: ignore
     logger.info(f"Running server listening on port {args.port}")
-    socketio.run(app, host='0.0.0.0', port=args.port, debug=args.debug)
+    socketio.run(app, host='0.0.0.0', port=args.port, debug=args.debug, **extra_args)

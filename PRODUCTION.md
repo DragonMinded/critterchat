@@ -4,9 +4,8 @@ CritterChat uses nginx for SSL termination as well as a static resources server
 for production instances. While it is possible to run an instance without nginx
 it is not recommended. Offloading static assets takes load off of the server
 itself so that it can concentrate on dynamic requests from clients. Additionally,
-no support for SSL is included in the default software so you would end up running
-with plain http which exposes all chat messages and user login details to the
-public internet.
+handling SSL termination is best left to a production-grade reverse proxy such as
+nginx.
 
 There are two options for running a production instance: bare metal and within a
 docker container. With bare metal you manage the Python virtual environment,
@@ -30,15 +29,17 @@ as well as an nginx configuration file for the nginx proxy portion. Both are mea
 to be customized for your domain and certs as well as where you ultimately decide
 to deploy CritterChat for a production instance. For SSL certificates, I recommend
 using `certbot` which is a CLI interface to the Let's Encrypt project. If you want
-to purchase certificates and use them in your nginx config instead you can.
+to purchase certificates for use with SSL you can.
 
 ## Initial Setup
 
 Initial setup is fairly straightforward. Pick a directory that you will deploy to,
 create it, and make sure that it is owned by the user that will execute the server.
-Make sure that it is readable by the user that nginx uses since it will serve
-static assets out of this directory as well. Copy `example/baremetal.config.yaml`
-to the directory you've just created and make sure that you customize it for your
+If you are using nginx as your reverse proxy and SSL termination then also make
+sure that the directory is readable by the user that nginx uses since it will serve
+static assets out of this directory as well. Copy `example/baremetal.mysql.config.yaml`
+or `example/baremetal.sqlite.config.yaml` (depending on your database of choice) to
+the directory you've just created and make sure that you customize it for your
 installation. Create an attachments directory under the installation directory and
 again make sure that it is owned by the server user and readable by the nginx
 user.
@@ -67,7 +68,8 @@ directory called `venv` or similar. It doesn't matter where it is but you'll
 want to keep organized. Once you've created that virtual environment you'll
 be activating it every time you want to install updates. For now, activate it
 and install the initial production instance by going into the `backend/`
-directory and running `python3 -m pip install .`. This will install all dependencies,
+directory and first running `python3 -m pip install --upgrade pip -r requirements.txt`
+followed by `python3 -m pip install .`. This will install all dependencies,
 the static resources and the code itself. If you have not built the frontend
 for production, you will need to do this before running the above command by
 going into the `frontend/` directory and running `npm run clean && npm run build`.
@@ -119,6 +121,30 @@ Now, once this is done, symlink the file you just created into `/etc/nginx/sites
 to activate this and restart nginx using `systemctl restart nginx`. Once the restart
 is complete you should have a production instance of CritterChat running on the
 domain you've chosen!
+
+## Running Without nginx
+
+The above walkthrough as well as all of the baremetal examples assumes you're going
+to use nginx as your reverse proxy and SSL termination. If you do not wish to set
+this up and want to instead use the built-in SSL handler and asset serving code you
+can but note that nginx will always be more performant than pure Python. You can
+see the configuration options available to you by running the following command while
+your production virtual environment is active:
+
+```
+python3 -m critterchat --config <path to your production config> --help
+```
+
+Specifically, you'll want to care about the `--port`, `--nginx-proxy`, `--cert` and
+`--cert-key` options. It's recommended to still use the `example/critterchat.service`
+file as a starting point but you'll need to make changes to the `ExecStart` line.
+For the listen port, you'll need to set this to 443 because CritterChat will be handling
+SSL directly from client requests. You'll need to get rid of the `--nginx-proxy`
+option since you aren't using an nginx proxy. Failing to remove this could lead you to
+being vulnerable to IP spoofing in logs. Next, you'll want to provide the SSL cert
+files that you obtained from Let's Encrypt or purchasing a certificate. Pass the full
+path to your certificate fullchain file to `--cert` and the full path to your certificate
+private key file to `--cert-key`.
 
 ## Administration
 
@@ -177,6 +203,7 @@ directory and make sure you've built a new production bundle by running
 `npm run clean && npm run build`. Then, activate the virtual environment you
 created for the production instance. Now, stop the running server by executing
 `systemctl stop critterchat`. Now, in the `backend/` directory, run
+`python3 -m pip install --upgrade pip -r requirements.txt` followed by
 `python3 -m pip install --upgrade .` to upgrade dependencies and install the new
 version of CritterChat. Then run to following command to perform any schema migrations
 that are present in the newly installed code:

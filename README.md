@@ -72,7 +72,7 @@ depend on at least Python 3.11. Optionally, you will need a MySQL database or co
 (MariaDB that is recent) that supports at least MySQL 5.7 features due to using the
 JSON column type. If you do not have or want a MySQL database you can instead use
 SQLite which comes built-in with Python. Finally, you will need ffmpeg installed for
-notification conversion. For a production instance it is heavily recommended to use a
+media conversion. For a production instance it is heavily recommended to use a
 production-ready webserver for SSL termination and static resources such as nginx.
 
 ## Quick Start Guide
