@@ -54,6 +54,12 @@ server {
         alias /path/to/your/attachments;
         autoindex off;
         add_header Cache-Control "public, max-age=31557600, no-transform, immutable";
+
+        # This section makes it so that any file that otherwise might be rendered is instead displayed
+        # as plain text. Stops people uploading php or html files that could include a JS credential stealer.
+        location ~* \.(php|phtml|php3|php4|php5|pl|py|jsp|asp|html|htm|shtml|sh|cgi)$ {
+            add_header Content-Type text/plain;
+        }
     }
 
     location /static {
