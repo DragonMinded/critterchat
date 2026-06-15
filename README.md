@@ -45,6 +45,7 @@ federation between instances that can be enabled or disabled per-instance.
  - Multi-account support in the web frontend.
  - Inter-instance direct messages and private conversations, inter-instance OIDC-based authentication.
  - REST API for bot integration, discord-compatible webhook support.
+ - Multi-language support with default language per-instance.
 
 ## Needed Help
 
@@ -63,6 +64,7 @@ get in touch so we can work out the direction you plan to take.
  - Support for more authentication provider flows.
  - Native clients for mobile or desktop operating systems.
  - Changes that make custom integrations easier.
+ - Frontend translation support and translations to other languages.
 
 # Getting Started
 
