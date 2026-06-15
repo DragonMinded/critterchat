@@ -7,8 +7,8 @@ TODO Immediate
 TODO Low Priority
 =================
 
- - Replace <div> with <button> on emoji picker popover interactable elements.
- - Replace <div> with <button> on attachment picker popover interactable elements.
+ - Replace \<div\> with \<button\> on emoji picker popover interactable elements.
+ - Replace \<div\> with \<button\> on attachment picker popover interactable elements.
  - Generate a unique URI for all conversations and rooms, allow editing for public rooms.
  - Mentioning typeahead should allow searching by display nick as well as username.
  - Support editing your nickname and avatar per-room (limit to non-DMs).
