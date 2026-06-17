@@ -76,7 +76,7 @@ class Attachments:
 
     @property
     def allowed_mime_types(self) -> list[str]:
-        defaults = ["application/json", "application/pdf"]
+        defaults = ["application/javascript", "application/json", "application/pdf"]
 
         vals = self._config.get("attachments", {}).get("allowed_mime_types", defaults)
         if not isinstance(vals, list):

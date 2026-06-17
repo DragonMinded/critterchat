@@ -374,7 +374,17 @@ const getExt = function(path) {
     fileparts.shift();
 
     // Form an extension to display, or display generic if empty.
-    return fileparts.length > 0 ? fileparts.join(".") : "file";
+    var fullext = fileparts.length > 0 ? fileparts.join(".") : "file";
+    if (fullext.includes(".")) {
+        const lower = fullext.toLowerCase();
+
+        if (!lower.startsWith("tar.")) {
+            // This isn't one of our exceptions.
+            fullext = fileparts[fileparts.length - 1];
+        }
+    }
+
+    return fullext;
 }
 
 /**

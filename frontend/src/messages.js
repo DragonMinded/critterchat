@@ -2,6 +2,7 @@ import $ from "jquery";
 import linkifyHtml from "linkify-html";
 import { marked } from 'marked';
 import DOMPurify from 'dompurify';
+import hljs from 'highlight.js';
 
 import {
     escapeHtml,
@@ -1279,19 +1280,89 @@ class Messages {
     }
 
     /**
+     * Helper to ensure spacing and newlines work within manually-formatted HTML.
+     */
+    _preserveSpacing( html ) {
+        html = html.replaceAll("\n", "<br />");
+        html = html.replaceAll("  ", "&nbsp;&nbsp;");
+        html = html.replaceAll("\t", "&nbsp;&nbsp;&nbsp;&nbsp;");
+        return html;
+    }
+
+    /**
      * Formats a text attachment for display.
      */
     _formatText( extension, text ) {
         if ( extension == "md" ) {
             // Markdown formatting.
             return DOMPurify.sanitize(marked.parse(text));
+        } else if( extension == "py" ) {
+            let html = hljs.highlight(text, {language: 'py', ignoreIllegals: true}).value;
+            return '<span class="plaintext">' + this._preserveSpacing(html) + '</span>';
+        } else if( extension == "css" ) {
+            let html = hljs.highlight(text, {language: 'css', ignoreIllegals: true}).value;
+            return '<span class="plaintext">' + this._preserveSpacing(html) + '</span>';
+        } else if( extension == "htm" || extension == "html" || extension == "xhtml" || extension == "html5" ) {
+            let html = hljs.highlight(text, {language: 'html', ignoreIllegals: true}).value;
+            return '<span class="plaintext">' + this._preserveSpacing(html) + '</span>';
+        } else if( extension == "js" || extension == "jsx" ) {
+            let html = hljs.highlight(text, {language: 'js', ignoreIllegals: true}).value;
+            return '<span class="plaintext">' + this._preserveSpacing(html) + '</span>';
+        } else if( extension == "c" || extension == "h" ) {
+            let html = hljs.highlight(text, {language: 'c', ignoreIllegals: true}).value;
+            return '<span class="plaintext">' + this._preserveSpacing(html) + '</span>';
+        } else if(
+            extension == "cpp" || extension == "hpp" ||
+            extension == "cc" || extension == "hh" ||
+            extension == "cxx" || extension == "hxx" ||
+            extension == "c++" || extension == "h++"
+        ) {
+            let html = hljs.highlight(text, {language: 'c++', ignoreIllegals: true}).value;
+            return '<span class="plaintext">' + this._preserveSpacing(html) + '</span>';
+        } else if( extension == "ini" ) {
+            let html = hljs.highlight(text, {language: 'ini', ignoreIllegals: true}).value;
+            return '<span class="plaintext">' + this._preserveSpacing(html) + '</span>';
+        } else if( extension == "toml" ) {
+            let html = hljs.highlight(text, {language: 'toml', ignoreIllegals: true}).value;
+            return '<span class="plaintext">' + this._preserveSpacing(html) + '</span>';
+        } else if( extension == "yaml" || extension == "yml" ) {
+            let html = hljs.highlight(text, {language: 'yaml', ignoreIllegals: true}).value;
+            return '<span class="plaintext">' + this._preserveSpacing(html) + '</span>';
+        } else if( extension == "json" ) {
+            let html = hljs.highlight(text, {language: 'json', ignoreIllegals: true}).value;
+            return '<span class="plaintext">' + this._preserveSpacing(html) + '</span>';
+        } else if( extension == "php" || extension == "php4" || extension == "php5" ) {
+            let html = hljs.highlight(text, {language: 'php', ignoreIllegals: true}).value;
+            return '<span class="plaintext">' + this._preserveSpacing(html) + '</span>';
+        } else if( extension == "rs" ) {
+            let html = hljs.highlight(text, {language: 'rust', ignoreIllegals: true}).value;
+            return '<span class="plaintext">' + this._preserveSpacing(html) + '</span>';
+        } else if( extension == "java" ) {
+            let html = hljs.highlight(text, {language: 'java', ignoreIllegals: true}).value;
+            return '<span class="plaintext">' + this._preserveSpacing(html) + '</span>';
         } else {
             // Raw text formatting.
             let html = escapeHtml(text);
-            html = html.replaceAll("\n", "<br />");
-            html = html.replaceAll("  ", "&nbsp;&nbsp;");
-            return '<span class="plaintext">' + html + '</span>';
+            return '<span class="plaintext">' + this._preserveSpacing(html) + '</span>';
         }
+    }
+
+    /**
+     * Helper for recognizing text types based on mimetype.
+     */
+    _isText( mt ) {
+        mt = mt.toLowerCase();
+        if (mt.startsWith("text/")) {
+            return true;
+        }
+        if (mt == "application/json") {
+            return true;
+        }
+        if (mt == "application/javascript") {
+            return true;
+        }
+
+        return false;
     }
 
     /**
@@ -1303,7 +1374,7 @@ class Messages {
             mimetypes.push(attachment.mimetype);
         });
         const allImages = mimetypes.every((mt) => mt.startsWith("image/"));
-        const allText = mimetypes.every((mt) => mt.startsWith("text/"));
+        const allText = mimetypes.every((mt) => this._isText(mt));
         const desiredHeight = (attachments.length == 1 && allImages) ? 300 : 100;
         const textInline = attachments.length == 1 && allText && attachments[0].preview;
 

@@ -1,0 +1,19 @@
+.hljs-keyword {
+    color: light-dark(#a86e02, #f2b611);
+}
+
+.hljs-built_in, .hljs-type, .hljs-literal {
+    color: light-dark(#0773ba, #4bb4fa);
+}
+
+.hljs-number, .hljs-regexp, .hljs-string {
+    color: light-dark(#cc1010, #db3535);
+}
+
+.hljs-char.escape, .hljs-variable.language {
+    color: light-dark(#a723db, #a723db);
+}
+
+.hljs-comment {
+    color: light-dark(#0a8f2b, #179933);
+}

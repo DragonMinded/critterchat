@@ -95,9 +95,6 @@ class AttachmentService:
         # mime types in the interim until we support those upload types.
         return content_type in self.__config.attachments.allowed_mime_types
 
-        # Unrecognized so unsupported.
-        return False
-
     def get_content_category(self, content_type: str) -> str:
         content_type = content_type.lower()
 
@@ -426,7 +423,8 @@ class AttachmentService:
         return data, width, height, content_type
 
     def resolve_attachment_preview(self, attachment: Attachment) -> Attachment:
-        if attachment.mimetype.lower()[:5] == "text/":
+        lowered = attachment.mimetype.lower()
+        if lowered[:5] == "text/" or lowered in {"application/json", "application/javascript"}:
             # Look up the attachment data itself for the attachment preview.
             content_type_and_data = self.get_attachment_data(attachment.id)
             if content_type_and_data:

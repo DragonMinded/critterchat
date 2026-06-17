@@ -65,6 +65,7 @@ attachments:
   # shared.
   allowed_mime_types:
     - "application/json"
+    - "application/javascript"
     - "application/pdf"
 
 limits:
