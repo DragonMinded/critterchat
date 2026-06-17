@@ -1,6 +1,8 @@
 TODO Immediate
 ==============
 
+ - Figure out how to make binary and text files have the original name in the attachment name.
+
 TODO Low Priority
 =================
 
