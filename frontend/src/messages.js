@@ -1302,7 +1302,11 @@ class Messages {
         } else if( extension == "css" ) {
             let html = hljs.highlight(text, {language: 'css', ignoreIllegals: true}).value;
             return '<span class="plaintext">' + this._preserveSpacing(html) + '</span>';
-        } else if( extension == "htm" || extension == "html" || extension == "xhtml" || extension == "html5" ) {
+        } else if(
+            extension == "htm" || extension == "html" ||
+            extension == "xhtml" || extension == "html5" ||
+            extension == "shtml"
+        ) {
             let html = hljs.highlight(text, {language: 'html', ignoreIllegals: true}).value;
             return '<span class="plaintext">' + this._preserveSpacing(html) + '</span>';
         } else if( extension == "js" || extension == "jsx" ) {
@@ -1331,7 +1335,10 @@ class Messages {
         } else if( extension == "json" ) {
             let html = hljs.highlight(text, {language: 'json', ignoreIllegals: true}).value;
             return '<span class="plaintext">' + this._preserveSpacing(html) + '</span>';
-        } else if( extension == "php" || extension == "php4" || extension == "php5" ) {
+        } else if(
+            extension == "php" || extension == "php3" ||
+            extension == "php4" || extension == "php5"
+        ) {
             let html = hljs.highlight(text, {language: 'php', ignoreIllegals: true}).value;
             return '<span class="plaintext">' + this._preserveSpacing(html) + '</span>';
         } else if( extension == "rs" ) {
