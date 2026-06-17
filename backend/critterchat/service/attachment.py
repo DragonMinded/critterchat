@@ -425,6 +425,20 @@ class AttachmentService:
 
         return data, width, height, content_type
 
+    def resolve_attachment_preview(self, attachment: Attachment) -> Attachment:
+        if attachment.mimetype.lower()[:5] == "text/":
+            # Look up the attachment data itself for the attachment preview.
+            content_type_and_data = self.get_attachment_data(attachment.id)
+            if content_type_and_data:
+                _, data = content_type_and_data
+                try:
+                    preview = data.decode('utf-8')
+                    attachment.preview = preview
+                except Exception:
+                    pass
+
+        return attachment
+
     def resolve_user_icon(self, user: User) -> User:
         if user.iconid is None:
             user.icon = self.get_attachment_url(DefaultAvatarID)

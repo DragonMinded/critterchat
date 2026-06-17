@@ -377,6 +377,15 @@ const getExt = function(path) {
     return fileparts.length > 0 ? fileparts.join(".") : "file";
 }
 
+/**
+ * Given an absolute or relative file path (unix or windows), get the filename
+ * itself without the path.
+ */
+const getFilename = function(path) {
+    const parts = path.includes("\\") ? path.split("\\") : path.split("/");
+    return parts[parts.length - 1];
+}
+
 export {
     escapeHtml,
     formatTime,
@@ -392,4 +401,5 @@ export {
     highlightStandaloneText,
     findElement,
     getExt,
+    getFilename,
 };

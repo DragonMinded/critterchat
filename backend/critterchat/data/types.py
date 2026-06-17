@@ -291,11 +291,15 @@ class Attachment:
         uri: str,
         mimetype: str,
         metadata: dict[MetadataType, object],
+        filename: str | None = None,
+        preview: str | None = None,
     ) -> None:
         self.id = attachmentid
         self.uri = uri
         self.mimetype = mimetype
         self.metadata = metadata
+        self.filename = filename
+        self.preview = preview
 
     def clone(self) -> "Attachment":
         return Attachment(
@@ -303,10 +307,12 @@ class Attachment:
             self.uri,
             self.mimetype,
             {**self.metadata},
+            self.filename,
+            self.preview,
         )
 
     def to_dict(self) -> dict[str, object]:
-        return {
+        retval: dict[str, object] = {
             # Intentionally don't include ID here because doing so along with the URI could allow
             # an attacker to reverse the URI hash and enumerate attachments by ID. This could
             # expose private attachments to URI guessing.
@@ -314,6 +320,12 @@ class Attachment:
             "mimetype": self.mimetype,
             "metadata": self.metadata,
         }
+
+        if self.preview:
+            retval["preview"] = self.preview
+        if self.filename:
+            retval["filename"] = self.filename
+        return retval
 
     @staticmethod
     def from_id(attachmentid: AttachmentID) -> str:

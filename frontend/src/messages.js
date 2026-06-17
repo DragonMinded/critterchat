@@ -11,6 +11,7 @@ import {
     highlightStandaloneText,
     findElement,
     getExt,
+    getFilename,
 } from "./utils.js";
 import { EmojiSearch } from "./components/emojisearch.js";
 import { autocomplete } from "./components/autocomplete.js";
@@ -44,6 +45,8 @@ class Messages {
         this.screenState = screenState;
         this.size = initialSize;
         this.visibility = initialVisibility;
+        this.nonce = 1;
+        this.previews = new Map();
         this.connected = false;
         this.messages = [];
         this.occupants = [];
@@ -123,6 +126,35 @@ class Messages {
             this.autoscroll = scrollTop(box[0]) >= (scrollTopMax(box[0]) - 5);
             if (this.autoscroll) {
                 $( 'div.new-messages-alert' ).css( 'display', 'none' );
+            }
+        });
+
+        // Universal controls for any expand/collapse buttons on text previews.
+        $( document ).on("click", "button.attachment.preview", (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            event.stopImmediatePropagation();
+
+            const jqe = $(event.target);
+            const id = $(jqe).attr('data-id');
+            if (id) {
+                const target = $('pre#' + id);
+                const full = !target.hasClass('shortened');
+                const details = this.previews.get(id);
+
+                if (target && details) {
+                    if (full) {
+                        $(target).addClass('shortened');
+                        $(target).html(details.shortened);
+                        $("button.attachment.preview.expanded[data-id='" + id + "']").removeClass('active');
+                        $("button.attachment.preview.collapsed[data-id='" + id + "']").addClass('active');
+                    } else {
+                        $(target).removeClass('shortened');
+                        $(target).html(details.full);
+                        $("button.attachment.preview.expanded[data-id='" + id + "']").addClass('active');
+                        $("button.attachment.preview.collapsed[data-id='" + id + "']").removeClass('active');
+                    }
+                }
             }
         });
 
@@ -1232,16 +1264,24 @@ class Messages {
             mimetypes.push(attachment.mimetype);
         });
         const allImages = mimetypes.every((mt) => mt.startsWith("image/"));
+        const allText = mimetypes.every((mt) => mt.startsWith("text/"));
         const desiredHeight = (attachments.length == 1 && allImages) ? 300 : 100;
+        const textInline = attachments.length == 1 && allText && attachments[0].preview;
 
         var html = '<div class="attachments" id="' + message.id + '">';
 
         attachments.forEach((attachment) => {
+            const ext = getExt(new URL(attachment.uri).pathname);
+
             if (attachment.mimetype.startsWith("image/")) {
                 // Image attachment.
                 var attachImg = $(
-                    '<img class="attachment" src="' + attachment.uri + '"' + this._getDims(attachment, desiredHeight) + '/>'
-                ).attr('alt', attachment.metadata.alt_text || "message attachment");
+                    '<img class="attachment"' + this._getDims(attachment, desiredHeight) + '/>'
+                ).attr(
+                    'alt', attachment.metadata.alt_text || "message attachment"
+                ).attr(
+                    'src', attachment.uri
+                );
 
                 if (attachment.metadata.sensitive) {
                     attachImg = attachImg.addClass('blurred');
@@ -1251,7 +1291,7 @@ class Messages {
                     attachImg = attachImg.attr('title', attachment.metadata.alt_text);
                 }
 
-                html += '<a target="_blank" href="' + attachment.uri + '">';
+                html += '<a target="_blank" class="attachment thumbnail" href="' + attachment.uri + '">';
                 html += '  ' + attachImg.prop('outerHTML');
 
                 if (attachment.metadata.sensitive) {
@@ -1259,11 +1299,56 @@ class Messages {
                 }
 
                 html += '</a>';
+            } else if(textInline) {
+                // Text-based attachment that we can render inline.
+                const preview = attachment.preview.replace(/\r\n/g,"\n").replace(/\r/g,"\n");
+                const lines = preview.split("\n");
+                const filename = attachment.filename || getFilename(new URL(attachment.uri).pathname);
+
+                // Doesn't matter what the nonce is, just that we have a unique nonce for expanding/collapsing.
+                const nonce = this.nonce;
+                this.nonce += 1;
+
+                if (lines.length <= 15) {
+                    let attachTxt = $(
+                        '<pre class="attachment preview" />'
+                    ).attr(
+                        'id', 'preview-' + nonce
+                    ).attr(
+                        'src', attachment.uri
+                    ).html(escapeHtml(preview));
+
+                    html += '<div class="attachment preview header">';
+                    html += '<div><a target="_blank" class="attachment preview" href="' + attachment.uri + '">';
+                    html += $('<span />').text(filename).prop('outerHTML');
+                    html += '</a></div>';
+                    html += '</div>';
+                    html += attachTxt.prop('outerHTML');
+                } else {
+                    var actual = escapeHtml(lines.slice(0, 15).join("\n"));
+                    var id = 'preview-' + nonce;
+                    this.previews.set(id, {'shortened': actual, 'full': escapeHtml(preview)});
+
+                    let attachTxt = $(
+                        '<pre class="attachment preview shortened" />'
+                    ).attr(
+                        'id', id
+                    ).attr(
+                        'src', attachment.uri
+                    ).html(actual);
+
+                    html += '<div class="attachment preview header">';
+                    html += '<div><a target="_blank" class="attachment preview" href="' + attachment.uri + '">';
+                    html += $('<span />').text(filename).prop('outerHTML');
+                    html += '</a></div>';
+                    html += '<button class="attachment preview active collapsed" data-id="' + id + '">expand</button>';
+                    html += '<button class="attachment preview expanded" data-id="' + id + '">collapse</button>';
+                    html += '</div>';
+                    html += attachTxt.prop('outerHTML');
+                }
             } else {
                 // Arbitrary attachment.
-                const ext = getExt(new URL(attachment.uri).pathname);
-
-                html += '<a target="_blank" href="' + attachment.uri + '">';
+                html += '<a target="_blank" class="attachment file" href="' + attachment.uri + '">';
                 html += '  <div class="file"><div class="name">';
                 html += '    ' + escapeHtml(ext);
                 html += '  </div></div>';

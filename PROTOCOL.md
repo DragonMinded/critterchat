@@ -105,6 +105,8 @@ An attachment, such as an image or a downloadable file. Actions can have zero or
  - `uri` - A string URI where a browser or HTTP client can download the attachment from.
  - `mimetype` - The mime type or content type of the attachment itself. Useful for clients that wish to display different types of attachments differently.
  - `metadata` - A JSON object containing metadata about the attachment. For images, this includes the `width` and `height` attributes which represent the image's width and height after accounting for image orientation. For all attachments, an optional `alt_text` attribute can be present which is a string representing alt text for the attachment. For all attachments, an optional `sensitive` attribute can be present which is a boolean representing if the attachment is sensitive and the preview should be blurred by default.
+ - `preview` - A string preview of the attachment, if it is available. Right now this is only present on text attachments (attachments that have a mimetype starting with `text/`) and will be the contents of the text file for displaying a preview directly in chat. If this is not available or not applicable to the attachment type, this attribute will be left off to save space.
+ - `filename` - A string representing the original upload filename of the attachment, if it is available. If the original filename is not available this attribute will be left off to save space.
 
 ### action
 

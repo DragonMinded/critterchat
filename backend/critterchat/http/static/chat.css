@@ -1239,6 +1239,7 @@ div.conversation div.item div.content-wrapper {
     display: flex;
     flex-direction: column;
     flex-grow: 1;
+    width: 100%;
 }
 
 div.conversation div.item div.meta-wrapper {
@@ -1317,6 +1318,61 @@ div.conversation div.item div.attachments div.file div.name {
     background: var(--message-attachment-background);
     color: var(--message-attachment-text);
     filter: drop-shadow(2px 2px 1px);
+}
+
+div.conversation div.item div.attachments pre.preview {
+    font-size: var(--application-text-size-14);
+    overflow: auto;
+    margin: 0px;
+    border-left: 1px solid var(--message-attachment-preview-border);
+    border-right: 1px solid var(--message-attachment-preview-border);
+    border-bottom: 1px solid var(--message-attachment-preview-border);
+    background: var(--message-attachment-preview-background);
+    color: var(--message-attachment-preview-text);
+    padding: var(--application-item-padding);
+    width: 100%;
+}
+
+div.conversation div.item div.attachments pre.preview.shortened {
+    -webkit-mask-image: linear-gradient(to bottom, black 90%, transparent 100%);
+    mask-image: linear-gradient(to bottom, black 90%, transparent 100%);
+}
+
+div.conversation div.item div.attachments div.attachment.preview.header {
+    display: flex;
+    flex-direction: row;
+    gap: var(--application-item-padding);
+    font-size: var(--application-text-size-14);
+    border-top: 1px solid var(--message-attachment-preview-border);
+    border-left: 1px solid var(--message-attachment-preview-border);
+    border-right: 1px solid var(--message-attachment-preview-border);
+    background: var(--message-attachment-preview-background);
+    margin-bottom: calc(var(--message-attachment-padding) * -1);
+    padding: var(--application-item-padding);
+    padding-bottom: 0px;
+    width: 100%;
+}
+
+div.conversation div.item div.attachments button.attachment.preview {
+    border: 1px solid transparent;
+    background: transparent;
+    font-size: var(--application-text-size-14);
+    cursor: pointer;
+}
+
+div.conversation div.item div.attachments button.attachment.preview:focus-visible {
+    border: 1px solid var(--button-border);
+    border-radius: var(--input-border-radius);
+}
+
+div.conversation div.item div.attachments button.attachment.preview:not(.active) {
+    display: none;
+}
+
+div.conversation div.item div.attachments div.attachment.preview.header > div {
+    flex-grow: 1;
+    display: flex;
+    align-items: center;
 }
 
 div.conversation div.item div.attachments a div.blurred {
@@ -1855,6 +1911,7 @@ button.emoji-search:hover, button.emoji-search:focus-visible, button.emoji-searc
 div.newseparator > div.content-wrapper {
     display: flex;
     flex-direction: row;
+    width: 100%;
 }
 
 div.newseparator div.newline {

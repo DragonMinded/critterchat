@@ -73,11 +73,14 @@ class MessageService:
             attachments: list[Attachment] = []
             for actionattachment in actionattachments:
                 attachments.append(
-                    Attachment(
-                        actionattachment.attachmentid,
-                        self.__attachments.get_attachment_url(actionattachment.attachmentid),
-                        actionattachment.content_type,
-                        actionattachment.metadata,
+                    self.__attachments.resolve_attachment_preview(
+                        Attachment(
+                            actionattachment.attachmentid,
+                            self.__attachments.get_attachment_url(actionattachment.attachmentid),
+                            actionattachment.content_type,
+                            actionattachment.metadata,
+                            filename=actionattachment.original_filename,
+                        )
                     )
                 )
             action.attachments = attachments
@@ -176,11 +179,14 @@ class MessageService:
 
             attachmentids.append(adata.id)
             response_attachments.append(
-                Attachment(
-                    adata.id,
-                    self.__attachments.get_attachment_url(adata.id),
-                    adata.content_type,
-                    adata.metadata,
+                self.__attachments.resolve_attachment_preview(
+                    Attachment(
+                        adata.id,
+                        self.__attachments.get_attachment_url(adata.id),
+                        adata.content_type,
+                        adata.metadata,
+                        filename=adata.original_filename,
+                    )
                 )
             )
 

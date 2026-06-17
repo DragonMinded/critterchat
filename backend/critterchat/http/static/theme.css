@@ -67,6 +67,9 @@
     --message-attachment-text: light-dark(#000000, #ffffff);
     --message-attachment-background: light-dark(#dddddd, #888888);
     --message-attachment-border: light-dark(#222222, #dfdfdf);
+    --message-attachment-preview-text: light-dark(#000000, #dddddd);
+    --message-attachment-preview-border: light-dark(#bcbcbc, #6d6d6d);
+    --message-attachment-preview-background: light-dark(#ffffff, #1c1c1c);
 
     --error-border: light-dark(#b3b3b3, #1c1c1c);
     --error-error: light-dark(#e4a7a7, #d77575);

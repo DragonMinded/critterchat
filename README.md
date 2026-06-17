@@ -120,3 +120,5 @@ For in-depth documentation on hosting a production instance, please see
 [PRODUCTION.md](PRODUCTION.md).
 
 For an administrator's manual, please see [ADMINISTRATION.md](ADMINISTRATION.md).
+
+For documentation around the server-client protocol, please see [PROTOCOL.md](PROTOCOL.md).
