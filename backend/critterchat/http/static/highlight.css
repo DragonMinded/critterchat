@@ -1,8 +1,8 @@
-.hljs-keyword {
+.hljs-keyword, .hljs-selector-tag {
     color: light-dark(#a86e02, #f2b611);
 }
 
-.hljs-built_in, .hljs-type, .hljs-literal {
+.hljs-built_in, .hljs-type, .hljs-literal, .hljs-selector-class {
     color: light-dark(#0773ba, #4bb4fa);
 }
 
@@ -10,8 +10,8 @@
     color: light-dark(#cc1010, #db3535);
 }
 
-.hljs-char.escape, .hljs-variable.language {
-    color: light-dark(#a723db, #a723db);
+.hljs-char.escape, .hljs-variable.language, .hljs-selector-attr, .hlj-selector-id, .hljs-selector-pseudo {
+    color: light-dark(#a723db, #ad37db);
 }
 
 .hljs-comment {
