@@ -1,5 +1,7 @@
 import $ from "jquery";
 import linkifyHtml from "linkify-html";
+import { marked } from 'marked';
+import DOMPurify from 'dompurify';
 
 import {
     escapeHtml,
@@ -30,6 +32,9 @@ const searchOptions = {
         };
     },
 };
+
+const previewLines = 10;
+const maxCombined = 10;
 
 /**
  * The class responsible for the chat pane in the center of the screen. This currently
@@ -138,7 +143,7 @@ class Messages {
             const jqe = $(event.target);
             const id = $(jqe).attr('data-id');
             if (id) {
-                const target = $('pre#' + id);
+                const target = $('div#' + id);
                 const full = !target.hasClass('shortened');
                 const details = this.previews.get(id);
 
@@ -1256,6 +1261,40 @@ class Messages {
     }
 
     /**
+     * Shortens a text attachment for collapsed preview.
+     */
+    _shortenText( extension, lines ) {
+        if ( extension == "md" ) {
+            // Markdown formatting, have to keep definitions which can be at the end.
+            var kept = lines.slice(0, previewLines).join("\n");
+            kept = kept.replaceAll("!!!!!", "&excl;&excl;&excl;&excl;&excl;");
+            kept += "\n\n!!!!!\n\n";
+            kept += lines.slice(previewLines).join("\n");
+
+            var formatted = this._formatText(extension, kept);
+            return formatted.split("<p>!!!!!</p>")[0];
+        } else {
+            return this._formatText(extension, lines.slice(0, previewLines).join("\n"));
+        }
+    }
+
+    /**
+     * Formats a text attachment for display.
+     */
+    _formatText( extension, text ) {
+        if ( extension == "md" ) {
+            // Markdown formatting.
+            return DOMPurify.sanitize(marked.parse(text));
+        } else {
+            // Raw text formatting.
+            let html = escapeHtml(text);
+            html = html.replaceAll("\n", "<br />");
+            html = html.replaceAll("  ", "&nbsp;&nbsp;");
+            return '<span class="plaintext">' + html + '</span>';
+        }
+    }
+
+    /**
      * Draws the attachments for a given message.
      */
     _drawAttachments( message, attachments ) {
@@ -1271,7 +1310,7 @@ class Messages {
         var html = '<div class="attachments" id="' + message.id + '">';
 
         attachments.forEach((attachment) => {
-            const ext = getExt(new URL(attachment.uri).pathname);
+            const ext = getExt(new URL(attachment.uri).pathname).toLowerCase();
 
             if (attachment.mimetype.startsWith("image/")) {
                 // Image attachment.
@@ -1301,7 +1340,7 @@ class Messages {
                 html += '</a>';
             } else if(textInline) {
                 // Text-based attachment that we can render inline.
-                const preview = attachment.preview.replace(/\r\n/g,"\n").replace(/\r/g,"\n");
+                const preview = attachment.preview.replaceAll(/\r\n/g,"\n").replaceAll(/\r/g,"\n");
                 const lines = preview.split("\n");
                 const filename = attachment.filename || getFilename(new URL(attachment.uri).pathname);
 
@@ -1309,35 +1348,35 @@ class Messages {
                 const nonce = this.nonce;
                 this.nonce += 1;
 
-                if (lines.length <= 15) {
+                if (lines.length <= previewLines) {
                     let attachTxt = $(
-                        '<pre class="attachment preview" />'
+                        '<div class="attachment preview" />'
                     ).attr(
                         'id', 'preview-' + nonce
                     ).attr(
                         'src', attachment.uri
-                    ).html(escapeHtml(preview));
+                    ).html(this._formatText(ext, preview));
 
-                    html += '<div class="attachment preview header">';
+                    html += '<div class="attachment preview-header">';
                     html += '<div><a target="_blank" class="attachment preview" href="' + attachment.uri + '">';
                     html += $('<span />').text(filename).prop('outerHTML');
                     html += '</a></div>';
                     html += '</div>';
                     html += attachTxt.prop('outerHTML');
                 } else {
-                    var actual = escapeHtml(lines.slice(0, 15).join("\n"));
+                    var actual = this._shortenText(ext, lines);
                     var id = 'preview-' + nonce;
-                    this.previews.set(id, {'shortened': actual, 'full': escapeHtml(preview)});
+                    this.previews.set(id, {'shortened': actual, 'full': this._formatText(ext, preview)});
 
                     let attachTxt = $(
-                        '<pre class="attachment preview shortened" />'
+                        '<div class="attachment preview shortened" />'
                     ).attr(
                         'id', id
                     ).attr(
                         'src', attachment.uri
                     ).html(actual);
 
-                    html += '<div class="attachment preview header">';
+                    html += '<div class="attachment preview-header">';
                     html += '<div><a target="_blank" class="attachment preview" href="' + attachment.uri + '">';
                     html += $('<span />').text(filename).prop('outerHTML');
                     html += '</a></div>';
@@ -1737,7 +1776,7 @@ class Messages {
                 }
                 // Next, if we've combined more than 10 messages in a row, split out to a new
                 // message.
-                else if (combined >= 10) {
+                else if (combined >= maxCombined) {
                     firstTimestamp = timestamp;
                     combined = 1;
                 }

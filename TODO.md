@@ -1,8 +1,7 @@
 TODO Immediate
 ==============
 
- - Markdown/code formatter display for text attachments.
-   - highlight.js for code, marked for markdown.
+ - Code formatter display for text attachments, using highlight.js.
 
 TODO Low Priority
 =================
