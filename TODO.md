@@ -2,6 +2,7 @@ TODO Immediate
 ==============
 
  - Arbitrary attachment "thumbnails" should show the original filename.
+ - Cap super long filenames in text display.
 
 TODO Low Priority
 =================
