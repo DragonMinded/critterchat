@@ -10,3 +10,7 @@ flake8
 pytest
 pytest-cov
 freezegun
+
+setuptools
+build
+twine
