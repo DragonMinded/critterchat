@@ -766,24 +766,32 @@ div.uploadpicker-container div.upload > div.file {
     width: var(--attachment-picker-item-height);
     height: var(--attachment-picker-item-height);
     display: flex;
+    flex-direction: column;
+    padding: var(--application-item-padding);
     border: 1px solid var(--button-border);
     border-radius: var(--button-border-radius);
     background: var(--button-background);
-    justify-content: center;
-    align-items: center;
 }
 
 div.uploadpicker-container div.upload > div.file div.name {
+    flex-grow: 1;
+    overflow: hidden;
+    overflow-wrap: break-word;
+    word-break: break-word;
+}
+
+div.uploadpicker-container div.upload > div.file div.ext {
     display: flex;
-    width: 45%;
-    height: 45%;
+    flex-shrink: 0;
+    width: 35%;
+    height: 35%;
     justify-content: center;
     align-items: center;
     border-radius: var(--button-border-radius);
     border: 1px solid var(--message-attachment-border);
     background: var(--message-attachment-background);
     color: var(--message-attachment-text);
-    filter: drop-shadow(2px 2px 1px);
+    margin-left: auto;
 }
 
 div.uploadpicker-container div.upload div.delete-container {
@@ -1295,11 +1303,11 @@ div.conversation div.item div.attachments div.file {
     width: var(--message-attachment-width);
     height: var(--message-attachment-height);
     display: flex;
+    flex-direction: column;
+    padding: var(--application-item-padding);
     border: 1px solid var(--button-border);
     border-radius: var(--button-border-radius);
     background: var(--button-background);
-    justify-content: center;
-    align-items: center;
 }
 
 div.conversation div.item div.attachments div.file:hover, div.conversation div.item div.attachments a:focus-visible div.file {
@@ -1308,16 +1316,24 @@ div.conversation div.item div.attachments div.file:hover, div.conversation div.i
 }
 
 div.conversation div.item div.attachments div.file div.name {
+    flex-grow: 1;
+    overflow: hidden;
+    overflow-wrap: break-word;
+    word-break: break-word;
+}
+
+div.conversation div.item div.attachments div.file div.ext {
     display: flex;
-    width: 45%;
-    height: 45%;
+    flex-shrink: 0;
+    width: 35%;
+    height: 35%;
     justify-content: center;
     align-items: center;
     border-radius: var(--button-border-radius);
     border: 1px solid var(--message-attachment-border);
     background: var(--message-attachment-background);
     color: var(--message-attachment-text);
-    filter: drop-shadow(2px 2px 1px);
+    margin-left: auto;
 }
 
 div.conversation div.item div.attachments div.preview {

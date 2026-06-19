@@ -1,5 +1,5 @@
 import $ from "jquery";
-import { flash, getExt } from "../utils.js";
+import { flash, getExt, getFilename } from "../utils.js";
 import { displayAltTextEditor } from "../modals/alttextmodal.js";
 
 class UploadPicker {
@@ -232,6 +232,7 @@ class UploadPicker {
         room.files.forEach((upload, idx) => {
             const isImage = upload.mimetype.startsWith("image/");
             const ext = getExt(upload.filename);
+            const shortenedFile = getFilename(upload.filename);
 
             // The item itself.
             const item = $('<div class="upload"></div>')
@@ -249,6 +250,10 @@ class UploadPicker {
                     .appendTo(item);
                 $('<div />')
                     .attr('class', 'name')
+                    .text(shortenedFile)
+                    .appendTo(outerFile);
+                $('<div />')
+                    .attr('class', 'ext')
                     .text(ext)
                     .appendTo(outerFile);
             }

@@ -1383,12 +1383,13 @@ class Messages {
         const allImages = mimetypes.every((mt) => mt.startsWith("image/"));
         const allText = mimetypes.every((mt) => this._isText(mt));
         const desiredHeight = (attachments.length == 1 && allImages) ? 300 : 100;
-        const textInline = attachments.length == 1 && allText && attachments[0].preview;
+        const textInline = (attachments.length == 1) && allText && attachments[0].preview;
 
         var html = '<div class="attachments" id="' + message.id + '">';
 
         attachments.forEach((attachment) => {
             const ext = getExt(new URL(attachment.uri).pathname).toLowerCase();
+            const filename = attachment.filename || getFilename(new URL(attachment.uri).pathname);
 
             if (attachment.mimetype.startsWith("image/")) {
                 // Image attachment.
@@ -1420,7 +1421,6 @@ class Messages {
                 // Text-based attachment that we can render inline.
                 const preview = attachment.preview.replaceAll(/\r\n/g,"\n").replaceAll(/\r/g,"\n");
                 const lines = preview.split("\n");
-                const filename = attachment.filename || getFilename(new URL(attachment.uri).pathname);
 
                 // Doesn't matter what the nonce is, just that we have a unique nonce for expanding/collapsing.
                 const nonce = this.nonce;
@@ -1466,7 +1466,11 @@ class Messages {
             } else {
                 // Arbitrary attachment.
                 html += '<a target="_blank" class="attachment file" href="' + attachment.uri + '">';
-                html += '  <div class="file"><div class="name">';
+                html += '  <div class="file">';
+                html += '  <div class="name">';
+                html += '    ' + escapeHtml(filename);
+                html += '  </div>';
+                html += '  <div class="ext">';
                 html += '    ' + escapeHtml(ext);
                 html += '  </div></div>';
                 html += '</a>';
