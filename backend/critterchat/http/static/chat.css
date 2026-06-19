@@ -601,76 +601,6 @@ li.info {
     background: var(--error-info);
 }
 
-div.maskable, button.maskable {
-    display: inline-block;
-    background-color: currentColor;
-    mask-size: contain;
-    mask-repeat: no-repeat;
-}
-
-div.maskable.close-svg {
-    width: 1.3em;
-    height: 1.3em;
-    margin-bottom: -0.25em;
-    mask-image: url('close.svg');
-}
-
-div.maskable.search-svg {
-    width: 1.3em;
-    height: 1.3em;
-    margin-bottom: -0.25em;
-    mask-image: url('search.svg');
-}
-
-div.maskable.invite-svg {
-    width: 1.3em;
-    height: 1.3em;
-    margin-bottom: -0.25em;
-    mask-image: url('invite.svg');
-}
-
-div.maskable.edit-svg {
-    width: 1.3em;
-    height: 1.3em;
-    margin-bottom: -0.25em;
-    mask-image: url('edit.svg');
-}
-
-div.maskable.leave-svg {
-    width: 1.3em;
-    height: 1.3em;
-    margin-bottom: -0.25em;
-    mask-image: url('leave.svg');
-}
-
-div.maskable.logout-svg {
-    width: 1.3em;
-    height: 1.3em;
-    margin-bottom: -0.25em;
-    mask-image: url('logout.svg');
-}
-
-div.maskable.preview {
-    width: 1.3em;
-    height: 1.3em;
-    margin-bottom: -0.25em;
-    mask-image: url('preview.svg');
-}
-
-div.maskable.cancel {
-    width: 1.3em;
-    height: 1.3em;
-    margin-bottom: -0.25em;
-    mask-image: url('cancel.svg');
-}
-
-div.maskable.delete {
-    width: 1.3em;
-    height: 1.3em;
-    margin-bottom: -0.25em;
-    mask-image: url('delete.svg');
-}
-
 button.maskable.attachment-picker {
     width: 1.2em;
     height: 1.2em;
@@ -1325,15 +1255,11 @@ div.conversation div.item div.attachments div.file div.name {
 div.conversation div.item div.attachments div.file div.ext {
     display: flex;
     flex-shrink: 0;
-    width: 35%;
-    height: 35%;
-    justify-content: center;
-    align-items: center;
-    border-radius: var(--button-border-radius);
-    border: 1px solid var(--message-attachment-border);
-    background: var(--message-attachment-background);
+    width: 25%;
+    height: 25%;
     color: var(--message-attachment-text);
     margin-left: auto;
+    margin-bottom: var(--application-item-padding);
 }
 
 div.conversation div.item div.attachments div.preview {

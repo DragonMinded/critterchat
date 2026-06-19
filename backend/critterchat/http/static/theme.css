@@ -112,3 +112,108 @@ body.light {
 body.dark {
     color-scheme: dark ! important;
 }
+
+div.maskable, button.maskable {
+    display: inline-block;
+    background-color: currentColor;
+    mask-size: contain;
+    mask-repeat: no-repeat;
+}
+
+div.maskable.close-svg {
+    width: 1.3em;
+    height: 1.3em;
+    margin-bottom: -0.25em;
+    mask-image: url('close.svg');
+}
+
+div.maskable.search-svg {
+    width: 1.3em;
+    height: 1.3em;
+    margin-bottom: -0.25em;
+    mask-image: url('search.svg');
+}
+
+div.maskable.invite-svg {
+    width: 1.3em;
+    height: 1.3em;
+    margin-bottom: -0.25em;
+    mask-image: url('invite.svg');
+}
+
+div.maskable.edit-svg {
+    width: 1.3em;
+    height: 1.3em;
+    margin-bottom: -0.25em;
+    mask-image: url('edit.svg');
+}
+
+div.maskable.leave-svg {
+    width: 1.3em;
+    height: 1.3em;
+    margin-bottom: -0.25em;
+    mask-image: url('leave.svg');
+}
+
+div.maskable.logout-svg {
+    width: 1.3em;
+    height: 1.3em;
+    margin-bottom: -0.25em;
+    mask-image: url('logout.svg');
+}
+
+div.maskable.preview {
+    width: 1.3em;
+    height: 1.3em;
+    margin-bottom: -0.25em;
+    mask-image: url('preview.svg');
+}
+
+div.maskable.cancel {
+    width: 1.3em;
+    height: 1.3em;
+    margin-bottom: -0.25em;
+    mask-image: url('cancel.svg');
+}
+
+div.maskable.delete {
+    width: 1.3em;
+    height: 1.3em;
+    margin-bottom: -0.25em;
+    mask-image: url('delete.svg');
+}
+
+div.maskable.file-audio {
+    width: 1.3em;
+    height: 1.3em;
+    margin-bottom: -0.25em;
+    mask-image: url('file-audio.svg');
+}
+
+div.maskable.file-binary {
+    width: 1.3em;
+    height: 1.3em;
+    margin-bottom: -0.25em;
+    mask-image: url('file-binary.svg');
+}
+
+div.maskable.file-photo {
+    width: 1.3em;
+    height: 1.3em;
+    margin-bottom: -0.25em;
+    mask-image: url('file-photo.svg');
+}
+
+div.maskable.file-text {
+    width: 1.3em;
+    height: 1.3em;
+    margin-bottom: -0.25em;
+    mask-image: url('file-text.svg');
+}
+
+div.maskable.file-video {
+    width: 1.3em;
+    height: 1.3em;
+    margin-bottom: -0.25em;
+    mask-image: url('file-video.svg');
+}

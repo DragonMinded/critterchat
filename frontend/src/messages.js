@@ -1376,6 +1376,27 @@ class Messages {
     }
 
     /**
+     * Helper to resolve the correct attachment image based on mimetype and filename.
+     */
+    _getAttachmentImage( ext, mt ) {
+        mt = mt.toLowerCase();
+
+        if (this._isText(mt) || mt == "application/pdf") {
+            return "file-text";
+        }
+        if (mt.startsWith("audio/")) {
+            return "file-audio";
+        }
+        if (mt.startsWith("video/")) {
+            return "file-video";
+        }
+        if (mt.startsWith("image/")) {
+            return "file-image";
+        }
+        return "file-binary";
+    }
+
+    /**
      * Draws the attachments for a given message.
      */
     _drawAttachments( message, attachments ) {
@@ -1470,12 +1491,11 @@ class Messages {
                 // Arbitrary attachment.
                 html += '<a target="_blank" class="attachment file" href="' + attachment.uri + '">';
                 html += '  <div class="file">';
-                html += '  <div class="name">';
-                html += '    ' + escapeHtml(filename);
+                html += '    <div class="name">';
+                html += '      ' + escapeHtml(filename);
+                html += '    </div>';
+                html += '    <div class="ext maskable ' + this._getAttachmentImage(ext, attachment.mimetype) + '"></div>';
                 html += '  </div>';
-                html += '  <div class="ext">';
-                html += '    ' + escapeHtml(ext);
-                html += '  </div></div>';
                 html += '</a>';
             }
         });
