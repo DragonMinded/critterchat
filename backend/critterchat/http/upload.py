@@ -209,6 +209,11 @@ def attachments_upload() -> dict[str, object]:
             _, filename = filename.rsplit("\\", 1)
         if "/" in filename:
             _, filename = filename.rsplit("/", 1)
+        if len(filename) > 255:
+            # Arbitrarily cap filename so it filts in the DB. Do it from the end
+            # instead of the beginning so we preserve any extension. Weird, I know,
+            # but at this point there's not much we can do.
+            filename = filename[-255:]
 
         header, b64data = rawdata.split(",", 1)
         if not header.startswith("data:") or not header.endswith("base64"):
@@ -246,6 +251,7 @@ def attachments_upload() -> dict[str, object]:
             if content_type != presumed_content_type:
                 # Gotta add a new extension to the file.
                 filename = filename + attachmentservice.get_extension(content_type)
+                filename = filename[-255:]
 
             # The attachment is validated at this point, so we can attach it and return the ID.
             attachmentid = attachmentservice.create_attachment(
@@ -264,6 +270,7 @@ def attachments_upload() -> dict[str, object]:
             if not ext:
                 # Gotta add a new extension to the file, it was possibly extensionless.
                 filename = filename + attachmentservice.get_extension(content_type)
+                filename = filename[-255:]
 
             # The attachment is effectively validated at this point, not much we can do with text.
             attachmentid = attachmentservice.create_attachment(
@@ -280,6 +287,7 @@ def attachments_upload() -> dict[str, object]:
             if not ext:
                 # Gotta add a new extension to the file, it was possibly extensionless.
                 filename = filename + attachmentservice.get_extension(content_type)
+                filename = filename[-255:]
 
             # Binary file that passed our configuration.
             attachmentid = attachmentservice.create_attachment(

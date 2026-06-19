@@ -57,6 +57,9 @@ class TestMessagePumpEmotes:
             Emote("b", AttachmentID(102), "local", "image/png", {MetadataType.WIDTH: 32, MetadataType.HEIGHT: 32}),
             Emote("c", AttachmentID(103), "local", "image/png", {MetadataType.WIDTH: 32, MetadataType.HEIGHT: 32}),
         ])
+        set_lambda(data.attachment.lookup_attachment, lambda aid: (
+            Attachment(aid, "local", "image/png", None, {MetadataType.WIDTH: 32, MetadataType.HEIGHT: 32})
+        ))
 
         emotes = send_emote_deltas(config, data, socketio, emotes)
 

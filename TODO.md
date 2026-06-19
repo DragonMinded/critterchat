@@ -1,7 +1,7 @@
 TODO Immediate
 ==============
 
- - Figure out how to make binary and text files have the original name in the attachment name.
+ - Arbitrary attachment "thumbnails" should show the original filename.
 
 TODO Low Priority
 =================

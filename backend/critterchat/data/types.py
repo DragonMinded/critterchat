@@ -29,6 +29,7 @@ class Migration(StrEnum):
     HASHED_ATTACHMENTS = "hashed_attachments"
     ATTACHMENT_EXTENSIONS = "attachment_extensions"
     IMAGE_DIMENSIONS = "image_dimensions"
+    ATTACHMENT_FILENAMES = "attachment_filenames"
 
 
 class UserPermission(IntEnum):

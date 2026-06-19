@@ -3,6 +3,7 @@ import hashlib
 import magic
 import mimetypes
 import os
+import re
 from PIL import Image, ImageOps
 from typing import Final, cast
 
@@ -27,6 +28,10 @@ from ..http.static import default_avatar, default_room, default_icon
 
 # Guess we need to init this. Feel like I'm doing embedded again.
 mimetypes.init()
+
+
+# Ensure we have faster sanitization.
+FILENAME_SANITIZATION_RE = re.compile("[\0\\\\/:\\*\\?\"<>|]")
 
 
 class AttachmentServiceException(Exception):
@@ -121,18 +126,43 @@ class AttachmentService:
             "application/pdf": ".pdf",
         }.get(content_type, "")
 
+    def _sanitize_filename(self, original_filename: str | None) -> str | None:
+        if not original_filename:
+            return None
+        if original_filename == "." or original_filename == "..":
+            return None
+
+        original_filename = FILENAME_SANITIZATION_RE.sub("", original_filename)
+        original_filename = original_filename.strip()
+        while original_filename and original_filename[-1] == ".":
+            original_filename = original_filename[:-1]
+        original_filename = original_filename.replace(" ", "_")
+
+        # Ensure that any extension is lowercase.
+        if "." in original_filename:
+            before, after = original_filename.rsplit(".", 1)
+            original_filename = before + "." + after.lower()
+
+        # Leave room for the hash and separator and a little more wiggle room.
+        if len(original_filename) > 200:
+            original_filename = original_filename[-200:]
+        return original_filename or None
+
     def _get_hashed_attachment_name(self, aid: AttachmentID, content_type: str, original_filename: str | None) -> str:
         # Default attachments don't get extensions.
         if aid in {DefaultAvatarID, DefaultRoomID, FaviconID}:
             return Attachment.from_id(aid)
 
-        # Extensions match based on original filename if present, and then based on content type.
-        if original_filename and "." in original_filename:
-            _, ext = os.path.splitext(original_filename)
-            ext = ext.lower()
-        else:
+        # Try to add on the original filename if we can, and otherwise add a predetermined extension.
+        ext = ""
+        if original_filename:
+            ext = self._sanitize_filename(original_filename) or ""
+        if not ext or "." not in ext:
             ext = self.get_extension(content_type)
+        if ext and ext[0] != ".":
+            ext = "." + ext
 
+        # Now, hash the attachment for a unique name and to not expose attachment IDs.
         hashkey = self.__config.attachments.attachment_key
         inval = f"{hashkey}-{Attachment.from_id(aid)}"
         hashval = hashlib.shake_256(inval.encode('utf-8')).hexdigest(20)
@@ -173,7 +203,7 @@ class AttachmentService:
 
                 return os.path.join(directory, Attachment.from_id(aid))
 
-            def _get_legacy_hashed_attachment_name(aid: AttachmentID) -> str:
+            def _get_pre_extension_hashed_attachment_name(aid: AttachmentID) -> str:
                 if aid in {DefaultAvatarID, DefaultRoomID, FaviconID}:
                     return Attachment.from_id(aid)
 
@@ -181,12 +211,36 @@ class AttachmentService:
                 inval = f"{hashkey}-{Attachment.from_id(aid)}"
                 return hashlib.shake_256(inval.encode('utf-8')).hexdigest(20)
 
-            def _get_legacy_local_attachment_path(aid: AttachmentID) -> str:
+            def _get_pre_extension_local_attachment_path(aid: AttachmentID) -> str:
                 directory = self.__config.attachments.directory
                 if not directory:
                     raise AttachmentServiceException("Cannot find directory for local attachment storage!")
 
-                return os.path.join(directory, _get_legacy_hashed_attachment_name(aid))
+                return os.path.join(directory, _get_pre_extension_hashed_attachment_name(aid))
+
+            def _get_pre_filename_hashed_attachment_name(aid: AttachmentID, content_type: str, original_filename: str | None) -> str:
+                # Default attachments don't get extensions.
+                if aid in {DefaultAvatarID, DefaultRoomID, FaviconID}:
+                    return Attachment.from_id(aid)
+
+                # Extensions match based on original filename if present, and then based on content type.
+                if original_filename and "." in original_filename:
+                    _, ext = os.path.splitext(original_filename)
+                    ext = ext.lower()
+                else:
+                    ext = self.get_extension(content_type)
+
+                hashkey = self.__config.attachments.attachment_key
+                inval = f"{hashkey}-{Attachment.from_id(aid)}"
+                hashval = hashlib.shake_256(inval.encode('utf-8')).hexdigest(20)
+                return f"{hashval}{ext}"
+
+            def _get_pre_filename_attachment_path(aid: AttachmentID, content_type: str, original_filename: str | None) -> str:
+                directory = self.__config.attachments.directory
+                if not directory:
+                    raise AttachmentServiceException("Cannot find directory for local attachment storage!")
+
+                return os.path.join(directory, _get_pre_filename_hashed_attachment_name(aid, content_type, original_filename))
 
             # Look up which of these we've done since they're expensive, skipping the work if not needed.
             finished_migrations = self.__data.migration.get_migrations()
@@ -194,7 +248,8 @@ class AttachmentService:
             if (
                 Migration.HASHED_ATTACHMENTS in finished_migrations and
                 Migration.ATTACHMENT_EXTENSIONS in finished_migrations and
-                Migration.IMAGE_DIMENSIONS in finished_migrations
+                Migration.IMAGE_DIMENSIONS in finished_migrations and
+                Migration.ATTACHMENT_FILENAMES in finished_migrations
             ):
                 # We've done all the migrations, so don't bother looking up attachments.
                 return
@@ -207,7 +262,7 @@ class AttachmentService:
                 for attachment in attachments:
                     # Local storage, copy the system default into the attachment directory if needed.
                     oldpath = _get_prehashed_local_attachment_path(attachment.id)
-                    path = _get_legacy_local_attachment_path(attachment.id)
+                    path = _get_pre_extension_local_attachment_path(attachment.id)
                     if (not os.path.isfile(path)) and os.path.isfile(oldpath):
                         with open(oldpath, "rb") as bfp1:
                             data = bfp1.read()
@@ -222,8 +277,8 @@ class AttachmentService:
                 # Next, we need to attempt to migrate from pre-extension to extension.
                 for attachment in attachments:
                     # Local storage, copy the system default into the attachment directory if needed.
-                    oldpath = _get_legacy_local_attachment_path(attachment.id)
-                    path = self._get_local_attachment_path(attachment.id, attachment.content_type, attachment.original_filename)
+                    oldpath = _get_pre_extension_local_attachment_path(attachment.id)
+                    path = _get_pre_filename_attachment_path(attachment.id, attachment.content_type, attachment.original_filename)
                     if path == oldpath:
                         # This can happen for files we don't have an original filename for and we don't
                         # have a matching extension for the mimetype (like application/octet-stream).
@@ -238,6 +293,27 @@ class AttachmentService:
 
                 # Mark that we did this migration so we never run it again.
                 self.__data.migration.flag_migrated(Migration.ATTACHMENT_EXTENSIONS)
+
+            if Migration.ATTACHMENT_FILENAMES not in finished_migrations:
+                # Next, we need to attempt to migrate from pre-filename to filename.
+                for attachment in attachments:
+                    # Local storage, copy the system default into the attachment directory if needed.
+                    oldpath = _get_pre_filename_attachment_path(attachment.id, attachment.content_type, attachment.original_filename)
+                    path = self._get_local_attachment_path(attachment.id, attachment.content_type, attachment.original_filename)
+                    if path == oldpath:
+                        # This can happen for files whose original filename is just the extension, or for
+                        # files we don't store original filename with (such as emotes and notifications).
+                        continue
+
+                    if (not os.path.isfile(path)) and os.path.isfile(oldpath):
+                        with open(oldpath, "rb") as bfp1:
+                            data = bfp1.read()
+                        with open(path, "wb") as bfp2:
+                            bfp2.write(data)
+                        os.remove(oldpath)
+
+                # Mark that we did this migration so we never run it again.
+                self.__data.migration.flag_migrated(Migration.ATTACHMENT_FILENAMES)
 
             if Migration.IMAGE_DIMENSIONS not in finished_migrations:
                 # Now, we need to load all attachments that don't have dimensions and
@@ -301,6 +377,8 @@ class AttachmentService:
         original_filename: str | None,
         metadata: dict[MetadataType, object],
     ) -> AttachmentID | None:
+        # Note that only message attachments get an original filename. Emotes, icons, notifications, and other
+        # things that use the attachment system do not provide a filename as it is not relevant.
         return self.__data.attachment.insert_attachment(
             self.__config.attachments.system,
             content_type,
@@ -518,7 +596,8 @@ class AttachmentService:
 
         attachment = self.__data.attachment.lookup_attachment(attachmentid)
         if not attachment:
-            # We can't find the attachment, so assume that it has no extension and try that.
+            # We can't find the attachment, so it's a dangling or invalid ID. Just return the generic
+            # filename for the attachment in this case.
             _id_to_hash_lut[attachmentid] = self._get_hashed_attachment_name(attachmentid, self.GENERIC_MIME_TYPE, None)
             return _id_to_hash_lut[attachmentid]
 
