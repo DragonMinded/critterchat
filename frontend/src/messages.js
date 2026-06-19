@@ -1368,6 +1368,9 @@ class Messages {
         if (mt == "application/javascript") {
             return true;
         }
+        if (mt == "application/xml") {
+            return true;
+        }
 
         return false;
     }

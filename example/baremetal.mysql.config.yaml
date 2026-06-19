@@ -64,8 +64,6 @@ attachments:
   # or disallow different binary attachment types here to prevent malicious executables being
   # shared.
   allowed_mime_types:
-    - "application/json"
-    - "application/javascript"
     - "application/pdf"
 
 limits:

@@ -55,6 +55,7 @@ class AttachmentService:
     MAX_ICON_WIDTH: Final[int] = 512
     MAX_ICON_HEIGHT: Final[int] = 512
     GENERIC_MIME_TYPE: Final[str] = "application/octet-stream"
+    TEXT_TYPES = {"application/json", "application/javascript", "application/xml"}
     SUPPORTED_IMAGE_TYPES = {"image/apng", "image/gif", "image/jpeg", "image/png", "image/webp"}
     CONVERTIBLE_IMAGE_TYPES = {"image/bmp"}
 
@@ -90,6 +91,8 @@ class AttachmentService:
 
         if content_type[:5] == "text/":
             return True
+        if content_type in self.TEXT_TYPES:
+            return True
         if content_type[:6] == "image/":
             return (
                 content_type in self.SUPPORTED_IMAGE_TYPES or
@@ -103,6 +106,8 @@ class AttachmentService:
     def get_content_category(self, content_type: str) -> str:
         content_type = content_type.lower()
 
+        if content_type in self.TEXT_TYPES:
+            return "text"
         if not content_type or "/" not in content_type:
             return "application"
         return content_type.split("/", 1)[0]
@@ -123,6 +128,8 @@ class AttachmentService:
             "image/png": ".png",
             "image/webp": ".webp",
             "application/json": ".json",
+            "application/javascript": ".js",
+            "application/xml": ".xml",
             "application/pdf": ".pdf",
         }.get(content_type, "")
 
@@ -501,8 +508,8 @@ class AttachmentService:
         return data, width, height, content_type
 
     def resolve_attachment_preview(self, attachment: Attachment) -> Attachment:
-        lowered = attachment.mimetype.lower()
-        if lowered[:5] == "text/" or lowered in {"application/json", "application/javascript"}:
+        category = self.get_content_category(attachment.mimetype)
+        if category == "text":
             # Look up the attachment data itself for the attachment preview.
             content_type_and_data = self.get_attachment_data(attachment.id)
             if content_type_and_data:
