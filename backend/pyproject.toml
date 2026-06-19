@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "critterchat"
-version = "0.1.2"
+version = "0.1.3"
 description = "CritterChat self-hosted web chat software."
 readme = "README.md"
 license = "Unlicense"
@@ -17,6 +17,13 @@ maintainers = [
     {name = "DragonMinded", email = "dragonminded@dragonminded.com"},
 ]
 dynamic = ["dependencies"]
+
+[project.scripts]
+critterchat = "critterchat.cli:main"
+critterchat-manage = "critterchat.manage.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/DragonMinded/critterchat"
 
 [tool.setuptools]
 include-package-data = true
@@ -38,7 +45,3 @@ include = [
     'critterchat.manage',
     'critterchat.service'
 ]
-
-[project.scripts]
-critterchat = "critterchat:main"
-critterchat-manage = "critterchat.manage:main"

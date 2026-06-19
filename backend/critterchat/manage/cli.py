@@ -1,0 +1,1495 @@
+import argparse
+import getpass
+import os
+import string
+import sys
+
+from critterchat.data import (
+    Data,
+    DBCreateException,
+    MetadataType,
+    UserPermission,
+    User,
+    Room,
+    RoomPurpose,
+    NewUserID,
+    DefaultAvatarID,
+    DefaultRoomID,
+    AttachmentID,
+    FaviconID,
+)
+from critterchat.config import Config, load_config
+from critterchat.service import (
+    AttachmentService,
+    AttachmentServiceException,
+    AttachmentServiceUnsupportedImageException,
+    AttachmentServiceInvalidSizeException,
+    EmoteService,
+    EmoteServiceException,
+    MastodonService,
+    MastodonServiceException,
+    MessageService,
+    MessageServiceException,
+    UserService,
+    UserServiceException,
+)
+from critterchat.http.static import default_avatar, default_room, default_icon
+
+
+class CLIException(Exception):
+    pass
+
+
+class CommandException(Exception):
+    pass
+
+
+def create_db(config: Config, exist_okay: bool) -> None:
+    """
+    Given a config pointing at a valid MySQL DB, initializes that DB by creating all required tables.
+    """
+
+    with Data.spawn(config) as data:
+        data.create(exist_okay=exist_okay)
+
+
+def upgrade_db(config: Config) -> None:
+    """
+    Given a config pointing at a valid MySQL DB that's been created already, runs any pending migrations
+    that were checked in since you last ran create or migrate.
+    """
+
+    with Data.spawn(config) as data:
+        data.upgrade()
+
+
+def downgrade_db(config: Config, tag: str) -> None:
+    """
+    Given a config pointing at a valid MySQL DB that's been created already, undoes any migrations down
+    to the given tag.
+    """
+
+    with Data.spawn(config) as data:
+        data.downgrade(tag)
+
+
+def generate_migration(config: Config, message: str, allow_empty: bool) -> None:
+    """
+    Given some changes to the table definitions in the SQL files of this repo, and a config pointing
+    at a valid MySQL DB that has previously been initialized and then upgraded to the base revision
+    of the repo before modification, generates a migration that will allow a production instance to
+    auto-upgrade their DB to mirror your changes.
+    """
+
+    with Data.spawn(config) as data:
+        data.generate(message, allow_empty)
+
+
+def mastodon_register_all(config: Config, filter_url: str | None = None) -> None:
+    """
+    Given configured Mastodon instances in our config, ensure that all of them are registered so that
+    we can perform OAuth and network lookups against it.
+    """
+
+    with Data.spawn(config) as data:
+        try:
+            mastodonservice = MastodonService(config, data)
+            found = False
+            for instance in config.authentication.mastodon:
+                if filter_url and instance.base_url != filter_url:
+                    continue
+
+                print(f"Registering with {instance.base_url}")
+                mastodonservice.register_instance(instance.base_url)
+                found = True
+
+            if filter_url and not found:
+                raise CommandException(f"Could not find Mastodon instance {filter_url} in config!")
+            else:
+                print("Registered with all configured Mastodon instances.")
+
+        except MastodonServiceException as e:
+            raise CommandException(str(e))
+
+
+def mastodon_list_all(config: Config, filter_url: str | None = None) -> None:
+    """
+    List all registered instances in the DB and pull information from those instances to ensure they
+    are working.
+    """
+
+    with Data.spawn(config) as data:
+        try:
+            mastodonservice = MastodonService(config, data)
+            found = False
+            for instance in mastodonservice.get_all_instances():
+                if filter_url and instance.base_url != filter_url:
+                    continue
+
+                details = mastodonservice.get_instance_details(instance)
+
+                print(f"Base URL: {details.base_url}")
+                print(f"Connected: {details.connected}")
+                if details.connected:
+                    print(f"Domain: {details.domain}")
+                    print(f"Title: {details.title}")
+
+                print("")
+                found = True
+
+            if filter_url and not found:
+                raise CommandException(f"Could not find Mastodon instance {filter_url} in config!")
+
+        except MastodonServiceException as e:
+            raise CommandException(str(e))
+
+
+def mastodon_unregister(config: Config, base_url: str) -> None:
+    """
+    Given a configured Mastodon instance in our config, ensure that the specified one is unregistered
+    so that we can no longer perform OAuth nand network lookups against it.
+    """
+    with Data.spawn(config) as data:
+        try:
+            mastodonservice = MastodonService(config, data)
+            instance = mastodonservice.lookup_instance(base_url)
+            if not instance:
+                raise CommandException(f"Instance {base_url} does not exist or is already unregistered!")
+
+            mastodonservice.unregister_instance(instance.base_url)
+
+            print(f"Unregistered Mastodon instance {instance.base_url}")
+
+        except MastodonServiceException as e:
+            raise CommandException(str(e))
+
+
+def list_users(config: Config) -> None:
+    """
+    List all users on the instance.
+    """
+
+    with Data.spawn(config) as data:
+        users = data.user.get_users()
+
+    for user in users:
+        print(f"ID: {User.from_id(user.id)}")
+        print(f"Username: {user.username}")
+        print(f"Nickname: {user.nickname}")
+        print(f"Permissions: {', '.join([u.name for u in user.permissions])}")
+        print("")
+
+
+def create_user(config: Config, username: str, password: str | None) -> None:
+    """
+    Create a new user that logs in with username, and uses password to login. If the password is
+    not provided at the CLI, instead prompts for a password interactively.
+    """
+
+    valid_names = string.ascii_letters + string.digits + "_."
+    for ch in username:
+        if ch not in valid_names:
+            raise CommandException("You cannot use non-alphanumeric characters in a username!")
+
+    if not password:
+        # Prompt for it at the CLI instead.
+        password1 = getpass.getpass(prompt="Password: ")
+        password2 = getpass.getpass(prompt="Password again: ")
+        if password1 != password2:
+            raise CommandException("Passwords do not match!")
+        password = password1
+
+    with Data.spawn(config) as data:
+        try:
+            userservice = UserService(config, data)
+            new_user = userservice.create_user(username, password)
+            userservice.add_permission(new_user.id, UserPermission.ACTIVATED)
+
+            print(f"User created with username {new_user.username}")
+        except UserServiceException as e:
+            raise CommandException(str(e))
+
+
+def change_user_password(config: Config, username: str, password: str | None) -> None:
+    """
+    Given an existing user that logs in with username, update their password to the provded password.
+    If the password is not provided at the CLI, instead prompts for a password interactively.
+    """
+
+    if not password:
+        # Prompt for it at the CLI instead.
+        password1 = getpass.getpass(prompt="Password: ")
+        password2 = getpass.getpass(prompt="Password again: ")
+        if password1 != password2:
+            raise CommandException("Passwords do not match!")
+        password = password1
+
+    with Data.spawn(config) as data:
+        try:
+            userservice = UserService(config, data)
+            existing_user = userservice.find_user(username)
+            if not existing_user:
+                raise CommandException("User does not exist in the database!")
+            userservice.change_user_password(existing_user.id, password)
+
+            print(f"User with username {username} updated with new password")
+        except UserServiceException as e:
+            raise CommandException(str(e))
+
+
+def generate_password_recovery(config: Config, username: str) -> None:
+    """
+    Given an existing user that logs in with username, generate a password recovery URL
+    that can be given to that user on another platform so they can recover their password.
+    """
+
+    with Data.spawn(config) as data:
+        try:
+            userservice = UserService(config, data)
+            existing_user = userservice.find_user(username)
+            if not existing_user:
+                raise CommandException("User does not exist in the database!")
+            url = userservice.create_user_recovery(existing_user.id)
+
+            print(f"Generated recovery URL for user with username {username}: {url}")
+        except UserServiceException as e:
+            raise CommandException(str(e))
+
+
+def generate_user_invite(config: Config) -> None:
+    """
+    Generate an invite URL that somebody can use to join an instance without needing
+    activation, and bypassing any disabled activation settings.
+    """
+
+    with Data.spawn(config) as data:
+        try:
+            userservice = UserService(config, data)
+            url = userservice.create_user_invite(NewUserID)
+
+            print(f"Generated invite URL for new user sign-up: {url}")
+        except UserServiceException as e:
+            raise CommandException(str(e))
+
+
+def activate_user(config: Config, username: str) -> None:
+    """
+    Given an existing user that logs in with username, update their account to be in the active
+    state, allowing them to login and use the account normally.
+    """
+
+    with Data.spawn(config) as data:
+        try:
+            userservice = UserService(config, data)
+            existing_user = userservice.find_user(username)
+            if not existing_user:
+                raise CommandException("User does not exist in the database!")
+            userservice.add_permission(existing_user.id, UserPermission.ACTIVATED)
+
+            print(f"User with username {username} activated")
+        except UserServiceException as e:
+            raise CommandException(str(e))
+
+
+def deactivate_user(config: Config, username: str) -> None:
+    """
+    Given an existing user that logs in with username, update their account to be in the
+    inactive state, kicking them out of any active sessions and disallowing login.
+    """
+
+    with Data.spawn(config) as data:
+        try:
+            userservice = UserService(config, data)
+            existing_user = userservice.find_user(username)
+            if not existing_user:
+                raise CommandException("User does not exist in the database!")
+            userservice.remove_permission(existing_user.id, UserPermission.ACTIVATED)
+
+            print(f"User with username {username} deactivated")
+        except UserServiceException as e:
+            raise CommandException(str(e))
+
+
+def admin_user(config: Config, username: str) -> None:
+    """
+    Given an existing user that logs in with username, update their account to be marked
+    as an administrator, allowing them to take additional administration actions on the UI.
+    """
+
+    with Data.spawn(config) as data:
+        try:
+            userservice = UserService(config, data)
+            existing_user = userservice.find_user(username)
+            if not existing_user:
+                raise CommandException("User does not exist in the database!")
+            userservice.add_permission(existing_user.id, UserPermission.ADMINISTRATOR)
+
+            print(f"User with username {username} set as administrator")
+        except UserServiceException as e:
+            raise CommandException(str(e))
+
+
+def deadmin_user(config: Config, username: str) -> None:
+    """
+    Given an existing user that logs in with username, update their account to not be
+    marked as an administrator, taking away any permissions they had to administer.
+    """
+
+    with Data.spawn(config) as data:
+        try:
+            userservice = UserService(config, data)
+            existing_user = userservice.find_user(username)
+            if not existing_user:
+                raise CommandException("User does not exist in the database!")
+            userservice.remove_permission(existing_user.id, UserPermission.ADMINISTRATOR)
+
+            print(f"User with username {username} unset as administrator")
+        except UserServiceException as e:
+            raise CommandException(str(e))
+
+
+def list_emotes(config: Config, only_broken: bool) -> None:
+    """
+    List all of the custom emotes enabled on this instance right now.
+    """
+
+    with Data.spawn(config) as data:
+        try:
+            emoteservice = EmoteService(config, data)
+            emotes = emoteservice.get_all_emotes()
+        except EmoteServiceException as e:
+            raise CommandException(str(e))
+
+    names = sorted([e for e in emotes])
+    for name in names:
+        if only_broken:
+            if emoteservice.validate_emote(name, check_data=True):
+                continue
+
+        print(f"{name}")
+
+
+def import_emote(config: Config, alias: str | None, filename_or_directory: str) -> None:
+    """
+    Given a filename or a directory, and optionally an alias, import emotes to the system.
+    """
+
+    with Data.spawn(config) as data:
+        try:
+            emoteservice = EmoteService(config, data)
+
+            if os.path.isdir(filename_or_directory):
+                if alias:
+                    raise CommandException("Cannot provide an alias when importing an entire directory!")
+
+                # Add all files in this directory.
+                for filename in os.listdir(filename_or_directory):
+                    alias, ext = os.path.splitext(filename)
+                    if ext.lower() not in {".apng", ".png", ".gif", ".jpg", ".jpeg", ".webp"}:
+                        print(f"Skipping {filename} because it is not a recognized image type!")
+
+                    full_file = os.path.join(filename_or_directory, filename)
+                    with open(full_file, "rb") as bfp:
+                        emotedata = bfp.read()
+
+                    try:
+                        emoteservice.add_emote(alias, emotedata)
+                        print(f"Emote added to system with alias '{alias}'")
+                    except EmoteServiceException:
+                        print(f"Emote with alias '{alias}' not added to system")
+
+            else:
+                potential_alias, ext = os.path.splitext(os.path.basename(filename_or_directory))
+                if not alias:
+                    alias = potential_alias
+                if ext.lower() not in {".apng", ".png", ".gif", ".jpg", ".jpeg", ".webp"}:
+                    raise CommandException(f"Cannot add {filename_or_directory} because it is not a recognized image type!")
+
+                with open(filename_or_directory, "rb") as bfp:
+                    emotedata = bfp.read()
+
+                try:
+                    emoteservice.add_emote(alias, emotedata)
+                    print(f"Emote added to system with alias '{alias}'")
+                except EmoteServiceException as e:
+                    raise CommandException(str(e))
+
+        except EmoteServiceException as e:
+            raise CommandException(str(e))
+
+
+def export_emote(config: Config, directory: str) -> None:
+    """
+    Given a directory, export emotes from the system.
+    """
+
+    with Data.spawn(config) as data:
+        try:
+            emoteservice = EmoteService(config, data)
+            emotes = emoteservice.get_all_emotes()
+
+            names = sorted([e for e in emotes])
+            for alias in names:
+                name_and_data = emoteservice.fetch_emote(alias)
+                if name_and_data:
+                    os.makedirs(directory, exist_ok=True)
+
+                    filename = os.path.join(directory, name_and_data[0])
+                    with open(filename, "wb") as bfp:
+                        bfp.write(name_and_data[1])
+
+                    print(f"Emote with alias '{alias}' written to file {filename!r}")
+
+        except EmoteServiceException as e:
+            raise CommandException(str(e))
+
+
+def remove_emote(config: Config, alias: str) -> None:
+    """
+    Given an alias of an existing emote, remove it from the instance.
+    """
+
+    with Data.spawn(config) as data:
+        emoteservice = EmoteService(config, data)
+        try:
+            emoteservice.drop_emote(alias)
+
+            print(f"Emote with alias '{alias}' removed from system")
+        except EmoteServiceException as e:
+            raise CommandException(str(e))
+
+
+def update_attachment(config: Config, attachment: str, file: str) -> None:
+    """
+    Given an attachment to update, update it with new file data.
+    """
+
+    actual = {
+        "room": DefaultRoomID,
+        "avatar": DefaultAvatarID,
+        "favicon": FaviconID,
+    }.get(attachment)
+    if not actual:
+        raise CommandException(f"Invalid attachment {attachment} to update!")
+
+    if file == "default":
+        file = {
+            DefaultAvatarID: default_avatar,
+            DefaultRoomID: default_room,
+            FaviconID: default_icon,
+        }.get(actual, "")
+
+    if not os.path.isfile(file):
+        raise CommandException("Invalid file path given to update attachment!")
+
+    with open(file, "rb") as bfp:
+        attachmentdata = bfp.read()
+
+    with Data.spawn(config) as data:
+        try:
+            attachmentservice = AttachmentService(config, data)
+            attachmentdata, width, height, content_type = attachmentservice.prepare_attachment_image(
+                attachmentdata,
+                AttachmentService.MAX_ICON_WIDTH,
+                AttachmentService.MAX_ICON_HEIGHT,
+            )
+            if width != height:
+                raise CommandException(f"Image for {attachment} is not square.")
+
+            attachmentservice.put_attachment_data(actual, attachmentdata)
+
+            print(f"Updated {attachment} image with new data from {file}.")
+        except AttachmentServiceException as e:
+            raise CommandException(str(e))
+
+
+def list_public_rooms(config: Config) -> None:
+    """
+    List all public rooms on the instance.
+    """
+
+    with Data.spawn(config) as data:
+        try:
+            messageservice = MessageService(config, data)
+            rooms = messageservice.get_public_rooms(NewUserID)
+
+            for room in rooms:
+                print(f"ID: {Room.from_id(room.id)}")
+                print(f"Name: {room.name}")
+                print(f"Topic: {room.topic}")
+                print(f"Autojoin: {'on' if room.autojoin else 'off'}")
+                print(f"Moderated: {'on' if room.moderated else 'off'}")
+                print("")
+        except MessageServiceException as e:
+            raise CommandException(str(e))
+
+
+def create_public_room(
+    config: Config,
+    name: str | None,
+    topic: str | None,
+    icon: str | None,
+    autojoin: str,
+    moderated: str,
+) -> None:
+    """
+    Create a new public room on the instance, optionally setting it as auto-join when
+    accounts are created and joining existing users to the room.
+    """
+
+    with Data.spawn(config) as data:
+        try:
+            attachmentid: AttachmentID | None = None
+            if icon:
+                with open(icon, "rb") as bfp:
+                    icondata = bfp.read()
+
+                attachmentservice = AttachmentService(config, data)
+                try:
+                    icondata, width, height, content_type = attachmentservice.prepare_attachment_image(
+                        icondata,
+                        AttachmentService.MAX_ICON_WIDTH,
+                        AttachmentService.MAX_ICON_HEIGHT,
+                    )
+                except AttachmentServiceUnsupportedImageException:
+                    raise CommandException("Room image is an unrecognized format.")
+                except AttachmentServiceInvalidSizeException:
+                    raise CommandException(f"Invalid image size for room. Roomss must be a maximum of {AttachmentService.MAX_ICON_WIDTH}x{AttachmentService.MAX_ICON_HEIGHT}")
+
+                if width != height:
+                    raise CommandException("Room image is not square.")
+
+                attachmentid = attachmentservice.create_attachment(
+                    content_type,
+                    None,
+                    {MetadataType.WIDTH: width, MetadataType.HEIGHT: height}
+                )
+                if attachmentid is None:
+                    raise CommandException("Could not insert new room icon.")
+                attachmentservice.put_attachment_data(attachmentid, icondata)
+
+            messageservice = MessageService(config, data)
+            room = messageservice.create_public_room(name or "", topic or "", attachmentid, autojoin == "on", moderated == "on")
+
+            if autojoin == "on":
+                print(f"Room created with ID {Room.from_id(room.id)} and all activated users joined to the room.")
+            else:
+                print(f"Room created with ID {Room.from_id(room.id)}.")
+
+        except MessageServiceException as e:
+            raise CommandException(str(e))
+
+
+def modify_public_room_info(config: Config, roomid: str, name: str | None, topic: str | None, icon: str | None) -> None:
+    """
+    Modify an existing room by ID, optionally setting a new name, title, or icon (or sometimes multiple).
+    """
+
+    with Data.spawn(config) as data:
+        try:
+            actual_id = Room.to_id(roomid)
+            if actual_id is None:
+                raise CommandException("Room ID is not valid!")
+            messageservice = MessageService(config, data)
+            room = messageservice.lookup_room(actual_id, NewUserID)
+            if not room:
+                raise CommandException("Room ID is not valid!")
+            if room.purpose != RoomPurpose.ROOM:
+                raise CommandException("Room is not public!")
+
+            attachmentid: AttachmentID | None = None
+            icon_delete = False
+            if icon and icon != "default":
+                with open(icon, "rb") as bfp:
+                    icondata = bfp.read()
+
+                attachmentservice = AttachmentService(config, data)
+                try:
+                    icondata, width, height, content_type = attachmentservice.prepare_attachment_image(
+                        icondata,
+                        AttachmentService.MAX_ICON_WIDTH,
+                        AttachmentService.MAX_ICON_HEIGHT,
+                    )
+                except AttachmentServiceUnsupportedImageException:
+                    raise CommandException("Room image is an unrecognized format.")
+                except AttachmentServiceInvalidSizeException:
+                    raise CommandException(f"Invalid image size for room. Roomss must be a maximum of {AttachmentService.MAX_ICON_WIDTH}x{AttachmentService.MAX_ICON_HEIGHT}")
+
+                if width != height:
+                    raise CommandException("Room image is not square.")
+
+                attachmentid = attachmentservice.create_attachment(
+                    content_type,
+                    None,
+                    {MetadataType.WIDTH: width, MetadataType.HEIGHT: height}
+                )
+                if attachmentid is None:
+                    raise CommandException("Could not insert new room icon.")
+                attachmentservice.put_attachment_data(attachmentid, icondata)
+            elif icon == "default":
+                icon_delete = True
+
+            messageservice.update_room(actual_id, NewUserID, name=name, topic=topic, icon=attachmentid, icon_delete=icon_delete)
+
+            print(f"Room with ID {Room.from_id(actual_id)} updated information.")
+
+        except MessageServiceException as e:
+            raise CommandException(str(e))
+
+
+def modify_public_room_autojoin(config: Config, roomid: str, autojoin: str) -> None:
+    """
+    Modify an existing room by ID, setting it's autojoin property. Note that when toggling this,
+    if you set a room to autojoin and it was not set to that before, all users will be joined to
+    the room.
+    """
+
+    with Data.spawn(config) as data:
+        try:
+            actual_id = Room.to_id(roomid)
+            if actual_id is None:
+                raise CommandException("Room ID is not valid!")
+            messageservice = MessageService(config, data)
+            messageservice.update_public_room_autojoin(actual_id, NewUserID, autojoin == "on")
+
+            if autojoin == "on":
+                print(f"Room with ID {Room.from_id(actual_id)} set to auto join new users.")
+            else:
+                print(f"Room with ID {Room.from_id(actual_id)} set to not auto join new users.")
+
+        except MessageServiceException as e:
+            raise CommandException(str(e))
+
+
+def modify_public_room_moderated(config: Config, roomid: str, moderated: str) -> None:
+    """
+    Modify an existing room by ID, setting it's moderated property.
+    """
+
+    with Data.spawn(config) as data:
+        try:
+            actual_id = Room.to_id(roomid)
+            if actual_id is None:
+                raise CommandException("Room ID is not valid!")
+            messageservice = MessageService(config, data)
+            messageservice.update_public_room_moderated(actual_id, NewUserID, moderated == "on")
+
+            if moderated == "on":
+                print(f"Room with ID {Room.from_id(actual_id)} set to moderated.")
+            else:
+                print(f"Room with ID {Room.from_id(actual_id)} set to free-for-all.")
+
+        except MessageServiceException as e:
+            raise CommandException(str(e))
+
+
+def grant_public_room_moderator(config: Config, roomid: str, username: str) -> None:
+    """
+    Modify an existing room by ID, setting a user by username as a moderator. Note that
+    the user must be in the room and will not be added if they are not.
+    """
+
+    with Data.spawn(config) as data:
+        try:
+            userservice = UserService(config, data)
+            existing_user = userservice.find_user(username)
+            if not existing_user:
+                raise CommandException("User does not exist in the database!")
+
+            actual_id = Room.to_id(roomid)
+            if actual_id is None:
+                raise CommandException("Room ID is not valid!")
+
+            messageservice = MessageService(config, data)
+            messageservice.grant_room_moderator(actual_id, existing_user.id)
+
+            print(f"User with username {username} granted moderator role for room with ID {Room.from_id(actual_id)}.")
+
+        except MessageServiceException as e:
+            raise CommandException(str(e))
+        except UserServiceException as e:
+            raise CommandException(str(e))
+
+
+def revoke_public_room_moderator(config: Config, roomid: str, username: str) -> None:
+    """
+    Modify an existing room by ID, removing a user by username as a moderator. Note that
+    the user must be in the room and will not be ejected, just the moderator role revoked.
+    """
+
+    with Data.spawn(config) as data:
+        try:
+            userservice = UserService(config, data)
+            existing_user = userservice.find_user(username)
+            if not existing_user:
+                raise CommandException("User does not exist in the database!")
+
+            actual_id = Room.to_id(roomid)
+            if actual_id is None:
+                raise CommandException("Room ID is not valid!")
+
+            messageservice = MessageService(config, data)
+            messageservice.revoke_room_moderator(actual_id, existing_user.id)
+
+            print(f"User with username {username} revoked moderator role for room with ID {Room.from_id(actual_id)}.")
+
+        except MessageServiceException as e:
+            raise CommandException(str(e))
+        except UserServiceException as e:
+            raise CommandException(str(e))
+
+
+def mute_public_room_user(config: Config, roomid: str, username: str) -> None:
+    """
+    Mute a specific user in a specific room. They will not be able to send messages or
+    update info anymore.
+    """
+
+    with Data.spawn(config) as data:
+        try:
+            userservice = UserService(config, data)
+            existing_user = userservice.find_user(username)
+            if not existing_user:
+                raise CommandException("User does not exist in the database!")
+
+            actual_id = Room.to_id(roomid)
+            if actual_id is None:
+                raise CommandException("Room ID is not valid!")
+
+            messageservice = MessageService(config, data)
+            messageservice.mute_room_user(actual_id, existing_user.id)
+
+            print(f"User with username {username} muted in room with ID {Room.from_id(actual_id)}.")
+
+        except MessageServiceException as e:
+            raise CommandException(str(e))
+        except UserServiceException as e:
+            raise CommandException(str(e))
+
+
+def unmute_public_room_user(config: Config, roomid: str, username: str) -> None:
+    """
+    Unmute a specific user in a specific room. They will not be able to send messages or
+    update info anymore.
+    """
+
+    with Data.spawn(config) as data:
+        try:
+            userservice = UserService(config, data)
+            existing_user = userservice.find_user(username)
+            if not existing_user:
+                raise CommandException("User does not exist in the database!")
+
+            actual_id = Room.to_id(roomid)
+            if actual_id is None:
+                raise CommandException("Room ID is not valid!")
+
+            messageservice = MessageService(config, data)
+            messageservice.unmute_room_user(actual_id, existing_user.id)
+
+            print(f"User with username {username} unmuted in room with ID {Room.from_id(actual_id)}.")
+
+        except MessageServiceException as e:
+            raise CommandException(str(e))
+        except UserServiceException as e:
+            raise CommandException(str(e))
+
+
+def main(prog: str = "critterchat-manage") -> None:
+    parser = argparse.ArgumentParser(prog=prog, description="A utility for administrating a CritterChat instance.")
+    parser.add_argument(
+        "-c",
+        "--config",
+        type=str,
+        default="config.yaml",
+        help="core configuration, used for determining what DB to connect to (defaults to config.yaml)",
+    )
+    commands = parser.add_subparsers(dest="operation")
+
+    # Another subcommand here.
+    database_parser = commands.add_parser(
+        "database",
+        help="modify backing DB for this instance",
+        description="Modify backing DB for this instance.",
+    )
+    database_commands = database_parser.add_subparsers(dest="database")
+
+    # No params for this one
+    create_parser = database_commands.add_parser(
+        "create",
+        help="create tables in fresh DB",
+        description="Create tables in fresh DB.",
+    )
+    create_parser.add_argument(
+        "-e",
+        "--existing-okay",
+        action='store_true',
+        help="don't error on existing database (useful for running in a container startup script)",
+    )
+
+    # Only a few params for this one
+    generate_parser = database_commands.add_parser(
+        "generate",
+        help="generate migration from a DB and code delta",
+        description="Generate migration from a DB and code delta.",
+    )
+    generate_parser.add_argument(
+        "-m",
+        "--message",
+        required=True,
+        type=str,
+        help="message to use for auto-generated migration scripts, similar to a commit message",
+    )
+    generate_parser.add_argument(
+        "-e",
+        "--allow-empty",
+        action='store_true',
+        help="allow empty migration script to be generated (useful for creating data-only migrations)",
+    )
+
+    # No params for this one
+    database_commands.add_parser(
+        "upgrade",
+        help="apply pending migrations to a DB",
+        description="Apply pending migrations to a DB.",
+    )
+
+    downgrade_parser = database_commands.add_parser(
+        "downgrade",
+        help="unapply migrations to a specific tag",
+        description="Unapply migrations to a specific tag.",
+    )
+    downgrade_parser.add_argument(
+        "-t",
+        "--tag",
+        required=True,
+        type=str,
+        help="tag that we should downgrade to",
+    )
+
+    # Another subcommand here.
+    mastodon_parser = commands.add_parser(
+        "mastodon",
+        help="administer Mastodon OAuth for this instance",
+        description="Administer Mastodon OAuth for this instance.",
+    )
+    mastodon_commands = mastodon_parser.add_subparsers(dest="mastodon")
+
+    # One optional param for this one.
+    register_instance_parser = mastodon_commands.add_parser(
+        "register",
+        help="register our instance with all configured Mastodon instances",
+        description="Register our instance with all configured Mastodon instances.",
+    )
+    register_instance_parser.add_argument(
+        "-i",
+        "--instance",
+        type=str,
+        default=None,
+        help="optional base url of specific instance we want to register",
+    )
+
+    # One optional param for this one.
+    list_instance_parser = mastodon_commands.add_parser(
+        "list",
+        help="list Mastodon instances with details pulled from that instance",
+        description="List Mastodon instances with details pulled from that instace.",
+    )
+    list_instance_parser.add_argument(
+        "-i",
+        "--instance",
+        type=str,
+        default=None,
+        help="optional base url of specific instance we want to list",
+    )
+
+    # One required param for this one.
+    unregister_instance_parser = mastodon_commands.add_parser(
+        "unregister",
+        help="unregister our instance with a specific Mastodon instance",
+        description="Unregister our instance with a specific Mastodon instance.",
+    )
+    unregister_instance_parser.add_argument(
+        "-i",
+        "--instance",
+        type=str,
+        required=True,
+        help="base url of specific instance we want to unregister",
+    )
+
+    # Another subcommand here.
+    user_parser = commands.add_parser(
+        "user",
+        help="modify backing DB for this instance",
+        description="Modify backing DB for this instance.",
+    )
+    user_commands = user_parser.add_subparsers(dest="user")
+
+    # No params for this one
+    user_commands.add_parser(
+        "list",
+        help="list all users on this instance",
+        description="List all users on this instance.",
+    )
+
+    # Only a few params for this one
+    create_parser = user_commands.add_parser(
+        "create",
+        help="create a new user that can log in",
+        description="Create a new user that can log in.",
+    )
+    create_parser.add_argument(
+        "-u",
+        "--username",
+        required=True,
+        type=str,
+        help="username that the user will use to login with",
+    )
+    create_parser.add_argument(
+        "-p",
+        "--password",
+        default=None,
+        type=str,
+        help="password that the user will use to login with",
+    )
+
+    # Only a few params for this one
+    user_commands.add_parser(
+        "generate_invite",
+        help="generate invite URL for a new user to sign up for the instance",
+        description="Generate invite URL for a new user to sign up for the instance.",
+    )
+
+    # Only a few params for this one
+    change_password_parser = user_commands.add_parser(
+        "change_password",
+        help="change password for a user that can log in",
+        description="Change password for a user that can log in.",
+    )
+    change_password_parser.add_argument(
+        "-u",
+        "--username",
+        required=True,
+        type=str,
+        help="username that the user uses to login with",
+    )
+    change_password_parser.add_argument(
+        "-p",
+        "--password",
+        default=None,
+        type=str,
+        help="password that the user uses to login with",
+    )
+
+    # Only a few params for this one
+    generate_recovery_parser = user_commands.add_parser(
+        "generate_recovery",
+        help="generate recovery URL for a user to recover their password",
+        description="Generate recovery URL for a user to recover their password.",
+    )
+    generate_recovery_parser.add_argument(
+        "-u",
+        "--username",
+        required=True,
+        type=str,
+        help="username that the user uses to login with",
+    )
+
+    # Only a few params for this one
+    activate_parser = user_commands.add_parser(
+        "activate",
+        help="activate a user, allowing them to log in",
+        description="Activate a user, allowing them to log in",
+    )
+    activate_parser.add_argument(
+        "-u",
+        "--username",
+        required=True,
+        type=str,
+        help="username that the user uses to login with",
+    )
+
+    # Only a few params for this one
+    deactivate_parser = user_commands.add_parser(
+        "deactivate",
+        help="deactivate a user, disallowing them from logging in",
+        description="Deactivate a user, disallowing them from logging in",
+    )
+    deactivate_parser.add_argument(
+        "-u",
+        "--username",
+        required=True,
+        type=str,
+        help="username that the user uses to login with",
+    )
+
+    # Only a few params for this one
+    admin_parser = user_commands.add_parser(
+        "admin",
+        help="apply administrator permissions to a user",
+        description="Apply administrator permissions to a user",
+    )
+    admin_parser.add_argument(
+        "-u",
+        "--username",
+        required=True,
+        type=str,
+        help="username that the user uses to login with",
+    )
+
+    # Only a few params for this one
+    deadmin_parser = user_commands.add_parser(
+        "deadmin",
+        help="remove administrator permissions from a user",
+        description="Remove administrator permissions from a user",
+    )
+    deadmin_parser.add_argument(
+        "-u",
+        "--username",
+        required=True,
+        type=str,
+        help="username that the user uses to login with",
+    )
+
+    # Another subcommand here.
+    emote_parser = commands.add_parser(
+        "emote",
+        help="modify custom emotes on the instance",
+        description="Modify custom emotes on the instance.",
+    )
+    emote_commands = emote_parser.add_subparsers(dest="emote")
+
+    # No params for this one
+    listemote_parser = emote_commands.add_parser(
+        "list",
+        help="list all custom emotes",
+        description="List all custom emotes.",
+    )
+    listemote_parser.add_argument(
+        "-o",
+        "--only-broken",
+        action="store_true",
+        help="only list emotes that do not have valid data in the current attachment backend",
+    )
+
+    # A few params for this one
+    importemote_parser = emote_commands.add_parser(
+        "import",
+        help="import a custom emote",
+        description="Import a custom emote.",
+    )
+    importemote_parser.add_argument(
+        "-a",
+        "--alias",
+        type=str,
+        help="alias to use for the emote you're importing, containing only alphanumberic characters, dashes and underscores",
+    )
+    importemote_parser.add_argument(
+        "-f",
+        "--file",
+        type=str,
+        required=True,
+        help=(
+            "file or directory of the emote you're importing. "
+            + "if you provide a file and do not provide an alias, the filename without the extension will be used as the alias. "
+            + "if you provide a directory, all supported images in that directory will be imported as emotes using their filename without extension as the alias."
+        )
+    )
+
+    # A few params for this one
+    removeemote_parser = emote_commands.add_parser(
+        "remove",
+        help="remove a custom emote",
+        description="Remove a custom emote.",
+    )
+    removeemote_parser.add_argument(
+        "-a",
+        "--alias",
+        type=str,
+        required=True,
+        help="alias of the emote you're removing, containing only alphanumberic characters, dashes and underscores",
+    )
+
+    # A few params for this one
+    exportemote_parser = emote_commands.add_parser(
+        "export",
+        help="export all custom emotes",
+        description="List all custom emotes.",
+    )
+    exportemote_parser.add_argument(
+        "-d",
+        "--directory",
+        type=str,
+        required=True,
+        help="the directory we should export all custom emotes to",
+    )
+
+    # Another subcommand here.
+    attachment_parser = commands.add_parser(
+        "attachment",
+        help="modify attachments on the instance",
+        description="Modify attachments on the instance.",
+    )
+    attachment_commands = attachment_parser.add_subparsers(dest="attach")
+
+    # A few params for this one.
+    updateattachment_parser = attachment_commands.add_parser(
+        "update",
+        help="update a particular attachment",
+        description="Update a particular attachment.",
+    )
+    updateattachment_parser.add_argument(
+        "-a",
+        "--attachment",
+        type=str,
+        required=True,
+        choices=["room", "avatar", "favicon"],
+        help="update this particular attachment",
+    )
+    updateattachment_parser.add_argument(
+        "-f",
+        "--file",
+        type=str,
+        required=True,
+        help="file you would like to use as the new attachment, or \"default\" to revert to the default",
+    )
+
+    # Another subcommand here.
+    room_parser = commands.add_parser(
+        "room",
+        help="modify public rooms on the instance",
+        description="Modify public rooms on the instance.",
+    )
+    room_commands = room_parser.add_subparsers(dest="room")
+
+    # No params for this one
+    room_commands.add_parser(
+        "list",
+        help="list all public rooms",
+        description="List all public rooms.",
+    )
+
+    # A few params for this one
+    createroom_parser = room_commands.add_parser(
+        "create",
+        help="create a public room",
+        description="Create a public room.",
+    )
+    createroom_parser.add_argument(
+        "-n",
+        "--name",
+        type=str,
+        default=None,
+        help="name of the room that you are creating",
+    )
+    createroom_parser.add_argument(
+        "-t",
+        "--topic",
+        type=str,
+        default=None,
+        help="topic of the room that you are creating",
+    )
+    createroom_parser.add_argument(
+        "-c",
+        "--icon",
+        type=str,
+        default=None,
+        help="image file you would like to use as the room's icon",
+    )
+    createroom_parser.add_argument(
+        "-a",
+        "--autojoin",
+        type=str,
+        choices=["on", "off"],
+        default="off",
+        help="whether the room is set to auto-join on account creation or not",
+    )
+    createroom_parser.add_argument(
+        "-m",
+        "--moderated",
+        type=str,
+        choices=["on", "off"],
+        default="off",
+        help="whether the room is set to moderated or free-for-all",
+    )
+
+    # A few params for this one
+    changeroominfo_parser = room_commands.add_parser(
+        "info",
+        help="modify a public room's info such as name, title or icon",
+        description="Modify a public room's info such as name, title or icon.",
+    )
+    changeroominfo_parser.add_argument(
+        "-i",
+        "--id",
+        type=str,
+        required=True,
+        help="ID of the room that you are modifying the information of",
+    )
+    changeroominfo_parser.add_argument(
+        "-n",
+        "--name",
+        type=str,
+        default=None,
+        help="new name of the room",
+    )
+    changeroominfo_parser.add_argument(
+        "-t",
+        "--topic",
+        type=str,
+        default=None,
+        help="new topic of the room",
+    )
+    changeroominfo_parser.add_argument(
+        "-c",
+        "--icon",
+        type=str,
+        default=None,
+        help="image file you would like to use as the room's new icon, or \"default\" to unset a custom icon",
+    )
+
+    # A few params for this one
+    autojoinroom_parser = room_commands.add_parser(
+        "autojoin",
+        help="modify a public room's autojoin property",
+        description="Modify a public room's autojoin property.",
+    )
+    autojoinroom_parser.add_argument(
+        "-i",
+        "--id",
+        type=str,
+        required=True,
+        help="ID of the room that you are modifying the autojoin property of",
+    )
+    autojoinroom_parser.add_argument(
+        "-a",
+        "--autojoin",
+        type=str,
+        choices=["on", "off"],
+        required=True,
+        help="whether the room is set to auto-join on account creation or not",
+    )
+
+    # A few params for this one
+    moderatedroom_parser = room_commands.add_parser(
+        "moderated",
+        help="modify a public room's moderated property",
+        description="Modify a public room's moderated property.",
+    )
+    moderatedroom_parser.add_argument(
+        "-i",
+        "--id",
+        type=str,
+        required=True,
+        help="ID of the room that you are modifying the moderated property of",
+    )
+    moderatedroom_parser.add_argument(
+        "-m",
+        "--moderated",
+        type=str,
+        choices=["on", "off"],
+        required=True,
+        help="whether the room is set to moderated or free-for-all",
+    )
+
+    # A few params for this one
+    grantmoderator_parser = room_commands.add_parser(
+        "grant_moderator",
+        help="grant moderator role to a user in a room",
+        description="Grant moderator role to a user in a room.",
+    )
+    grantmoderator_parser.add_argument(
+        "-i",
+        "--id",
+        type=str,
+        required=True,
+        help="ID of the room that you are adding a moderator to.",
+    )
+    grantmoderator_parser.add_argument(
+        "-u",
+        "--username",
+        required=True,
+        type=str,
+        help="username that the user uses to login with",
+    )
+
+    # A few params for this one
+    revokemoderator_parser = room_commands.add_parser(
+        "revoke_moderator",
+        help="revoke moderator role from a user in a room",
+        description="Revoke moderator role from a user in a room.",
+    )
+    revokemoderator_parser.add_argument(
+        "-i",
+        "--id",
+        type=str,
+        required=True,
+        help="ID of the room that you are removing a moderator from.",
+    )
+    revokemoderator_parser.add_argument(
+        "-u",
+        "--username",
+        required=True,
+        type=str,
+        help="username that the user uses to login with",
+    )
+
+    # A few params for this one
+    muteuser_parser = room_commands.add_parser(
+        "mute_user",
+        help="mute a user in a room",
+        description="Mute a user in a room.",
+    )
+    muteuser_parser.add_argument(
+        "-i",
+        "--id",
+        type=str,
+        required=True,
+        help="ID of the room that you are muting a user in.",
+    )
+    muteuser_parser.add_argument(
+        "-u",
+        "--username",
+        required=True,
+        type=str,
+        help="username that the user uses to login with",
+    )
+
+    # A few params for this one
+    unmuteuser_parser = room_commands.add_parser(
+        "unmute_user",
+        help="unmute a user in a room",
+        description="Unmute a user in a room.",
+    )
+    unmuteuser_parser.add_argument(
+        "-i",
+        "--id",
+        type=str,
+        required=True,
+        help="ID of the room that you are unmuting a user in.",
+    )
+    unmuteuser_parser.add_argument(
+        "-u",
+        "--username",
+        required=True,
+        type=str,
+        help="username that the user uses to login with",
+    )
+
+    args = parser.parse_args()
+
+    config = Config()
+    load_config(args.config, config)
+    try:
+        if args.operation is None:
+            raise CLIException("Unuspecified operation!")
+
+        elif args.operation == "database":
+            if args.database is None:
+                raise CLIException("Unuspecified database operation!")
+            elif args.database == "create":
+                create_db(config, args.existing_okay)
+            elif args.database == "generate":
+                generate_migration(config, args.message, args.allow_empty)
+            elif args.database == "upgrade":
+                upgrade_db(config)
+            elif args.database == "downgrade":
+                downgrade_db(config, args.tag)
+            else:
+                raise CLIException(f"Unknown database operation '{args.database}'")
+
+        elif args.operation == "mastodon":
+            if args.mastodon is None:
+                raise CLIException("Unspecified mastodon operation!")
+            elif args.mastodon == "register":
+                mastodon_register_all(config, args.instance)
+            elif args.mastodon == "list":
+                mastodon_list_all(config, args.instance)
+            elif args.mastodon == "unregister":
+                mastodon_unregister(config, args.instance)
+            else:
+                raise CLIException(f"Unknown mastodon operation '{args.mastodon}'")
+
+        elif args.operation == "user":
+            if args.user is None:
+                raise CLIException("Unspecified user operation!")
+            elif args.user == "list":
+                list_users(config)
+            elif args.user == "create":
+                create_user(config, args.username, args.password)
+            elif args.user == "generate_invite":
+                generate_user_invite(config)
+            elif args.user == "change_password":
+                change_user_password(config, args.username, args.password)
+            elif args.user == "generate_recovery":
+                generate_password_recovery(config, args.username)
+            elif args.user == "activate":
+                activate_user(config, args.username)
+            elif args.user == "deactivate":
+                deactivate_user(config, args.username)
+            elif args.user == "admin":
+                admin_user(config, args.username)
+            elif args.user == "deadmin":
+                deadmin_user(config, args.username)
+            else:
+                raise CLIException(f"Unknown user operation '{args.user}'")
+
+        elif args.operation == "emote":
+            if args.emote is None:
+                raise CLIException("Unspecified emote operation!")
+            elif args.emote == "list":
+                list_emotes(config, args.only_broken)
+            elif args.emote == "import":
+                import_emote(config, args.alias, args.file)
+            elif args.emote == "export":
+                export_emote(config, args.directory)
+            elif args.emote == "remove":
+                remove_emote(config, args.alias)
+            else:
+                raise CLIException(f"Unknown emote operation '{args.emote}'")
+
+        elif args.operation == "attachment":
+            if args.attach is None:
+                raise CLIException("Unspecified attachment operation!")
+            elif args.attach == "update":
+                update_attachment(config, args.attachment, args.file)
+            else:
+                raise CLIException(f"Unknown attachment operation '{args.attach}'")
+
+        elif args.operation == "room":
+            if args.room is None:
+                raise CLIException("Unspecified room operation!")
+            elif args.room == "list":
+                list_public_rooms(config)
+            elif args.room == "create":
+                create_public_room(config, args.name, args.topic, args.icon, args.autojoin, args.moderated)
+            elif args.room == "info":
+                modify_public_room_info(config, args.id, args.name, args.topic, args.icon)
+            elif args.room == "autojoin":
+                modify_public_room_autojoin(config, args.id, args.autojoin)
+            elif args.room == "moderated":
+                modify_public_room_moderated(config, args.id, args.moderated)
+            elif args.room == "grant_moderator":
+                grant_public_room_moderator(config, args.id, args.username)
+            elif args.room == "revoke_moderator":
+                revoke_public_room_moderator(config, args.id, args.username)
+            elif args.room == "mute_user":
+                mute_public_room_user(config, args.id, args.username)
+            elif args.room == "unmute_user":
+                unmute_public_room_user(config, args.id, args.username)
+            else:
+                raise CLIException(f"Unknown room operation '{args.room}'")
+
+        else:
+            raise CLIException(f"Unknown operation '{args.operation}'")
+    except CLIException as e:
+        print(str(e), file=sys.stderr)
+        print(file=sys.stderr)
+        parser.print_help(sys.stderr)
+        sys.exit(1)
+    except CommandException as e:
+        print(str(e), file=sys.stderr)
+        sys.exit(1)
+    except DBCreateException as e:
+        print(str(e), file=sys.stderr)
+        sys.exit(1)
