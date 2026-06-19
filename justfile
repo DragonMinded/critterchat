@@ -10,7 +10,7 @@ init backend="sqlite":
 # Set up both backend and frontend package management to run locally
 setup:
     cd backend && python3 -m venv .venv
-    ./backend/.venv/bin/python3 -m pip install --upgrade pip -r backend/requirements.txt
+    ./backend/.venv/bin/python3 -m pip install --upgrade pip -r backend/requirements.txt -r backend/requirements-dev.txt
     cd frontend && npm install
 
 # Build a debug version of the frontend package

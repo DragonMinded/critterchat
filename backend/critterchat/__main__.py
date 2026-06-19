@@ -49,7 +49,7 @@ def perform_initialization_work(config: Config) -> None:
         logger.info("Done with initialization.")
 
 
-if __name__ == '__main__':
+def main() -> None:
     parser = argparse.ArgumentParser(description="Run the chat application backend.")
     parser.add_argument("-p", "--port", help="Port to listen on. Defaults to 5678", type=int, default=5678)
     parser.add_argument("-d", "--debug", help="Enable debug mode. Defaults to off", action="store_true")
@@ -98,3 +98,7 @@ if __name__ == '__main__':
         app.wsgi_app = ProxyFix(app.wsgi_app, x_host=args.nginx_proxy, x_proto=args.nginx_proxy, x_for=args.nginx_proxy, x_prefix=args.nginx_proxy)  # type: ignore
     logger.info(f"Running server listening on port {args.port}")
     socketio.run(app, host='0.0.0.0', port=args.port, debug=args.debug, **extra_args)
+
+
+if __name__ == '__main__':
+    main()

@@ -1,3 +1,44 @@
 [build-system]
 requires = ["setuptools"]
 build-backend = "setuptools.build_meta"
+
+[project]
+name = "critterchat"
+version = "0.1.2"
+description = "CritterChat self-hosted web chat software."
+readme = "README.md"
+license = "Unlicense"
+license-files = ["LICENSE"]
+requires-python = ">= 3.11"
+authors = [
+    {name = "DragonMinded", email = "dragonminded@dragonminded.com"},
+]
+maintainers = [
+    {name = "DragonMinded", email = "dragonminded@dragonminded.com"},
+]
+dynamic = ["dependencies"]
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.dynamic]
+dependencies = {file = ["requirements.txt"]}
+
+[tool.setuptools.packages.find]
+include = [
+    'critterchat',
+    'critterchat.common',
+    'critterchat.config',
+    'critterchat.data',
+    'critterchat.data.migrations',
+    'critterchat.data.migrations.versions',
+    'critterchat.http',
+    'critterchat.http.static',
+    'critterchat.http.templates',
+    'critterchat.manage',
+    'critterchat.service'
+]
+
+[project.scripts]
+critterchat = "critterchat:main"
+critterchat-manage = "critterchat.manage:main"

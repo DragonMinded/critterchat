@@ -19,16 +19,3 @@ sql-fragments
 python-dateutil
 pydub
 python-magic-standalone
-
-types-emoji
-types-gevent
-types-pyyaml
-types-requests
-types-python-dateutil
-types-setuptools
-
-mypy
-flake8
-pytest
-pytest-cov
-freezegun
