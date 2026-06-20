@@ -27,12 +27,10 @@ federation between instances that can be enabled or disabled per-instance.
 
 ## Wishlist
 
- - Message editing.
- - Message deleting.
+ - Message editing and deleting.
  - Reply to message.
- - Now typing indicators.
- - Read receipts.
- - Pinned messages.
+ - Now typing indicators and read receipts.
+ - Pinned messages, tagging pins.
  - Sticker support.
  - Moderation tools for network admin (global mute, global ban, etc).
  - Moderation tools for individuals (block user, allow direct messages, etc.).
@@ -46,6 +44,7 @@ federation between instances that can be enabled or disabled per-instance.
  - Inter-instance direct messages and private conversations, inter-instance OIDC-based authentication.
  - REST API for bot integration, discord-compatible webhook support.
  - Multi-language support with default language per-instance.
+ - TOTP support, passkey support.
 
 ## Needed Help
 
