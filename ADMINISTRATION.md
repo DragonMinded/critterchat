@@ -17,8 +17,8 @@ the following to use your development setup to interact with your production ins
 just manage --config <path to production config> --help
 ```
 
-If you've installed CritterChat through `pipx` you can instead run the following
-command to interact with your instance:
+If you've installed CritterChat through [pipx](https://pipx.pypa.io/stable/) you can
+instead run the following command to interact with your instance:
 
 ```
 critterchat-manage --config <path to production config> --help

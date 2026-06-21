@@ -231,7 +231,7 @@ python3 -m critterchat.manage --config <path to your production config> user dea
 
 For more in-depth documentation of administration features please see [ADMINISTRATION.md](ADMINISTRATION.md).
 
-## Upgrading Production
+## Upgrading from Repo
 
 Once you've got everything installed, if you want to apply updates that you've
 pulled from this repository, you can do so with the following steps.
