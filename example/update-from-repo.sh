@@ -1,6 +1,9 @@
 #! /bin/bash
 #
-# Example update script for bare metal installations, automates the "Upgrading Production" steps from the README file. Note that you need to edit a few details about your own installation below. Meant to be run out of the root of this repository.
+# Example update script for bare metal installations tracking the latest development
+# branch. Automates the "Upgrading Production" steps from the README file. Note that
+# you need to edit a few details about your own installation below. Meant to be run
+# out of the root of this repository.
 
 set -e
 
