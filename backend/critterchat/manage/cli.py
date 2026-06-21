@@ -1425,7 +1425,11 @@ def main(prog: str = "critterchat-manage") -> None:
     args = parser.parse_args()
 
     config = Config()
-    load_config(args.config, config)
+    if os.path.exists(args.config):
+        load_config(args.config, config)
+    else:
+        print(f"Config file {args.config} doesn't exist, assuming empty config!", file=sys.stderr)
+
     try:
         if args.operation is None:
             raise CLIException("Unuspecified operation!")
