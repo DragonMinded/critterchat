@@ -7,7 +7,7 @@ as little time as possible:
 ```
 # Install necessary system dependencies for CritterChat
 sudo apt install python3 python3-dev python3-pip pkg-config \
-         libmysqlclient-dev build-essential npm git ffmpeg pipx
+         libmysqlclient-dev build-essential ffmpeg pipx
 
 # Install CritterChat into your user path using PipX
 pipx install critterchat
