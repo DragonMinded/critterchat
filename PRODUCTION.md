@@ -67,12 +67,24 @@ production installation. I recommend sticking it in the deployed folder under a
 directory called `venv` or similar. It doesn't matter where it is but you'll
 want to keep organized. Once you've created that virtual environment you'll
 be activating it every time you want to install updates. For now, activate it
-and install the initial production instance by going into the `backend/`
-directory and first running `python3 -m pip install --upgrade pip -r requirements.txt`
-followed by `python3 -m pip install .`. This will install all dependencies,
-the static resources and the code itself. If you have not built the frontend
-for production, you will need to do this before running the above command by
-going into the `frontend/` directory and running `npm run clean && npm run build`.
+so that you can install CritterChat into it either from a checkout of the repo
+or from PyPI. If you're developing or customizing CritterChat, you'll want to
+install out of your repo. If you're just running a released version of CritterChat
+you can install directly from PyPI.
+
+If you're installing from your repo, first ensure that you've built the frontend
+for production as the repo does not ship with pre-built frontend files. You can
+do that by going into  the `frontend/` directory and running `npm run clean && npm run build`.
+Once that's done, install CritterChat into your virtual environment by going into
+the `backend/` directory and first running `python3 -m pip install --upgrade pip -r requirements.txt`
+followed by `python3 -m pip install .`. This will install all dependencies, the
+static resources and the code itself into your virtual enviornment.
+
+If you're installing from PyPI you can skip the build steps since the package
+ships with pre-built frontend files. Install the package into your virtual
+environment by running `python3 -m pip install --upgrade pip critterchat`. This
+will install all dependencies, the static resources and thecode itself into your
+virtual environment.
 
 Now that the software is actually installed, you'll want to seed the database
 which is presumably empty. In the same terminal that you have the activated
@@ -146,6 +158,31 @@ files that you obtained from Let's Encrypt or purchasing a certificate. Pass the
 path to your certificate fullchain file to `--cert` and the full path to your certificate
 private key file to `--cert-key`.
 
+## Running Without systemd
+
+The above walkthrough as well as all of the baremetal examples assumes you will be
+creating a virtual environment where you will install CritterChat into which is then
+managed by systemd. If you do not wish to set this up and instead want to manage
+CritterChat in some other way you can install CritterChat into your local user's
+system path for direct executing using [pipx](https://pipx.pypa.io/stable/). Run
+`pipx install critterchat` to do so, at which point the utility `critterchat` will
+be available in your system path as a stand-in for `python3 -m critterchat`, and
+`critterchat-manage` will be available in your system path as a stand-in for
+`python3 -m critterchat.manage`.
+
+Both of these utilities behave identical to their virtual environment counterparts
+which means you can use them with MySQL or SQLite as well as with or without nginx.
+If you do not want to set any dependencies up save for ffmpeg which is a simple install
+you can run CritterChat from a pipx installation with SQLite and built-in SSL
+termination. Note that when you're running pipx-managed CritterChat, pipx is responsible
+for updates as well. To update your CritterChat instance, stop the running program
+and then run `pipx upgrade critterchat`. Don't forget to execute database migrations
+before restarting by running the following:
+
+```
+critterchat-manage --config <path to your production config> database upgrade
+```
+
 ## Administration
 
 Most of the administration for the server can be done in the CLI. At some point
@@ -197,13 +234,14 @@ For more in-depth documentation of administration features please see [ADMINISTR
 ## Upgrading Production
 
 Once you've got everything installed, if you want to apply updates that you've
-pulled from this repository, you can do so with the following steps. First,
-actually pull the changes by refreshing your git repository. Go into the `frontend/`
-directory and make sure you've built a new production bundle by running
-`npm run clean && npm run build`. Then, activate the virtual environment you
-created for the production instance. Now, stop the running server by executing
-`systemctl stop critterchat`. Now, in the `backend/` directory, run
-`python3 -m pip install --upgrade pip -r requirements.txt` followed by
+pulled from this repository, you can do so with the following steps.
+
+If you are installing from a repository, first actually pull the changes by refreshing
+your copy of the repository. Go into the `frontend/` directory and make sure you've
+built a new production bundle by running `npm run clean && npm run build`. Then,
+activate the virtual environment you created for the production instance. Now, stop the
+running server by executing `systemctl stop critterchat`. Now, in the `backend/` directory,
+run `python3 -m pip install --upgrade pip -r requirements.txt` followed by
 `python3 -m pip install --upgrade .` to upgrade dependencies and install the new
 version of CritterChat. Then run to following command to perform any schema migrations
 that are present in the newly installed code:
@@ -222,7 +260,29 @@ once the upgrade is successful. As a reminder, you can check the server logs for
 upgraded instance by running `journalctl -u critterchat`.
 
 An example script that automates the entire upgrade process is available for you to
-modify under `example/update-script`. Be sure to customize it to your installation.
+modify under `example/update-from-repo.sh`. Be sure to customize it to your installation.
+
+## Upgrading from PyPI
+
+If you've installed from PyPI instead of from a repo, the following simpler steps can
+be used to upgrade your production instance.
+
+First, stop the running server by executing `systemctl stop critterchat`. Now, activate
+the virtual environment you created for the production instance. Now, upgrade CritterChat
+by running `python3 -m pip install --upgrade pip critterchat` which will take care of all
+dependencies as well as the pre-built frontend files. Then, run the following command to
+perform any schema migrations that are present in the newly installed code:
+
+```
+python3 -m critterchat.manage --config <path to your production config> database upgrade
+```
+
+Finally, once all those steps are done, re-start the backend service with
+`systemctl start critterchat`. As a reminder, you can check the server logs for the
+upgraded instance by running `journalctl -u critterchat`.
+
+An example script that automates the entire upgrade process is available for you to
+modify under `example/update-from-pypi.sh`. Be sure to customize it to your installation.
 
 # Docker Hosting
 
