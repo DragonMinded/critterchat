@@ -267,6 +267,7 @@ class Menu {
         invites.forEach((invite) => this._drawInvite(invite));
 
         // Only draw another header if this is a full refresh.
+        var lastSeen = undefined;
         const forceHeaders = this.preferencesLoaded && this.preferences.rooms_on_top;
         if (fullRedraw) {
             var label = undefined;
@@ -278,14 +279,16 @@ class Menu {
                     label = "rooms";
                 } else {
                     label = "conversations";
+                    lastSeen = "chat";
                 }
             }
 
-            conversations.append('<div class="header">' + label + '</div>');
+            if (rooms.length > 0) {
+                conversations.append('<div class="header">' + label + '</div>');
+            }
         }
 
         // Now draw rooms, interjecting another header for conversations when we get there if need be.
-        var lastSeen = undefined;
         rooms.forEach((room) => {
             if (fullRedraw && forceHeaders) {
                 if (lastSeen != "chat" && lastSeen != "dm" && room.type != "room") {
@@ -574,10 +577,10 @@ class Menu {
         if (this.selected == roomid ) {
             this.selected = "";
 
-            var conversations = $('div.menu > div.rooms');
-            conversations.find('button.item#' + roomid).remove();
-
-            this.rooms = this.rooms.filter((room) => room.id != roomid);
+            if (this.roomsLoaded) {
+                this.rooms = this.rooms.filter((room) => room.id != roomid);
+                this.setRooms(this.rooms, true);
+            }
 
             this.screenState.setState("menu");
         }
