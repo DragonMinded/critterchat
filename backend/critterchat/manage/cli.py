@@ -1,6 +1,7 @@
 import argparse
 import getpass
 import os
+import pathlib
 import string
 import sys
 
@@ -42,6 +43,24 @@ class CLIException(Exception):
 
 class CommandException(Exception):
     pass
+
+
+def write_examples(examples_directory: pathlib.Path, output_directory: str) -> None:
+    """
+    Given an examples directory and an output directory, write examples to that directory.
+    """
+    output_directory = os.path.abspath(output_directory)
+    os.makedirs(output_directory, exist_ok=True)
+
+    for f in examples_directory.iterdir():
+        if not f.is_file():
+            continue
+
+        with open(f, "rb") as rfp:
+            out = os.path.join(output_directory, f.name)
+            with open(out, "wb") as wfp:
+                print(f"Writing {out}...")
+                wfp.write(rfp.read())
 
 
 def create_db(config: Config, exist_okay: bool) -> None:
@@ -796,6 +815,10 @@ def unmute_public_room_user(config: Config, roomid: str, username: str) -> None:
 
 
 def main(prog: str = "critterchat-manage") -> None:
+    # Only allowing the example subcommand when the example directory is present for us to use.
+    examples = pathlib.Path(__file__).parent.resolve() / "example"
+    examples_available = examples.is_dir()
+
     parser = argparse.ArgumentParser(prog=prog, description="A utility for administrating a CritterChat instance.")
     parser.add_argument(
         "-c",
@@ -805,6 +828,29 @@ def main(prog: str = "critterchat-manage") -> None:
         help="core configuration, used for determining what DB to connect to (defaults to config.yaml)",
     )
     commands = parser.add_subparsers(dest="operation")
+
+    # First subcommand here.
+    if examples_available:
+        example_parser = commands.add_parser(
+            "example",
+            help="work with example configuration files included in this instance",
+            description="Work with example configuration files included in this instance.",
+        )
+        example_commands = example_parser.add_subparsers(dest="example")
+
+        # A directory output param for this one.
+        create_parser = example_commands.add_parser(
+            "write",
+            help="write example configuration files to directory",
+            description="Write example configuration files to directory.",
+        )
+        create_parser.add_argument(
+            "-d",
+            "--directory",
+            type=str,
+            default='.',
+            help="directory to write example files to, defaults to the current directory",
+        )
 
     # Another subcommand here.
     database_parser = commands.add_parser(
@@ -1479,6 +1525,14 @@ def main(prog: str = "critterchat-manage") -> None:
                 unmute_public_room_user(config, args.id, args.username)
             else:
                 raise CLIException(f"Unknown room operation '{args.room}'")
+
+        elif examples_available and args.operation == "example":
+            if args.example is None:
+                raise CLIException("Unspecified example operation!")
+            elif args.example == "write":
+                write_examples(examples, args.directory)
+            else:
+                raise CLIException(f"Unknown example operation '{args.example}'")
 
         else:
             raise CLIException(f"Unknown operation '{args.operation}'")

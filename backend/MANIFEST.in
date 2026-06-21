@@ -14,4 +14,9 @@ include critterchat/http/static/*.json
 include critterchat/http/static/*.png
 include critterchat/http/static/*.svg
 include critterchat/http/static/*.mp3
+include critterchat/manage/example/*.txt
+include critterchat/manage/example/*.conf
+include critterchat/manage/example/*.yaml
+include critterchat/manage/example/*.service
+include critterchat/manage/example/*.sh
 graft critterchat/http/static/twemoji

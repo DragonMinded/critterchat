@@ -102,7 +102,7 @@ reboot, and finally `systemctl start critterchat` to start the service. You can
 use `journalctl -u critterchat` to see logs and verify that it started successfully.
 
 Finally, we will set up the nginx proxy which will actually serve the production
-traffic. Make a copy of the `example/critterchat-nginx-conf` file and place it
+traffic. Make a copy of the `example/critterchat-nginx.conf` file and place it
 into `/etc/nginx/sites-available`. Edit the `server_name` line everywhere it appears
 and change it to the domain or subdomain that you are running this under. Don't
 forget to edit the `return` line in the top portion of the file to auto-promote

@@ -8,6 +8,7 @@ backend/critterchat/http/static/chat.*.js.LICENSE.txt
 backend/critterchat/http/static/home.*.js
 backend/critterchat/http/static/home.*.js.LICENSE.txt
 backend/critterchat/http/static/webpack-assets.json
+backend/critterchat/manage/example/
 backend/LICENSE
 backend/README.md
 frontend/node_modules/

@@ -20,9 +20,12 @@ build:
     cd frontend && npm run clean && npm run build
     cd backend && rm -rf build/ dist/
     cp README.md LICENSE backend/
-    cd backend && sed -i '/## More Documentation/,$d' README.md
+    cd backend/critterchat/manage && rm -rf example
+    cp -r example backend/critterchat/manage/
+    cd backend && sed -i '/## Quick Start Guide/,$d' README.md && cat QUICKSTART.md >> README.md
     cd backend && ./.venv/bin/python3 -m build --no-isolation --quiet
     rm -rf backend/README.md backend/LICENSE
+    rm -rf backend/critterchat/manage/example
 
 # Release a version of the critterchat package to pypi
 release:
