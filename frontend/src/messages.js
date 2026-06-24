@@ -13,8 +13,10 @@ import {
     containsStandaloneText,
     highlightStandaloneText,
     findElement,
+    isText,
     getExt,
     getFilename,
+    getAttachmentImage,
 } from "./utils.js";
 import { EmojiSearch } from "./components/emojisearch.js";
 import { autocomplete } from "./components/autocomplete.js";
@@ -1355,48 +1357,6 @@ class Messages {
     }
 
     /**
-     * Helper for recognizing text types based on mimetype.
-     */
-    _isText( mt ) {
-        mt = mt.toLowerCase();
-        if (mt.startsWith("text/")) {
-            return true;
-        }
-        if (mt == "application/json") {
-            return true;
-        }
-        if (mt == "application/javascript") {
-            return true;
-        }
-        if (mt == "application/xml") {
-            return true;
-        }
-
-        return false;
-    }
-
-    /**
-     * Helper to resolve the correct attachment image based on mimetype and filename.
-     */
-    _getAttachmentImage( ext, mt ) {
-        mt = mt.toLowerCase();
-
-        if (this._isText(mt) || mt == "application/pdf") {
-            return "file-text";
-        }
-        if (mt.startsWith("audio/")) {
-            return "file-audio";
-        }
-        if (mt.startsWith("video/")) {
-            return "file-video";
-        }
-        if (mt.startsWith("image/")) {
-            return "file-image";
-        }
-        return "file-binary";
-    }
-
-    /**
      * Draws the attachments for a given message.
      */
     _drawAttachments( message, attachments ) {
@@ -1405,7 +1365,7 @@ class Messages {
             mimetypes.push(attachment.mimetype);
         });
         const allImages = mimetypes.every((mt) => mt.startsWith("image/"));
-        const allText = mimetypes.every((mt) => this._isText(mt));
+        const allText = mimetypes.every((mt) => isText(mt));
         const desiredHeight = (attachments.length == 1 && allImages) ? 300 : 100;
         const textInline = (attachments.length == 1) && allText && attachments[0].preview;
 
@@ -1518,7 +1478,7 @@ class Messages {
                 html += '    <div class="name">';
                 html += '      ' + escapeHtml(filename);
                 html += '    </div>';
-                html += '    <div class="ext maskable ' + this._getAttachmentImage(ext, attachment.mimetype) + '"></div>';
+                html += '    <div class="ext maskable ' + getAttachmentImage(ext, attachment.mimetype) + '"></div>';
                 html += '  </div>';
 
                 if (attachment.metadata.sensitive) {

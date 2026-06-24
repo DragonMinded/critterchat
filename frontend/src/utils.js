@@ -396,6 +396,52 @@ const getFilename = function(path) {
     return parts[parts.length - 1];
 }
 
+/**
+ * Given a mimetype, returns true if the mimetype represents what a person
+ * considers text, or false otherwise. This means that the document is
+ * renderable as plain text, so things that are in the application namespace
+ * but are actually just text still count.
+ */
+const isText = function(mt) {
+    mt = mt.toLowerCase();
+    if (mt.startsWith("text/")) {
+        return true;
+    }
+    if (mt == "application/json") {
+        return true;
+    }
+    if (mt == "application/javascript") {
+        return true;
+    }
+    if (mt == "application/xml") {
+        return true;
+    }
+
+    return false;
+}
+
+/**
+ * Given an extension and a mimetype, return the mask image that represents
+ * that file for an attachment thumbnail.
+ */
+const getAttachmentImage = function(ext, mt) {
+    mt = mt.toLowerCase();
+
+    if (isText(mt) || mt == "application/pdf") {
+        return "file-text";
+    }
+    if (mt.startsWith("audio/")) {
+        return "file-audio";
+    }
+    if (mt.startsWith("video/")) {
+        return "file-video";
+    }
+    if (mt.startsWith("image/")) {
+        return "file-image";
+    }
+    return "file-binary";
+}
+
 export {
     escapeHtml,
     formatTime,
@@ -410,6 +456,8 @@ export {
     containsStandaloneText,
     highlightStandaloneText,
     findElement,
+    isText,
     getExt,
     getFilename,
+    getAttachmentImage,
 };

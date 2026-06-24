@@ -712,15 +712,11 @@ div.uploadpicker-container div.upload > div.file div.name {
 div.uploadpicker-container div.upload > div.file div.ext {
     display: flex;
     flex-shrink: 0;
-    width: 35%;
-    height: 35%;
-    justify-content: center;
-    align-items: center;
-    border-radius: var(--button-border-radius);
-    border: 1px solid var(--message-attachment-border);
-    background: var(--message-attachment-background);
+    width: 25%;
+    height: 25%;
     color: var(--message-attachment-text);
     margin-left: auto;
+    margin-bottom: var(--application-item-padding);
 }
 
 div.uploadpicker-container div.upload div.delete-container {

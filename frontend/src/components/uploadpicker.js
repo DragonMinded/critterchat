@@ -1,5 +1,5 @@
 import $ from "jquery";
-import { flash, getExt, getFilename } from "../utils.js";
+import { flash, getExt, getFilename, getAttachmentImage } from "../utils.js";
 import { displayAltTextEditor } from "../modals/alttextmodal.js";
 
 class UploadPicker {
@@ -253,8 +253,7 @@ class UploadPicker {
                     .text(shortenedFile)
                     .appendTo(outerFile);
                 $('<div />')
-                    .attr('class', 'ext')
-                    .text(ext)
+                    .attr('class', 'ext maskable ' + getAttachmentImage(ext, upload.mimetype))
                     .appendTo(outerFile);
             }
 
