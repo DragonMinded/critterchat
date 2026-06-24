@@ -67,8 +67,8 @@ body.smallest {
 
     --message-visible-top: 3.5px;
     --message-sensitive-top: 3.5px;
-    --message-attachment-width: 100px;
-    --message-attachment-height: 100px;
+    --message-attachment-width: 90px;
+    --message-attachment-height: 90px;
 
     --nav-button-width: 32px;
     --nav-button-height: 32px;
@@ -159,8 +159,8 @@ body.smaller {
 
     --message-visible-top: 3.5px;
     --message-sensitive-top: 3.5px;
-    --message-attachment-width: 100px;
-    --message-attachment-height: 100px;
+    --message-attachment-width: 88px;
+    --message-attachment-height: 88px;
 
     --nav-button-width: 32px;
     --nav-button-height: 32px;
@@ -251,8 +251,8 @@ body:not(.smallest):not(.smaller):not(.larger):not(.largest) {
 
     --message-visible-top: 3.5px;
     --message-sensitive-top: 3.5px;
-    --message-attachment-width: 100px;
-    --message-attachment-height: 100px;
+    --message-attachment-width: 88px;
+    --message-attachment-height: 88px;
 
     --nav-button-width: 36px;
     --nav-button-height: 36px;
@@ -343,8 +343,8 @@ body.larger {
 
     --message-visible-top: 3.5px;
     --message-sensitive-top: 3.5px;
-    --message-attachment-width: 100px;
-    --message-attachment-height: 100px;
+    --message-attachment-width: 88px;
+    --message-attachment-height: 88px;
 
     --nav-button-width: 40px;
     --nav-button-height: 40px;
@@ -435,8 +435,8 @@ body.largest {
 
     --message-visible-top: 3.5px;
     --message-sensitive-top: 3.5px;
-    --message-attachment-width: 100px;
-    --message-attachment-height: 100px;
+    --message-attachment-width: 88px;
+    --message-attachment-height: 88px;
 
     --nav-button-width: 44px;
     --nav-button-height: 44px;
@@ -1244,6 +1244,7 @@ div.conversation div.item div.attachments div.file:hover, div.conversation div.i
 }
 
 div.conversation div.item div.attachments div.file div.name {
+    font-size: var(--application-text-size-14);
     flex-grow: 1;
     overflow: hidden;
     overflow-wrap: break-word;
