@@ -1321,7 +1321,7 @@ div.conversation div.item div.attachments div.attachment.preview-header > div {
     align-items: center;
 }
 
-div.conversation div.item div.attachments a div.blurred {
+div.conversation div.item div.attachments a div[class="blurred"] {
     width: 100%;
     height: 100%;
     position: absolute;
@@ -1336,7 +1336,7 @@ div.attachments div.blurred div {
     color: var(--conversation-text);
 }
 
-div.conversation div.item div.attachments img.blurred {
+div.conversation div.item div.attachments img.blurred, div.conversation div.item div.attachments div.file.blurred {
     filter: blur(50px);
 }
 

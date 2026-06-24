@@ -1490,12 +1490,23 @@ class Messages {
             } else {
                 // Arbitrary attachment.
                 html += '<a target="_blank" class="attachment file" href="' + attachment.uri + '">';
-                html += '  <div class="file">';
+
+                if (attachment.metadata.sensitive) {
+                    html += '  <div class="file blurred">';
+                } else {
+                    html += '  <div class="file">';
+                }
+
                 html += '    <div class="name">';
                 html += '      ' + escapeHtml(filename);
                 html += '    </div>';
                 html += '    <div class="ext maskable ' + this._getAttachmentImage(ext, attachment.mimetype) + '"></div>';
                 html += '  </div>';
+
+                if (attachment.metadata.sensitive) {
+                    html += '  <div class="blurred"><div class="maskable attachment-sensitive"></div></div>';
+                }
+
                 html += '</a>';
             }
         });
@@ -1794,13 +1805,14 @@ class Messages {
                     elem.removeClass('sensitive');
                     elem.off();
                 });
-                $('div.attachments div.blurred').on('click', (event) => {
+                $('div.attachments div[class="blurred"]').on('click', (event) => {
                     event.preventDefault();
                     event.stopPropagation();
                     event.stopImmediatePropagation();
 
                     const elem = $(event.currentTarget);
                     elem.parent().find('img.blurred').removeClass('blurred');
+                    elem.parent().find('div.file.blurred').removeClass('blurred');
                     elem.remove();
                 });
             }
