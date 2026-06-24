@@ -699,7 +699,6 @@ div.uploadpicker-container div.upload > div.file {
     flex-direction: column;
     padding: var(--application-item-padding);
     border: 1px solid var(--button-border);
-    border-radius: var(--button-border-radius);
     background: var(--button-background);
 }
 
@@ -1236,7 +1235,6 @@ div.conversation div.item div.attachments div.file {
     flex-direction: column;
     padding: var(--application-item-padding);
     border: 1px solid var(--button-border);
-    border-radius: var(--button-border-radius);
     background: var(--button-background);
 }
 
@@ -1263,6 +1261,12 @@ div.conversation div.item div.attachments div.file div.ext {
 }
 
 div.conversation div.item div.attachments div.preview {
+    width: 100%;
+    padding: 0px;
+    margin: 0px;
+}
+
+div.conversation div.item div.attachments div.preview-body {
     font-size: var(--application-text-size-14);
     overflow: auto;
     margin: 0px;
@@ -1275,11 +1279,11 @@ div.conversation div.item div.attachments div.preview {
     padding: var(--application-item-padding);
 }
 
-div.conversation div.item div.attachments div.preview span.plaintext {
+div.conversation div.item div.attachments div.preview-body span.plaintext {
     font-family: monospace;
 }
 
-div.conversation div.item div.attachments div.preview.shortened {
+div.conversation div.item div.attachments div.preview-body.shortened {
     -webkit-mask-image: linear-gradient(to bottom, black 90%, transparent 100%);
     mask-image: linear-gradient(to bottom, black 90%, transparent 100%);
 }
@@ -1296,7 +1300,6 @@ div.conversation div.item div.attachments div.attachment.preview-header {
     margin-bottom: calc(var(--message-attachment-padding) * -1);
     padding: var(--application-item-padding);
     padding-bottom: 0px;
-    width: 100%;
 }
 
 div.conversation div.item div.attachments button.attachment.preview {
@@ -1321,7 +1324,8 @@ div.conversation div.item div.attachments div.attachment.preview-header > div {
     align-items: center;
 }
 
-div.conversation div.item div.attachments a div[class="blurred"] {
+div.conversation div.item div.attachments div[class="blurred"] {
+    cursor: pointer;
     width: 100%;
     height: 100%;
     position: absolute;
@@ -1336,8 +1340,15 @@ div.attachments div.blurred div {
     color: var(--conversation-text);
 }
 
-div.conversation div.item div.attachments img.blurred, div.conversation div.item div.attachments div.file.blurred {
+div.conversation div.item div.attachments img.blurred,
+div.conversation div.item div.attachments div.file.blurred
+{
     filter: blur(50px);
+}
+
+div.conversation div.item div.attachments div.preview-wrapper.blurred
+{
+    filter: blur(10px);
 }
 
 div.conversation div.item.combined div.icon {

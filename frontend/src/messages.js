@@ -1444,6 +1444,7 @@ class Messages {
             } else if(textInline) {
                 // Text-based attachment that we can render inline.
                 const preview = attachment.preview.replaceAll(/\r\n/g,"\n").replaceAll(/\r/g,"\n");
+                const blurred = attachment.metadata.sensitive ? " blurred" : "";
                 const lines = preview.split("\n");
 
                 // Doesn't matter what the nonce is, just that we have a unique nonce for expanding/collapsing.
@@ -1452,32 +1453,42 @@ class Messages {
 
                 if (lines.length <= previewLines) {
                     let attachTxt = $(
-                        '<div class="attachment preview" />'
+                        '<div class="attachment preview-body" />'
                     ).attr(
                         'id', 'preview-' + nonce
                     ).attr(
                         'src', attachment.uri
                     ).html(this._formatText(ext, preview));
 
+                    html += '<div class="attachment preview"><div class="attachment preview-wrapper' + blurred + '">';
                     html += '<div class="attachment preview-header">';
                     html += '<div><a target="_blank" class="attachment preview" href="' + attachment.uri + '">';
                     html += $('<span />').text(filename).prop('outerHTML');
                     html += '</a></div>';
                     html += '</div>';
                     html += attachTxt.prop('outerHTML');
+                    html += '</div>';
+
+                    if (attachment.metadata.sensitive) {
+                        html += '  <div class="blurred"><div class="maskable attachment-sensitive"></div></div>';
+                    }
+
+                    html += '</div>';
                 } else {
                     var actual = this._shortenText(ext, lines);
                     var id = 'preview-' + nonce;
                     this.previews.set(id, {'shortened': actual, 'full': this._formatText(ext, preview)});
 
                     let attachTxt = $(
-                        '<div class="attachment preview shortened" />'
+                        '<div class="attachment preview-body shortened" />'
                     ).attr(
                         'id', id
                     ).attr(
                         'src', attachment.uri
                     ).html(actual);
 
+
+                    html += '<div class="attachment preview"><div class="attachment preview-wrapper' + blurred + '">';
                     html += '<div class="attachment preview-header">';
                     html += '<div><a target="_blank" class="attachment preview" href="' + attachment.uri + '">';
                     html += $('<span />').text(filename).prop('outerHTML');
@@ -1486,6 +1497,13 @@ class Messages {
                     html += '<button class="attachment preview expanded" data-id="' + id + '">collapse</button>';
                     html += '</div>';
                     html += attachTxt.prop('outerHTML');
+                    html += '</div>';
+
+                    if (attachment.metadata.sensitive) {
+                        html += '<div class="blurred"><div class="maskable attachment-sensitive"></div></div>';
+                    }
+
+                    html += '</div>';
                 }
             } else {
                 // Arbitrary attachment.
@@ -1813,6 +1831,7 @@ class Messages {
                     const elem = $(event.currentTarget);
                     elem.parent().find('img.blurred').removeClass('blurred');
                     elem.parent().find('div.file.blurred').removeClass('blurred');
+                    elem.parent().find('div.preview-wrapper.blurred').removeClass('blurred');
                     elem.remove();
                 });
             }
