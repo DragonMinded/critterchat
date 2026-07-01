@@ -40,6 +40,7 @@ def _icon_upload(uploadtype: str) -> dict[str, object]:
     # Ensure that we only allow certain size uploads.
     request.max_content_length = (((g.config.limits.icon_size * 1024) * 4) // 3) + 1024
 
+    username = g.user.username if g.user else "(anonymous)"
     attachmentservice = AttachmentService(g.config, g.data)
     body = request.get_data(as_text=True)
     icon: bytes | None = None
@@ -66,7 +67,8 @@ def _icon_upload(uploadtype: str) -> dict[str, object]:
             AttachmentService.MAX_ICON_WIDTH,
             AttachmentService.MAX_ICON_HEIGHT,
         )
-    except AttachmentServiceUnsupportedImageException:
+    except AttachmentServiceUnsupportedImageException as e:
+        logger.warning(f"Client {username} denied upload attachment with the following reason: {str(e)}")
         raise UserException(f"{uploadtype.capitalize()} image is an unrecognized format.")
     except AttachmentServiceInvalidSizeException:
         raise UserException(f"Invalid image size for {uploadtype}. {uploadtype.capitalize()}s must be a maximum of {AttachmentService.MAX_ICON_WIDTH}x{AttachmentService.MAX_ICON_HEIGHT}")
@@ -79,7 +81,6 @@ def _icon_upload(uploadtype: str) -> dict[str, object]:
         raise Exception(f"Could not insert new {uploadtype} icon.")
     attachmentservice.put_attachment_data(attachmentid, icon)
 
-    username = g.user.username if g.user else "(anonymous)"
     name = attachmentservice.get_attachment_name(attachmentid)
     logger.info(f"Client {username} uploaded attachment with ID {attachmentid} and public name {name}")
 
@@ -158,7 +159,8 @@ def notifications_upload() -> dict[str, object]:
 
                         response[alias] = Attachment.from_id(attachmentid)
 
-        except CouldntDecodeError:
+        except CouldntDecodeError as e:
+            logger.warning(f"Client {username} denied upload attachment with the following reason: {str(e)}")
             raise UserException("Unsupported audio provided for user notification.")
 
     # Finally, return all the attachment IDs.
@@ -234,7 +236,7 @@ def attachments_upload() -> dict[str, object]:
             not attachmentservice.is_allowed_content_type(presumed_content_type, allow_convertible=True) and
             not attachmentservice.is_allowed_content_type(content_type, allow_convertible=True)
         ):
-            logger.info(f"Client {username} denied upload attachment with filename {filename} and detected type {content_type}")
+            logger.warning(f"Client {username} denied upload attachment with filename {filename} and detected type {content_type}")
             raise UserException(f'Chosen attachment {filename} is not a supported file type.')
 
         presumed_content_category = attachmentservice.get_content_category(presumed_content_type)
@@ -245,7 +247,8 @@ def attachments_upload() -> dict[str, object]:
             # people from trying to abuse uploads to store executables or zip files.
             try:
                 attachmentdata, width, height, content_type = attachmentservice.prepare_attachment_image(attachmentdata)
-            except AttachmentServiceUnsupportedImageException:
+            except AttachmentServiceUnsupportedImageException as e:
+                logger.warning(f"Client {username} denied upload attachment with the following reason: {str(e)}")
                 raise UserException(f'Chosen attachment {filename} is not a supported image.')
 
             if content_type != presumed_content_type:
@@ -300,6 +303,7 @@ def attachments_upload() -> dict[str, object]:
             )
 
         else:
+            logger.warning(f"Client {username} denied upload attachment with filename {filename} and detected type {content_type}")
             raise UserException(f'Chosen attachment {filename} is not a supported file type.')
 
         # We should always have gotten a valid ID back at this point.

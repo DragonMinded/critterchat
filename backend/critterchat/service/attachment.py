@@ -483,9 +483,9 @@ class AttachmentService:
         transposed = ImageOps.exif_transpose(img)
         width, height = transposed.size
         if max_width is not None and width > max_width:
-            raise AttachmentServiceInvalidSizeException("Invalid image size for attachment.")
+            raise AttachmentServiceInvalidSizeException(f"Invalid image size {width}x{height} for attachment.")
         if max_height is not None and height > max_height:
-            raise AttachmentServiceInvalidSizeException("Invalid image size for attachment.")
+            raise AttachmentServiceInvalidSizeException(f"Invalid image size {width}x{height} for attachment.")
 
         content_type = img.get_format_mimetype()
         if not content_type:
@@ -503,7 +503,7 @@ class AttachmentService:
             content_type = "image/png"
 
         if content_type not in self.SUPPORTED_IMAGE_TYPES:
-            raise AttachmentServiceUnsupportedImageException("Attachment image is an unrecognized format.")
+            raise AttachmentServiceUnsupportedImageException(f"Attachment image is an unrecognized format {content_type}.")
 
         return data, width, height, content_type
 
