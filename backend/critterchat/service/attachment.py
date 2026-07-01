@@ -3,6 +3,7 @@ import hashlib
 import magic
 import mimetypes
 import os
+import pillow_jxl  # noqa: import registers this plugin
 import re
 from PIL import Image, ImageOps
 from typing import Final, cast
@@ -57,7 +58,7 @@ class AttachmentService:
     GENERIC_MIME_TYPE: Final[str] = "application/octet-stream"
     TEXT_TYPES = {"application/json", "application/javascript", "application/xml"}
     SUPPORTED_IMAGE_TYPES = {"image/apng", "image/gif", "image/jpeg", "image/png", "image/webp"}
-    CONVERTIBLE_IMAGE_TYPES = {"image/bmp"}
+    CONVERTIBLE_IMAGE_TYPES = {"image/bmp", "image/jxl"}
 
     def __init__(self, config: Config, data: Data) -> None:
         self.__config = config
@@ -494,7 +495,7 @@ class AttachmentService:
 
         if content_type in self.CONVERTIBLE_IMAGE_TYPES:
             # We want to convert this to a PNG file so that we can support uploading it.
-            converted = transposed.convert("RGB")
+            converted = transposed.convert("RGBA")
             converted_array = io.BytesIO()
             converted.save(converted_array, format='PNG')
             data = converted_array.getvalue()
