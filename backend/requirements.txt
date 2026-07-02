@@ -12,6 +12,7 @@ emoji
 webcolors
 pillow
 pillow-jxl-plugin
+pillow-heif
 requests
 pycryptodome
 libpass

@@ -6,6 +6,7 @@ import os
 import pillow_jxl  # noqa: import registers this plugin
 import re
 from PIL import Image, ImageOps
+from pillow_heif import register_heif_opener
 from typing import Final, cast
 
 from ..config import Config
@@ -29,6 +30,7 @@ from ..http.static import default_avatar, default_room, default_icon
 
 # Guess we need to init this. Feel like I'm doing embedded again.
 mimetypes.init()
+register_heif_opener()
 
 
 # Ensure we have faster sanitization.
@@ -58,7 +60,7 @@ class AttachmentService:
     GENERIC_MIME_TYPE: Final[str] = "application/octet-stream"
     TEXT_TYPES = {"application/json", "application/javascript", "application/xml"}
     SUPPORTED_IMAGE_TYPES = {"image/apng", "image/gif", "image/jpeg", "image/png", "image/webp"}
-    CONVERTIBLE_IMAGE_TYPES = {"image/bmp", "image/jxl"}
+    CONVERTIBLE_IMAGE_TYPES = {"image/bmp", "image/jxl", "image/heic"}
 
     def __init__(self, config: Config, data: Data) -> None:
         self.__config = config
