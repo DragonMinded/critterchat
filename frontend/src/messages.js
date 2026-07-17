@@ -1,9 +1,7 @@
 import $ from "jquery";
 import linkifyHtml from "linkify-html";
-import { marked } from 'marked';
-import DOMPurify from 'dompurify';
-import hljs from 'highlight.js';
 
+import { formatText, shortenText, previewLines } from "./format.js";
 import {
     escapeHtml,
     formatDateTime,
@@ -36,7 +34,6 @@ const searchOptions = {
     },
 };
 
-const previewLines = 10;
 const maxCombined = 10;
 
 /**
@@ -1264,99 +1261,6 @@ class Messages {
     }
 
     /**
-     * Shortens a text attachment for collapsed preview.
-     */
-    _shortenText( extension, lines ) {
-        if ( extension == "md" ) {
-            // Markdown formatting, have to keep definitions which can be at the end.
-            var kept = lines.slice(0, previewLines).join("\n");
-            kept = kept.replaceAll("!!!!!", "&excl;&excl;&excl;&excl;&excl;");
-            kept += "\n\n!!!!!\n\n";
-            kept += lines.slice(previewLines).join("\n");
-
-            var formatted = this._formatText(extension, kept);
-            return formatted.split("<p>!!!!!</p>")[0];
-        } else {
-            return this._formatText(extension, lines.slice(0, previewLines).join("\n"));
-        }
-    }
-
-    /**
-     * Helper to ensure spacing and newlines work within manually-formatted HTML.
-     */
-    _preserveSpacing( html ) {
-        html = html.replaceAll("\n", "<br />");
-        html = html.replaceAll("  ", "&nbsp;&nbsp;");
-        html = html.replaceAll("\t", "&nbsp;&nbsp;&nbsp;&nbsp;");
-        return html;
-    }
-
-    /**
-     * Formats a text attachment for display.
-     */
-    _formatText( extension, text ) {
-        if ( extension == "md" ) {
-            // Markdown formatting.
-            return DOMPurify.sanitize(marked.parse(text));
-        } else if( extension == "py" ) {
-            let html = hljs.highlight(text, {language: 'py', ignoreIllegals: true}).value;
-            return '<span class="plaintext">' + this._preserveSpacing(html) + '</span>';
-        } else if( extension == "css" ) {
-            let html = hljs.highlight(text, {language: 'css', ignoreIllegals: true}).value;
-            return '<span class="plaintext">' + this._preserveSpacing(html) + '</span>';
-        } else if(
-            extension == "htm" || extension == "html" ||
-            extension == "xhtml" || extension == "html5" ||
-            extension == "shtml"
-        ) {
-            let html = hljs.highlight(text, {language: 'html', ignoreIllegals: true}).value;
-            return '<span class="plaintext">' + this._preserveSpacing(html) + '</span>';
-        } else if( extension == "js" || extension == "jsx" ) {
-            let html = hljs.highlight(text, {language: 'js', ignoreIllegals: true}).value;
-            return '<span class="plaintext">' + this._preserveSpacing(html) + '</span>';
-        } else if( extension == "c" || extension == "h" ) {
-            let html = hljs.highlight(text, {language: 'c', ignoreIllegals: true}).value;
-            return '<span class="plaintext">' + this._preserveSpacing(html) + '</span>';
-        } else if(
-            extension == "cpp" || extension == "hpp" ||
-            extension == "cc" || extension == "hh" ||
-            extension == "cxx" || extension == "hxx" ||
-            extension == "c++" || extension == "h++"
-        ) {
-            let html = hljs.highlight(text, {language: 'c++', ignoreIllegals: true}).value;
-            return '<span class="plaintext">' + this._preserveSpacing(html) + '</span>';
-        } else if( extension == "ini" ) {
-            let html = hljs.highlight(text, {language: 'ini', ignoreIllegals: true}).value;
-            return '<span class="plaintext">' + this._preserveSpacing(html) + '</span>';
-        } else if( extension == "toml" ) {
-            let html = hljs.highlight(text, {language: 'toml', ignoreIllegals: true}).value;
-            return '<span class="plaintext">' + this._preserveSpacing(html) + '</span>';
-        } else if( extension == "yaml" || extension == "yml" ) {
-            let html = hljs.highlight(text, {language: 'yaml', ignoreIllegals: true}).value;
-            return '<span class="plaintext">' + this._preserveSpacing(html) + '</span>';
-        } else if( extension == "json" ) {
-            let html = hljs.highlight(text, {language: 'json', ignoreIllegals: true}).value;
-            return '<span class="plaintext">' + this._preserveSpacing(html) + '</span>';
-        } else if(
-            extension == "php" || extension == "php3" ||
-            extension == "php4" || extension == "php5"
-        ) {
-            let html = hljs.highlight(text, {language: 'php', ignoreIllegals: true}).value;
-            return '<span class="plaintext">' + this._preserveSpacing(html) + '</span>';
-        } else if( extension == "rs" ) {
-            let html = hljs.highlight(text, {language: 'rust', ignoreIllegals: true}).value;
-            return '<span class="plaintext">' + this._preserveSpacing(html) + '</span>';
-        } else if( extension == "java" ) {
-            let html = hljs.highlight(text, {language: 'java', ignoreIllegals: true}).value;
-            return '<span class="plaintext">' + this._preserveSpacing(html) + '</span>';
-        } else {
-            // Raw text formatting.
-            let html = escapeHtml(text);
-            return '<span class="plaintext">' + this._preserveSpacing(html) + '</span>';
-        }
-    }
-
-    /**
      * Draws the attachments for a given message.
      */
     _drawAttachments( message, attachments ) {
@@ -1418,7 +1322,7 @@ class Messages {
                         'id', 'preview-' + nonce
                     ).attr(
                         'src', attachment.uri
-                    ).html(this._formatText(ext, preview));
+                    ).html(formatText(ext, preview));
 
                     html += '<div class="attachment preview"><div class="attachment preview-wrapper' + blurred + '">';
                     html += '<div class="attachment preview-header">';
@@ -1435,9 +1339,9 @@ class Messages {
 
                     html += '</div>';
                 } else {
-                    var actual = this._shortenText(ext, lines);
+                    var actual = shortenText(ext, lines);
                     var id = 'preview-' + nonce;
-                    this.previews.set(id, {'shortened': actual, 'full': this._formatText(ext, preview)});
+                    this.previews.set(id, {'shortened': actual, 'full': formatText(ext, preview)});
 
                     let attachTxt = $(
                         '<div class="attachment preview-body shortened" />'
