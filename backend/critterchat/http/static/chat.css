@@ -1281,6 +1281,7 @@ div.conversation div.item div.attachments div.preview-body {
 
 div.conversation div.item div.attachments div.preview-body span.plaintext {
     font-family: monospace;
+    word-break: break-all;
 }
 
 div.conversation div.item div.attachments div.preview-body.shortened {
