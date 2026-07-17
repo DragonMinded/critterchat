@@ -1327,7 +1327,7 @@ class Messages {
                     html += '<div class="attachment preview"><div class="attachment preview-wrapper' + blurred + '">';
                     html += '<div class="attachment preview-header">';
                     html += '<div><a target="_blank" class="attachment preview" href="' + attachment.uri + '">';
-                    html += $('<span />').text(filename).prop('outerHTML');
+                    html += $('<span />').text(filename).prop('innerHTML');
                     html += '</a></div>';
                     html += '</div>';
                     html += attachTxt.prop('outerHTML');
@@ -1355,7 +1355,7 @@ class Messages {
                     html += '<div class="attachment preview"><div class="attachment preview-wrapper' + blurred + '">';
                     html += '<div class="attachment preview-header">';
                     html += '<div><a target="_blank" class="attachment preview" href="' + attachment.uri + '">';
-                    html += $('<span />').text(filename).prop('outerHTML');
+                    html += $('<span />').text(filename).prop('innerHTML');
                     html += '</a></div>';
                     html += '<button class="attachment preview active collapsed" data-id="' + id + '">expand</button>';
                     html += '<button class="attachment preview expanded" data-id="' + id + '">collapse</button>';

@@ -1224,6 +1224,7 @@ div.conversation div.item div.attachments a {
     overflow: hidden;
     position: relative;
     text-decoration: none;
+    word-break: break-all;
 }
 
 div.conversation div.item div.attachments div.file {
