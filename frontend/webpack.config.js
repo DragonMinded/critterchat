@@ -1,10 +1,6 @@
 const path = require('path');
-var AssetsPlugin = require('assets-webpack-plugin')
-var assetsPluginInstance = new AssetsPlugin({
-    fullPath: false,
-    removeFullPathAutoPrefix: true,
-    useCompilerPath: true,
-})
+const webpack = require('webpack');
+const AssetsPlugin = require('assets-webpack-plugin')
 
 module.exports = {
     entry: {
@@ -15,7 +11,17 @@ module.exports = {
         filename: '[name].[fullhash].js',
         path: path.resolve(__dirname, '../backend/critterchat/http/static'),
     },
-    plugins: [assetsPluginInstance],
+    plugins: [
+        new AssetsPlugin({
+            fullPath: false,
+            removeFullPathAutoPrefix: true,
+            useCompilerPath: true,
+        }),
+        new webpack.ContextReplacementPlugin(
+            /highlight\.js\/lib\/languages$/,
+            new RegExp(`^./(${['python', 'css', 'xml', 'javascript', 'c', 'cpp', 'ini', 'yaml', 'json', 'php', 'rust', 'java'].join('|')})$`),
+        ),
+    ],
     performance: {
         maxEntrypointSize: 300000,
         maxAssetSize: 300000

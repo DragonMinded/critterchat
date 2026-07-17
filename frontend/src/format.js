@@ -1,7 +1,22 @@
 import { marked } from 'marked';
 import DOMPurify from 'dompurify';
-import hljs from 'highlight.js';
+import hljs from 'highlight.js/lib/core';
 import { escapeHtml } from "./utils.js";
+
+
+// Manually whitelisting used languages to drastically reduce hljs bundle size.
+hljs.registerLanguage('python', require('highlight.js/lib/languages/python'));
+hljs.registerLanguage('css', require('highlight.js/lib/languages/css'));
+hljs.registerLanguage('xml', require('highlight.js/lib/languages/xml'));
+hljs.registerLanguage('javascript', require('highlight.js/lib/languages/javascript'));
+hljs.registerLanguage('c', require('highlight.js/lib/languages/c'));
+hljs.registerLanguage('cpp', require('highlight.js/lib/languages/cpp'));
+hljs.registerLanguage('ini', require('highlight.js/lib/languages/ini'));
+hljs.registerLanguage('yaml', require('highlight.js/lib/languages/yaml'));
+hljs.registerLanguage('json', require('highlight.js/lib/languages/json'));
+hljs.registerLanguage('php', require('highlight.js/lib/languages/php'));
+hljs.registerLanguage('rust', require('highlight.js/lib/languages/rust'));
+hljs.registerLanguage('java', require('highlight.js/lib/languages/java'));
 
 
 // Number of lines to keep in preview.
