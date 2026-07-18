@@ -27,6 +27,7 @@ export default defineConfig([
                 emojis: "readonly",
                 emotes: "readonly",
                 username: "readonly",
+                require: "readonly",
             },
         },
     },
