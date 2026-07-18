@@ -1,6 +1,6 @@
 import $ from "jquery";
 
-const entityMap = {
+const entityMap: {[index: string]:string} = {
   '&': '&amp;',
   '<': '&lt;',
   '>': '&gt;',
@@ -13,18 +13,25 @@ const entityMap = {
 
 const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
+declare global {
+    interface Window {
+        emotes: any;
+        emojis: any;
+    }
+}
+
 /**
  * Given a string, escape all HTML within that string by converting any unsafe characters to their
  * HTML equivalent, and then convert all known emoji and emotes to the correct <img> tag pointing to
  * the asset which should be displayed.
  */
-const escapeHtml = function( str ) {
+function escapeHtml(str: string): string {
     str = String(str);
         str = str.replace(/[&<>"'`=/]/g, function (s) {
         return entityMap[s];
     });
-    Object.keys(emojis).forEach(function(emoji) {
-        str = str.replaceAll(emoji, emojis[emoji]);
+    Object.keys(window.emojis).forEach(function(emoji) {
+        str = str.replaceAll(emoji, window.emojis[emoji]);
     });
     str = twemoji.parse(str, twemojiOptions);
     Object.keys(window.emotes).forEach(function(emote) {
@@ -43,10 +50,10 @@ const escapeHtml = function( str ) {
  * Given a unix timestamp, formats the time as human-readable within the day. Allows for 24 hour
  * and 12 hour display as well as displaying or hiding seconds.
  */
-const formatTime = function( ts, showseconds, twentyfour ) {
-    var date = new Date(ts * 1000);
-    var hours = date.getHours();
-    var ampm = "";
+function formatTime(ts: number, showseconds?: boolean, twentyfour?: boolean): string {
+    const date = new Date(ts * 1000);
+    let hours = date.getHours();
+    let ampm = "";
     if (!twentyfour) {
         if (hours == 24) { hours = 0; }
 
@@ -55,28 +62,28 @@ const formatTime = function( ts, showseconds, twentyfour ) {
         if (hours > 12) { hours -= 12; }
         if (hours < 1) { hours += 12; }
     }
-    var minutes = "0" + date.getMinutes();
-    var seconds = "0" + date.getSeconds();
-    var formattedTime = hours + ':' + minutes.substr(-2) + (showseconds ? ':' + seconds.substr(-2) : '') + ampm;
+    const minutes = "0" + date.getMinutes();
+    const seconds = "0" + date.getSeconds();
+    const formattedTime = hours + ':' + minutes.substr(-2) + (showseconds ? ':' + seconds.substr(-2) : '') + ampm;
     return formattedTime;
 }
 
 /**
  * Given a unix timestamp, formats the date as human-readable, ignoring the time within the day.
  */
-const formatDate = function( ts ) {
-    var date = new Date(ts * 1000);
-    var month = months[date.getMonth()];
-    var day = date.getDate();
-    var year = date.getFullYear();
-    var formattedDate = month + " " + day + ", " + year;
+function formatDate(ts: number): string {
+    const date = new Date(ts * 1000);
+    const month = months[date.getMonth()];
+    const day = date.getDate();
+    const year = date.getFullYear();
+    const formattedDate = month + " " + day + ", " + year;
     return formattedDate;
 }
 
 /**
  * Given a unix timestamp, formats the date and time it represents as a human-readable string.
  */
-const formatDateTime = function( ts ) {
+function formatDateTime(ts: number): string {
     return formatDate( ts ) + " @ " + formatTime( ts );
 }
 
@@ -85,7 +92,7 @@ const formatDateTime = function( ts ) {
  * scrolling back to an element after a full redraw as well as understanding whether the user
  * is at the top or bottom of a scroll area.
  */
-const scrollTop = function( obj ) {
+function scrollTop(obj: any): number {
     // Sometimes the chrome/firefox calculation of scrollTopMax is off by one
     return Math.floor(obj.scrollTop) + 1;
 }
@@ -93,7 +100,7 @@ const scrollTop = function( obj ) {
 /*
  * Given a DOM element, calculates the maximum scroll top of a given component.
  */
-const scrollTopMax = function( obj ) {
+function scrollTopMax(obj: any): number {
     return obj.scrollHeight - obj.clientHeight;
 }
 
@@ -101,7 +108,7 @@ const scrollTopMax = function( obj ) {
  * Given a DOM element, returns true if that element is visible within the viewport that it
  * resides in, or false if it is out of view usually via scrolling.
  */
-const isInViewport = function( el ) {
+function isInViewport(el: any): boolean {
     if (el) {
         el = el[0];
         if (el) {
@@ -127,10 +134,10 @@ const isInViewport = function( el ) {
  * to can also add flash messages of its own such as a successful login acknowledgement. This goes
  * through and ensures that those are also closeable.
  */
-const flashHook = function() {
+function flashHook(): void {
     // Ensure that all visible flashes can be closed.
     $( 'ul.errors li button' ).off();
-    $( 'ul.errors li button' ).on('click', function(event) {
+    $( 'ul.errors li button' ).on('click', function(event: any) {
         event.preventDefault();
         const id = $( this ).attr('pid');
         $( 'ul.errors li#' + id ).remove();
@@ -145,16 +152,20 @@ const flashHook = function() {
     }
 };
 
+declare global {
+    interface Window { nonce: number; }
+}
+
 /**
  * Displays a new flash message at the top, below all existing displayed flash messages. Also ensures
  * that the message itself can be closed by clicking the [x] button on the right hand side.
  */
-const flash = function( type, message ) {
+function flash(type: string, message: string): void {
     const ts = Date.now();
     const nonce = window.nonce || 0;
     window.nonce = nonce + 1;
 
-    var html = '<li class="' + type + '" id="flash' + ts + '' + nonce + '">';
+    let html = '<li class="' + type + '" id="flash' + ts + '' + nonce + '">';
     html    += '  <div class="flash-message">' + message + '</div>';
     html    += '  <button pid="flash' + ts + '' + nonce + '" class="close ' + type + '">';
     html    += '    <div class="maskable close-svg"></div>';
@@ -169,13 +180,17 @@ const flash = function( type, message ) {
  * Grabs the selection text for the window. Essentially, this grabs whatever text the user has highlighted
  * on the page by double or triple-clicking, or by click-dragging the text.
  */
-const getSelectionText = function() {
+function getSelectionText(): string {
     let text = "";
 
     if (window.getSelection) {
-        text = window.getSelection().toString();
-    } else if (document.selection && document.selection.type != "Control") {
-        text = document.selection.createRange().text;
+        text = (window.getSelection() || "").toString();
+    } else {
+        // @ts-ignore TS2551 this is for legacy browser support.
+        const selection = document.selection;
+        if (selection && selection.type != "Control") {
+            text = selection.createRange().text;
+        }
     }
 
     return text;
@@ -186,10 +201,10 @@ const getSelectionText = function() {
  * that needle standalone. By standalone, this means surrounded on both sides by a whitespace character
  * or the start/end of the message.
  */
-const containsStandaloneText = function( haystack, needle ) {
+function containsStandaloneText(haystack: string, needle: string): boolean {
     needle = needle.toLowerCase();
 
-    var pos = 0;
+    let pos = 0;
     while (pos <= (haystack.length - needle.length)) {
         if (pos > 0) {
             const beforeChar = haystack.substring(pos - 1, pos);
@@ -248,7 +263,7 @@ const containsStandaloneText = function( haystack, needle ) {
  * text with, does that surrounding. Note that this has the same rules as the standalone text contains
  * function above, where both sides need to be surrounded by whitespace or the start/end of message.
  */
-const highlightStandaloneText = function( haystack, needle, before, after ) {
+function highlightStandaloneText(haystack: string, needle: string, before: string, after: string): string {
     if( haystack.length < needle.length ) {
         return haystack;
     }
@@ -257,7 +272,7 @@ const highlightStandaloneText = function( haystack, needle, before, after ) {
         return haystack;
     }
 
-    var pos = 0;
+    let pos = 0;
     while (pos <= (haystack.length - needle.length)) {
         if (pos > 0) {
             const beforeChar = haystack.substring(pos - 1, pos);
@@ -323,8 +338,8 @@ const highlightStandaloneText = function( haystack, needle, before, after ) {
  * Search through a control and all its parents, trying to find a parent that matches
  * these properties. Note that any of these properties can be undefined, but not all.
  */
-const findElement = function( elem, tag, prop, hasClass ) {
-    var jqe = $(elem);
+function findElement(elem: any, tag: string, prop?: string, hasClass?: string ): any {
+    let jqe = $(elem);
     tag = tag.toLowerCase();
 
     while (true) {
@@ -367,14 +382,14 @@ const findElement = function( elem, tag, prop, hasClass ) {
  * Given an absolute or relative file path (unix or windows), get the extension, or
  * the word "file" if there is no valid extension.
  */
-const getExt = function(path) {
+function getExt(path: string): string {
     const parts = path.includes("\\") ? path.split("\\") : path.split("/");
     const filename = parts[parts.length - 1];
     const fileparts = filename.split(".");
     fileparts.shift();
 
     // Form an extension to display, or display generic if empty.
-    var fullext = fileparts.length > 0 ? fileparts.join(".") : "file";
+    let fullext = fileparts.length > 0 ? fileparts.join(".") : "file";
     if (fullext.includes(".")) {
         const lower = fullext.toLowerCase();
 
@@ -391,7 +406,7 @@ const getExt = function(path) {
  * Given an absolute or relative file path (unix or windows), get the filename
  * itself without the path.
  */
-const getFilename = function(path) {
+function getFilename(path: string): string {
     const parts = path.includes("\\") ? path.split("\\") : path.split("/");
     return parts[parts.length - 1];
 }
@@ -402,7 +417,7 @@ const getFilename = function(path) {
  * renderable as plain text, so things that are in the application namespace
  * but are actually just text still count.
  */
-const isText = function(mt) {
+function isText(mt: string): boolean {
     mt = mt.toLowerCase();
     if (mt.startsWith("text/")) {
         return true;
@@ -424,7 +439,7 @@ const isText = function(mt) {
  * Given an extension and a mimetype, return the mask image that represents
  * that file for an attachment thumbnail.
  */
-const getAttachmentImage = function(ext, mt) {
+function getAttachmentImage(ext: string, mt: string): string {
     mt = mt.toLowerCase();
 
     if (isText(mt) || mt == "application/pdf") {

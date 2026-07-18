@@ -1,5 +1,5 @@
 import $ from "jquery";
-import { escapeHtml } from "./utils.js";
+import { escapeHtml } from "./utils.ts";
 import { EditProfile } from "./modals/editprofile.js";
 import { EditPreferences } from "./modals/editpreferences.js";
 import { displayWarning } from "./modals/warningmodal.js";

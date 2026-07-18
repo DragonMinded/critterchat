@@ -1,0 +1,21 @@
+{
+  "compilerOptions": {
+    "module": "commonjs",
+    "lib": ["dom", "es2021"],
+    "allowJs": true,
+    "noImplicitAny": true,
+    "removeComments": true,
+    "preserveConstEnums": true,
+    "sourceMap": true,
+    "paths": {
+        "*": [
+            "./types/*"
+        ]
+    }
+  },
+  "include": [
+      "./src/",
+      "./test/",
+      "./types/"
+  ]
+}

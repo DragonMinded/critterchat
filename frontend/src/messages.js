@@ -15,7 +15,7 @@ import {
     getExt,
     getFilename,
     getAttachmentImage,
-} from "./utils.js";
+} from "./utils.ts";
 import { EmojiSearch } from "./components/emojisearch.js";
 import { autocomplete } from "./components/autocomplete.js";
 import { UploadPicker } from "./components/uploadpicker.js";

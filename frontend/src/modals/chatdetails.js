@@ -1,5 +1,5 @@
 import $ from "jquery";
-import { flash } from "../utils.js";
+import { flash } from "../utils.ts";
 import { autocomplete } from "../components/autocomplete.js";
 
 /**

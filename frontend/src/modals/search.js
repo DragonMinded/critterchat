@@ -1,5 +1,5 @@
 import $ from "jquery";
-import { escapeHtml } from "../utils.js";
+import { escapeHtml } from "../utils.ts";
 
 /**
  * Handles the search popover which is the main entrypoint for finding rooms to join,

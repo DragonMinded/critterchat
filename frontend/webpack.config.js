@@ -7,6 +7,15 @@ module.exports = {
         chat: './src/chat.js',
         home: './src/home.js',
     },
+    module: {
+        rules: [
+            {
+                test: /\.tsx?$/,
+                use: "ts-loader",
+                exclude: /node_modules/,
+            },
+        ],
+    },
     output: {
         filename: '[name].[fullhash].js',
         path: path.resolve(__dirname, '../backend/critterchat/http/static'),

@@ -1,5 +1,5 @@
 import $ from "jquery";
-import { flash } from "../utils.js";
+import { flash } from "../utils.ts";
 
 /**
  * Handles taking base64-encoded URL data and uploading it to the backend, getting in

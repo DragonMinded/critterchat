@@ -1,5 +1,5 @@
 import $ from "jquery";
-import { flash } from "../utils.js";
+import { flash } from "../utils.ts";
 import { AUDIO_PREFS } from "../common.js";
 
 

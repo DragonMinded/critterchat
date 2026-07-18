@@ -1,7 +1,7 @@
 import $ from "jquery";
 import linkifyHtml from "linkify-html";
 import { ACTIVATED, ADMINISTRATOR } from "../common.js";
-import { escapeHtml } from "../utils.js";
+import { escapeHtml } from "../utils.ts";
 
 const linkifyOptions = { defaultProtocol: "http", target: "_blank", validate: { email: () => false } };
 

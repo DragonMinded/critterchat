@@ -1,7 +1,7 @@
 import $ from "jquery";
 import linkifyHtml from "linkify-html";
 
-import { escapeHtml } from "./utils.js";
+import { escapeHtml } from "./utils.ts";
 import { ChatDetails } from "./modals/chatdetails.js";
 import { displayWarning } from "./modals/warningmodal.js";
 

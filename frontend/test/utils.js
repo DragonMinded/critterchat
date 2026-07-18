@@ -1,4 +1,4 @@
-import { containsStandaloneText, highlightStandaloneText } from '../src/utils.js';
+import { containsStandaloneText, highlightStandaloneText } from '../src/utils.ts';
 
 test('containsStandaloneText empty string', () => {
     expect(containsStandaloneText("", "@test")).toBe(false);

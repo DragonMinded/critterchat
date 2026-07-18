@@ -1,7 +1,7 @@
 import { marked } from 'marked';
 import DOMPurify from 'dompurify';
 import hljs from 'highlight.js/lib/core';
-import { escapeHtml } from "./utils.js";
+import { escapeHtml } from "./utils.ts";
 
 
 // Manually whitelisting used languages to drastically reduce hljs bundle size.
