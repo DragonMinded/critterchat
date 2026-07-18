@@ -9,7 +9,7 @@ import { hook } from "./extensions.js";
 import { Socket } from "./components/socket.js";
 
 // Importing this enables linkify.
-import * as linkify from "linkifyjs"; // eslint-disable-line no-unused-vars
+import * as linkify from "linkifyjs"; // eslint-disable-line @typescript-eslint/no-unused-vars
 
 // Hook our custom jQuery extensions immediately.
 hook();

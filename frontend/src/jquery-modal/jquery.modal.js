@@ -24,7 +24,6 @@ export function modal() {
     var remove, target;
     this.$body = $('body');
     this.options = $.extend({}, $.modal.defaults, options);
-    this.options.doFade = !isNaN(parseInt(this.options.fadeDuration, 10));
     this.$blocker = null;
     if (this.options.closeExisting)
       while ($.modal.isActive())
@@ -74,16 +73,9 @@ export function modal() {
     constructor: $.modal,
 
     open: function() {
-      var m = this;
       this.block();
       this.anchor.blur();
-      if(this.options.doFade) {
-        setTimeout(function() {
-          m.show();
-        }, this.options.fadeDuration * this.options.fadeDelay);
-      } else {
-        this.show();
-      }
+      this.show();
       $(document).off('keydown.modal').on('keydown.modal', function(event) {
         var current = getCurrent();
         if (event.which === 27 && current.options.escapeClose) current.close();
@@ -108,22 +100,16 @@ export function modal() {
       this.$body.css('overflow','hidden');
       this.$blocker = $('<div class="' + this.options.blockerClass + ' blocker current"></div>').appendTo(this.$body);
       selectCurrent();
-      if(this.options.doFade) {
-        this.$blocker.css('opacity',0).animate({opacity: 1}, this.options.fadeDuration);
-      }
       this.$elm.trigger($.modal.BLOCK, [this._ctx()]);
     },
 
-    unblock: function(now) {
-      if (!now && this.options.doFade)
-        this.$blocker.fadeOut(this.options.fadeDuration, this.unblock.bind(this,true));
-      else {
-        this.$blocker.children().appendTo(this.$body);
-        this.$blocker.remove();
-        this.$blocker = null;
-        selectCurrent();
-        if (!$.modal.isActive())
-          this.$body.css('overflow','');
+    unblock: function(_now) {
+      this.$blocker.children().appendTo(this.$body);
+      this.$blocker.remove();
+      this.$blocker = null;
+      selectCurrent();
+      if (!$.modal.isActive()) {
+        this.$body.css('overflow','');
       }
     },
 
@@ -134,27 +120,17 @@ export function modal() {
         this.$elm.append(this.closeButton);
       }
       this.$elm.addClass(this.options.modalClass).appendTo(this.$blocker);
-      if(this.options.doFade) {
-        this.$elm.css({opacity: 0, display: 'inline-block'}).animate({opacity: 1}, this.options.fadeDuration);
-      } else {
-        this.$elm.css('display', 'inline-block');
-      }
+      this.$elm.css('display', 'inline-block');
       this.$elm.trigger($.modal.OPEN, [this._ctx()]);
     },
 
     hide: function() {
       this.$elm.trigger($.modal.BEFORE_CLOSE, [this._ctx()]);
       if (this.closeButton) this.closeButton.remove();
-      var _this = this;
-      if(this.options.doFade) {
-        this.$elm.fadeOut(this.options.fadeDuration, function () {
-          _this.$elm.trigger($.modal.AFTER_CLOSE, [_this._ctx()]);
-        });
-      } else {
-        this.$elm.hide(0, function () {
-          _this.$elm.trigger($.modal.AFTER_CLOSE, [_this._ctx()]);
-        });
-      }
+      var _this = this;  // eslint-disable-line @typescript-eslint/no-this-alias
+      this.$elm.hide(0, function () {
+        _this.$elm.trigger($.modal.AFTER_CLOSE, [_this._ctx()]);
+      });
       this.$elm.trigger($.modal.CLOSE, [this._ctx()]);
     },
 
