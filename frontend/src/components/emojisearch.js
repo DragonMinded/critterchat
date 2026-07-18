@@ -1,5 +1,5 @@
 import $ from "jquery";
-import { findElement } from "../utils.ts"
+import { findElement } from "../utils"
 
 function getCursorStart(element) {
     var el = $(element).get(0);

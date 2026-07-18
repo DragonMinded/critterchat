@@ -1,5 +1,5 @@
 import $ from "jquery";
-import { escapeHtml, findElement } from "../utils.ts";
+import { escapeHtml, findElement } from "../utils";
 import { EmojiSearch } from "../components/emojisearch.js";
 
 const searchOptions = {

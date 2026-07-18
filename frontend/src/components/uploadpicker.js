@@ -1,5 +1,5 @@
 import $ from "jquery";
-import { flash, getExt, getFilename, getAttachmentImage } from "../utils.ts";
+import { flash, getExt, getFilename, getAttachmentImage } from "../utils";
 import { displayAltTextEditor } from "../modals/alttextmodal.js";
 
 class UploadPicker {

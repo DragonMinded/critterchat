@@ -1,4 +1,4 @@
-import { flash } from "../utils.ts";
+import { flash } from "../utils";
 
 import {
     CHAT_SENT,

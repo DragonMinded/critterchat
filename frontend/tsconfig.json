@@ -6,12 +6,18 @@
     "noImplicitAny": true,
     "removeComments": true,
     "preserveConstEnums": true,
+    "strictNullChecks": true,
+    "noUncheckedIndexedAccess": true,
+    "noImplicitReturns": true,
+    "strictFunctionTypes": true,
     "sourceMap": true,
+    "strict": true,
     "paths": {
         "*": [
             "./types/*"
         ]
-    }
+    },
+    "types": ["node"]
   },
   "include": [
       "./src/",

@@ -1,7 +1,7 @@
 import $ from "jquery";
 import linkifyHtml from "linkify-html";
 
-import { formatText, shortenText, previewLines } from "./format.js";
+import { formatText, shortenText, previewLines } from "./format";
 import {
     escapeHtml,
     formatDateTime,
@@ -15,7 +15,7 @@ import {
     getExt,
     getFilename,
     getAttachmentImage,
-} from "./utils.ts";
+} from "./utils";
 import { EmojiSearch } from "./components/emojisearch.js";
 import { autocomplete } from "./components/autocomplete.js";
 import { UploadPicker } from "./components/uploadpicker.js";

@@ -7,6 +7,9 @@ module.exports = {
         chat: './src/chat.js',
         home: './src/home.js',
     },
+    resolve: {
+        extensions: ['.js', '.ts'],
+    },
     module: {
         rules: [
             {

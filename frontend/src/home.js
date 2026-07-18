@@ -7,7 +7,7 @@ import * as linkify from "linkifyjs"; // eslint-disable-line @typescript-eslint/
 // Hook our custom jQuery extensions immediately.
 hook();
 
-import { escapeHtml } from "./utils.ts";
+import { escapeHtml } from "./utils";
 
 $( document ).ready(function () {
     // Perform any emoji sanitization necessary.

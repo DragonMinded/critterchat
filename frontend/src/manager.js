@@ -2,7 +2,7 @@ import $ from "jquery";
 
 import { InputState } from "./inputstate.js";
 import { ScreenState } from "./screenstate.js";
-import { EventHandler } from "./components/event.ts";
+import { EventHandler } from "./components/event";
 import { Uploader } from "./components/upload.js";
 import { AudioNotifications } from "./components/audionotifs.js";
 
@@ -12,7 +12,7 @@ import { Info } from "./info.js";
 import { Profile } from "./modals/profile.js";
 import { Search } from "./modals/search.js";
 
-import { escapeHtml, flash, flashHook, containsStandaloneText } from "./utils.ts";
+import { escapeHtml, flash, flashHook, containsStandaloneText } from "./utils";
 import { displayInfo } from "./modals/infomodal.js";
 import { ADMINISTRATOR } from "./common.js";
 

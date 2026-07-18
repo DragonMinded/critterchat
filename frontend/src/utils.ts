@@ -6,9 +6,9 @@ const entityMap: {[index: string]:string} = {
   '>': '&gt;',
   '"': '&quot;',
   "'": '&#39;',
-  '/': '&#x2F;',
   '`': '&#x60;',
-  '=': '&#x3D;'
+  '=': '&#x3D;',
+  '/': '&#x2F;',
 };
 
 const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -27,8 +27,8 @@ declare global {
  */
 function escapeHtml(str: string): string {
     str = String(str);
-        str = str.replace(/[&<>"'`=/]/g, function (s) {
-        return entityMap[s];
+        str = str.replace(/[&<>"'`=/]/g, function (s: string): string {
+        return entityMap[s]!;
     });
     Object.keys(window.emojis).forEach(function(emoji) {
         str = str.replaceAll(emoji, window.emojis[emoji]);
@@ -384,7 +384,7 @@ function findElement(elem: any, tag: string, prop?: string, hasClass?: string ):
  */
 function getExt(path: string): string {
     const parts = path.includes("\\") ? path.split("\\") : path.split("/");
-    const filename = parts[parts.length - 1];
+    const filename = parts[parts.length - 1]!;
     const fileparts = filename.split(".");
     fileparts.shift();
 
@@ -395,7 +395,7 @@ function getExt(path: string): string {
 
         if (!lower.startsWith("tar.")) {
             // This isn't one of our exceptions.
-            fullext = fileparts[fileparts.length - 1];
+            fullext = fileparts[fileparts.length - 1]!;
         }
     }
 
@@ -408,7 +408,7 @@ function getExt(path: string): string {
  */
 function getFilename(path: string): string {
     const parts = path.includes("\\") ? path.split("\\") : path.split("/");
-    return parts[parts.length - 1];
+    return parts[parts.length - 1]!;
 }
 
 /**
