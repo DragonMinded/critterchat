@@ -1,7 +1,7 @@
 import $ from "jquery";
 
-import { InputState } from "./inputstate.js";
-import { ScreenState } from "./screenstate.js";
+import { InputState } from "./inputstate";
+import { ScreenState } from "./screenstate";
 import { EventHandler } from "./components/event";
 import { Uploader } from "./components/upload.js";
 import { AudioNotifications } from "./components/audionotifs.js";
@@ -14,7 +14,7 @@ import { Search } from "./modals/search.js";
 
 import { escapeHtml, flash, flashHook, containsStandaloneText } from "./utils";
 import { displayInfo } from "./modals/infomodal.js";
-import { ADMINISTRATOR } from "./common.js";
+import { ADMINISTRATOR } from "./common";
 
 /**
  * The socket and event manager for CritterChat's frontend. The various major components of the

@@ -12,7 +12,7 @@ import {
     REACTION_RECEIVED,
     INVITATION_RECEIVED,
     AUDIO_PREFS
-} from "../common.js";
+} from "../common";
 
 /**
  * Audio notification handling component. This is responsible for listening for
