@@ -2,13 +2,13 @@ import { io, Socket as ClientSocket } from "socket.io-client";
 import { v4 as uuidv4 } from "uuid";
 
 // Standard event callback for when an on() handler fires.
-type EvtCallback = (request: object) => void;
+type EvtCallback = (request: any) => void;
 
 // Tagged request callback, for the packet response associated with the tag and a previous request.
-type ReqCallback = (evt: string, response: object) => void;
+type ReqCallback = (evt: string, response: any) => void;
 
 // socket.io packet acknowledgement callback.
-type AckCallback = (acknowledgement: object) => void;
+type AckCallback = (acknowledgement: any) => void;
 
 // Data object, which should have a tag.
 interface TaggedObject {

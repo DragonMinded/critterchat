@@ -1,6 +1,20 @@
 import $ from "jquery";
 import { flash } from "../utils";
 
+type ID = string;
+type SingleCallback = (aid: ID) => void;
+type MultiCallback = (aids: ID[]) => void;
+
+// These are provided by the backend when it renders out the HTML we're part of.
+declare global {
+    interface Window {
+        uploadIcon: string;
+        uploadAvatar: string;
+        uploadAttachments: string;
+        uploadNotifications: string;
+    }
+}
+
 /**
  * Handles taking base64-encoded URL data and uploading it to the backend, getting in
  * return an attachment ID that can be used to refer to an attachment of some type.
@@ -11,7 +25,7 @@ class Uploader {
         // This constructor intentionally left blank.
     }
 
-    _uploadSingle(url, data, callback) {
+    _uploadSingle(url: string, data: object, callback: SingleCallback): void {
         $.ajax(
             url,
             {
@@ -30,15 +44,15 @@ class Uploader {
         );
     }
 
-    uploadIcon(data, callback) {
+    uploadIcon(data: object, callback: SingleCallback) {
         this._uploadSingle(window.uploadIcon, data, callback);
     }
 
-    uploadAvatar(data, callback) {
+    uploadAvatar(data: object, callback: SingleCallback) {
         this._uploadSingle(window.uploadAvatar, data, callback);
     }
 
-    uploadNotificationSounds(data, callback) {
+    uploadNotificationSounds(data: object, callback: MultiCallback) {
         $.ajax(
             window.uploadNotifications,
             {
@@ -57,7 +71,7 @@ class Uploader {
         );
     }
 
-    uploadAttachments(data, callback) {
+    uploadAttachments(data: object, callback: MultiCallback) {
         $.ajax(
             window.uploadAttachments,
             {

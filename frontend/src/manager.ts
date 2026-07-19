@@ -1,20 +1,151 @@
 import $ from "jquery";
 
+import { Socket } from "./components/socket";
+
 import { InputState } from "./inputstate";
 import { ScreenState } from "./screenstate";
 import { EventHandler } from "./components/event";
-import { Uploader } from "./components/upload.js";
-import { AudioNotifications } from "./components/audionotifs.js";
+import { Uploader } from "./components/upload";
+import { AudioNotifications } from "./components/audionotifs";
 
-import { Menu } from "./menu.js";
-import { Messages } from "./messages.js";
-import { Info } from "./info.js";
-import { Profile } from "./modals/profile.js";
-import { Search } from "./modals/search.js";
+import { Menu } from "./menu";
+import { Messages } from "./messages";
+import { Info } from "./info";
+import { Profile } from "./modals/profile";
+import { Search } from "./modals/search";
 
 import { escapeHtml, flash, flashHook, containsStandaloneText } from "./utils";
-import { displayInfo } from "./modals/infomodal.js";
+import { displayInfo } from "./modals/infomodal";
 import { ADMINISTRATOR } from "./common";
+
+// These are provided by the backend when it renders out the HTML we're part of, and
+// then we manage them and keep them up-to-date as packets come in.
+declare global {
+    interface Window {
+        // Boolean for whether this user is an instance admin or not.
+        admin: boolean;
+        // String username of logged in user.
+        username: string;
+        // Opaque user ID of logged in user.
+        userid: object;
+        // Name of this instance.
+        appname: string;
+        // Size of elements in desktop mode, stored as a cookie by the server as well
+        // as in our preferences so we can render before getting the prefs from the server.
+        desktopSize: string;
+        // Size of elements in mobile mode, stored as a cookie by the server as well
+        // as in our preferences so we can render before getting the prefs from the server.
+        mobileSize: string;
+        // Version string as computed by the server, used for prompting to refresh on new deploys.
+        version: string;
+        // Version check endpoint URI.
+        versionCheck: string;
+    }
+}
+
+// We don't allow the client to know anything about IDs, they should be seen as opaque.
+type ID = string;
+
+// For packets that require an acknowledgement, we use a standard response type that
+// always includes a "status".
+interface Acknowledgement {
+    status: string;
+}
+
+// The below are all interface definitions for types that we expect from the server.
+interface Settings {
+    info?: string;
+    roomid?: ID;
+}
+
+interface Room {
+    id: ID;
+    type: string;
+    name: string;
+    customname: string;
+    topic: string;
+    public: boolean;
+    moderated: boolean;
+    autojoin: boolean;
+    oldest_action: ID | null;
+    newest_action: ID | null;
+    last_action_timestamp: number;
+    icon: string | null;
+    deficon: string;
+}
+
+interface User {
+    id: ID;
+    username: string;
+    nickname: string;
+    about: string;
+    icon: string | null;
+}
+
+interface Invite {
+    id: ID;
+    user: User | null;
+    timestamp: number;
+    room?: Room;
+    cancellable?: boolean;
+    active?: boolean;
+    seen?: boolean;
+}
+
+interface Occupant {
+    id: ID;
+    userid: ID;
+    username: string;
+    nickname: string;
+    present: boolean;
+    inactive: boolean;
+    moderator: boolean;
+    muted: boolean;
+    invite: Invite | null;
+    icon: string | null;
+}
+
+interface Attachment {
+    uri: string;
+    mimetype: string;
+    metadata: object;
+}
+
+interface Details {
+    // Sometimes present on JOIN and LEAVE actions to specify if they were added or removed by somebody.
+    actor?: ID;
+
+    // Present on CHANGE_MESSAGE actions to specify who changed the message (could be somebody reacting).
+    actionid?: ID;
+
+    // Present on INVITE_USER actions to specify who invited the occupant.
+    invited?: ID;
+
+    // Present on UNINVITE_USER actions to specify who uninvited the occupant.
+    uninvited?: ID;
+
+    // These are present on MESSAGE actions.
+    message?: string;
+    reactions?: {[index: string]:string[]};
+
+    // Present on MESSAGE actions when the message was resent due to being modified.
+    modified?: boolean;
+
+    // These are present on CHANGE_MESSAGE actions to specify what was changed.
+    edited?: string[];
+    add?: string;
+    remove?: string;
+}
+
+interface Action {
+    id: ID;
+    order: number;
+    timestamp: number;
+    occupant: Occupant | null;
+    action: string;
+    details: Details;
+    attachments: Attachment[];
+}
 
 /**
  * The socket and event manager for CritterChat's frontend. The various major components of the
@@ -41,56 +172,56 @@ import { ADMINISTRATOR } from "./common";
  * the screen state which allows the various components to coordinate passing UI control between
  * each other depending on user request.
  */
-export function manager(socket) {
-    var eventBus = new EventHandler();
-    var inputState = new InputState();
-    var screenState = new ScreenState();
-    var uploader = new Uploader();
+export function manager(socket: Socket) {
+    const eventBus = new EventHandler();
+    const inputState = new InputState();
+    const screenState = new ScreenState();
+    const uploader = new Uploader();
 
     // Tracks all known rooms that we are in and the last known action in each room. Used to
     // request missing actions that were sent while we were disconnected upon reconnect.
-    var rooms = new Map();
+    let rooms: Map<ID, Room> = new Map();
 
     // Tracks known actions to determine whether that action is our own or not.
-    var actions = new Map();
+    const actions = new Map();
 
     // Tracks known invites to determine whether an invite requires notification or not.
-    var invites = new Map();
-    var invitesGathered = false;
+    const invites = new Map();
+    let invitesGathered = false;
 
     // Tracks the user's last settings, such as what room they are in and the info panel visibility.
-    var settings = {};
+    let settings: Settings = {};
 
     // Tracks the determined window size and handles the understanding of whether we're displaying
     // in desktop mode (vertical panels available) or mobile mode (one screen at a time and using
     // the screen state to coordinate moving between screens).
-    var size = $( window ).width() <= 700 ? "mobile" : "desktop";
-    var desktopSize = window.desktopSize;
-    var mobileSize = window.mobileSize;
+    let size = ($( window ).width() || 0) <= 700 ? "mobile" : "desktop";
+    let desktopSize = window.desktopSize;
+    let mobileSize = window.mobileSize;
 
     // Tracks whether we are currently the active, visible tab or a background tab.
-    var visibility = document.visibilityState;
+    let visibility = document.visibilityState;
 
     // Handles the left hand menu panel which shows all joined rooms and private conversations.
-    var menuInst = new Menu(eventBus, screenState, inputState, size, visibility);
+    const menuInst = new Menu(eventBus, screenState, inputState, size, visibility);
 
     // Handles the center chat panel.
-    var messagesInst = new Messages(eventBus, screenState, inputState, size, visibility);
+    const messagesInst = new Messages(eventBus, screenState, inputState, size, visibility);
 
     // Handles the right hand info panel which shows joined chatters, as well as handling the
     // info pane above the message instance.
-    var infoInst = new Info(eventBus, screenState, inputState, size, visibility);
+    const infoInst = new Info(eventBus, screenState, inputState, size, visibility);
 
     // Handles audio notification playback.
-    var notifInst = new AudioNotifications(eventBus, size, visibility);
+    const notifInst = new AudioNotifications(eventBus, size, visibility);
 
     // Handles the profile view popover, not owned by any one panel since it can be summoned
     // by multiple of them.
-    var profileInst = new Profile(eventBus);
+    const profileInst = new Profile(eventBus);
 
     // Handles the search view, both when searching for chats to join or jump to, and when
     // searching for users to invite to a private chat.
-    var search = new Search(eventBus, inputState);
+    const search = new Search(eventBus, inputState);
 
     // Ensure any server-generated messages are closeable, container is not foregrounded.
     flashHook();
@@ -175,7 +306,7 @@ export function manager(socket) {
     // Broadcasts that new size whenever we pass a threshold using the "resize" event so
     // various systems can listen and react accordingly.
     $( window ).on( "resize", () => {
-        const width = $( window ).width();
+        const width = $( window ).width() || 0;
         const newSize = width <= 700 ? "mobile" : "desktop";
 
         if (newSize != size) {
@@ -209,7 +340,7 @@ export function manager(socket) {
             document.execCommand("copy");
             temp.remove();
 
-            var type = jqe.attr('data-type');
+            let type = jqe.attr('data-type');
             if (!type) {
                 type = 'Text';
             }
@@ -223,10 +354,10 @@ export function manager(socket) {
     // lives here for now. There's no real reason why it needs to be here versus in its own
     // separate class aside from the extra overhead of setting that up.
     socket.on('welcome', (msg) => {
-        var html = "";
-        msg.rooms.forEach((result) => {
-            var id = result.id;
-            var type = result.type == "room" ? 'room' : 'avatar';
+        let html = "";
+        msg.rooms.forEach((result: Room) => {
+            const id = result.id;
+            const type = result.type == "room" ? 'room' : 'avatar';
 
             html += '<button class="item" type="button" id="' + id + '">';
             html += '  <div class="icon ' + type + '">';
@@ -239,7 +370,7 @@ export function manager(socket) {
             html += '</button>';
         });
 
-        var source = "";
+        let source = "";
         if (msg.source) {
             source = '<div class="info-subheader"><a target="_blank" href="' + msg.source + '">' + msg.source + '</a></div>';
         }
@@ -265,7 +396,7 @@ export function manager(socket) {
 
     // Similar rationale as welcome, we just display the info in the info panel itself
     socket.on('info', (msg) => {
-        var source = "";
+        let source = "";
         if (msg.source) {
             source = '<div class="info-subheader"><a target="_blank" href="' + msg.source + '">' + msg.source + '</a></div>';
         }
@@ -299,7 +430,7 @@ export function manager(socket) {
         if (msg.rooms) {
             // First, track the rooms ourselves so we can handle notification generation.
             const newRooms = new Map();
-            msg.rooms.forEach((room) => {
+            msg.rooms.forEach((room: Room) => {
                 newRooms.set(room.id, room);
             });
             rooms = newRooms;
@@ -325,17 +456,17 @@ export function manager(socket) {
     });
 
     socket.on('invites', (msg) => {
-        msg.active.forEach((invite) => {
+        msg.active.forEach((invite: Invite) => {
             if (invitesGathered) {
                 if (invites.has(invite.id)) {
                     if (invites.get(invite.id).seen && !invite.seen) {
                         // The old one was seen but the new one is not seen (must have been updated).
-                        eventBus.emit("notification", {"action": "invite", "type": invite.room.type});
+                        eventBus.emit("notification", {"action": "invite", "type": invite.room!.type});
                     }
                 } else {
                     if (!invite.seen) {
                         // This is a brand new invite which we haven't seen.
-                        eventBus.emit("notification", {"action": "invite", "type": invite.room.type});
+                        eventBus.emit("notification", {"action": "invite", "type": invite.room!.type});
                     }
                 }
             }
@@ -344,7 +475,7 @@ export function manager(socket) {
             invites.set(invite.id, invite);
         });
 
-        msg.ignored.forEach((invite) => {
+        msg.ignored.forEach((invite: Invite) => {
             // These we dismissed previously, no need to badge or notify.
             invites.set(invite.id, invite);
         });
@@ -355,7 +486,7 @@ export function manager(socket) {
         menuInst.setInvites(msg);
     });
 
-    socket.on('lastsettings', (msg) => {
+    socket.on('lastsettings', (msg: Settings) => {
         // Keep an updated copy of our settings for ourselves.
         settings = msg;
 
@@ -374,7 +505,7 @@ export function manager(socket) {
             window.username = msg.username;
 
             // This might change if the user is granted or revoked admin while using the app.
-            var permissions = msg.permissions || [];
+            const permissions = msg.permissions || [];
             window.admin = permissions.indexOf(ADMINISTRATOR) >= 0;
 
             // Notify various systems that our profile has been updated, so they can grab
@@ -427,7 +558,7 @@ export function manager(socket) {
         }
 
         // Make sure we know which actions are our actions and not.
-        msg.history.forEach((action) => {
+        msg.history.forEach((action: Action) => {
             actions.set(action.id, action.occupant);
         })
 
@@ -443,28 +574,28 @@ export function manager(socket) {
         // actions generate notifications. Note that this is done here and not in the above
         // "chathistory" listener because the above packet handles bulk history fetching where
         // this handles getting notified of new actions that just occurred.
-        var roomType = undefined;
+        let roomType = undefined;
         if (rooms.has(msg.roomid)) {
-            roomType = rooms.get(msg.roomid).type;
+            roomType = rooms.get(msg.roomid)!.type;
         }
 
         // Make sure we know which actions are our actions and not.
-        msg.actions.forEach((action) => {
+        msg.actions.forEach((action: Action) => {
             actions.set(action.id, action.occupant);
         })
 
         if (roomType) {
-            msg.actions.forEach((message) => {
+            msg.actions.forEach((message: Action) => {
                 if (message.action == "join") {
                     eventBus.emit("notification", {"action": "join", "type": roomType});
                 } else if (message.action == "leave") {
                     eventBus.emit("notification", {"action": "leave", "type": roomType});
                 } else if (message.action == "message") {
                     if (!message.details.modified) {
-                        if (message.occupant.username == window.username) {
+                        if (message.occupant?.username == window.username) {
                             eventBus.emit("notification", {"action": "messageSend", "type": roomType})
                         } else {
-                            const escaped = escapeHtml(message.details.message);
+                            const escaped = escapeHtml(message.details.message!);
                             const actualuser = '@' + window.username;
                             if (containsStandaloneText(escaped, actualuser)) {
                                 eventBus.emit("notification", {"action": "mention", "type": roomType});
@@ -474,12 +605,12 @@ export function manager(socket) {
                         }
                     }
                 } else if (message.action == "change_message") {
-                    if (message.occupant.username != window.username) {
+                    if (message.occupant?.username != window.username) {
                         const edited = message.details.edited || [];
                         if (edited.includes("reactions") && message.details.add) {
                             // This is a reaction add, we need to look up the original message.
                             const reactedOwner = actions.get(message.details.actionid);
-                            var reactingToMe = false;
+                            let reactingToMe = false;
                             if (reactedOwner) {
                                 reactingToMe = reactedOwner.username == window.username;
                             }
@@ -495,17 +626,22 @@ export function manager(socket) {
         // ends up being used when we disconnect and reconnect without a page refresh, so we know what
         // action we left off on and can request any actions we missed that were newer than our known actions.
         if (rooms.has(msg.roomid)) {
-            var lastAction = {};
-            msg.actions.forEach((message) => {
-                if (!lastAction?.order) {
-                    lastAction = message;
+            let lastAction: ID | null = null;
+            let order: number | null = null;
+            msg.actions.forEach((message: Action) => {
+                if (order === null) {
+                    lastAction = message.id;
                 } else {
-                    if (message.order > lastAction.order) {
-                        lastAction = message;
+                    if (message.order > order) {
+                        lastAction = message.id;
                     }
                 }
+                order = message.order;
             });
-            rooms.get(msg.roomid).newest_action = lastAction;
+
+            if (lastAction !== null) {
+                rooms.get(msg.roomid)!.newest_action = lastAction;
+            }
         }
 
         // Now, notify various subsystems of new actions that just occurred.
@@ -643,7 +779,7 @@ export function manager(socket) {
         socket.emit('reaction', info)
     });
 
-    eventBus.on('updateinfo', (info) => {
+    eventBus.on('updateinfo', (info: string) => {
         // We were notified that the user toggled the info panel. Update our copy of settings and then
         // inform the server so it can save the current toggle state of the info panel. This means that
         // on refreshing or closing and reopening the client we will persist whether the info panel was
@@ -665,7 +801,7 @@ export function manager(socket) {
     eventBus.on('updateprofile', (profile) => {
         if (profile.icon) {
             // Need to upload the new icon and get the attachment ID back.
-            uploader.uploadAvatar(profile.icon, (iconid) => {
+            uploader.uploadAvatar(profile.icon, (iconid: ID) => {
                 profile.icon = iconid;
                 socket.emit('updateprofile', profile);
             });
@@ -679,7 +815,7 @@ export function manager(socket) {
         if ($.isEmptyObject(preferences.notif_sounds)) {
             socket.emit('updatepreferences', preferences);
         } else {
-            uploader.uploadNotificationSounds(preferences.notif_sounds, (sounds) => {
+            uploader.uploadNotificationSounds(preferences.notif_sounds, (sounds: ID[]) => {
                 preferences.notif_sounds = sounds;
                 socket.emit('updatepreferences', preferences);
             });
@@ -704,7 +840,7 @@ export function manager(socket) {
     eventBus.on('newroom', (details) => {
         if (details.icon) {
             // Need to upload the new icon and get the attachment ID back.
-            uploader.uploadIcon(details.icon, (iconid) => {
+            uploader.uploadIcon(details.icon, (iconid: ID) => {
                 details.icon = iconid;
                 socket.emit('newroom', details);
             });
@@ -716,11 +852,11 @@ export function manager(socket) {
 
     eventBus.on('updateroom', (msg) => {
         const roomid = msg.roomid;
-        var details = msg.details;
+        const details = msg.details;
 
         if (details.icon) {
             // Need to upload the new icon and get the attachment ID back.
-            uploader.uploadIcon(details.icon, (iconid) => {
+            uploader.uploadIcon(details.icon, (iconid: ID) => {
                 details.icon = iconid;
                 socket.emit('updateroom', {'roomid': roomid, 'details': details});
             });
@@ -734,15 +870,15 @@ export function manager(socket) {
         const roomid = msg.roomid;
         const message = msg.message;
         const sensitive = msg.sensitive;
-        var attachments = msg.attachments;
+        const attachments = msg.attachments;
 
         if (attachments.length > 0) {
             // Need to upload attachments first before sending message.
-            uploader.uploadAttachments(attachments, (aids) => {
+            uploader.uploadAttachments(attachments, (aids: ID[]) => {
                 socket.emit(
                     'message',
                     {'roomid': roomid, 'message': message, 'sensitive': sensitive, 'attachments': aids},
-                    (response) => {
+                    (response: Acknowledgement) => {
                         if (response.status == "success") {
                             eventBus.emit('messageack', {'roomid': msg.roomid, 'status': 'success'});
                         } else {
@@ -752,7 +888,7 @@ export function manager(socket) {
                 );
             });
         } else {
-            socket.emit('message', {'roomid': roomid, 'message': message, 'sensitive': sensitive}, (response) => {
+            socket.emit('message', {'roomid': roomid, 'message': message, 'sensitive': sensitive}, (response: Acknowledgement) => {
                 if (response.status == "success") {
                     eventBus.emit('messageack', {'roomid': msg.roomid, 'status': 'success'});
                 } else {

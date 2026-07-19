@@ -13,6 +13,8 @@ const entityMap: {[index: string]:string} = {
 
 const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
+// These are provided by the backend when it renders out the HTML we're part of, and then we keep
+// them up-to-date when custom emotes get added or removed from the instance.
 declare global {
     interface Window {
         emotes: any;
