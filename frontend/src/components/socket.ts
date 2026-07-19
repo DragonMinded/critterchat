@@ -1,5 +1,19 @@
-import { io } from "socket.io-client";
+import { io, Socket as ClientSocket } from "socket.io-client";
 import { v4 as uuidv4 } from "uuid";
+
+// Standard event callback for when an on() handler fires.
+type EvtCallback = (request: object) => void;
+
+// Tagged request callback, for the packet response associated with the tag and a previous request.
+type ReqCallback = (evt: string, response: object) => void;
+
+// socket.io packet acknowledgement callback.
+type AckCallback = (acknowledgement: object) => void;
+
+// Data object, which should have a tag.
+interface TaggedObject {
+    tag?: string;
+}
 
 /**
  * Handles providing an event and tag based callback system on top of socket.io
@@ -7,27 +21,36 @@ import { v4 as uuidv4 } from "uuid";
  * JS client for developer familiarity as well as drop-in support.
  */
 class Socket {
-    constructor( loc ) {
+    callbacks: Map<string, EvtCallback[]>;
+    tags: Map<string, ReqCallback>;
+    socket: ClientSocket;
+    connected: boolean;
+
+    constructor( loc: string ) {
+        // Set up callbacks for packet handling.
         this.callbacks = new Map();
         this.tags = new Map();
-        this.socket = undefined;
-        this.connected = false;
 
-        if ( loc ) {
-            this.connect(loc);
-        }
+        // Connect to server.
+        this.socket = io(loc);
+        this.connected = true;
+        this.socket.on('connect', () => { this._call("connect", {}); });
+        this.socket.on('disconnect', () => { this._call("disconnect", {}); });
+        this.socket.onAny((evt: string, ...args) => {
+            this._handle(evt, args[0]);
+        });
     }
 
-    _call( evt, data ) {
+    _call( evt: string, data: object ): void {
         if (this.callbacks.has(evt)) {
-            const handlers = this.callbacks.get(evt);
+            const handlers = this.callbacks.get(evt)!;
             handlers.forEach((handler) => {
                 handler(data);
             });
         }
     }
 
-    _handle( evt, data ) {
+    _handle( evt: string, data: TaggedObject ): void {
         if (data.tag) {
             // This is a response to a request.
             const tag = data.tag;
@@ -35,7 +58,7 @@ class Socket {
 
             if (this.tags.has(tag)) {
                 // We recognize the handler. Call it and then nuke the handler from our registry.
-                const handler = this.tags.get(tag);
+                const handler = this.tags.get(tag)!;
                 handler(evt, data);
                 this.tags.delete(tag);
             } else {
@@ -48,30 +71,25 @@ class Socket {
         }
     }
 
-    connect( loc ) {
-        this.socket = io.connect(loc);
+    connect(): void {
+        this.socket.connect();
         this.connected = true;
-        this.socket.on('connect', () => { this._call("connect", {}); });
-        this.socket.on('disconnect', () => { this._call("disconnect", {}); });
-        this.socket.onAny((evt, ...args) => {
-            this._handle(evt, args[0]);
-        });
     }
 
-    disconnect() {
+    disconnect(): void {
         this.connected = false;
         this.socket.disconnect();
     }
 
-    on( evt, callback ) {
+    on( evt: string, callback: EvtCallback ): void {
         if (!this.callbacks.has(evt)) {
             this.callbacks.set(evt, [callback]);
         } else {
-            this.callbacks.get(evt).push(callback);
+            this.callbacks.get(evt)!.push(callback);
         }
     }
 
-    emit( evt, data, ack ) {
+    emit( evt: string, data: object, ack?: AckCallback ): void {
         if (!this.connected) {
             return;
         }
@@ -83,7 +101,7 @@ class Socket {
         }
     }
 
-    request( evt, data, callback, ack ) {
+    request( evt: string, data: object, callback: ReqCallback, ack?: AckCallback ): void {
         if (!this.connected) {
             return;
         }

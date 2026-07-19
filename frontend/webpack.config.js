@@ -4,8 +4,8 @@ const AssetsPlugin = require('assets-webpack-plugin')
 
 module.exports = {
     entry: {
-        chat: './src/chat.js',
-        home: './src/home.js',
+        chat: './src/chat.ts',
+        home: './src/home.ts',
     },
     resolve: {
         extensions: ['.js', '.ts'],

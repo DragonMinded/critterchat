@@ -2,7 +2,7 @@
   "name": "Critter Chat Frontend",
   "version": "1.0.0",
   "description": "JS frontend for the critter chat software package.",
-  "main": "chat.js",
+  "main": "chat.ts",
   "scripts": {
     "build": "webpack --mode production",
     "debug": "webpack --mode development",
