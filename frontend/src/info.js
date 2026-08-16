@@ -653,7 +653,11 @@ class Info {
                     $( 'div.top-info div.icon img' ).attr('src', room.icon);
                     $( 'div.top-info div.icon' ).removeClass('hidden');
                     $( 'div.top-info div.title' ).html(escapeHtml(room.name));
-                    $( 'div.top-info div.topic' ).html(linkifyHtml(escapeHtml(room.topic), linkifyOptions));
+                    if (room.topic) {
+                        $( 'div.top-info div.topic' ).show().html(linkifyHtml(escapeHtml(room.topic), linkifyOptions));
+                    } else {
+                        $( 'div.top-info div.topic' ).hide();
+                    }
                     $( '#leave-room' ).attr('roomid', roomid);
                     $( '#edit-info' ).attr('roomid', roomid);
                     $( '#invite-chatter' ).attr('roomid', roomid);
@@ -718,7 +722,11 @@ class Info {
                     }
 
                     $( 'div.top-info div.title' ).html(escapeHtml(room.name));
-                    $( 'div.top-info div.topic' ).html(linkifyHtml(escapeHtml(room.topic), linkifyOptions));
+                    if (room.topic) {
+                        $( 'div.top-info div.topic' ).show().html(linkifyHtml(escapeHtml(room.topic), linkifyOptions));
+                    } else {
+                        $( 'div.top-info div.topic' ).hide();
+                    }
                     $( 'div.top-info div.icon img' ).attr('src', room.icon);
                 }
             });
