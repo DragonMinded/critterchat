@@ -62,7 +62,7 @@ def _icon_upload(uploadtype: str) -> dict[str, object]:
         raise Exception(f'{uploadtype.capitalize()} data corrupt or not provided in upload.')
 
     try:
-        icon, width, height, content_type = attachmentservice.prepare_attachment_image(
+        icon, thumb, width, height, is_animated, content_type = attachmentservice.prepare_attachment_image(
             icon,
             AttachmentService.MAX_ICON_WIDTH,
             AttachmentService.MAX_ICON_HEIGHT,
@@ -76,10 +76,11 @@ def _icon_upload(uploadtype: str) -> dict[str, object]:
     if width != height:
         raise UserException(f"{uploadtype.capitalize()} image is not square.")
 
-    attachmentid = attachmentservice.create_attachment(content_type, None, {MetadataType.WIDTH: width, MetadataType.HEIGHT: height})
+    attachmentid = attachmentservice.create_attachment(content_type, None, {MetadataType.WIDTH: width, MetadataType.HEIGHT: height, MetadataType.ANIMATED: is_animated})
     if attachmentid is None:
         raise Exception(f"Could not insert new {uploadtype} icon.")
     attachmentservice.put_attachment_data(attachmentid, icon)
+    attachmentservice.put_thumbnail_data(attachmentid, thumb)
 
     name = attachmentservice.get_attachment_name(attachmentid)
     logger.info(f"Client {username} uploaded attachment with ID {attachmentid} and public name {name}")
@@ -246,7 +247,7 @@ def attachments_upload() -> dict[str, object]:
             # Now, verify the image is actually loadable and the right mimetype. Stop
             # people from trying to abuse uploads to store executables or zip files.
             try:
-                attachmentdata, width, height, content_type = attachmentservice.prepare_attachment_image(attachmentdata)
+                attachmentdata, attachmentthumb, width, height, is_animated, content_type = attachmentservice.prepare_attachment_image(attachmentdata)
             except AttachmentServiceUnsupportedImageException as e:
                 logger.warning(f"Client {username} denied upload attachment with the following reason: {str(e)}")
                 raise UserException(f'Chosen attachment {filename} is not a supported image.')
@@ -265,8 +266,12 @@ def attachments_upload() -> dict[str, object]:
                     MetadataType.HEIGHT: height,
                     MetadataType.ALT_TEXT: alt_text,
                     MetadataType.SENSITIVE: sensitive,
+                    MetadataType.ANIMATED: is_animated,
                 },
             )
+
+            if attachmentid is not None:
+                attachmentservice.put_thumbnail_data(attachmentid, attachmentthumb)
 
         elif presumed_content_category == "text" or content_category == "text":
             _, ext = os.path.splitext(filename)

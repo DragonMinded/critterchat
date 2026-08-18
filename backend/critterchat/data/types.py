@@ -55,6 +55,7 @@ class User:
         self.nickname = nickname
         self.iconid = iconid
         self.icon: str | None = None
+        self.lmicon: str | None = None
 
         # Only set when this user is looked up through message service based on an OID.
         self.occupantid: OccupantID | None = None
@@ -74,6 +75,7 @@ class User:
         )
 
         user.icon = self.icon
+        user.lmicon = self.lmicon
         user.occupantid = self.occupantid
         user.moderator = self.moderator
         user.muted = self.muted
@@ -88,6 +90,7 @@ class User:
             "nickname": self.nickname,
             "about": self.about,
             "icon": self.icon,
+            "lmicon": self.lmicon,
         }
 
         if self.occupantid:
@@ -283,6 +286,7 @@ class MetadataType(StrEnum):
     HEIGHT = 'height'
     ALT_TEXT = 'alt_text'
     SENSITIVE = 'sensitive'
+    ANIMATED = 'animated'
 
 
 class Attachment:
@@ -395,7 +399,9 @@ class Room:
 
         # Resolved only after lookup by attachment system.
         self.icon: str | None = None
+        self.lmicon: str | None = None
         self.deficon: str | None = None
+        self.lmdeficon: str | None = None
 
         # Resolved only after lookup by message/search system, not sent to clients.
         self.occupants: list[Occupant] = []
@@ -419,6 +425,8 @@ class Room:
         room.public = self.public
         room.icon = self.icon
         room.deficon = self.deficon
+        room.lmicon = self.lmicon
+        room.lmdeficon = self.lmdeficon
         room.occupants = [o.clone() for o in self.occupants]
         return room
 
@@ -436,7 +444,9 @@ class Room:
             "newest_action": Action.from_id(self.newest_action) if self.newest_action else None,
             "last_action_timestamp": self.last_action_timestamp,
             "icon": self.icon,
+            "lmicon": self.lmicon,
             "deficon": self.deficon,
+            "lmdeficon": self.lmdeficon,
         }
 
     @staticmethod
@@ -532,6 +542,7 @@ class SearchResult:
         roomid: RoomID | None,
         userid: UserID | None,
         icon: str,
+        lmicon: str,
     ) -> None:
         self.name = name
         self.handle = handle
@@ -541,6 +552,7 @@ class SearchResult:
         self.roomid = roomid
         self.userid = userid
         self.icon = icon
+        self.lmicon = icon
 
         # Resolved from room type.
         self.public = purpose == RoomPurpose.ROOM
@@ -551,6 +563,7 @@ class SearchResult:
             "handle": self.handle,
             "type": self.purpose,
             "icon": self.icon,
+            "lmicon": self.lmicon,
             "public": self.public,
             "joined": self.joined,
             "invited": self.invited,
@@ -583,7 +596,10 @@ class Occupant:
         self.muted = muted
         self.invite = invite
         self.iconid = iconid
+
+        # Filled in by attachment system on lookup.
         self.icon: str | None = None
+        self.lmicon: str | None = None
 
     def clone(self) -> "Occupant":
         o = Occupant(
@@ -598,6 +614,7 @@ class Occupant:
             invite=self.invite.clone() if self.invite else None,
         )
         o.icon = self.icon
+        o.lmicon = self.lmicon
         return o
 
     def to_dict(self) -> dict[str, object]:
@@ -612,6 +629,7 @@ class Occupant:
             "muted": self.muted,
             "invite": self.invite.to_dict(include_status=False) if self.invite else None,
             "icon": self.icon,
+            "lmicon": self.lmicon,
         }
 
     @staticmethod
@@ -776,13 +794,15 @@ class Action:
 
 
 class Emote:
-    def __init__(self, uri: str, dimensions: tuple[int, int]) -> None:
+    def __init__(self, uri: str, lmuri: str, dimensions: tuple[int, int]) -> None:
         self.uri = uri
+        self.lmuri = lmuri
         self.dimensions = dimensions
 
     def to_dict(self) -> dict[str, object]:
         return {
             "uri": self.uri,
+            "lmuri": self.lmuri,
             "dimensions": list(self.dimensions),
         }
 

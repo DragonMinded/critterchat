@@ -29,9 +29,13 @@ def get_attachment(attachment: str) -> Response:
 
         # This is a debug endpoint only, not meant for production use. So, it's fine
         # to pull a little shenanigans here.
-        attachmentid = attachmentservice.id_from_path(attachment)
+        attachmentid, thumb = attachmentservice.id_from_path(attachment)
         if attachmentid is not None:
-            response = attachmentservice.get_attachment_data(attachmentid)
+            if thumb:
+                response = attachmentservice.get_thumbnail_data(attachmentid)
+            else:
+                response = attachmentservice.get_attachment_data(attachmentid)
+
             if response:
                 mime_type, attachmentbytes = response
 

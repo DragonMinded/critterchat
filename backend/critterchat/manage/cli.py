@@ -507,7 +507,7 @@ def update_attachment(config: Config, attachment: str, file: str) -> None:
     with Data.spawn(config) as data:
         try:
             attachmentservice = AttachmentService(config, data)
-            attachmentdata, width, height, content_type = attachmentservice.prepare_attachment_image(
+            attachmentdata, thumbnail, width, height, is_animated, content_type = attachmentservice.prepare_attachment_image(
                 attachmentdata,
                 AttachmentService.MAX_ICON_WIDTH,
                 AttachmentService.MAX_ICON_HEIGHT,
@@ -516,6 +516,7 @@ def update_attachment(config: Config, attachment: str, file: str) -> None:
                 raise CommandException(f"Image for {attachment} is not square.")
 
             attachmentservice.put_attachment_data(actual, attachmentdata)
+            attachmentservice.put_thumbnail_data(actual, thumbnail)
 
             print(f"Updated {attachment} image with new data from {file}.")
         except AttachmentServiceException as e:
@@ -565,7 +566,7 @@ def create_public_room(
 
                 attachmentservice = AttachmentService(config, data)
                 try:
-                    icondata, width, height, content_type = attachmentservice.prepare_attachment_image(
+                    icondata, iconthumb, width, height, is_animated, content_type = attachmentservice.prepare_attachment_image(
                         icondata,
                         AttachmentService.MAX_ICON_WIDTH,
                         AttachmentService.MAX_ICON_HEIGHT,
@@ -581,11 +582,12 @@ def create_public_room(
                 attachmentid = attachmentservice.create_attachment(
                     content_type,
                     None,
-                    {MetadataType.WIDTH: width, MetadataType.HEIGHT: height}
+                    {MetadataType.WIDTH: width, MetadataType.HEIGHT: height, MetadataType.ANIMATED: is_animated}
                 )
                 if attachmentid is None:
                     raise CommandException("Could not insert new room icon.")
                 attachmentservice.put_attachment_data(attachmentid, icondata)
+                attachmentservice.put_thumbnail_data(attachmentid, iconthumb)
 
             messageservice = MessageService(config, data)
             room = messageservice.create_public_room(name or "", topic or "", attachmentid, autojoin == "on", moderated == "on")
@@ -624,7 +626,7 @@ def modify_public_room_info(config: Config, roomid: str, name: str | None, topic
 
                 attachmentservice = AttachmentService(config, data)
                 try:
-                    icondata, width, height, content_type = attachmentservice.prepare_attachment_image(
+                    icondata, iconthumb, width, height, is_animated, content_type = attachmentservice.prepare_attachment_image(
                         icondata,
                         AttachmentService.MAX_ICON_WIDTH,
                         AttachmentService.MAX_ICON_HEIGHT,
@@ -640,11 +642,13 @@ def modify_public_room_info(config: Config, roomid: str, name: str | None, topic
                 attachmentid = attachmentservice.create_attachment(
                     content_type,
                     None,
-                    {MetadataType.WIDTH: width, MetadataType.HEIGHT: height}
+                    {MetadataType.WIDTH: width, MetadataType.HEIGHT: height, MetadataType.ANIMATED: is_animated}
                 )
                 if attachmentid is None:
                     raise CommandException("Could not insert new room icon.")
                 attachmentservice.put_attachment_data(attachmentid, icondata)
+                attachmentservice.put_thumbnail_data(attachmentid, iconthumb)
+
             elif icon == "default":
                 icon_delete = True
 

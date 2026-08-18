@@ -82,7 +82,7 @@ def avatar_to_attachment(avatar: str) -> AttachmentID | None:
     # Now, try to make sure this is a valid image.
     attachmentservice = AttachmentService(g.config, g.data)
     try:
-        icon, width, height, content_type = attachmentservice.prepare_attachment_image(
+        icon, thumb, width, height, is_animated, content_type = attachmentservice.prepare_attachment_image(
             resp.content,
             AttachmentService.MAX_ICON_WIDTH,
             AttachmentService.MAX_ICON_HEIGHT,
@@ -95,12 +95,17 @@ def avatar_to_attachment(avatar: str) -> AttachmentID | None:
         # Not square, ignore it.
         return None
 
-    attachmentid = attachmentservice.create_attachment(content_type, None, {MetadataType.WIDTH: width, MetadataType.HEIGHT: height})
+    attachmentid = attachmentservice.create_attachment(
+        content_type,
+        None,
+        {MetadataType.WIDTH: width, MetadataType.HEIGHT: height, MetadataType.ANIMATED: is_animated},
+    )
     if attachmentid is None:
         logger.error(f"Could not insert new attachment for {avatar}!")
         return None
 
     attachmentservice.put_attachment_data(attachmentid, icon)
+    attachmentservice.put_thumbnail_data(attachmentid, thumb)
     return attachmentid
 
 

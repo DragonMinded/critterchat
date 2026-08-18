@@ -92,7 +92,11 @@ class TestMessagePumpEmotes:
         assert socketio.sent == [
             Message(
                 "emotechanges",
-                {'additions': {':d:': {'uri': 'http://localhost/attachments/5b86e764755ec92458d8881789088538a93d6268.png', 'dimensions': [32, 32]}}, 'deletions': []},
+                {'additions': {':d:': {
+                    'uri': 'http://localhost/attachments/5b86e764755ec92458d8881789088538a93d6268.png',
+                    'lmuri': 'http://localhost/attachments/thumb_5b86e764755ec92458d8881789088538a93d6268.png',
+                    'dimensions': [32, 32],
+                }}, 'deletions': []},
             ),
         ]
 
@@ -147,7 +151,11 @@ class TestMessagePumpEmotes:
         assert socketio.sent == [
             Message(
                 "emotechanges",
-                {'additions': {':d:': {'uri': 'http://localhost/attachments/5b86e764755ec92458d8881789088538a93d6268.png', 'dimensions': [32, 32]}}, 'deletions': [':a:']},
+                {'additions': {':d:': {
+                    'uri': 'http://localhost/attachments/5b86e764755ec92458d8881789088538a93d6268.png',
+                    'lmuri': 'http://localhost/attachments/thumb_5b86e764755ec92458d8881789088538a93d6268.png',
+                    'dimensions': [32, 32],
+                }}, 'deletions': [':a:']},
             ),
         ]
 
@@ -206,6 +214,7 @@ class TestMessagePumpUser:
                     'nickname': 'testuser',
                     'about': 'about me',
                     'icon': 'http://localhost/attachments/defavi',
+                    'lmicon': 'http://localhost/attachments/thumb_defavi',
                     'full_username': '@testusername@localhost',
                 },
                 'testsid',
@@ -243,6 +252,7 @@ class TestMessagePumpUser:
                     'nickname': 'testuser',
                     'about': 'about me',
                     'icon': 'http://localhost/attachments/defavi',
+                    'lmicon': 'http://localhost/attachments/thumb_defavi',
                     'full_username': '@testusername@localhost',
                     'permissions': ['ADMINISTRATOR'],
                 },
@@ -380,7 +390,9 @@ class TestMessagePumpActions:
                             'newest_action': 'a100001',
                             'last_action_timestamp': 0,
                             'icon': 'http://localhost/attachments/defroom',
+                            'lmicon': 'http://localhost/attachments/thumb_defroom',
                             'deficon': 'http://localhost/attachments/defroom',
+                            'lmdeficon': 'http://localhost/attachments/thumb_defroom',
                         },
                     ],
                     'counts': [
@@ -442,7 +454,9 @@ class TestMessagePumpActions:
                             'newest_action': 'a100101',
                             'last_action_timestamp': 0,
                             'icon': 'http://localhost/attachments/defroom',
+                            'lmicon': 'http://localhost/attachments/thumb_defroom',
                             'deficon': 'http://localhost/attachments/defroom',
+                            'lmdeficon': 'http://localhost/attachments/thumb_defroom',
                         },
                         {
                             'id': 'r502',
@@ -457,7 +471,9 @@ class TestMessagePumpActions:
                             'newest_action': 'a100104',
                             'last_action_timestamp': 0,
                             'icon': 'http://localhost/attachments/defroom',
+                            'lmicon': 'http://localhost/attachments/thumb_defroom',
                             'deficon': 'http://localhost/attachments/defroom',
+                            'lmdeficon': 'http://localhost/attachments/thumb_defroom',
                         },
                     ],
                     'counts': [
@@ -608,7 +624,8 @@ class TestMessagePumpActions:
                                 'moderator': False,
                                 'muted': False,
                                 'invite': None,
-                                'icon': 'http://localhost/attachments/defavi'
+                                'icon': 'http://localhost/attachments/defavi',
+                                'lmicon': 'http://localhost/attachments/thumb_defavi',
                             },
                             'action': ActionType.MESSAGE,
                             'details': {'message': 'testing 123', 'reactions': {}},
@@ -620,7 +637,14 @@ class TestMessagePumpActions:
                             'timestamp': 123456,
                             'occupant': None,
                             'action': ActionType.CHANGE_INFO,
-                            'details': {'name': 'test room 2!', 'topic': 'test topic 2!', 'iconid': None, 'moderated': False, 'icon': 'http://localhost/attachments/defroom'},
+                            'details': {
+                                'name': 'test room 2!',
+                                'topic': 'test topic 2!',
+                                'iconid': None,
+                                'moderated': False,
+                                'icon': 'http://localhost/attachments/defroom',
+                                'lmicon': 'http://localhost/attachments/thumb_defroom',
+                            },
                             'attachments': [],
                         },
                     ],
@@ -644,7 +668,9 @@ class TestMessagePumpActions:
                             'newest_action': 'a100401',
                             'last_action_timestamp': 0,
                             'icon': 'http://localhost/attachments/defroom',
+                            'lmicon': 'http://localhost/attachments/thumb_defroom',
                             'deficon': 'http://localhost/attachments/defroom',
+                            'lmdeficon': 'http://localhost/attachments/thumb_defroom',
                         },
                         {
                             'id': 'r802',
@@ -659,7 +685,9 @@ class TestMessagePumpActions:
                             'newest_action': 'a100406',
                             'last_action_timestamp': 0,
                             'icon': 'http://localhost/attachments/defroom',
+                            'lmicon': 'http://localhost/attachments/thumb_defroom',
                             'deficon': 'http://localhost/attachments/defroom',
+                            'lmdeficon': 'http://localhost/attachments/thumb_defroom',
                         },
                     ],
                 },

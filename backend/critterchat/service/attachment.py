@@ -7,7 +7,7 @@ import pillow_jxl  # noqa: import registers this plugin
 import re
 from PIL import Image, ImageOps
 from pillow_heif import register_heif_opener  # type: ignore
-from typing import Final, cast
+from typing import Final, Tuple, cast
 
 from ..config import Config
 from ..data import (
@@ -51,12 +51,20 @@ class AttachmentServiceInvalidSizeException(AttachmentServiceException):
 
 _hash_to_id_lut: dict[str, AttachmentID] = {}
 _id_to_hash_lut: dict[AttachmentID, str] = {}
+_thumbhash_to_id_lut: dict[str, AttachmentID] = {}
+_id_to_thumbhash_lut: dict[AttachmentID, str] = {}
 _emotes_initialized: bool = False
 
 
 class AttachmentService:
     MAX_ICON_WIDTH: Final[int] = 512
     MAX_ICON_HEIGHT: Final[int] = 512
+
+    MAX_LARGE_PREVIEW_HEIGHT: Final[int] = 300
+    MAX_SMALL_PREVIEW_HEIGHT: Final[int] = 100
+    MAX_THUMBNAIL_WIDTH: Final[int] = 2048
+
+    THUMBNAIL_PREFIX: Final[str] = "thumb_"
     GENERIC_MIME_TYPE: Final[str] = "application/octet-stream"
     TEXT_TYPES = {"application/json", "application/javascript", "application/xml"}
     SUPPORTED_IMAGE_TYPES = {"image/apng", "image/gif", "image/jpeg", "image/png", "image/webp"}
@@ -71,6 +79,10 @@ class AttachmentService:
             emotes = self.__data.attachment.get_emotes()
             for emote in emotes:
                 _id_to_hash_lut[emote.attachmentid] = self._get_hashed_attachment_name(
+                    # Emotes always have an empty filename, we don't store it.
+                    emote.attachmentid, emote.content_type, None,
+                )
+                _id_to_thumbhash_lut[emote.attachmentid] = self._get_hashed_thumbnail_name(
                     # Emotes always have an empty filename, we don't store it.
                     emote.attachmentid, emote.content_type, None,
                 )
@@ -178,12 +190,23 @@ class AttachmentService:
         hashval = hashlib.shake_256(inval.encode('utf-8')).hexdigest(20)
         return f"{hashval}{ext}"
 
+    def _get_hashed_thumbnail_name(self, aid: AttachmentID, content_type: str, original_filename: str | None) -> str:
+        hashed_name = self._get_hashed_attachment_name(aid, content_type, original_filename)
+        return f"{self.THUMBNAIL_PREFIX}{hashed_name}"
+
     def _get_local_attachment_path(self, aid: AttachmentID, content_type: str, original_filename: str | None) -> str:
         directory = self.__config.attachments.directory
         if not directory:
             raise AttachmentServiceException("Cannot find directory for local attachment storage!")
 
         return os.path.join(directory, self._get_hashed_attachment_name(aid, content_type, original_filename))
+
+    def _get_local_thumbnail_path(self, aid: AttachmentID, content_type: str, original_filename: str | None) -> str:
+        directory = self.__config.attachments.directory
+        if not directory:
+            raise AttachmentServiceException("Cannot find directory for local attachment storage!")
+
+        return os.path.join(directory, self._get_hashed_thumbnail_name(aid, content_type, original_filename))
 
     def create_default_attachments(self) -> None:
         for aid, default in [
@@ -200,6 +223,15 @@ class AttachmentService:
                         data = bfp1.read()
                     with open(path, "wb") as bfp2:
                         bfp2.write(data)
+
+                # We don't know if the icon that's already there is low-motion or animated, so
+                # we need to save a non-animated version.
+                tpath = self._get_local_thumbnail_path(aid, content_type, None)
+                if not os.path.isfile(tpath):
+                    with open(path, "rb") as bfp1:
+                        img = Image.open(bfp1)
+                        with open(tpath, "wb") as bfp2:
+                            img.save(bfp2, format='PNG')
             else:
                 # Unknown backend, throw.
                 raise AttachmentServiceException("Unrecognized backend system!")
@@ -360,18 +392,31 @@ class AttachmentService:
             # Unknown backend, throw since we have no known migrations.
             raise AttachmentServiceException("Unrecognized backend system!")
 
-    def id_from_path(self, path: str) -> AttachmentID | None:
+    def id_from_path(self, path: str) -> Tuple[AttachmentID | None, bool]:
+        """
+        Given an attachment path, returns the attachment's ID as well as whether the path
+        represents a thumbnail or a regular attachment.
+        """
+
         path = path.rsplit("/", 1)[-1]
 
         if path == Attachment.from_id(DefaultAvatarID):
-            return DefaultAvatarID
+            return DefaultAvatarID, False
         if path == Attachment.from_id(DefaultRoomID):
-            return DefaultRoomID
+            return DefaultRoomID, False
         if path == Attachment.from_id(FaviconID):
-            return FaviconID
+            return FaviconID, False
+        if path == self.THUMBNAIL_PREFIX + Attachment.from_id(DefaultAvatarID):
+            return DefaultAvatarID, True
+        if path == self.THUMBNAIL_PREFIX + Attachment.from_id(DefaultRoomID):
+            return DefaultRoomID, True
+        if path == self.THUMBNAIL_PREFIX + Attachment.from_id(FaviconID):
+            return FaviconID, True
 
         if path in _hash_to_id_lut:
-            return _hash_to_id_lut[path]
+            return (_hash_to_id_lut[path], False)
+        if path in _thumbhash_to_id_lut:
+            return (_thumbhash_to_id_lut[path], True)
 
         attachments = self.__data.attachment.get_attachments()
         for attachment in attachments:
@@ -379,7 +424,17 @@ class AttachmentService:
             _hash_to_id_lut[calculated] = attachment.id
             _id_to_hash_lut[attachment.id] = calculated
 
-        return _hash_to_id_lut.get(path, None)
+            calculated = self._get_hashed_thumbnail_name(attachment.id, attachment.content_type, attachment.original_filename)
+            _thumbhash_to_id_lut[calculated] = attachment.id
+            _id_to_thumbhash_lut[attachment.id] = calculated
+
+        actual = _hash_to_id_lut.get(path)
+        if actual:
+            return actual, False
+        actual = _thumbhash_to_id_lut.get(path)
+        if actual:
+            return actual, True
+        return None, False
 
     def create_attachment(
         self,
@@ -461,6 +516,68 @@ class AttachmentService:
             # Unknown backend, throw.
             raise AttachmentServiceException("Unrecognized backend system!")
 
+    def get_thumbnail_data(self, attachmentid: AttachmentID) -> tuple[str, bytes] | None:
+        # Check for default images which aren't stored in the DB.
+        if attachmentid == DefaultAvatarID or attachmentid == DefaultRoomID or attachmentid == FaviconID:
+            if self.__config.attachments.system == "local":
+                # Local storage, look up the storage directory and return that data.
+                path = self._get_local_thumbnail_path(attachmentid, self.GENERIC_MIME_TYPE, None)
+                try:
+                    with open(path, "rb") as bfp:
+                        data = bfp.read()
+                        enc = self.get_content_type(path)
+                    return enc, data
+                except FileNotFoundError:
+                    return None
+            else:
+                # Unknown backend, throw.
+                raise AttachmentServiceException("Unrecognized backend system!")
+
+        attachment = self.__data.attachment.lookup_attachment(attachmentid)
+        if not attachment:
+            return None
+
+        if attachment.system == "local":
+            # Local storage, look up the storage directory and return that data.
+            path = self._get_local_thumbnail_path(attachment.id, attachment.content_type, attachment.original_filename)
+            try:
+                with open(path, "rb") as bfp:
+                    print(path)
+                    data = bfp.read()
+                return attachment.content_type, data
+            except FileNotFoundError:
+                return None
+        else:
+            # Unknown backend, throw.
+            raise AttachmentServiceException("Unrecognized backend system!")
+
+    def put_thumbnail_data(self, attachmentid: AttachmentID, data: bytes) -> None:
+        # Check for default images which aren't stored in the DB.
+        if attachmentid == DefaultAvatarID or attachmentid == DefaultRoomID or attachmentid == FaviconID:
+            if self.__config.attachments.system == "local":
+                # Local storage, look up the storage directory and return that data.
+                path = self._get_local_thumbnail_path(attachmentid, self.GENERIC_MIME_TYPE, None)
+                with open(path, "wb") as bfp:
+                    bfp.write(data)
+            else:
+                # Unknown backend, throw.
+                raise AttachmentServiceException("Unrecognized backend system!")
+
+            return
+
+        attachment = self.__data.attachment.lookup_attachment(attachmentid)
+        if not attachment:
+            return
+
+        if attachment.system == "local":
+            # Local storage, look up the storage directory and write the data.
+            path = self._get_local_thumbnail_path(attachment.id, attachment.content_type, attachment.original_filename)
+            with open(path, "wb") as bfp:
+                bfp.write(data)
+        else:
+            # Unknown backend, throw.
+            raise AttachmentServiceException("Unrecognized backend system!")
+
     def delete_attachment_data(self, attachmentid: AttachmentID) -> None:
         attachment = self.__data.attachment.lookup_attachment(attachmentid)
         if not attachment:
@@ -473,11 +590,16 @@ class AttachmentService:
                 os.remove(path)
             except FileNotFoundError:
                 pass
+            path = self._get_local_thumbnail_path(attachment.id, attachment.content_type, attachment.original_filename)
+            try:
+                os.remove(path)
+            except FileNotFoundError:
+                pass
         else:
             # Unknown backend, throw.
             raise AttachmentServiceException("Unrecognized backend system!")
 
-    def prepare_attachment_image(self, data: bytes, max_width: int | None = None, max_height: int | None = None) -> tuple[bytes, int, int, str]:
+    def prepare_attachment_image(self, data: bytes, max_width: int | None = None, max_height: int | None = None) -> tuple[bytes, bytes, int, int, bool, str]:
         try:
             img = Image.open(io.BytesIO(data))
         except Exception:
@@ -502,13 +624,27 @@ class AttachmentService:
             converted.save(converted_array, format='PNG')
             data = converted_array.getvalue()
 
+            # Re-open so we can use the image we just created in the below stanza for animation detection.
+            img.close()
+            img = Image.open(io.BytesIO(data))
+
             # We've updated the content type to a PNG now, so reflect that.
             content_type = "image/png"
 
         if content_type not in self.SUPPORTED_IMAGE_TYPES:
             raise AttachmentServiceUnsupportedImageException(f"Attachment image is an unrecognized format {content_type}.")
 
-        return data, width, height, content_type
+        # Now, determine if it is animated, because we want to have thumbnail support for non-animated
+        # images, as well as have the option for low-motion for accessibility.
+        is_animated = getattr(img, "is_animated", False)
+
+        # And finally, create a thumbnail to go along with the image.
+        img.thumbnail((self.MAX_THUMBNAIL_WIDTH, self.MAX_LARGE_PREVIEW_HEIGHT))
+        thumbnail_bytes = io.BytesIO()
+        img.save(thumbnail_bytes, format='PNG')
+        img.close()
+
+        return data, thumbnail_bytes.getvalue(), width, height, is_animated, content_type
 
     def resolve_attachment_preview(self, attachment: Attachment) -> Attachment:
         category = self.get_content_category(attachment.mimetype)
@@ -522,21 +658,28 @@ class AttachmentService:
                     attachment.preview = preview
                 except Exception:
                     pass
+        elif category == "image":
+            # Look up the attachment thumbnail URI.
+            attachment.preview = self.get_thumbnail_url(attachment.id)
 
         return attachment
 
     def resolve_user_icon(self, user: User) -> User:
         if user.iconid is None:
             user.icon = self.get_attachment_url(DefaultAvatarID)
+            user.lmicon = self.get_thumbnail_url(DefaultAvatarID)
         else:
             user.icon = self.get_attachment_url(user.iconid)
+            user.lmicon = self.get_thumbnail_url(user.iconid)
         return user
 
     def resolve_occupant_icon(self, occupant: Occupant) -> Occupant:
         if occupant.iconid is None:
             occupant.icon = self.get_attachment_url(DefaultAvatarID)
+            occupant.lmicon = self.get_thumbnail_url(DefaultAvatarID)
         else:
             occupant.icon = self.get_attachment_url(occupant.iconid)
+            occupant.lmicon = self.get_thumbnail_url(occupant.iconid)
         return occupant
 
     def resolve_action_icon(self, action: Action) -> Action:
@@ -553,8 +696,10 @@ class AttachmentService:
 
             if iconid is None:
                 details["icon"] = self.get_attachment_url(DefaultRoomID)
+                details["lmicon"] = self.get_thumbnail_url(DefaultRoomID)
             else:
                 details["icon"] = self.get_attachment_url(iconid)
+                details["lmicon"] = self.get_thumbnail_url(iconid)
 
             action.details = details
         elif action.action == ActionType.CHANGE_PROFILE:
@@ -567,8 +712,10 @@ class AttachmentService:
 
             if iconid is None:
                 details["icon"] = self.get_attachment_url(DefaultAvatarID)
+                details["lmicon"] = self.get_thumbnail_url(DefaultAvatarID)
             else:
                 details["icon"] = self.get_attachment_url(iconid)
+                details["lmicon"] = self.get_thumbnail_url(iconid)
 
             action.details = details
 
@@ -577,24 +724,50 @@ class AttachmentService:
     def resolve_chat_icon(self, room: Room) -> Room:
         if room.iconid is None:
             room.icon = self.get_attachment_url(DefaultAvatarID)
+            room.lmicon = self.get_thumbnail_url(DefaultAvatarID)
         else:
             room.icon = self.get_attachment_url(room.iconid)
+            room.lmicon = self.get_thumbnail_url(room.iconid)
         if room.deficonid is None:
             room.deficon = self.get_attachment_url(DefaultAvatarID)
+            room.lmdeficon = self.get_thumbnail_url(DefaultAvatarID)
         else:
             room.deficon = self.get_attachment_url(room.deficonid)
+            room.lmdeficon = self.get_thumbnail_url(room.deficonid)
         return room
 
     def resolve_room_icon(self, room: Room) -> Room:
         if room.iconid is None:
             room.icon = self.get_attachment_url(DefaultRoomID)
+            room.lmicon = self.get_thumbnail_url(DefaultRoomID)
         else:
             room.icon = self.get_attachment_url(room.iconid)
+            room.lmicon = self.get_thumbnail_url(room.iconid)
         if room.deficonid is None:
             room.deficon = self.get_attachment_url(DefaultRoomID)
+            room.lmdeficon = self.get_thumbnail_url(DefaultRoomID)
         else:
             room.deficon = self.get_attachment_url(room.deficonid)
+            room.lmdeficon = self.get_thumbnail_url(room.deficonid)
         return room
+
+    def get_thumbnail_name(self, attachmentid: AttachmentID) -> str:
+        if attachmentid in _id_to_thumbhash_lut:
+            return _id_to_thumbhash_lut[attachmentid]
+
+        if attachmentid in {DefaultAvatarID, DefaultRoomID, FaviconID}:
+            _id_to_thumbhash_lut[attachmentid] = self._get_hashed_thumbnail_name(attachmentid, self.GENERIC_MIME_TYPE, None)
+            return _id_to_thumbhash_lut[attachmentid]
+
+        attachment = self.__data.attachment.lookup_attachment(attachmentid)
+        if not attachment:
+            # We can't find the attachment, so it's a dangling or invalid ID. Just return the generic
+            # filename for the attachment in this case.
+            _id_to_thumbhash_lut[attachmentid] = self._get_hashed_thumbnail_name(attachmentid, self.GENERIC_MIME_TYPE, None)
+            return _id_to_thumbhash_lut[attachmentid]
+
+        _id_to_thumbhash_lut[attachmentid] = self._get_hashed_thumbnail_name(attachment.id, attachment.content_type, attachment.original_filename)
+        return _id_to_thumbhash_lut[attachmentid]
 
     def get_attachment_name(self, attachmentid: AttachmentID) -> str:
         if attachmentid in _id_to_hash_lut:
@@ -613,6 +786,24 @@ class AttachmentService:
 
         _id_to_hash_lut[attachmentid] = self._get_hashed_attachment_name(attachment.id, attachment.content_type, attachment.original_filename)
         return _id_to_hash_lut[attachmentid]
+
+    def get_thumbnail_url(self, attachmentid: AttachmentID) -> str:
+        prefix = self.__config.attachments.prefix
+        while prefix and (prefix[-1] == "/"):
+            prefix = prefix[:-1]
+
+        possibly_relative = f"{prefix}/{self.get_thumbnail_name(attachmentid)}"
+        if possibly_relative.startswith("http://") or possibly_relative.startswith("https://"):
+            return possibly_relative
+
+        while possibly_relative[0] == "/":
+            possibly_relative = possibly_relative[1:]
+
+        base = self.__config.base_url
+        while base[-1] == "/":
+            base = base[:-1]
+
+        return f"{base}/{possibly_relative}"
 
     def get_attachment_url(self, attachmentid: AttachmentID) -> str:
         prefix = self.__config.attachments.prefix

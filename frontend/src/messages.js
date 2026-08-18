@@ -1270,7 +1270,7 @@ class Messages {
         });
         const allImages = mimetypes.every((mt) => mt.startsWith("image/"));
         const allText = mimetypes.every((mt) => isText(mt));
-        const desiredHeight = (attachments.length == 1 && allImages) ? 300 : 100;
+        const desiredHeight = (attachments.length == 1 && allImages) ? window.maxpreviewheight.large : window.maxpreviewheight.small;
         const textInline = (attachments.length == 1) && allText && attachments[0].preview;
 
         var html = '<div class="attachments" id="' + message.id + '">';
@@ -1281,12 +1281,18 @@ class Messages {
 
             if (attachment.mimetype.startsWith("image/")) {
                 // Image attachment.
+                let uri = attachment.uri;
+                console.log(attachment);
+                if (attachment.preview && !attachment.metadata.animated) {
+                    uri = attachment.preview;
+                }
+
                 var attachImg = $(
                     '<img class="attachment"' + this._getDims(attachment, desiredHeight) + '/>'
                 ).attr(
                     'alt', attachment.metadata.alt_text || "message attachment"
                 ).attr(
-                    'src', attachment.uri
+                    'src', uri
                 );
 
                 if (attachment.metadata.sensitive) {

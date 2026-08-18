@@ -42,8 +42,10 @@ class EmoteService:
 
         for emote in emotes:
             url = self.__attachments.get_attachment_url(emote.attachmentid)
+            lmurl = self.__attachments.get_thumbnail_url(emote.attachmentid)
             results[emote.alias] = Emote(
                 url,
+                lmurl,
                 (cast(int, emote.metadata[MetadataType.WIDTH]), cast(int, emote.metadata[MetadataType.HEIGHT])),
             )
         return results
@@ -79,7 +81,7 @@ class EmoteService:
             raise EmoteServiceException("Emote name already in use!")
 
         try:
-            data, width, height, content_type = self.__attachments.prepare_attachment_image(data)
+            data, thumbnail, width, height, is_animated, content_type = self.__attachments.prepare_attachment_image(data)
         except AttachmentServiceUnsupportedImageException:
             raise EmoteServiceException("Unsupported image provided for emote!")
         except AttachmentServiceException as e:
@@ -93,12 +95,14 @@ class EmoteService:
             {
                 MetadataType.WIDTH: width,
                 MetadataType.HEIGHT: height,
+                MetadataType.ANIMATED: is_animated,
             },
         )
         if attachmentid is None:
             raise EmoteServiceException("Could not create new emote!")
 
         self.__attachments.put_attachment_data(attachmentid, data)
+        self.__attachments.put_thumbnail_data(attachmentid, thumbnail)
 
         # Now, link it to the emote.
         self.__data.attachment.add_emote(alias, attachmentid)

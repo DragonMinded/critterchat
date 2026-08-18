@@ -1007,6 +1007,7 @@ class MessageService:
         results: list[SearchResult] = []
         for room in rooms:
             icon = room.icon
+            lmicon = room.lmicon
             handle: str | None = None
             if room.purpose == RoomPurpose.DIRECT_MESSAGE:
                 if len(room.occupants) == 1:
@@ -1015,7 +1016,7 @@ class MessageService:
                     not_me = [o for o in room.occupants if o.userid != userid]
                     handle = "@" + not_me[0].username
 
-            if not icon:
+            if not icon or not lmicon:
                 raise Exception("Logic error, should have been inferred above!")
 
             invited = room.id in potentialinvites
@@ -1023,16 +1024,17 @@ class MessageService:
                 del potentialinvites[room.id]
 
             if room.id in memberof:
-                results.append(SearchResult(room.name, handle, room.purpose, True, False, room.id, None, icon))
+                results.append(SearchResult(room.name, handle, room.purpose, True, False, room.id, None, icon, lmicon))
             else:
-                results.append(SearchResult(room.name, handle, room.purpose, False, invited, room.id, None, icon))
+                results.append(SearchResult(room.name, handle, room.purpose, False, invited, room.id, None, icon, lmicon))
 
         for user in potentialusers:
             icon = user.icon
-            if not icon:
+            lmicon = user.lmicon
+            if not icon or not lmicon:
                 raise Exception("Logic error, should have been inferred above!")
             results.append(SearchResult(
-                user.nickname, f"@{user.username}", RoomPurpose.DIRECT_MESSAGE, False, False, None, user.id, icon
+                user.nickname, f"@{user.username}", RoomPurpose.DIRECT_MESSAGE, False, False, None, user.id, icon, lmicon
             ))
 
         # Now, handle adding on room invites that weren't handled above.
@@ -1045,9 +1047,10 @@ class MessageService:
 
         for room in potentialinvites.values():
             icon = room.icon
-            if not icon:
+            lmicon = room.lmicon
+            if not icon or not lmicon:
                 raise Exception("Logic error, should have been inferred above!")
-            results.append(SearchResult(room.name, None, room.purpose, False, True, room.id, None, icon))
+            results.append(SearchResult(room.name, None, room.purpose, False, True, room.id, None, icon, lmicon))
 
         return sorted(results, key=lambda result: (result.name or "").lower())
 
@@ -1082,7 +1085,8 @@ class MessageService:
         for occupant in occupants.values():
             self.__attachments.resolve_occupant_icon(occupant)
             icon = occupant.icon
-            if not icon:
+            lmicon = occupant.lmicon
+            if not icon or not lmicon:
                 raise Exception("Logic error, should have been inferred above!")
 
             results.append(SearchResult(
@@ -1094,6 +1098,7 @@ class MessageService:
                 None,
                 occupant.userid,
                 icon,
+                lmicon,
             ))
 
         # Now, resolve the icons of everyone that we can invite who wasn't already in the above
@@ -1105,7 +1110,8 @@ class MessageService:
 
             self.__attachments.resolve_user_icon(user)
             icon = user.icon
-            if not icon:
+            lmicon = user.lmicon
+            if not icon or not lmicon:
                 raise Exception("Logic error, should have been inferred above!")
 
             results.append(SearchResult(
@@ -1117,6 +1123,7 @@ class MessageService:
                 None,
                 user.id,
                 icon,
+                lmicon,
             ))
 
         return sorted(results, key=lambda result: (result.name or "").lower())
