@@ -20,7 +20,6 @@ TODO Low Priority
  - Link existing local account with an OAuth provider.
  - Unlink existing local account from an OAuth provider.
  - Better integration with Mastodon OAuth that saves client token and only revalidates when needed.
- - Attachment thumbnails so larger images don't get downloaded on slow connections on display.
  - Role groups, for moderators and public room visibility, including auto-join on add to group.
  - Better autocomplete that lets you scroll down past the first 10 entries.
  - When server selects a room for you, ensure that the menu on the left scrolls to make that room visible.
