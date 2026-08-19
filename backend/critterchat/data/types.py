@@ -30,6 +30,7 @@ class Migration(StrEnum):
     ATTACHMENT_EXTENSIONS = "attachment_extensions"
     IMAGE_DIMENSIONS = "image_dimensions"
     ATTACHMENT_FILENAMES = "attachment_filenames"
+    ATTACHMENT_THUMBNAILS = "attachment_thumbnails"
 
 
 class UserPermission(IntEnum):

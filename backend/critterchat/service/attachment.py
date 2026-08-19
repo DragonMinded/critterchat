@@ -291,7 +291,8 @@ class AttachmentService:
                 Migration.HASHED_ATTACHMENTS in finished_migrations and
                 Migration.ATTACHMENT_EXTENSIONS in finished_migrations and
                 Migration.IMAGE_DIMENSIONS in finished_migrations and
-                Migration.ATTACHMENT_FILENAMES in finished_migrations
+                Migration.ATTACHMENT_FILENAMES in finished_migrations and
+                Migration.ATTACHMENT_THUMBNAILS in finished_migrations
             ):
                 # We've done all the migrations, so don't bother looking up attachments.
                 return
@@ -365,7 +366,7 @@ class AttachmentService:
                         # We're not concerned with this.
                         continue
 
-                    if 'width' in attachment.metadata and 'height' in attachment.metadata:
+                    if MetadataType.WIDTH in attachment.metadata and MetadataType.HEIGHT in attachment.metadata:
                         # We already have dimensions on this.
                         continue
 
@@ -387,6 +388,31 @@ class AttachmentService:
 
                 # Mark that we did this migration so we never run it again.
                 self.__data.migration.flag_migrated(Migration.IMAGE_DIMENSIONS)
+
+            if Migration.ATTACHMENT_THUMBNAILS not in finished_migrations:
+                # Now we need to load all attachments that don't have an animated flag and
+                # create thumbnails for them all.
+                for attachment in attachments:
+                    if attachment.content_type not in AttachmentService.SUPPORTED_IMAGE_TYPES:
+                        # We're not concerned with this.
+                        continue
+
+                    if MetadataType.ANIMATED in attachment.metadata:
+                        # We already have a thumbnail for this.
+                        continue
+
+                    content_type_and_data = self.get_attachment_data(attachment.id)
+                    if content_type_and_data:
+                        _, data = content_type_and_data
+                        _, thumb, _, _, is_animated, _ = self.prepare_attachment_image(data)
+                        self.__data.attachment.update_attachment_metadata(
+                            attachment.id,
+                            {MetadataType.ANIMATED: is_animated},
+                        )
+                        self.put_thumbnail_data(attachment.id, thumb)
+
+                # Mark that we did this migration so we never run it again.
+                self.__data.migration.flag_migrated(Migration.ATTACHMENT_THUMBNAILS)
 
         else:
             # Unknown backend, throw since we have no known migrations.

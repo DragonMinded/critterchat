@@ -1,6 +1,8 @@
 TODO Immediate
 ==============
 
+ - Need a setting for low-motion to disable motion by default, need to swap to low motion icons when setting present, need to swap to low motion thumb even on animated gifs and such when setting present. Need to also swap server icons and custom emotes as well, but these might require a reload.
+
 TODO Low Priority
 =================
 
@@ -23,4 +25,3 @@ TODO Low Priority
  - Better autocomplete that lets you scroll down past the first 10 entries.
  - When server selects a room for you, ensure that the menu on the left scrolls to make that room visible.
  - Proper history integration for mobile so browser back action works the same as back button.
- - Low-motion option for those who are sensitive to motion.
