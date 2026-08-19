@@ -1282,7 +1282,6 @@ class Messages {
             if (attachment.mimetype.startsWith("image/")) {
                 // Image attachment.
                 let uri = attachment.uri;
-                console.log(attachment);
                 if (attachment.preview && !attachment.metadata.animated) {
                     uri = attachment.preview;
                 }
