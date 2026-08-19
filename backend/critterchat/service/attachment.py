@@ -636,6 +636,10 @@ class AttachmentService:
             raise AttachmentServiceUnsupportedImageException("Attachment image is an unrecognized format.")
         content_type = content_type.lower()
 
+        # Now, determine if it is animated, because we want to have thumbnail support for non-animated
+        # images, as well as have the option for low-motion for accessibility.
+        is_animated = getattr(img, "is_animated", False)
+
         transposed = ImageOps.exif_transpose(img)
         img.close()
 
@@ -653,6 +657,7 @@ class AttachmentService:
             converted_array = io.BytesIO()
             converted.save(converted_array, format='PNG')
             data = converted_array.getvalue()
+            is_animated = False
 
             # Re-open so we can use the image we just created in the below stanza for animation detection.
             converted.close()
@@ -663,10 +668,6 @@ class AttachmentService:
 
         if content_type not in self.SUPPORTED_IMAGE_TYPES:
             raise AttachmentServiceUnsupportedImageException(f"Attachment image is an unrecognized format {content_type}.")
-
-        # Now, determine if it is animated, because we want to have thumbnail support for non-animated
-        # images, as well as have the option for low-motion for accessibility.
-        is_animated = getattr(transposed, "is_animated", False)
 
         # And finally, create a thumbnail to go along with the image.
         transposed.thumbnail((self.MAX_THUMBNAIL_WIDTH, self.MAX_LARGE_PREVIEW_HEIGHT))
