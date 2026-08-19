@@ -1,6 +1,7 @@
 TODO Immediate
 ==============
 
+ - Fix topic getting cut off on mobile on some long channel names.
  - Need a setting for low-motion to disable motion by default, need to swap to low motion icons when setting present, need to swap to low motion thumb even on animated gifs and such when setting present. Need to also swap server icons and custom emotes as well, but these might require a reload.
 
 TODO Low Priority
