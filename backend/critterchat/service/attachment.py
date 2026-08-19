@@ -631,28 +631,32 @@ class AttachmentService:
         except Exception:
             raise AttachmentServiceUnsupportedImageException("Unsupported image provided for attachment.")
 
+        content_type = img.get_format_mimetype()
+        if not content_type:
+            raise AttachmentServiceUnsupportedImageException("Attachment image is an unrecognized format.")
+        content_type = content_type.lower()
+
         transposed = ImageOps.exif_transpose(img)
+        img.close()
+
         width, height = transposed.size
         if max_width is not None and width > max_width:
             raise AttachmentServiceInvalidSizeException(f"Invalid image size {width}x{height} for attachment.")
         if max_height is not None and height > max_height:
             raise AttachmentServiceInvalidSizeException(f"Invalid image size {width}x{height} for attachment.")
 
-        content_type = img.get_format_mimetype()
-        if not content_type:
-            raise AttachmentServiceUnsupportedImageException("Attachment image is an unrecognized format.")
-        content_type = content_type.lower()
-
         if content_type in self.CONVERTIBLE_IMAGE_TYPES:
             # We want to convert this to a PNG file so that we can support uploading it.
             converted = transposed.convert("RGBA")
+            transposed.close()
+
             converted_array = io.BytesIO()
             converted.save(converted_array, format='PNG')
             data = converted_array.getvalue()
 
             # Re-open so we can use the image we just created in the below stanza for animation detection.
-            img.close()
-            img = Image.open(io.BytesIO(data))
+            converted.close()
+            transposed = Image.open(io.BytesIO(data))
 
             # We've updated the content type to a PNG now, so reflect that.
             content_type = "image/png"
@@ -662,13 +666,16 @@ class AttachmentService:
 
         # Now, determine if it is animated, because we want to have thumbnail support for non-animated
         # images, as well as have the option for low-motion for accessibility.
-        is_animated = getattr(img, "is_animated", False)
+        is_animated = getattr(transposed, "is_animated", False)
 
         # And finally, create a thumbnail to go along with the image.
-        img.thumbnail((self.MAX_THUMBNAIL_WIDTH, self.MAX_LARGE_PREVIEW_HEIGHT))
+        transposed.thumbnail((self.MAX_THUMBNAIL_WIDTH, self.MAX_LARGE_PREVIEW_HEIGHT))
         thumbnail_bytes = io.BytesIO()
-        img.save(thumbnail_bytes, format='PNG')
-        img.close()
+        thumb = transposed.convert("RGBA")
+        transposed.close()
+
+        thumb.save(thumbnail_bytes, format='PNG')
+        thumb.close()
 
         return data, thumbnail_bytes.getvalue(), width, height, is_animated, content_type
 
