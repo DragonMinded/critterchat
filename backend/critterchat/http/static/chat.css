@@ -74,6 +74,7 @@ body.smallest {
     --nav-button-height: 32px;
 
     --conversation-panel-height: 34px;
+    --conversation-name-max-height: 15px;
     --conversation-topic-max-height: 13px;
     --conversation-newmessage-icon-padding: 56px;
     --conversation-newmessage-indicator-top: -35px;
@@ -166,6 +167,7 @@ body.smaller {
     --nav-button-height: 32px;
 
     --conversation-panel-height: 36px;
+    --conversation-name-max-height: 17px;
     --conversation-topic-max-height: 15px;
     --conversation-newmessage-icon-padding: 60px;
     --conversation-newmessage-indicator-top: -35px;
@@ -258,6 +260,7 @@ body:not(.smallest):not(.smaller):not(.larger):not(.largest) {
     --nav-button-height: 36px;
 
     --conversation-panel-height: 38px;
+    --conversation-name-max-height: 18px;
     --conversation-topic-max-height: 16px;
     --conversation-newmessage-icon-padding: 63px;
     --conversation-newmessage-indicator-top: -35px;
@@ -350,6 +353,7 @@ body.larger {
     --nav-button-height: 40px;
 
     --conversation-panel-height: 42px;
+    --conversation-name-max-height: 21px;
     --conversation-topic-max-height: 19px;
     --conversation-newmessage-icon-padding: 70px;
     --conversation-newmessage-indicator-top: -35px;
@@ -442,6 +446,7 @@ body.largest {
     --nav-button-height: 44px;
 
     --conversation-panel-height: 46px;
+    --conversation-name-max-height: 23px;
     --conversation-topic-max-height: 21px;
     --conversation-newmessage-icon-padding: 77px;
     --conversation-newmessage-indicator-top: -35px;
@@ -457,7 +462,6 @@ body.largest {
     --message-highlighted-h-padding: 5px;
     --message-highlighted-v-padding: 2px;
 }
-
 
 html, body {
     font-family: "Atkinson Hyperlegible", Arial, Helvetica, sans-serif;
@@ -1082,7 +1086,7 @@ div.top-info div.info-wrapper {
 
 div.top-info div.title {
     font-size: var(--application-text-size-16);
-    max-height: var(--conversation-panel-height);
+    max-height: var(--conversation-name-max-height);
     overflow: hidden;
     overflow-wrap: break-word;
     word-break: break-word;
