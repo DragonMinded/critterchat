@@ -306,6 +306,7 @@ class TestMessagePumpUser:
                     'invite_privacy': 'choose',
                     'mobile_audio_notifs': False,
                     'tabbable_chat_elements': True,
+                    'low_motion': False,
                     'audio_notifs': [],
                     'notif_sounds': {
                         'notif1': 'http://localhost/attachments/5413df7c56aae113d75f9ba586367f5936c5a8fb.mp3',

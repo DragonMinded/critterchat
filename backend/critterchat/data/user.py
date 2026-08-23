@@ -110,6 +110,7 @@ def tables(dialect: str, metadata: MetaData) -> None:
         Column("title_notifs", Boolean),
         Column("mobile_audio_notifs", Boolean),
         Column("tabbable_chat_elements", Boolean),
+        Column("low_motion", Boolean),
         Column("audio_notifs", Integer),
         Column("timestamp", Integer, index=True),
         mysql_charset="utf8mb4",
@@ -612,6 +613,7 @@ class UserData(BaseData):
             title_notifs=bool(result['title_notifs']),
             mobile_audio_notifs=bool(result['mobile_audio_notifs']),
             tabbable_chat_elements=bool(result['tabbable_chat_elements']) if result['tabbable_chat_elements'] is not None else True,
+            low_motion=bool(result['low_motion']),
             audio_notifs=notifications,
         )
 
@@ -657,6 +659,7 @@ class UserData(BaseData):
                     `search_privacy`,
                     `invite_privacy`,
                     `tabbable_chat_elements`,
+                    `low_motion`,
                     `timestamp`
                 )
                 VALUES (
@@ -673,6 +676,7 @@ class UserData(BaseData):
                     %value:search_privacy,
                     %value:invite_privacy,
                     %value:tabbable_chat_elements,
+                    %value:low_motion,
                     %value:ts
                 )
                 %fragment:upsert
@@ -688,6 +692,7 @@ class UserData(BaseData):
                     `search_privacy` = %value:search_privacy,
                     `invite_privacy` = %value:invite_privacy,
                     `tabbable_chat_elements` = %value:tabbable_chat_elements,
+                    `low_motion` = %value:low_motion,
                     `timestamp` = %value:ts
             """,
             upsert=self.upsert_fragment,
@@ -704,6 +709,7 @@ class UserData(BaseData):
             search_privacy=preferences.search_privacy,
             invite_privacy=preferences.invite_privacy,
             tabbable_chat_elements=preferences.tabbable_chat_elements,
+            low_motion=preferences.low_motion,
             ts=Time.now()
         ))
 

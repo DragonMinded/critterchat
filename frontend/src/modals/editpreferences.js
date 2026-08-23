@@ -46,6 +46,7 @@ class EditPreferences {
                     'invite_privacy': $('input[type=radio][name="invite-privacy"]:checked').val(),
                     'search_privacy': $('input[type=radio][name="search-privacy"]:checked').val(),
                     'tabbable_chat_elements': $('#editpreferences-tabbable-chat-elements').is(":checked"),
+                    'low_motion': $('#editpreferences-low-motion').is(":checked"),
                     'audio_notifs': set_audio_notifs,
                     'notif_sounds': this.newnotifications,
                     'notif_sounds_delete': Object.keys(this.deletednotifications),
@@ -166,6 +167,7 @@ class EditPreferences {
             $('input[type=radio][name="search-privacy"]').val([this.preferences.search_privacy]);
             $('input[type=radio][name="invite-privacy"]').val([this.preferences.invite_privacy]);
             $('#editpreferences-tabbable-chat-elements').prop('checked', this.preferences.tabbable_chat_elements);
+            $('#editpreferences-low-motion').prop('checked', this.preferences.low_motion);
 
             AUDIO_PREFS.forEach((pref) => {
                 const checked = this.preferences.audio_notifs.includes(pref);

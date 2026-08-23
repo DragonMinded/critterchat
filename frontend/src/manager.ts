@@ -532,6 +532,7 @@ export function manager(socket: Socket) {
         document.cookie = "ColorScheme=" + msg.color_scheme;
         document.cookie = "DesktopSize=" + msg.desktop_size;
         document.cookie = "MobileSize=" + msg.mobile_size;
+        document.cookie = "LowMotion=" + (msg.low_motion ? "on" : "off");
 
         desktopSize = msg.desktop_size;
         mobileSize = msg.mobile_size;

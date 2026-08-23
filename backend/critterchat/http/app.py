@@ -246,6 +246,7 @@ def extrafunctions() -> dict[str, Any]:
     colorscheme = request.cookies.get("ColorScheme", "system")
     desktopSize = request.cookies.get("DesktopSize", "normal")
     mobileSize = request.cookies.get("MobileSize", "normal")
+    lowMotion = request.cookies.get("LowMotion", "off")
 
     return {
         "absolute_url_for": absolute_url_for,
@@ -254,6 +255,7 @@ def extrafunctions() -> dict[str, Any]:
         "colorscheme": colorscheme,
         "desktopSize": desktopSize,
         "mobileSize": mobileSize,
+        "lowMotion": lowMotion,
     }
 
 

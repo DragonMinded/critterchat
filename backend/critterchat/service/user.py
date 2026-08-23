@@ -109,6 +109,7 @@ class UserService:
         audio_notifs: set[str] | None = None,
         notif_sounds: dict[str, AttachmentID] | None = None,
         notif_sounds_delete: set[str] | None = None,
+        low_motion: bool | None = None,
     ) -> None:
         prefs = self.__data.user.get_preferences(userid)
         if not prefs:
@@ -137,6 +138,8 @@ class UserService:
             prefs.mobile_audio_notifs = mobile_audio_notifs
         if tabbable_chat_elements is not None:
             prefs.tabbable_chat_elements = tabbable_chat_elements
+        if low_motion is not None:
+            prefs.low_motion = low_motion
         if audio_notifs is not None:
             try:
                 prefs.audio_notifs = {UserNotification[an] for an in audio_notifs}

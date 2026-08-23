@@ -227,6 +227,7 @@ class UserPreferences:
         title_notifs: bool,
         mobile_audio_notifs: bool,
         tabbable_chat_elements: bool,
+        low_motion: bool,
         audio_notifs: set[UserNotification],
     ) -> None:
         self.userid = userid
@@ -242,6 +243,7 @@ class UserPreferences:
         self.mobile_audio_notifs = mobile_audio_notifs
         self.audio_notifs = audio_notifs
         self.tabbable_chat_elements = tabbable_chat_elements
+        self.low_motion = low_motion
 
         # Only ever filled in by the user service before returning to the client.
         self.notif_sounds: dict[str, str] = {}
@@ -261,6 +263,7 @@ class UserPreferences:
             "tabbable_chat_elements": self.tabbable_chat_elements,
             "audio_notifs": [str(an.name) for an in self.audio_notifs],
             "notif_sounds": self.notif_sounds,
+            "low_motion": self.low_motion,
         }
 
     @staticmethod
@@ -278,6 +281,7 @@ class UserPreferences:
             invite_privacy=InvitePrivacy.CHOOSE,
             title_notifs=True,
             mobile_audio_notifs=False,
+            low_motion=False,
             audio_notifs=set(),
         )
 

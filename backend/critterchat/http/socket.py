@@ -540,6 +540,7 @@ def updatepreferences(json: dict[str, object]) -> None:
         new_search_privacy = coerce_enum(SearchPrivacy, json.get('search_privacy'))
         new_invite_privacy = coerce_enum(InvitePrivacy, json.get('invite_privacy'))
         new_title_notifs = json.get('title_notifs', None)
+        new_low_motion = json.get('low_motion', None)
         if new_title_notifs is not None:
             new_title_notifs = bool(new_title_notifs)
         new_mobile_audio_notifs = json.get('mobile_audio_notifs', None)
@@ -560,6 +561,8 @@ def updatepreferences(json: dict[str, object]) -> None:
         new_tabbable_chat_elements = json.get('tabbable_chat_elements', None)
         if new_tabbable_chat_elements is not None:
             new_tabbable_chat_elements = bool(new_tabbable_chat_elements)
+        if new_low_motion is not None:
+            new_low_motion = bool(new_low_motion)
 
         new_notif_sounds: dict[str, AttachmentID] = {}
         notif_dict = json.get('notif_sounds', {}) or {}
@@ -589,6 +592,7 @@ def updatepreferences(json: dict[str, object]) -> None:
                 tabbable_chat_elements=new_tabbable_chat_elements,
                 notif_sounds=new_notif_sounds,
                 notif_sounds_delete=notif_delete,
+                low_motion=new_low_motion,
             )
             flash('success', 'Your preferences have been updated!', room=request.sid)
         except UserServiceException as e:
