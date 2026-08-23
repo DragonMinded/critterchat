@@ -202,8 +202,18 @@ class Info {
      * here for consistency across top-level components.
      */
     setPreferences( preferences ) {
-        this.lowMotion = preferences.low_motion ? "on" : "off";
         this.chatdetails.setPreferences( preferences );
+
+        let newLowMotion = preferences.low_motion ? "on" : "off";
+        if (newLowMotion != this.lowMotion) {
+            this.lowMotion = newLowMotion;
+            if (this.roomsLoaded && this.occupantsLoaded) {
+                this._drawOccupants();
+            }
+            if (this.roomid) {
+                this._updateRoom(this.roomid);
+            }
+        }
     }
 
     /**
@@ -327,10 +337,13 @@ class Info {
                         if (occupant.id == entry.occupant.id) {
                             occupant.nickname = entry.occupant.nickname;
                             occupant.icon = entry.occupant.icon;
+                            occupant.lmicon = entry.occupant.lmicon;
                         }
                     });
                     $('div.info > div.occupants button.item#' + entry.occupant.id + ' div.name').html(escapeHtml(entry.occupant.nickname));
-                    $('div.info > div.occupants button.item#' + entry.occupant.id + ' div.icon img').attr('src', entry.occupant.icon);
+                    $('div.info > div.occupants button.item#' + entry.occupant.id + ' div.icon img').attr(
+                        'src', this.lowMotion == "on" ? entry.occupant.lmicon : entry.occupant.icon
+                    );
                 } else if (
                     entry.action == "change_users" ||
                     entry.action == "invite_user" ||
@@ -553,7 +566,7 @@ class Info {
 
             var html = '<button class="' + cls + '" type="button" id="' + occupant.id + '">';
             html    += '  <div class="icon avatar">';
-            html    += '    <img src="' + occupant.icon + '" />';
+            html    += '    <img src="' + (this.lowMotion == "on" ? occupant.lmicon : occupant.icon) + '" />';
             html    += '  </div>';
             html    += '  <div class="name-wrapper"><div class="name">' + escapeHtml(occupant.nickname) + '</div></div>';
             html    += '</button>';
@@ -652,7 +665,7 @@ class Info {
 
                     $( 'div.info div.title-wrapper' ).show();
                     $( 'div.top-info div.icon' ).removeClass('room').removeClass('avatar').addClass(iconType);
-                    $( 'div.top-info div.icon img' ).attr('src', room.icon);
+                    $( 'div.top-info div.icon img' ).attr('src', this.lowMotion == "on" ? room.lmicon : room.icon);
                     $( 'div.top-info div.icon' ).removeClass('hidden');
                     $( 'div.top-info div.title' ).html(escapeHtml(room.name));
                     if (room.topic) {
@@ -729,7 +742,7 @@ class Info {
                     } else {
                         $( 'div.top-info div.topic' ).hide();
                     }
-                    $( 'div.top-info div.icon img' ).attr('src', room.icon);
+                    $( 'div.top-info div.icon img' ).attr('src', this.lowMotion == "on" ? room.lmicon : room.icon);
                 }
             });
         }

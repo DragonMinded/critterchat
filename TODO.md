@@ -1,7 +1,13 @@
 TODO Immediate
 ==============
 
- - Need a setting for low-motion to disable motion by default, need to swap to low motion icons when setting present, need to swap to low motion thumb even on animated gifs and such when setting present. Need to also swap server icons and custom emotes as well, but these might require a reload.
+ - Low motion instance icon.
+ - Low motion attachment previews for messages.
+ - Low motion emotes in chat messages.
+ - Low motion emotes in typeaheads.
+ - Low motion emotes in emoji search.
+ - Low motion emotes in hover reactions.
+ - Low motion emotes in reactions.
 
 TODO Low Priority
 =================

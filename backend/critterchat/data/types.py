@@ -557,7 +557,7 @@ class SearchResult:
         self.roomid = roomid
         self.userid = userid
         self.icon = icon
-        self.lmicon = icon
+        self.lmicon = lmicon
 
         # Resolved from room type.
         self.public = purpose == RoomPurpose.ROOM

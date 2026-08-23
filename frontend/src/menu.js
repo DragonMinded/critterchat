@@ -399,14 +399,14 @@ class Menu {
         var conversations = $('div.menu > div.rooms');
         var drawnRoom = conversations.find('button.item#' + room.id);
         if (drawnRoom.length > 0) {
-            drawnRoom.find('.icon img').attr('src', room.icon);
+            drawnRoom.find('.icon img').attr('src', this.lowMotion == "on" ? room.lmicon : room.icon);
             drawnRoom.find('.name').html(escapeHtml(room.name));
         } else {
             // Now, draw it fresh since it's not an update.
             var type = room.type == 'room' ? 'room' : 'avatar';
             var html = '<button class="item" type="button" id="' + room.id + '">';
             html    += '  <div class="icon ' + type + '">';
-            html    += '    <img src="' + room.icon + '" />';
+            html    += '    <img src="' + (this.lowMotion == "on" ? room.lmicon : room.icon) + '" />';
             if (room.count) {
                 html    += '    <div class="badge"><div class="count">' + room.count + '</div></div>';
             } else {
@@ -441,14 +441,14 @@ class Menu {
         var conversations = $('div.menu > div.rooms');
         var drawnInvite = conversations.find('div.button#' + invite.id);
         if (drawnInvite.length > 0) {
-            drawnInvite.find('.icon img').attr('src', invite.room.icon);
+            drawnInvite.find('.icon img').attr('src', this.lowMotion == "on" ? invite.room.lmicon : invite.room.icon);
             drawnInvite.find('.name').html(escapeHtml(invite.room.name));
         } else {
             // Now, draw it fresh since it's not an update.
             var type = invite.room.type == 'room' ? 'room' : 'avatar';
             var html = '<button class="item" type="button" id="' + invite.id + '">';
             html    += '  <div class="icon ' + type + '">';
-            html    += '    <img src="' + invite.room.icon + '" />';
+            html    += '    <img src="' + (this.lowMotion == "on" ? invite.room.lmicon : invite.room.icon) + '" />';
             if (!invite.seen) {
                 html    += '    <div class="badge"><div class="count">1</div></div>';
             } else {

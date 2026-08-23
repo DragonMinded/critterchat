@@ -37,8 +37,9 @@ function escapeHtml(str: string): string {
     });
     str = twemoji.parse(str, twemojiOptions);
     Object.keys(window.emotes).forEach(function(emote) {
-        const src = "src=\"" + window.emotes[emote].uri + "\"";
-        const dims = "width=\"" + window.emotes[emote].dimensions[0] + "\" height=\"" + window.emotes[emote].dimensions[1] + "\"";
+        const data = window.emotes[emote];
+        const src = "src=\"" + (window.lowMotion == "on" ? data.lmuri : data.uri) + "\"";
+        const dims = "width=\"" + data.dimensions[0] + "\" height=\"" + data.dimensions[1] + "\"";
 
         str = str.replaceAll(
             emote,

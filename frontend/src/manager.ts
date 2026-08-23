@@ -539,7 +539,11 @@ export function manager(socket: Socket) {
         document.cookie = "MobileSize=" + msg.mobile_size;
         document.cookie = "LowMotion=" + (msg.low_motion ? "on" : "off");
 
+        // Put this back in the global namespace because a few unparented helper functions
+        // such as emote rendering for arbitrary text use this setting.
         lowMotion = msg.low_motion ? "on" : "off";
+        window.lowMotion = lowMotion;
+
         desktopSize = msg.desktop_size;
         mobileSize = msg.mobile_size;
         updateSize();

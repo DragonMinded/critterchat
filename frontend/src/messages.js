@@ -584,7 +584,12 @@ class Messages {
      */
     setPreferences( preferences ) {
         this.preferences = preferences;
-        this.lowMotion = preferences.low_motion ? "on" : "off";
+        let newLowMotion = preferences.low_motion ? "on" : "off";
+        if (newLowMotion != this.lowMotion) {
+            this.lowMotion = newLowMotion;
+            this._updateUsers();
+            this._refreshMotion();
+        }
         this._combineMessages(true);
         this._updateTabOrder();
         this.uploadPicker.resizeRooms();
@@ -1152,10 +1157,11 @@ class Messages {
             (occupant) => occupant.present
         ).map(
             (user) => {
+                let icon = this.lowMotion == "on" ? user.lmicon : user.icon;
                 return {
                     text: "@" + user.username,
                     type: "user",
-                    preview: "<img class=\"icon-preview\" src=\"" + user.icon + "\" />&nbsp;<span dir=\"auto\">" + escapeHtml(user.nickname) + "</span>",
+                    preview: "<img class=\"icon-preview\" src=\"" + icon + "\" />&nbsp;<span dir=\"auto\">" + escapeHtml(user.nickname) + "</span>",
                 };
             }
         );
@@ -1510,7 +1516,7 @@ class Messages {
 
                 html  = '<div class="item" id="' + message.id + '">';
                 html += '  <div class="icon avatar" id="' + message.occupant.id + '">';
-                html += '    <img src="' + message.occupant.icon + '" />';
+                html += '    <img src="' + (this.lowMotion == "on" ? message.occupant.lmicon : message.occupant.icon) + '" />';
                 html += '  </div>';
                 html += '  <div class="content-wrapper">';
                 html += '    <div class="meta-wrapper">';
@@ -1602,7 +1608,9 @@ class Messages {
             } else if (message.action == "change_profile") {
                 // Just update the name and icon since this is a change.
                 $('div.chat > div.conversation-wrapper > div.conversation span.name#' + message.occupant.id).html(escapeHtml(message.occupant.nickname));
-                $('div.chat > div.conversation-wrapper > div.conversation div.icon#' + message.occupant.id + ' img').attr('src', message.occupant.icon);
+                $('div.chat > div.conversation-wrapper > div.conversation div.icon#' + message.occupant.id + ' img').attr(
+                    'src', this.lowMotion == "on" ? message.occupant.lmicon : message.occupant.icon
+                );
             } else if (message.action == "invite_user") {
                 this.occupants.forEach((occupant) => {
                     if (occupant.id == message.details.invited) {
@@ -1728,6 +1736,20 @@ class Messages {
                 $(elem).attr('tabindex', -1);
             });
         }
+    }
+
+    /**
+     * Function responsible for swapping images displayed in the message window for their low
+     * motion counterpart and vice versa. Only ever called when we are toggling the low motion
+     * option.
+     */
+    _refreshMotion() {
+        this.occupants.forEach((occupant) => {
+            $('div.chat > div.conversation-wrapper > div.conversation span.name#' + occupant.id).html(escapeHtml(occupant.nickname));
+            $('div.chat > div.conversation-wrapper > div.conversation div.icon#' + occupant.id + ' img').attr(
+                'src', this.lowMotion == "on" ? occupant.lmicon : occupant.icon
+            );
+        });
     }
 
     /**

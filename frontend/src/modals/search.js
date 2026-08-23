@@ -146,7 +146,7 @@ class Search {
 
             var html = '<button class="item" type="button" id="' + id + '">';
             html    += '  <div class="icon ' + type + '">';
-            html    += '    <img src="' + result.icon + '" />';
+            html    += '    <img src="' + (this.lowMotion == "on" ? result.lmicon : result.icon) + '" />';
             if (result.type == 'room') {
                 html    += '    <div class="room-indicator">#</div>';
             }
