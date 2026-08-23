@@ -15,7 +15,7 @@ from .app import (
 )
 from ..common import get_aliases_unicode_dict, EMOJI_CATEGORIES
 from ..data import DefaultAvatarID, DefaultRoomID, FaviconID, User, UserPermission
-from ..service import AttachmentService, EmoteService, MessageService
+from ..service import AttachmentService, EmoteService, MessageService, UserService
 
 
 chat = Blueprint(
@@ -32,6 +32,7 @@ def home() -> Response:
     attachmentservice = AttachmentService(g.config, g.data)
     emoteservice = EmoteService(g.config, g.data)
     messageservice = MessageService(g.config, g.data)
+    userservice = UserService(g.config, g.data)
 
     emojis = {key: val for (key, val) in get_aliases_unicode_dict().items() if "__" not in key}
     emotes = {f":{key}:": val.to_dict() for key, val in emoteservice.get_all_emotes().items()}
@@ -42,6 +43,21 @@ def home() -> Response:
     jsname = get_frontend_filename()
     cachebust = get_frontend_version() + "-" + get_fingerprint_hash()
     defaultreactions = [r for r in g.config.reactions.defaults if messageservice.validate_reaction(f":{r}:")]
+
+    # These are stored in cookies so they're available even on pages where we're not logged in,
+    # but it's possible to change a setting on one client, save, and then load the chat on another
+    # client that has the old cookies. When that happens the initial load will be wrong which
+    # could be an issue with accessibility settings. So, look them up here as well. However, if
+    # we can't look them up, default back to whatever the cookies had these set to.
+    prefs = userservice.get_preferences(g.user.id) if g.user else None
+    extra = {}
+    if prefs:
+        extra = {
+            "colorscheme": prefs.color_scheme,
+            "desktopSize": prefs.desktop_size,
+            "mobileSize": prefs.mobile_size,
+            "lowMotion": "on" if prefs.low_motion else "off",
+        }
 
     return Response(render_template(
         "home/chat.html",
@@ -61,6 +77,7 @@ def home() -> Response:
         defavi=attachmentservice.get_attachment_url(DefaultAvatarID),
         defroom=attachmentservice.get_attachment_url(DefaultRoomID),
         favicon=attachmentservice.get_attachment_url(FaviconID),
+        **extra,
     ))
 
 
