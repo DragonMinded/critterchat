@@ -2,7 +2,14 @@ TODO Immediate
 ==============
 
  - Low motion instance icon.
+   - Need to make defavi, defroom, favicon into dictionaries.
+   - Need to select favicon based on low motion setting when rendering template.
+   - Need to update favicon during low-motion changeover.
+   - Need to reference defavi/defroom by dictionary in the front-end.
  - Low motion attachment previews for messages.
+   - Need to display [GIF] on thumbnails of animated images when in low-motion.
+   - Need to swap attachment thumbnails based on low motion setting.
+   - Probably a good time to handle the TODO in attachment re-rendering.
  - Low motion emotes in typeaheads.
  - Low motion emotes in emoji search.
 
@@ -19,7 +26,6 @@ TODO Low Priority
  - Image attachment carousel instead of opening images in new browser tab.
  - Rate limiting on actions, which will eventually be needed.
  - Allow unimportant flash messages to fade away after awhile.
- - Audit DB usage (lots of redundant fetches), add per-request cache to alleviate.
  - Link existing local account with an OAuth provider.
  - Unlink existing local account from an OAuth provider.
  - Better integration with Mastodon OAuth that saves client token and only revalidates when needed.
