@@ -44,12 +44,13 @@ const maxCombined = 10;
  * that cares about looking them up for new messages.
  */
 class Messages {
-    constructor( eventBus, screenState, inputState, initialSize, initialVisibility ) {
+    constructor( eventBus, screenState, inputState, initialSize, initialVisibility, initialLowMotion ) {
         this.eventBus = eventBus;
         this.inputState = inputState;
         this.screenState = screenState;
         this.size = initialSize;
         this.visibility = initialVisibility;
+        this.lowMotion = initialLowMotion;
         this.nonce = 1;
         this.previews = new Map();
         this.connected = false;
@@ -583,6 +584,7 @@ class Messages {
      */
     setPreferences( preferences ) {
         this.preferences = preferences;
+        this.lowMotion = preferences.low_motion ? "on" : "off";
         this._combineMessages(true);
         this._updateTabOrder();
         this.uploadPicker.resizeRooms();

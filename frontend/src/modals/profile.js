@@ -10,13 +10,14 @@ const linkifyOptions = { defaultProtocol: "http", target: "_blank", validate: { 
  * name in the info list or in chat.
  */
 class Profile {
-    constructor( eventBus ) {
+    constructor( eventBus, initialLowMotion ) {
         this.eventBus = eventBus;
         this.userid = undefined;
         this.profileid = undefined;
         this.preferences = {};
         this.room = {};
         this.actor = undefined;
+        this.lowMotion = initialLowMotion;
 
         $('#profile-form').on('submit', (event) => {
             event.stopPropagation();
@@ -131,6 +132,7 @@ class Profile {
      */
     setPreferences( preferences ) {
         this.preferences = preferences;
+        this.lowMotion = preferences.low_motion ? "on" : "off";
     }
 
     /**

@@ -36,6 +36,8 @@ declare global {
         // Size of elements in mobile mode, stored as a cookie by the server as well
         // as in our preferences so we can render before getting the prefs from the server.
         mobileSize: string;
+        // Whether we are in reduced motion (will be set to "on") or normal motion (will be set to "off").
+        lowMotion: string;
         // Version string as computed by the server, used for prompting to refresh on new deploys.
         version: string;
         // Version check endpoint URI.
@@ -202,26 +204,29 @@ export function manager(socket: Socket) {
     // Tracks whether we are currently the active, visible tab or a background tab.
     let visibility = document.visibilityState;
 
+    // Tracks whether we need reduced motion or not.
+    let lowMotion = window.lowMotion;
+
     // Handles the left hand menu panel which shows all joined rooms and private conversations.
-    const menuInst = new Menu(eventBus, screenState, inputState, size, visibility);
+    const menuInst = new Menu(eventBus, screenState, inputState, size, visibility, lowMotion);
 
     // Handles the center chat panel.
-    const messagesInst = new Messages(eventBus, screenState, inputState, size, visibility);
+    const messagesInst = new Messages(eventBus, screenState, inputState, size, visibility, lowMotion);
 
     // Handles the right hand info panel which shows joined chatters, as well as handling the
     // info pane above the message instance.
-    const infoInst = new Info(eventBus, screenState, inputState, size, visibility);
+    const infoInst = new Info(eventBus, screenState, inputState, size, visibility, lowMotion);
 
     // Handles audio notification playback.
     const notifInst = new AudioNotifications(eventBus, size, visibility);
 
     // Handles the profile view popover, not owned by any one panel since it can be summoned
     // by multiple of them.
-    const profileInst = new Profile(eventBus);
+    const profileInst = new Profile(eventBus, lowMotion);
 
     // Handles the search view, both when searching for chats to join or jump to, and when
     // searching for users to invite to a private chat.
-    const search = new Search(eventBus, inputState);
+    const search = new Search(eventBus, inputState, lowMotion);
 
     // Ensure any server-generated messages are closeable, container is not foregrounded.
     flashHook();
@@ -534,6 +539,7 @@ export function manager(socket: Socket) {
         document.cookie = "MobileSize=" + msg.mobile_size;
         document.cookie = "LowMotion=" + (msg.low_motion ? "on" : "off");
 
+        lowMotion = msg.low_motion ? "on" : "off";
         desktopSize = msg.desktop_size;
         mobileSize = msg.mobile_size;
         updateSize();

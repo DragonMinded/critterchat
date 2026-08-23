@@ -13,7 +13,7 @@ import { displayWarning } from "./modals/warningmodal.js";
  * to us onward to these components.
  */
 class Menu {
-    constructor( eventBus, screenState, inputState, initialSize, initialVisibility ) {
+    constructor( eventBus, screenState, inputState, initialSize, initialVisibility, initialLowMotion ) {
         this.eventBus = eventBus;
         this.screenState = screenState;
         this.inputState = inputState;
@@ -21,6 +21,7 @@ class Menu {
         this.editPreferences = new EditPreferences( eventBus, inputState );
         this.size = initialSize;
         this.visibility = initialVisibility;
+        this.lowMotion = initialLowMotion;
         this.title = document.title;
 
         this.rooms = [];
@@ -344,6 +345,7 @@ class Menu {
      */
     setPreferences( preferences ) {
         this.preferences = preferences;
+        this.lowMotion = preferences.low_motion ? "on" : "off";
         this.preferencesLoaded = true;
         this.editPreferences.setPreferences( preferences );
         this._updateGlobalBadges();

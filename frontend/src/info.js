@@ -15,13 +15,14 @@ const linkifyOptions = { defaultProtocol: "http", target: "_blank", validate: { 
  * relevant onward to the component that manages the popover.
  */
 class Info {
-    constructor( eventBus, screenState, inputState, initialSize, initialVisibility ) {
+    constructor( eventBus, screenState, inputState, initialSize, initialVisibility, initialLowMotion ) {
         this.eventBus = eventBus;
         this.inputState = inputState;
         this.screenState = screenState;
         this.chatdetails = new ChatDetails( eventBus, inputState );
         this.size = initialSize;
         this.visibility = initialVisibility;
+        this.lowMotion = initialLowMotion;
 
         this.roomid = "";
         this.roomType = "chat";
@@ -201,6 +202,7 @@ class Info {
      * here for consistency across top-level components.
      */
     setPreferences( preferences ) {
+        this.lowMotion = preferences.low_motion ? "on" : "off";
         this.chatdetails.setPreferences( preferences );
     }
 

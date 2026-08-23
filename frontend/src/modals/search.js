@@ -6,12 +6,13 @@ import { escapeHtml } from "../utils";
  * people to message, and existing rooms/chats that we are in to jump to that room.
  */
 class Search {
-    constructor( eventBus, inputState ) {
+    constructor( eventBus, inputState, initialLowMotion ) {
         this.eventBus = eventBus;
         this.inputState = inputState;
         this.mode = undefined;
         this.roomid = "";
         this.preferences = {};
+        this.lowMotion = initialLowMotion;
 
         $( '#search' ).on( 'input', (event) => {
             event.preventDefault();
@@ -188,6 +189,7 @@ class Search {
      */
     setPreferences( preferences ) {
         this.preferences = preferences;
+        this.lowMotion = preferences.low_motion ? "on" : "off";
     }
 
     /**
