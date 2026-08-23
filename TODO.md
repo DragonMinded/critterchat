@@ -3,11 +3,8 @@ TODO Immediate
 
  - Low motion instance icon.
  - Low motion attachment previews for messages.
- - Low motion emotes in chat messages.
  - Low motion emotes in typeaheads.
  - Low motion emotes in emoji search.
- - Low motion emotes in hover reactions.
- - Low motion emotes in reactions.
 
 TODO Low Priority
 =================

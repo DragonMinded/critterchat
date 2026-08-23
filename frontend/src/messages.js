@@ -1744,11 +1744,26 @@ class Messages {
      * option.
      */
     _refreshMotion() {
+        const messages = $('div.chat > div.conversation-wrapper > div.conversation');
+
         this.occupants.forEach((occupant) => {
-            $('div.chat > div.conversation-wrapper > div.conversation span.name#' + occupant.id).html(escapeHtml(occupant.nickname));
-            $('div.chat > div.conversation-wrapper > div.conversation div.icon#' + occupant.id + ' img').attr(
+            messages.find('span.name#' + occupant.id).html(escapeHtml(occupant.nickname));
+            messages.find('div.icon#' + occupant.id + ' img').attr(
                 'src', this.lowMotion == "on" ? occupant.lmicon : occupant.icon
             );
+        });
+
+        this.messages.forEach((message) => {
+            if (message.action == "message") {
+                const drawnMessage = messages.find('div.message#' + message.id);
+                if (drawnMessage.length > 0) {
+                    let content = this._formatMessage(message.details.message);
+                    drawnMessage.html(content);
+
+                    const drawnReactions = messages.find('div.reactions#' + message.id);
+                    drawnReactions.html(this._drawReactions(message.details.reactions, message.details.reactions_order));
+                }
+            }
         });
     }
 
