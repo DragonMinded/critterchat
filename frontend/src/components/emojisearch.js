@@ -158,11 +158,12 @@ export class EmojiSearch {
         // Make a mapping of the emojis and emotes.
         var emojimapping = {}
         entries.forEach((entry) => {
-            var text = entry.text.toLowerCase();
+            const text = entry.text.toLowerCase();
             if (catkeys.hasOwnProperty(text)) {
                 // We really need to rethink how this control is populated, we should probably
                 // be sending a preview src URI instead of a DOM element. Oh well, future FIXME.
-                catkeys[text] = entry.preview.replace('loading="lazy"', '');
+                const preview = (window.lowMotion == "on" && entry.lmpreview) ? entry.lmpreview : entry.preview;
+                catkeys[text] = preview.replace('loading="lazy"', '');
             }
             emojimapping[text] = entry;
         });
@@ -176,8 +177,8 @@ export class EmojiSearch {
 
         // Actually render the categories.
         Object.keys(categories).forEach((category) => {
-            var first = categories[category][0];
-            var preview = catkeys[first];
+            const first = categories[category][0];
+            const preview = catkeys[first];
 
             emojisearchCategories.append(
                 $('<div class="emojisearch-category"></div>')
@@ -194,11 +195,13 @@ export class EmojiSearch {
             var appendList = [];
             catList.forEach((entry) => {
                 if (emojimapping.hasOwnProperty(entry)) {
+                    const actual = emojimapping[entry];
+                    const preview = (window.lowMotion == "on" && actual.lmpreview) ? actual.lmpreview : actual.preview;
                     appendList.push(
                         $('<div class="emojisearch-element"></div>')
-                            .attr("text", emojimapping[entry].text)
+                            .attr("text", actual.text)
                             .attr("category", category)
-                            .html(emojimapping[entry].preview)
+                            .html(preview)
                     );
                 }
             });

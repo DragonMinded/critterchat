@@ -1,8 +1,6 @@
 TODO Immediate
 ==============
 
- - Low motion emotes in emoji search.
-
 TODO Low Priority
 =================
 

@@ -402,7 +402,9 @@ class Messages {
                 // Make sure we track when we were swapped to so we can handle spurious
                 // hover events on mobile.
                 this.loadTime = Date.now();
-                this.reactions.hide( true );
+                if (this.reactions) {
+                    this.reactions.hide( true );
+                }
             }
         });
 
@@ -413,7 +415,7 @@ class Messages {
 
         if (window.reactionsenabled) {
             // Set up our reactions popover.
-            this.reactions = new Reactions( eventBus, screenState, inputState, (id, evt, data) => {
+            this.reactions = new Reactions( eventBus, screenState, inputState, initialLowMotion, (id, evt, data) => {
                 // Send the reaction to the server.
                 if (evt == "reaction") {
                     this.eventBus.emit("reaction", {"actionid": id, "reaction": data, "type": "add"})
@@ -591,9 +593,17 @@ class Messages {
      */
     setPreferences( preferences ) {
         this.preferences = preferences;
+        if (this.reactions) {
+            this.reactions.setPreferences(preferences);
+        }
+
         let newLowMotion = preferences.low_motion ? "on" : "off";
         if (newLowMotion != this.lowMotion) {
             this.lowMotion = newLowMotion;
+            this.emojisearchUpdate.update(this.emojiSearchOptions);
+            if (this.reactionSearchUpdate) {
+                this.reactionSearchUpdate.update(this.emojiSearchOptions);
+            }
             this._updateUsers();
             this._refreshMotion();
         }
@@ -734,7 +744,9 @@ class Messages {
 
             // Always hide any reactions when swapping screens.
             this.loadTime = Date.now();
-            this.reactions.hide( true );
+            if (this.reactions) {
+                this.reactions.hide( true );
+            }
         } else {
             this.pendingroomid = roomid;
         }
@@ -765,7 +777,9 @@ class Messages {
             this.lastActionPending = false;
             this._updateUsers();
             this._recalculateSendEnabled();
-            this.reactions.hide( true );
+            if (this.reactions) {
+                this.reactions.hide( true );
+            }
 
             $('div.chat > div.conversation-wrapper > div.conversation').empty();
             $( '#message-actions' ).attr('roomid', '');
@@ -812,7 +826,9 @@ class Messages {
             // This is a first load, so we want to clear out any loading message and
             // work around a firefox mobile bug where we send spurious mouseenter events.
             this.loadTime = Date.now();
-            this.reactions.hide( true );
+            if (this.reactions) {
+                this.reactions.hide( true );
+            }
 
             $('div.chat > div.conversation-wrapper > div.conversation').empty();
         }

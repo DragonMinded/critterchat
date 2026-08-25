@@ -13,10 +13,11 @@ const searchOptions = {
 };
 
 class Reactions {
-    constructor( eventBus, screenState, inputState, callback ) {
+    constructor( eventBus, screenState, inputState, lowMotion, callback ) {
         this.eventBus = eventBus;
         this.screenState = screenState;
         this.inputState = inputState;
+        this.lowMotion = lowMotion;
         this.callback = callback;
         this.hovering = false;
         this.id = undefined;
@@ -53,11 +54,15 @@ class Reactions {
         }
         for (const [key, value] of Object.entries(window.emotes)) {
             const src = "src=\"" + value.uri + "\"";
+            const lmsrc = "src=\"" + value.lmuri + "\"";
             const dims = "width=\"" + value.dimensions[0] + "\" height=\"" + value.dimensions[1] + "\"";
 
-            emojiSearchOptions.push(
-                {text: key, type: "emote", preview: "<img class=\"emoji-preview\" " + src + " " + dims + " loading=\"lazy\" />"}
-            );
+            emojiSearchOptions.push({
+                text: key,
+                type: "emote",
+                preview: "<img class=\"emoji-preview\" " + src + " " + dims + " loading=\"lazy\" />",
+                lmpreview: "<img class=\"emoji-preview\" " + lmsrc + " " + dims + " loading=\"lazy\" />",
+            });
         }
 
         return emojiSearchOptions;
@@ -70,11 +75,15 @@ class Reactions {
     addEmotes( mapping ) {
         for (const [alias, details] of Object.entries(mapping)) {
             const src = "src=\"" + details.uri + "\"";
+            const lmsrc = "src=\"" + details.lmuri + "\"";
             const dims = "width=\"" + details.dimensions[0] + "\" height=\"" + details.dimensions[1] + "\"";
 
-            this.emojiSearchOptions.push(
-                {text: alias, type: "emote", preview: "<img class=\"emoji-preview\" " + src + " " + dims + " loading=\"lazy\" />"}
-            );
+            this.emojiSearchOptions.push({
+                text: alias,
+                type: "emote",
+                preview: "<img class=\"emoji-preview\" " + src + " " + dims + " loading=\"lazy\" />",
+                lmpreview: "<img class=\"emoji-preview\" " + lmsrc + " " + dims + " loading=\"lazy\" />",
+            });
         }
 
         this.search.update(this.emojiSearchOptions);
@@ -91,6 +100,19 @@ class Reactions {
         });
         this.search.update(this.emojiSearchOptions);
     }
+
+    /**
+     * Called whenever the manager is notified that we got updated preferences. We use this to re-render any
+     * emoji in the custom picker in order to respect low-motion settings.
+     */
+    setPreferences( preferences ) {
+        let newLowMotion = preferences.low_motion ? "on" : "off";
+        if (newLowMotion != this.lowMotion) {
+            this.lowMotion = newLowMotion;
+            this.search.update(this.emojiSearchOptions);
+        }
+    }
+
 
     show( id, force ) {
         if (this.id == id && !force) {
