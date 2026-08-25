@@ -25,7 +25,6 @@ from ..data import (
     DefaultRoomID,
     FaviconID,
 )
-from ..http.static import default_avatar, default_room, default_icon
 
 
 # Guess we need to init this. Feel like I'm doing embedded again.
@@ -209,6 +208,10 @@ class AttachmentService:
         return os.path.join(directory, self._get_hashed_thumbnail_name(aid, content_type, original_filename))
 
     def create_default_attachments(self) -> None:
+        # This becomes a circular import otherwise, and we really should be figuring out where
+        # these are without having to link from the service directory into the http directory.
+        from ..http.static import default_avatar, default_room, default_icon
+
         for aid, default in [
             (DefaultAvatarID, default_avatar),
             (DefaultRoomID, default_room),
