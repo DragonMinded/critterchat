@@ -214,7 +214,14 @@ class MessageService:
 
     def lookup_action(self, actionid: ActionID) -> Action | None:
         if actionid not in self.__data.requestcache.actions:
-            self.__data.requestcache.actions[actionid] = self.__data.room.get_action(actionid)
+            action = self.__data.room.get_action(actionid)
+            if action:
+                self.__attachments.resolve_action_icon(action)
+                history = [action]
+                history = self._resolve_attachments(history)
+                action = history[0]
+
+            self.__data.requestcache.actions[actionid] = action
         return self.__data.requestcache.actions[actionid]
 
     def validate_reaction(self, reaction: str) -> bool:
