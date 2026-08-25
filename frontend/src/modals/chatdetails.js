@@ -97,11 +97,15 @@ class ChatDetails {
         }
         for (const [key, value] of Object.entries(window.emotes)) {
             const src = "src=\"" + value.uri + "\"";
+            const lmsrc = "src=\"" + value.lmuri + "\"";
             const dims = "width=\"" + value.dimensions[0] + "\" height=\"" + value.dimensions[1] + "\"";
 
-            this.autocompleteOptions.push(
-                {text: key, type: "emote", preview: "<img class=\"emoji-preview\" " + src + " " + dims + " />"}
-            );
+            this.autocompleteOptions.push({
+                text: key,
+                type: "emote",
+                preview: "<img class=\"emoji-preview\" " + src + " " + dims + " />",
+                lmpreview: "<img class=\"emoji-preview\" " + lmsrc + " " + dims + " />",
+            });
         }
         this.autocompleteUpdate = [];
         this.autocompleteUpdate.push(autocomplete(this.inputState, '#chatdetails-name', this.autocompleteOptions));
@@ -115,11 +119,15 @@ class ChatDetails {
     addEmotes( mapping ) {
         for (const [alias, details] of Object.entries(mapping)) {
             const src = "src=\"" + details.uri + "\"";
+            const lmsrc = "src=\"" + details.lmuri + "\"";
             const dims = "width=\"" + details.dimensions[0] + "\" height=\"" + details.dimensions[1] + "\"";
 
-            this.autocompleteOptions.push(
-                {text: alias, type: "emote", preview: "<img class=\"emoji-preview\" " + src + " " + dims + " />"}
-            );
+            this.autocompleteOptions.push({
+                text: alias,
+                type: "emote",
+                preview: "<img class=\"emoji-preview\" " + src + " " + dims + " />",
+                lmpreview: "<img class=\"emoji-preview\" " + lmsrc + " " + dims + " />",
+            });
         }
 
         this.autocompleteUpdate.forEach((fun) => {

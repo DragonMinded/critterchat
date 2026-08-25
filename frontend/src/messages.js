@@ -436,14 +436,21 @@ class Messages {
         }
         for (const [key, value] of Object.entries(window.emotes)) {
             const src = "src=\"" + value.uri + "\"";
+            const lmsrc = "src=\"" + value.lmuri + "\"";
             const dims = "width=\"" + value.dimensions[0] + "\" height=\"" + value.dimensions[1] + "\"";
 
-            this.autocompleteOptions.push(
-                {text: key, type: "emote", preview: "<img class=\"emoji-preview\" " + src + " " + dims + " />"}
-            );
-            this.emojiSearchOptions.push(
-                {text: key, type: "emote", preview: "<img class=\"emoji-preview\" " + src + " " + dims + " loading=\"lazy\" />"}
-            );
+            this.autocompleteOptions.push({
+                text: key,
+                type: "emote",
+                preview: "<img class=\"emoji-preview\" " + src + " " + dims + " />",
+                lmpreview: "<img class=\"emoji-preview\" " + lmsrc + " " + dims + " />",
+            });
+            this.emojiSearchOptions.push({
+                text: key,
+                type: "emote",
+                preview: "<img class=\"emoji-preview\" " + src + " " + dims + " loading=\"lazy\" />",
+                lmpreview: "<img class=\"emoji-preview\" " + lmsrc + " " + dims + " loading=\"lazy\" />",
+            });
         }
         this.emojisearchUpdate = new EmojiSearch(this.inputState, '.emoji-search', '#message', this.emojiSearchOptions);
 
@@ -1157,6 +1164,8 @@ class Messages {
             (occupant) => occupant.present
         ).map(
             (user) => {
+                // We don't need to provide a low-motion preview here since we're updating all of the options
+                // when we swap between normal and reduced motion.
                 let icon = this.lowMotion == "on" ? user.lmicon : user.icon;
                 return {
                     text: "@" + user.username,
@@ -1176,14 +1185,21 @@ class Messages {
         for (const [alias, details] of Object.entries(mapping)) {
             window.emotes[alias] = details;
             const src = "src=\"" + details.uri + "\"";
+            const lmsrc = "src=\"" + details.lmuri + "\"";
             const dims = "width=\"" + details.dimensions[0] + "\" height=\"" + details.dimensions[1] + "\"";
 
-            this.autocompleteOptions.push(
-                {text: alias, type: "emote", preview: "<img class=\"emoji-preview\" " + src + " " + dims + " />"}
-            );
-            this.emojiSearchOptions.push(
-                {text: alias, type: "emote", preview: "<img class=\"emoji-preview\" " + src + " " + dims + " loading=\"lazy\" />"}
-            );
+            this.autocompleteOptions.push({
+                text: alias,
+                type: "emote",
+                preview: "<img class=\"emoji-preview\" " + src + " " + dims + " />",
+                lmpreview: "<img class=\"emoji-preview\" " + lmsrc + " " + dims + " />",
+            });
+            this.emojiSearchOptions.push({
+                text: alias,
+                type: "emote",
+                preview: "<img class=\"emoji-preview\" " + src + " " + dims + " loading=\"lazy\" />",
+                lmpreview: "<img class=\"emoji-preview\" " + lmsrc + " " + dims + " loading=\"lazy\" />",
+            });
         }
 
         this.emojisearchUpdate.update(this.emojiSearchOptions);

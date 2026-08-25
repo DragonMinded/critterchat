@@ -252,20 +252,22 @@ export function autocomplete(state, selector, items) {
         $('<div class="autocomplete"></div>').appendTo('body');
 
         items.forEach(function(item, i) {
-            var text = item.text;
+            const text = item.text;
+            const preview = (window.lowMotion == "on" && item.lmpreview) ? item.lmpreview : item.preview;
+
             if(text.startsWith('@')) {
                 // Display nick as just the preview.
                 $( '<div class="autocomplete-element"></div>' )
                     .attr("idx", i)
                     .attr("id", "autocomplete-element-" + i)
-                    .html("&nbsp;" + item.preview + "&nbsp;(" + text + ")")
+                    .html("&nbsp;" + preview + "&nbsp;(" + text + ")")
                     .appendTo('div.autocomplete');
             } else {
                 // Display emoji/emote as the preview and the text to insert.
                 $( '<div class="autocomplete-element"></div>' )
                     .attr("idx", i)
                     .attr("id", "autocomplete-element-" + i)
-                    .html("&nbsp;" + item.preview + "&nbsp;" + text)
+                    .html("&nbsp;" + preview + "&nbsp;" + text)
                     .appendTo('div.autocomplete');
             }
 

@@ -1,7 +1,6 @@
 TODO Immediate
 ==============
 
- - Low motion emotes in typeaheads.
  - Low motion emotes in emoji search.
 
 TODO Low Priority
