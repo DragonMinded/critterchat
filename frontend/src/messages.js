@@ -1271,7 +1271,11 @@ class Messages {
     /**
      * Draws the attachments for a given message.
      */
-    _drawAttachments( message, attachments ) {
+    _drawAttachments( messageId, attachments ) {
+        if (attachments.length == 0) {
+            return '<div class="attachments" id="' + messageId + '"></div>';
+        }
+
         const mimetypes = [];
         attachments.forEach((attachment) => {
             mimetypes.push(attachment.mimetype);
@@ -1281,7 +1285,7 @@ class Messages {
         const desiredHeight = (attachments.length == 1 && allImages) ? window.maxpreviewheight.large : window.maxpreviewheight.small;
         const textInline = (attachments.length == 1) && allText && attachments[0].preview;
 
-        var html = '<div class="attachments" id="' + message.id + '">';
+        var html = '<div class="attachments" id="' + messageId + '">';
 
         attachments.forEach((attachment) => {
             const ext = getExt(new URL(attachment.uri).pathname).toLowerCase();
@@ -1290,8 +1294,10 @@ class Messages {
             if (attachment.mimetype.startsWith("image/")) {
                 // Image attachment.
                 let uri = attachment.uri;
-                if (attachment.preview && !attachment.metadata.animated) {
-                    uri = attachment.preview;
+                if (attachment.preview) {
+                    if (this.lowMotion == 'on' || !attachment.metadata.animated) {
+                        uri = attachment.preview;
+                    }
                 }
 
                 var attachImg = $(
@@ -1312,6 +1318,10 @@ class Messages {
 
                 html += '<a target="_blank" class="attachment thumbnail" href="' + attachment.uri + '">';
                 html += '  ' + attachImg.prop('outerHTML');
+
+                if (this.lowMotion == 'on' && attachment.metadata.animated) {
+                    html += '  <div class="gif-indicator-container"><div>gif</div></div>';
+                }
 
                 if (attachment.metadata.sensitive) {
                     html += '  <div class="blurred"><div class="maskable attachment-sensitive"></div></div>';
@@ -1473,6 +1483,67 @@ class Messages {
     }
 
     /**
+     * Helper function that redraws a message when it is edited, reactions added or delted, or when
+     * reduced motion options are toggled.
+     */
+    _redrawMessage( drawnMessage, drawnAttachments, drawnReactions, message ) {
+        let content = this._formatMessage(message.details.message);
+        let highlighted = this._wasHighlighted(message.details.message);
+
+        // Redraw the message itself.
+        drawnMessage.html(content);
+
+        // Change the highlight depending on whether the message contains a highlight or not now.
+        if (highlighted) {
+            drawnMessage.addClass("highlighted");
+        } else {
+            drawnMessage.removeClass("highlighted");
+        }
+
+        // Now redraw any attachments in case they were edited.
+        drawnAttachments.replaceWith(this._drawAttachments(message.id, message.attachments));
+
+        // Now redraw any reactions.
+        drawnReactions.html(this._drawReactions(message.details.reactions, message.details.reactions_order));
+    }
+
+    /**
+     * Hooks various clickable events up to a message, called when a message is drawn or redrawn.
+     */
+    _hookEvents( messageId ) {
+        // Allow clicking on a username in the message itself.
+        $('div.item#' + messageId + ' span.name-link').on('click', (event) => {
+            event.stopPropagation();
+            event.stopImmediatePropagation();
+
+            var id = $(event.currentTarget).attr('id')
+            this.eventBus.emit('displayprofile', {userid: id, room: this.rooms.get(this.roomid), actor: this.myself});
+        });
+
+        // Allow un-spoilering sensitive messages.
+        $('div.message.sensitive').on('click', (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            event.stopImmediatePropagation();
+
+            const elem = $(event.currentTarget);
+            elem.removeClass('sensitive');
+            elem.off();
+        });
+        $('div.attachments div[class="blurred"]').on('click', (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            event.stopImmediatePropagation();
+
+            const elem = $(event.currentTarget);
+            elem.parent().find('img.blurred').removeClass('blurred');
+            elem.parent().find('div.file.blurred').removeClass('blurred');
+            elem.parent().find('div.preview-wrapper.blurred').removeClass('blurred');
+            elem.remove();
+        });
+    }
+
+    /**
      * The actual function that handles DOM manipulation for rendering a new or updated action.
      * Note that right now while the server CAN send us old actions that have been edited in some
      * manner, it currently does not. However, this function handles that and will continue to be
@@ -1485,20 +1556,9 @@ class Messages {
         const drawnMessage = messages.find('div.message#' + message.id);
         if (drawnMessage.length > 0) {
             if (message.action == "message") {
-                let content = this._formatMessage(message.details.message);
-                let highlighted = this._wasHighlighted(message.details.message);
-                drawnMessage.html(content);
-
-                if (highlighted) {
-                    drawnMessage.addClass("highlighted");
-                } else {
-                    drawnMessage.removeClass("highlighted");
-                }
-
-                // TODO: Need to update attachments here once we can edit messages.
-
                 const drawnReactions = messages.find('div.reactions#' + message.id);
-                drawnReactions.html(this._drawReactions(message.details.reactions, message.details.reactions_order));
+                const drawnAttachments = messages.find('div.attachments#' + message.id);
+                this._redrawMessage( drawnMessage, drawnAttachments, drawnReactions, message );
 
                 // Make sure reactions on the last message are visible, but don't badge new
                 // messages if we're scrolled up.
@@ -1525,9 +1585,8 @@ class Messages {
                 html += '    </div>';
                 html += '    <div class="message' + (highlighted ? " highlighted" : "") + (message.details.sensitive ? " sensitive" : "") + '" dir="auto" id="' + message.id + '">' + content + '</div>';
 
-                if (message.attachments.length) {
-                    html += this._drawAttachments(message, message.attachments);
-                }
+                html += this._drawAttachments(message.id, message.attachments);
+
                 html += '    <div class="reactions" id="' + message.id + '">' + this._drawReactions(message.details.reactions, message.details.reactions_order) + '</div>';
                 html += '  </div>';
                 html += '</div>';
@@ -1683,36 +1742,7 @@ class Messages {
                     });
                 });
 
-                // Allow clicking on a username in the message itself.
-                $('div.item#' + message.id + ' span.name-link').on('click', (event) => {
-                    event.stopPropagation();
-                    event.stopImmediatePropagation();
-
-                    var id = $(event.currentTarget).attr('id')
-                    this.eventBus.emit('displayprofile', {userid: id, room: this.rooms.get(this.roomid), actor: this.myself});
-                });
-
-                // Allow un-spoilering sensitive messages.
-                $('div.message.sensitive').on('click', (event) => {
-                    event.preventDefault();
-                    event.stopPropagation();
-                    event.stopImmediatePropagation();
-
-                    const elem = $(event.currentTarget);
-                    elem.removeClass('sensitive');
-                    elem.off();
-                });
-                $('div.attachments div[class="blurred"]').on('click', (event) => {
-                    event.preventDefault();
-                    event.stopPropagation();
-                    event.stopImmediatePropagation();
-
-                    const elem = $(event.currentTarget);
-                    elem.parent().find('img.blurred').removeClass('blurred');
-                    elem.parent().find('div.file.blurred').removeClass('blurred');
-                    elem.parent().find('div.preview-wrapper.blurred').removeClass('blurred');
-                    elem.remove();
-                });
+                this._hookEvents( message.id );
             }
         }
 
@@ -1757,11 +1787,10 @@ class Messages {
             if (message.action == "message") {
                 const drawnMessage = messages.find('div.message#' + message.id);
                 if (drawnMessage.length > 0) {
-                    let content = this._formatMessage(message.details.message);
-                    drawnMessage.html(content);
-
                     const drawnReactions = messages.find('div.reactions#' + message.id);
-                    drawnReactions.html(this._drawReactions(message.details.reactions, message.details.reactions_order));
+                    const drawnAttachments = messages.find('div.attachments#' + message.id);
+                    this._redrawMessage(drawnMessage, drawnAttachments, drawnReactions, message);
+                    this._hookEvents( message.id );
                 }
             }
         });

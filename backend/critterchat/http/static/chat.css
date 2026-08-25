@@ -65,6 +65,9 @@ body.smallest {
     --attachment-picker-visible-bottom: 4px;
     --attachment-picker-visible-top: -2.5px;
 
+    --attachment-gif-indicator-right: 4px;
+    --attachment-gif-indicator-bottom: 4px;
+
     --message-visible-top: 3.5px;
     --message-sensitive-top: 3.5px;
     --message-attachment-width: 100px;
@@ -157,6 +160,9 @@ body.smaller {
     --attachment-picker-visible-left: 4px;
     --attachment-picker-visible-bottom: 4px;
     --attachment-picker-visible-top: -2.5px;
+
+    --attachment-gif-indicator-right: 5px;
+    --attachment-gif-indicator-bottom: 5px;
 
     --message-visible-top: 3.5px;
     --message-sensitive-top: 3.5px;
@@ -251,6 +257,9 @@ body:not(.smallest):not(.smaller):not(.larger):not(.largest) {
     --attachment-picker-visible-bottom: 4px;
     --attachment-picker-visible-top: -2.5px;
 
+    --attachment-gif-indicator-right: 5px;
+    --attachment-gif-indicator-bottom: 5px;
+
     --message-visible-top: 3.5px;
     --message-sensitive-top: 3.5px;
     --message-attachment-width: 100px;
@@ -344,6 +353,9 @@ body.larger {
     --attachment-picker-visible-bottom: 4px;
     --attachment-picker-visible-top: -2.5px;
 
+    --attachment-gif-indicator-right: 5px;
+    --attachment-gif-indicator-bottom: 5px;
+
     --message-visible-top: 3.5px;
     --message-sensitive-top: 3.5px;
     --message-attachment-width: 100px;
@@ -436,6 +448,9 @@ body.largest {
     --attachment-picker-visible-left: 4px;
     --attachment-picker-visible-bottom: 4px;
     --attachment-picker-visible-top: -2.5px;
+
+    --attachment-gif-indicator-right: 5px;
+    --attachment-gif-indicator-bottom: 5px;
 
     --message-visible-top: 3.5px;
     --message-sensitive-top: 3.5px;
@@ -1229,6 +1244,28 @@ div.conversation div.item div.attachments a {
     position: relative;
     text-decoration: none;
     word-break: break-all;
+}
+
+div.conversation div.item div.attachments:empty {
+    display: none;
+}
+
+div.conversation div.item div.attachments div.gif-indicator-container {
+    position: absolute;
+    cursor: pointer;
+    width: 2.3em;
+    height: 1.5em;
+    right: var(--attachment-gif-indicator-right);
+    bottom: var(--attachment-gif-indicator-bottom);
+    border-radius: var(--button-border-radius);
+    background: var(--attachment-gif-indicator-background);
+    color: var(--attachment-gif-indicator-foreground);
+    border: 2px solid var(--attachment-gif-indicator-foreground);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-transform: uppercase;
+    font-size: var(--application-text-size-12);
 }
 
 div.conversation div.item div.attachments div.file {

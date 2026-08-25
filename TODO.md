@@ -1,10 +1,6 @@
 TODO Immediate
 ==============
 
- - Low motion attachment previews for messages.
-   - Need to display [GIF] on thumbnails of animated images when in low-motion.
-   - Need to swap attachment thumbnails based on low motion setting.
-   - Probably a good time to handle the TODO in attachment re-rendering.
  - Low motion emotes in typeaheads.
  - Low motion emotes in emoji search.
 
