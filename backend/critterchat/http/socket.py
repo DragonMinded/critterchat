@@ -292,6 +292,7 @@ def serverinfo(json: dict[str, object]) -> None:
         socketio.emit('info', hydrate_tag(json, {
             "name": config.name,
             "icon": attachmentservice.get_attachment_url(FaviconID),
+            "lmicon": attachmentservice.get_thumbnail_url(FaviconID),
             "administrator": config.administrator,
             "source": config.source,
             "version": "CritterChat " + ver,
@@ -320,6 +321,7 @@ def motd(json: dict[str, object]) -> None:
             socketio.emit('welcome', {
                 "name": config.name,
                 "icon": attachmentservice.get_attachment_url(FaviconID),
+                "lmicon": attachmentservice.get_thumbnail_url(FaviconID),
                 "administrator": config.administrator,
                 "source": config.source,
                 "message": extra,

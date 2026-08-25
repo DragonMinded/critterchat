@@ -1,11 +1,6 @@
 TODO Immediate
 ==============
 
- - Low motion instance icon.
-   - Need to make defavi, defroom, favicon into dictionaries.
-   - Need to select favicon based on low motion setting when rendering template.
-   - Need to update favicon during low-motion changeover.
-   - Need to reference defavi/defroom by dictionary in the front-end.
  - Low motion attachment previews for messages.
    - Need to display [GIF] on thumbnails of animated images when in low-motion.
    - Need to swap attachment thumbnails based on low motion setting.

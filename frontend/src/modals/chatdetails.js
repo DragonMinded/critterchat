@@ -7,7 +7,7 @@ import { autocomplete } from "../components/autocomplete.js";
  * and allows the user to modify the room name, topic and custom icon.
  */
 class ChatDetails {
-    constructor( eventBus, inputState ) {
+    constructor( eventBus, inputState, lowMotion ) {
         this.eventBus = eventBus;
         this.inputState = inputState;
         this.preferences = {};
@@ -15,6 +15,7 @@ class ChatDetails {
         this.action = undefined;
         this.icon = "";
         this.iconDelete = false;
+        this.lowMotion = lowMotion;
 
         $( '#chatdetails-form' ).on( 'submit', (event) => {
             event.preventDefault();
@@ -65,7 +66,7 @@ class ChatDetails {
             this.icon = "";
             this.iconDelete = true;
 
-            $( '#chatdetails-icon' ).attr('src', this.room['deficon']);
+            $( '#chatdetails-icon' ).attr('src', this.room[this.lowMotion == 'on' ? 'lmdeficon' : 'deficon']);
         });
 
         $( '#chatdetails-iconpicker' ).on( 'change', (event) => {
@@ -166,8 +167,8 @@ class ChatDetails {
             'autojoin': false,
             'customname': '',
             'topic': '',
-            'icon': window.defroom,
-            'deficon': window.defroom,
+            'icon': window.defroom[this.lowMotion == 'on' ? 'lm' : 'nm'],
+            'deficon': window.defroom[this.lowMotion == 'on' ? 'lm' : 'nm'],
         };
 
         $.modal.close();
@@ -219,7 +220,7 @@ class ChatDetails {
 
         $('#chatdetails-name').val(this.room.customname);
         $('#chatdetails-topic').val(this.room.topic);
-        $('#chatdetails-icon').attr('src', this.room.icon);
+        $('#chatdetails-icon').attr('src', this.lowMotion == 'on' ? this.room.lmicon : this.room.icon);
         $('#chatdetails-form').modal();
     }
 
@@ -229,6 +230,7 @@ class ChatDetails {
      */
     setPreferences( preferences ) {
         this.preferences = preferences;
+        this.lowMotion = preferences.low_motion ? "on" : "off";
     }
 }
 

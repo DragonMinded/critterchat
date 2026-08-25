@@ -19,7 +19,7 @@ class Info {
         this.eventBus = eventBus;
         this.inputState = inputState;
         this.screenState = screenState;
-        this.chatdetails = new ChatDetails( eventBus, inputState );
+        this.chatdetails = new ChatDetails( eventBus, inputState, initialLowMotion );
         this.size = initialSize;
         this.visibility = initialVisibility;
         this.lowMotion = initialLowMotion;

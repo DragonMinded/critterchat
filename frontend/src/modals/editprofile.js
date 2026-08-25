@@ -9,13 +9,14 @@ import { autocomplete } from "../components/autocomplete.js";
  * any sort of user customization we allow.
  */
 class EditProfile {
-    constructor( eventBus, inputState ) {
+    constructor( eventBus, inputState, lowMotion ) {
         this.eventBus = eventBus;
         this.inputState = inputState;
         this.profile = {};
         this.profileLoaded = false;
         this.icon = "";
         this.iconDelete = false;
+        this.lowMotion = lowMotion;
 
         $( '#editprofile-form' ).on( 'submit', (event) => {
             event.preventDefault();
@@ -47,7 +48,7 @@ class EditProfile {
             this.icon = "";
             this.iconDelete = true;
 
-            $( '#editprofile-icon' ).attr('src', window.defavi);
+            $( '#editprofile-icon' ).attr('src', window.defavi[this.lowMotion == 'on' ? 'lm' : 'nm']);
         });
 
         $( '#editprofile-iconpicker' ).on( 'change', (event) => {
@@ -168,6 +169,14 @@ class EditProfile {
         }
         this.profile = profile;
         this.profileLoaded = true;
+    }
+
+    /**
+     * Called every time our parent informs us that user preferences have been updated. We use this
+     * to keep track of reduced motion options.
+     */
+    setPreferences( preferences ) {
+        this.lowMotion = preferences.low_motion ? "on" : "off";
     }
 }
 

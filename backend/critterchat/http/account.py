@@ -25,9 +25,8 @@ from .login import (
     ensure_logged_out_all,
 )
 from ..common import get_aliases_unicode_dict
-from ..data import UserPermission, FaviconID
+from ..data import UserPermission
 from ..service import (
-    AttachmentService,
     EmoteService,
     MastodonService,
     MastodonServiceException,
@@ -60,8 +59,6 @@ def loginpost() -> Response:
 
 
 def __login(username: str, password: str) -> Response:
-    attachmentservice = AttachmentService(g.config, g.data)
-
     if not g.config.authentication.local:
         error("Account login is disabled.")
         return make_response(redirect(absolute_url_for("welcome.home", component="base")))
@@ -83,7 +80,6 @@ def __login(username: str, password: str) -> Response:
                     title="Log In",
                     username=original_username,
                     mastodon_providers=get_mastodon_providers(),
-                    favicon=attachmentservice.get_attachment_url(FaviconID),
                 )
             )
 
@@ -96,7 +92,6 @@ def __login(username: str, password: str) -> Response:
                 title="Log In",
                 username=original_username,
                 mastodon_providers=get_mastodon_providers(),
-                favicon=attachmentservice.get_attachment_url(FaviconID),
             )
         )
 
@@ -108,7 +103,6 @@ def __login(username: str, password: str) -> Response:
                 title="Log In",
                 username=original_username,
                 mastodon_providers=get_mastodon_providers(),
-                favicon=attachmentservice.get_attachment_url(FaviconID),
             )
         )
 
@@ -122,7 +116,6 @@ def __login(username: str, password: str) -> Response:
                 title="Log In",
                 username=original_username,
                 mastodon_providers=get_mastodon_providers(),
-                favicon=attachmentservice.get_attachment_url(FaviconID),
             )
         )
 
@@ -130,8 +123,6 @@ def __login(username: str, password: str) -> Response:
 @account.route("/login")
 @loginprohibited
 def login() -> Response:
-    attachmentservice = AttachmentService(g.config, g.data)
-
     if not g.config.authentication.local:
         error("Account login is disabled.")
         return make_response(redirect(absolute_url_for("welcome.home", component="base")))
@@ -140,13 +131,11 @@ def login() -> Response:
         "account/login.html",
         title="Log In",
         mastodon_providers=get_mastodon_providers(),
-        favicon=attachmentservice.get_attachment_url(FaviconID),
     )))
 
 
 @account.route("/recover/<recovery>", methods=["POST"])
 def recoverpost(recovery: str) -> Response:
-    attachmentservice = AttachmentService(g.config, g.data)
     userservice = UserService(g.config, g.data)
     username = request.form["username"]
     password1 = request.form["password1"]
@@ -169,7 +158,6 @@ def recoverpost(recovery: str) -> Response:
                     title="Recover Account Password",
                     username=original_username,
                     recovery=recovery,
-                    favicon=attachmentservice.get_attachment_url(FaviconID),
                 )
             )
 
@@ -180,7 +168,6 @@ def recoverpost(recovery: str) -> Response:
                 "account/recover.html",
                 title="Recover Account Password",
                 recovery=recovery,
-                favicon=attachmentservice.get_attachment_url(FaviconID),
             )
         )
 
@@ -192,7 +179,6 @@ def recoverpost(recovery: str) -> Response:
                 title="Recover Account Password",
                 username=original_username,
                 recovery=recovery,
-                favicon=attachmentservice.get_attachment_url(FaviconID),
             )
         )
 
@@ -204,7 +190,6 @@ def recoverpost(recovery: str) -> Response:
                 title="Recover Account Password",
                 username=original_username,
                 recovery=recovery,
-                favicon=attachmentservice.get_attachment_url(FaviconID),
             )
         )
 
@@ -218,7 +203,6 @@ def recoverpost(recovery: str) -> Response:
                     title="Log In",
                     username=original_username,
                     mastodon_providers=get_mastodon_providers(),
-                    favicon=attachmentservice.get_attachment_url(FaviconID),
                 )
             )
         else:
@@ -229,7 +213,6 @@ def recoverpost(recovery: str) -> Response:
                     title="Log In",
                     username=original_username,
                     mastodon_providers=get_mastodon_providers(),
-                    favicon=attachmentservice.get_attachment_url(FaviconID),
                 )
             )
 
@@ -241,7 +224,6 @@ def recoverpost(recovery: str) -> Response:
                 title="Recover Account Password",
                 username=original_username,
                 recovery=recovery,
-                favicon=attachmentservice.get_attachment_url(FaviconID),
             )
         )
     return ""
@@ -249,13 +231,10 @@ def recoverpost(recovery: str) -> Response:
 
 @account.route("/recover/<recovery>")
 def recover(recovery: str) -> Response:
-    attachmentservice = AttachmentService(g.config, g.data)
-
     return Response(render_template(
         "account/recover.html",
         title="Recover Account Password",
         recovery=recovery,
-        favicon=attachmentservice.get_attachment_url(FaviconID),
     ))
 
 
@@ -268,7 +247,6 @@ def logout() -> Response:
 @account.route("/register", methods=["POST"])
 @loginprohibited
 def registerpost() -> Response:
-    attachmentservice = AttachmentService(g.config, g.data)
     username = request.form["username"]
     password1 = request.form["password1"]
     password2 = request.form["password2"]
@@ -283,7 +261,6 @@ def registerpost() -> Response:
             render_template(
                 "account/register.html",
                 title="Register Account",
-                favicon=attachmentservice.get_attachment_url(FaviconID),
             )
         )
 
@@ -294,7 +271,6 @@ def registerpost() -> Response:
                 render_template(
                     "account/register.html",
                     title="Register Account",
-                    favicon=attachmentservice.get_attachment_url(FaviconID),
                 )
             )
 
@@ -304,7 +280,6 @@ def registerpost() -> Response:
             render_template(
                 "account/register.html",
                 title="Register Account",
-                favicon=attachmentservice.get_attachment_url(FaviconID),
             )
         )
 
@@ -315,7 +290,6 @@ def registerpost() -> Response:
                 "account/register.html",
                 title="Register Account",
                 username=username,
-                favicon=attachmentservice.get_attachment_url(FaviconID),
             )
         )
 
@@ -326,7 +300,6 @@ def registerpost() -> Response:
                 "account/register.html",
                 title="Register Account",
                 username=username,
-                favicon=attachmentservice.get_attachment_url(FaviconID),
             )
         )
 
@@ -341,7 +314,6 @@ def registerpost() -> Response:
                     title="Log In",
                     username=username,
                     mastodon_providers=get_mastodon_providers(),
-                    favicon=attachmentservice.get_attachment_url(FaviconID),
                 )
             )
         else:
@@ -357,7 +329,6 @@ def registerpost() -> Response:
                 "account/register.html",
                 title="Register Account",
                 username=username,
-                favicon=attachmentservice.get_attachment_url(FaviconID),
             )
         )
 
@@ -365,8 +336,6 @@ def registerpost() -> Response:
 @account.route("/register")
 @loginprohibited
 def register() -> Response:
-    attachmentservice = AttachmentService(g.config, g.data)
-
     if not g.config.account_registration.enabled:
         error("Account registration is disabled.")
         return make_response(redirect(absolute_url_for("welcome.home", component="base")))
@@ -374,7 +343,6 @@ def register() -> Response:
     return Response(render_template(
         "account/register.html",
         title="Register Account",
-        favicon=attachmentservice.get_attachment_url(FaviconID),
     ))
 
 
@@ -386,7 +354,6 @@ def invitepost(invite: str) -> Response:
         error("Invite is invalid or expired.")
         return make_response(redirect(absolute_url_for("welcome.home", component="base")))
 
-    attachmentservice = AttachmentService(g.config, g.data)
     emoteservice = EmoteService(g.config, g.data)
 
     user = g.data.user.from_invite(invite)
@@ -410,7 +377,6 @@ def invitepost(invite: str) -> Response:
                 jsname=jsname,
                 emojis=emojis,
                 emotes=emotes,
-                favicon=attachmentservice.get_attachment_url(FaviconID),
             )
         )
 
@@ -426,7 +392,6 @@ def invitepost(invite: str) -> Response:
                     jsname=jsname,
                     emojis=emojis,
                     emotes=emotes,
-                    favicon=attachmentservice.get_attachment_url(FaviconID),
                 )
             )
 
@@ -441,7 +406,6 @@ def invitepost(invite: str) -> Response:
                 jsname=jsname,
                 emojis=emojis,
                 emotes=emotes,
-                favicon=attachmentservice.get_attachment_url(FaviconID),
             )
         )
 
@@ -457,7 +421,6 @@ def invitepost(invite: str) -> Response:
                 jsname=jsname,
                 emojis=emojis,
                 emotes=emotes,
-                favicon=attachmentservice.get_attachment_url(FaviconID),
             )
         )
 
@@ -473,7 +436,6 @@ def invitepost(invite: str) -> Response:
                 jsname=jsname,
                 emojis=emojis,
                 emotes=emotes,
-                favicon=attachmentservice.get_attachment_url(FaviconID),
             )
         )
 
@@ -501,7 +463,6 @@ def invitepost(invite: str) -> Response:
                 jsname=jsname,
                 emojis=emojis,
                 emotes=emotes,
-                favicon=attachmentservice.get_attachment_url(FaviconID),
             )
         )
 
@@ -509,7 +470,6 @@ def invitepost(invite: str) -> Response:
 @account.route("/register/<invite>")
 @loginprohibited
 def invite(invite: str) -> Response:
-    attachmentservice = AttachmentService(g.config, g.data)
     emoteservice = EmoteService(g.config, g.data)
 
     if not g.data.user.validate_invite(invite):
@@ -530,7 +490,6 @@ def invite(invite: str) -> Response:
         jsname=jsname,
         emojis=emojis,
         emotes=emotes,
-        favicon=attachmentservice.get_attachment_url(FaviconID),
     ))
 
 

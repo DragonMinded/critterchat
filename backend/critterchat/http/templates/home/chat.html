@@ -48,6 +48,7 @@
     window.reactionsdefaults = {{ reactionsdefaults|tojson|safe }};
     window.defavi = {{ defavi|tojson|safe }};
     window.defroom = {{ defroom|tojson|safe }};
+    window.favicon = {{ favicon|tojson|safe }};
     window.silence = {{ absolute_url_for('static', component="base", filename='silence.mp3')|tojson|safe }};
   </script>
 {% endblock %}
@@ -55,7 +56,7 @@
     <div class="menu">
         <div class="header">
             <button class="instance" type="button">
-                <img class="icon" src="{{ favicon }}" />
+                <img class="icon" src="{{ favicon['lm' if lowMotion == 'on' else 'nm'] }}" />
                 <div class="instance-title">
                     {{ title }}
                 </div>

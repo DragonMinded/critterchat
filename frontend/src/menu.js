@@ -17,7 +17,7 @@ class Menu {
         this.eventBus = eventBus;
         this.screenState = screenState;
         this.inputState = inputState;
-        this.editProfile = new EditProfile( eventBus, inputState );
+        this.editProfile = new EditProfile( eventBus, inputState, initialLowMotion );
         this.editPreferences = new EditPreferences( eventBus, inputState );
         this.size = initialSize;
         this.visibility = initialVisibility;
@@ -347,6 +347,7 @@ class Menu {
         this.preferences = preferences;
         this.lowMotion = preferences.low_motion ? "on" : "off";
         this.preferencesLoaded = true;
+        this.editProfile.setPreferences( preferences );
         this.editPreferences.setPreferences( preferences );
         this._updateGlobalBadges();
         if (this.roomsLoaded) {

@@ -26,7 +26,8 @@ from flask_cors import CORS
 
 from ..common import AESCipher
 from ..config import Config
-from ..data import Data, User, UserPermission
+from ..data import Data, User, UserPermission, DefaultAvatarID, DefaultRoomID, FaviconID
+from ..service import AttachmentService
 from .templates import templates_location
 from .static import static_location
 
@@ -242,6 +243,8 @@ def toorderedjson(val: object) -> str:
 
 @app.context_processor
 def extrafunctions() -> dict[str, Any]:
+    attachmentservice = AttachmentService(g.config, g.data)
+
     cachebust = get_frontend_version() + "-" + get_fingerprint_hash()
     colorscheme = request.cookies.get("ColorScheme", "system")
     desktopSize = request.cookies.get("DesktopSize", "normal")
@@ -256,6 +259,11 @@ def extrafunctions() -> dict[str, Any]:
         "desktopSize": desktopSize,
         "mobileSize": mobileSize,
         "lowMotion": lowMotion,
+        # Provide normal motion and low motion variants for all default attachment types.
+        "defavi": {'nm': attachmentservice.get_attachment_url(DefaultAvatarID), 'lm': attachmentservice.get_thumbnail_url(DefaultAvatarID)},
+        "defroom": {'nm': attachmentservice.get_attachment_url(DefaultRoomID), 'lm': attachmentservice.get_thumbnail_url(DefaultRoomID)},
+        "favicon": {'nm': attachmentservice.get_attachment_url(FaviconID), 'lm': attachmentservice.get_thumbnail_url(FaviconID)},
+
     }
 
 

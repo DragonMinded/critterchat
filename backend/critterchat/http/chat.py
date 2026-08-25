@@ -74,9 +74,6 @@ def home() -> Response:
         maxpreviewheight={'large': attachmentservice.MAX_LARGE_PREVIEW_HEIGHT, 'small': attachmentservice.MAX_SMALL_PREVIEW_HEIGHT},
         reactionsdefaults=defaultreactions,
         mimetypes=g.config.attachments.allowed_mime_types,
-        defavi=attachmentservice.get_attachment_url(DefaultAvatarID),
-        defroom=attachmentservice.get_attachment_url(DefaultRoomID),
-        favicon=attachmentservice.get_attachment_url(FaviconID),
         **extra,
     ))
 
@@ -119,9 +116,9 @@ def config() -> dict[str, object]:
         "reactionsdefaults": defaultreactions,
         "invitesenabled": g.config.account_registration.invites,
         "mimetypes": g.config.attachments.allowed_mime_types,
-        "defavi": attachmentservice.get_attachment_url(DefaultAvatarID),
-        "defroom": attachmentservice.get_attachment_url(DefaultRoomID),
-        "favicon": attachmentservice.get_attachment_url(FaviconID),
+        "defavi": {'nm': attachmentservice.get_attachment_url(DefaultAvatarID), 'lm': attachmentservice.get_thumbnail_url(DefaultAvatarID)},
+        "defroom": {'nm': attachmentservice.get_attachment_url(DefaultRoomID), 'lm': attachmentservice.get_thumbnail_url(DefaultRoomID)},
+        "favicon": {'nm': attachmentservice.get_attachment_url(FaviconID), 'lm': attachmentservice.get_thumbnail_url(FaviconID)},
         "uploadicon": absolute_url_for('upload.icon_upload', component="upload"),
         "uploadavatar": absolute_url_for('upload.avatar_upload', component="upload"),
         "uploadnotifications": absolute_url_for('upload.notifications_upload', component="upload"),

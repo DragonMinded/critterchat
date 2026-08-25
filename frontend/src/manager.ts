@@ -42,6 +42,19 @@ declare global {
         version: string;
         // Version check endpoint URI.
         versionCheck: string;
+        // Icon definitions.
+        defavi: {
+            nm: string;
+            lm: string;
+        };
+        defroom: {
+            nm: string;
+            lm: string;
+        };
+        favicon: {
+            nm: string;
+            lm: string;
+        };
     }
 }
 
@@ -73,6 +86,7 @@ interface Room {
     newest_action: ID | null;
     last_action_timestamp: number;
     icon: string | null;
+    lmicon: string | null;
     deficon: string;
 }
 
@@ -82,6 +96,7 @@ interface User {
     nickname: string;
     about: string;
     icon: string | null;
+    lmicon: string | null;
 }
 
 interface Invite {
@@ -105,6 +120,7 @@ interface Occupant {
     muted: boolean;
     invite: Invite | null;
     icon: string | null;
+    lmicon: string | null;
 }
 
 interface Attachment {
@@ -366,7 +382,7 @@ export function manager(socket: Socket) {
 
             html += '<button class="item" type="button" id="' + id + '">';
             html += '  <div class="icon ' + type + '">';
-            html += '    <img src="' + result.icon + '" />';
+            html += '    <img src="' + (lowMotion == "on" ? result.lmicon : result.icon) + '" />';
             if (result.type == 'room') {
                 html    += '    <div class="room-indicator">#</div>';
             }
@@ -383,7 +399,7 @@ export function manager(socket: Socket) {
         displayInfo(
             (
                 '<div class="info-header">' +
-                '    <img class="icon" src="' + msg.icon + '" />' +
+                '    <img class="icon" src="' + (lowMotion == "on" ? msg.lmicon : msg.icon) + '" />' +
                 '    <div class="instance-title">Welcome to ' + msg.name + '!</div>' +
                 '</div>' +
                 '<div class="info-subheader">administered by ' + msg.administrator + '</div>' +
@@ -409,7 +425,7 @@ export function manager(socket: Socket) {
         displayInfo(
             (
                 '<div class="info-header">' +
-                '    <img class="icon" src="' + msg.icon + '" />' +
+                '    <img class="icon" src="' + (lowMotion == "on" ? msg.lmicon : msg.icon) + '" />' +
                 '    <div class="instance-title">' + msg.name + '</div>' +
                 '</div>' +
                 '<div class="info-subheader">administered by ' + msg.administrator + '</div>' +
@@ -542,7 +558,10 @@ export function manager(socket: Socket) {
         // Put this back in the global namespace because a few unparented helper functions
         // such as emote rendering for arbitrary text use this setting.
         lowMotion = msg.low_motion ? "on" : "off";
-        window.lowMotion = lowMotion;
+        if (lowMotion != window.lowMotion) {
+            window.lowMotion = lowMotion;
+            $('div.menu div.header button.instance img.icon').attr('src', window.favicon[lowMotion == 'on' ? 'lm' : 'nm']);
+        }
 
         desktopSize = msg.desktop_size;
         mobileSize = msg.mobile_size;
