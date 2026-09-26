@@ -7,7 +7,7 @@ init backend="sqlite":
     sed -i 's/"baremetal-info.txt"/".info.txt"/g' backend/.config.yaml
     sed -i 's/"sqlite.db"/".sqlite.db"/g' backend/.config.yaml
 
-# Set up both backend and frontend package management to run locally
+# Set up or upgrade both backend and frontend package management to run locally
 setup:
     cd backend && python3 -m venv .venv
     ./backend/.venv/bin/python3 -m pip install --upgrade pip

@@ -5,7 +5,7 @@ Flask-CORS
 gevent
 gevent-websocket
 PyYAML
-SQLAlchemy
+SQLAlchemy<2.1.0
 alembic
 mysqlclient
 emoji
