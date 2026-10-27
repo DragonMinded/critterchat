@@ -6,7 +6,7 @@ import os
 import pillow_jxl  # noqa: import registers this plugin
 import re
 from PIL import Image, ImageOps
-from pillow_heif import register_heif_opener  # type: ignore
+from pillow_heif import register_heif_opener
 from typing import Final, Tuple, cast
 
 from ..config import Config

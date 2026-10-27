@@ -833,11 +833,25 @@ export function manager(socket: Socket) {
             // Need to upload the new icon and get the attachment ID back.
             uploader.uploadAvatar(profile.icon, (iconid: ID) => {
                 profile.icon = iconid;
-                socket.emit('updateprofile', profile);
+                socket.emit('updateprofile', profile, (response: Acknowledgement) => {
+                    if (response.status == "success") {
+                        eventBus.emit('updateprofileack', {'status': 'success'});
+                    } else {
+                        eventBus.emit('updateprofileack', {'status': 'failure'});
+                    }
+                });
+            }, () => {
+                eventBus.emit('updateprofileack', {'status': 'failure'});
             });
         } else {
             // No need to upload anything, no icon changes.
-            socket.emit('updateprofile', profile);
+            socket.emit('updateprofile', profile, (response: Acknowledgement) => {
+                if (response.status == "success") {
+                    eventBus.emit('updateprofileack', {'status': 'success'});
+                } else {
+                    eventBus.emit('updateprofileack', {'status': 'failure'});
+                }
+            });
         }
     });
 

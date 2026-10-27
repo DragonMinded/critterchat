@@ -24,16 +24,28 @@ class EditProfile {
 
         $( '#editprofile-confirm' ).on( 'click', (event) => {
             event.preventDefault();
-            $.modal.close();
-            this.inputState.setState("empty");
 
             if (this.profileLoaded) {
+                // Prevent double-submit.
+                $( '#editprofile-confirm' ).prop('disabled', true);
+
                 this.eventBus.emit('updateprofile', {
                     'name': $('#editprofile-name').val().substring(0, 255),
                     'about': $('#editprofile-about').val().substring(0, window.maxabout),
                     'icon': this.icon,
                     'icon_delete': this.iconDelete,
                 });
+            }
+        });
+
+        eventBus.on('updateprofileack', (info) => {
+            // Regardless of success or failure, allow clicking again.
+            $( '#editprofile-confirm' ).prop('disabled', false);
+
+            // Close if it was successful.
+            if (info.status == "success") {
+                $.modal.close();
+                this.inputState.setState("empty");
             }
         });
 
@@ -157,6 +169,9 @@ class EditProfile {
             $('#editprofile-about').val(this.profile.about);
             $('#editprofile-icon').attr('src', this.lowMotion == "on" ? this.profile.lmicon : this.profile.icon);
             $('#editprofile-form').modal();
+
+            // Ensure that this isn't disabled from a previous run.
+            $('#editprofile-confirm').prop('disabled', false);
         }
     }
 

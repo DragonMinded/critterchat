@@ -476,14 +476,14 @@ def updatesettings(json: dict[str, object]) -> None:
 
 
 @socketio.on('updateprofile')  # type: ignore
-def updateprofile(json: dict[str, object]) -> None:
+def updateprofile(json: dict[str, object]) -> dict[str, object]:
     with Data.spawn(config) as data:
         userservice = UserService(config, data)
 
         # Try to associate with a user if there is one.
         user = recover_user(data, request.sid)
         if user is None:
-            return
+            return {'status': 'failed'}
 
         # Save last settings for this user.
         newname = str(json.get('name', '')).strip()
@@ -497,10 +497,10 @@ def updateprofile(json: dict[str, object]) -> None:
 
         if newname and len(newname) > 255:
             flash('warning', 'Your nickname is too long!', room=request.sid)
-            return
+            return {'status': 'failed'}
         if len(newabout) > config.limits.about_length:
             flash('warning', 'Your about section is too long!', room=request.sid)
-            return
+            return {'status': 'failed'}
 
         icon: AttachmentID | None = None
         if newicon:
@@ -514,8 +514,14 @@ def updateprofile(json: dict[str, object]) -> None:
             if userprofile:
                 socketio.emit('profile', hydrate_tag(json, userprofile.to_dict(config=config, admin=admin)), room=request.sid)
                 flash('success', 'Your profile has been updated!', room=request.sid)
+                return {'status': 'success'}
+            else:
+                # This should never happen, but let's handle it anyway.
+                flash('error', 'Your profile could not be located for update!', room=request.sid)
+                return {'status': 'failed'}
         except UserServiceException as e:
             error(str(e), room=request.sid)
+            return {'status': 'failed'}
 
 
 @socketio.on('updatepreferences')  # type: ignore

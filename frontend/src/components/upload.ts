@@ -2,6 +2,7 @@ import $ from "jquery";
 import { flash } from "../utils";
 
 type ID = string;
+type FailureCallback = () => void;
 type SingleCallback = (aid: ID) => void;
 type MultiCallback = (aids: ID[]) => void;
 
@@ -19,13 +20,15 @@ declare global {
  * Handles taking base64-encoded URL data and uploading it to the backend, getting in
  * return an attachment ID that can be used to refer to an attachment of some type.
  * Used for uploading room icons, avatars, message attachments and notification sounds.
+ * Each of the functions provides a callback to return the ID of the upload(s) and an
+ * optional failure callback which is called if there's an issue with the upload.
  */
 class Uploader {
     constructor() {
         // This constructor intentionally left blank.
     }
 
-    _uploadSingle(url: string, data: object, callback: SingleCallback): void {
+    _uploadSingle(url: string, data: object, callback: SingleCallback, failure?: FailureCallback): void {
         $.ajax(
             url,
             {
@@ -36,6 +39,9 @@ class Uploader {
                 error: (xhr) => {
                     const resp = JSON.parse(xhr.responseText);
                     flash('warning', resp.error);
+                    if (failure) {
+                        failure();
+                    }
                 },
                 success: (data) => {
                     callback(data.attachmentid);
@@ -44,15 +50,15 @@ class Uploader {
         );
     }
 
-    uploadIcon(data: object, callback: SingleCallback) {
-        this._uploadSingle(window.uploadIcon, data, callback);
+    uploadIcon(data: object, callback: SingleCallback, failure?: FailureCallback) {
+        this._uploadSingle(window.uploadIcon, data, callback, failure);
     }
 
-    uploadAvatar(data: object, callback: SingleCallback) {
-        this._uploadSingle(window.uploadAvatar, data, callback);
+    uploadAvatar(data: object, callback: SingleCallback, failure?: FailureCallback) {
+        this._uploadSingle(window.uploadAvatar, data, callback, failure);
     }
 
-    uploadNotificationSounds(data: object, callback: MultiCallback) {
+    uploadNotificationSounds(data: object, callback: MultiCallback, failure?: FailureCallback) {
         $.ajax(
             window.uploadNotifications,
             {
@@ -63,6 +69,9 @@ class Uploader {
                 error: (xhr) => {
                     const resp = JSON.parse(xhr.responseText);
                     flash('warning', resp.error);
+                    if (failure) {
+                        failure();
+                    }
                 },
                 success: (newData) => {
                     callback(newData.notif_sounds);
@@ -71,7 +80,7 @@ class Uploader {
         );
     }
 
-    uploadAttachments(data: object, callback: MultiCallback) {
+    uploadAttachments(data: object, callback: MultiCallback, failure?: FailureCallback) {
         $.ajax(
             window.uploadAttachments,
             {
@@ -82,6 +91,9 @@ class Uploader {
                 error: (xhr) => {
                     const resp = JSON.parse(xhr.responseText);
                     flash('warning', resp.error);
+                    if (failure) {
+                        failure();
+                    }
                 },
                 success: (newData) => {
                     callback(newData.attachments);
