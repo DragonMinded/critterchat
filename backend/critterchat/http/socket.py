@@ -513,7 +513,6 @@ def updateprofile(json: dict[str, object]) -> dict[str, object]:
 
             if userprofile:
                 socketio.emit('profile', hydrate_tag(json, userprofile.to_dict(config=config, admin=admin)), room=request.sid)
-                flash('success', 'Your profile has been updated!', room=request.sid)
                 return {'status': 'success'}
             else:
                 # This should never happen, but let's handle it anyway.

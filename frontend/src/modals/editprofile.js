@@ -46,6 +46,10 @@ class EditProfile {
             if (info.status == "success") {
                 $.modal.close();
                 this.inputState.setState("empty");
+                flash('success', 'Your profile has been updated!')
+            }
+            else if (info.status == "partial") {
+                flash('warning', 'Only your nickname and about section have been updated!')
             }
         });
 

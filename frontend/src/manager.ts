@@ -841,7 +841,15 @@ export function manager(socket: Socket) {
                     }
                 });
             }, () => {
-                eventBus.emit('updateprofileack', {'status': 'failure'});
+                // At least attempt to save the rest, don't report success so we don't close the dialog.
+                profile.icon = null;
+                socket.emit('updateprofile', profile, (response: Acknowledgement) => {
+                    if (response.status == "success") {
+                        eventBus.emit('updateprofileack', {'status': 'partial'});
+                    } else {
+                        eventBus.emit('updateprofileack', {'status': 'failure'});
+                    }
+                });
             });
         } else {
             // No need to upload anything, no icon changes.
