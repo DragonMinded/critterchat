@@ -1,5 +1,5 @@
 import $ from "jquery";
-import { flash, getExt, getFilename, getAttachmentImage } from "../utils";
+import { flash, getExt, getFilename, getAttachmentImage, isPendingMessageSensitive } from "../utils";
 import { displayAltTextEditor } from "../modals/alttextmodal.js";
 
 class UploadPicker {
@@ -196,7 +196,7 @@ class UploadPicker {
                             mimetype: file.type,
                             data: fr.result,
                             alt_text: '',
-                            sensitive: false,
+                            sensitive: isPendingMessageSensitive(),
                         });
 
                         this._drawRoom( roomid );

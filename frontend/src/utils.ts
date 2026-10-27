@@ -460,6 +460,14 @@ function getAttachmentImage(ext: string, mt: string): string {
     return "file-binary";
 }
 
+/**
+ * Returns whether the current chat's composer text has been marked as sensitive
+ * (true) or not (false).
+ */
+function isPendingMessageSensitive(): boolean {
+    return $( 'button.message-visibility' ).hasClass('message-sensitive');
+}
+
 export {
     escapeHtml,
     formatTime,
@@ -478,4 +486,5 @@ export {
     getExt,
     getFilename,
     getAttachmentImage,
+    isPendingMessageSensitive,
 };

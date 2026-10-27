@@ -15,6 +15,7 @@ import {
     getExt,
     getFilename,
     getAttachmentImage,
+    isPendingMessageSensitive,
 } from "./utils";
 import { EmojiSearch } from "./components/emojisearch.js";
 import { autocomplete } from "./components/autocomplete.js";
@@ -114,7 +115,7 @@ class Messages {
                             {
                                 'roomid': roomid,
                                 'message': message,
-                                'sensitive': $( 'button.message-visibility' ).hasClass('message-sensitive'),
+                                'sensitive': isPendingMessageSensitive(),
                                 'attachments': files,
                             },
                         );
@@ -337,7 +338,7 @@ class Messages {
             event.stopPropagation();
             event.stopImmediatePropagation();
 
-            if ($( 'button.message-visibility' ).hasClass('message-sensitive')) {
+            if (isPendingMessageSensitive()) {
                 $( 'button.message-visibility' ).addClass('message-visible').removeClass('message-sensitive');
             } else {
                 $( 'button.message-visibility' ).addClass('message-sensitive').removeClass('message-visible');
@@ -696,7 +697,7 @@ class Messages {
                         this.roomid,
                         {
                             "message": $( 'input#message' ).val(),
-                            "sensitive": $( 'button.message-visibility' ).hasClass('message-sensitive'),
+                            "sensitive": isPendingMessageSensitive(),
                         },
                     );
                     this.uploadPicker.hideRoom( this.roomid );
