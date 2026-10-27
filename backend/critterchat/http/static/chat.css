@@ -547,6 +547,7 @@ button:enabled:hover, button:enabled:focus-visible, input[type=button]:enabled:h
 button:disabled, input[type=button]:disabled {
     text-decoration: line-through;
     color: var(--input-button-disabled-text);
+    cursor: not-allowed;
 }
 
 input[type=text]:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-visible {
