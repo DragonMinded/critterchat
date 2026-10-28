@@ -187,8 +187,10 @@ class ChatDetails {
             'autojoin': false,
             'customname': '',
             'topic': '',
-            'icon': window.defroom[this.lowMotion == 'on' ? 'lm' : 'nm'],
-            'deficon': window.defroom[this.lowMotion == 'on' ? 'lm' : 'nm'],
+            'icon': window.defroom['nm'],
+            'lmicon': window.defroom['lm'],
+            'deficon': window.defroom['nm'],
+            'lmdeficon': window.defroom['lm'],
         };
 
         $.modal.close();
