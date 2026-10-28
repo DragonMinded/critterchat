@@ -865,11 +865,25 @@ export function manager(socket: Socket) {
 
     eventBus.on('updatepreferences', (preferences) => {
         if ($.isEmptyObject(preferences.notif_sounds)) {
-            socket.emit('updatepreferences', preferences);
+            socket.emit('updatepreferences', preferences, (response: Acknowledgement) => {
+                if (response.status == "success") {
+                    eventBus.emit('updatepreferencesack', {'status': 'success'});
+                } else {
+                    eventBus.emit('updatepreferencesack', {'status': 'failure'});
+                }
+            });
         } else {
             uploader.uploadNotificationSounds(preferences.notif_sounds, (sounds: ID[]) => {
                 preferences.notif_sounds = sounds;
-                socket.emit('updatepreferences', preferences);
+                socket.emit('updatepreferences', preferences, (response: Acknowledgement) => {
+                    if (response.status == "success") {
+                        eventBus.emit('updatepreferencesack', {'status': 'success'});
+                    } else {
+                        eventBus.emit('updatepreferencesack', {'status': 'failure'});
+                    }
+                });
+            }, () => {
+                eventBus.emit('updatepreferencesack', {'status': 'failure'});
             });
         }
     });

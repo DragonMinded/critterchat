@@ -23,10 +23,11 @@ class EditPreferences {
 
         $( '#editpreferences-confirm' ).on( 'click', (event) => {
             event.preventDefault();
-            $.modal.close();
-            this.inputState.setState("empty");
 
             if (this.preferencesLoaded) {
+                // Prevent double-submit.
+                $( '#editpreferences-confirm' ).prop('disabled', true);
+
                 let set_audio_notifs = [];
                 AUDIO_PREFS.forEach((pref) => {
                     if ($('#editpreferences-audio-notification-' + pref.toLowerCase()).prop('checked')) {
@@ -51,6 +52,17 @@ class EditPreferences {
                     'notif_sounds': this.newnotifications,
                     'notif_sounds_delete': Object.keys(this.deletednotifications),
                 });
+            }
+        });
+
+        eventBus.on('updatepreferencesack', (info) => {
+            // Regardless of success or failure, allow clicking again.
+            $( '#editpreferences-confirm' ).prop('disabled', false);
+
+            // Close if it was successful.
+            if (info.status == "success") {
+                $.modal.close();
+                this.inputState.setState("empty");
             }
         });
 
@@ -194,6 +206,7 @@ class EditPreferences {
             }
 
             // Display the actual modal.
+            $('#editpreferences-confirm').prop('disabled', false);
             $('#editpreferences-form').modal();
         }
     }

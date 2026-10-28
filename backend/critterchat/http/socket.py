@@ -524,14 +524,14 @@ def updateprofile(json: dict[str, object]) -> dict[str, object]:
 
 
 @socketio.on('updatepreferences')  # type: ignore
-def updatepreferences(json: dict[str, object]) -> None:
+def updatepreferences(json: dict[str, object]) -> dict[str, object]:
     with Data.spawn(config) as data:
         userservice = UserService(config, data)
 
         # Try to associate with a user and login session if there is one.
         user = recover_user(data, request.sid)
         if user is None:
-            return
+            return {'status': 'failed'}
 
         # Save preferences for this user.
         new_rooms_on_top = json.get('rooms_on_top', None)
@@ -602,8 +602,10 @@ def updatepreferences(json: dict[str, object]) -> None:
                 low_motion=new_low_motion,
             )
             flash('success', 'Your preferences have been updated!', room=request.sid)
+            return {'status': 'success'}
         except UserServiceException as e:
             error(str(e), room=request.sid)
+            return {'status': 'failed'}
 
 
 @socketio.on('chatactions')  # type: ignore
