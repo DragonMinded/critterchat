@@ -915,7 +915,7 @@ def joinroom(json: dict[str, object]) -> None:
 
 
 @socketio.on('newroom')  # type: ignore
-def newroom(json: dict[str, object]) -> None:
+def newroom(json: dict[str, object]) -> dict[str, object]:
     with Data.spawn(config) as data:
         messageservice = MessageService(config, data)
 
@@ -923,7 +923,7 @@ def newroom(json: dict[str, object]) -> None:
         user = recover_user(data, request.sid)
         info = recover_info(request.sid)
         if user is None or info is None:
-            return
+            return {'status': 'failed'}
 
         # Grab info about the room itself. Anyone can create a new private chat. Only admins
         # can create public rooms.
@@ -941,11 +941,12 @@ def newroom(json: dict[str, object]) -> None:
                     actual_id = room.id
                 except MessageServiceException as e:
                     error(str(e), room=request.sid)
-                    return
+                    return {'status': 'failed'}
 
             elif purpose == RoomPurpose.ROOM:
                 if UserPermission.ADMINISTRATOR not in user.permissions:
                     flash('error', 'You cannot create public rooms!', room=request.sid)
+                    return {'status': 'failed'}
 
                 newname = str(json.get('name', '')).strip()
                 newtopic = str(json.get('topic', '')).strip()
@@ -974,6 +975,7 @@ def newroom(json: dict[str, object]) -> None:
                     actual_id = room.id
                 except MessageServiceException as e:
                     error(str(e), room=request.sid)
+                    return {'status': 'failed'}
 
             if actual_id:
                 # Grab all rooms that the user is in, based on their user ID.
@@ -990,6 +992,10 @@ def newroom(json: dict[str, object]) -> None:
                 'rooms': [room.to_dict() for room in rooms],
                 'selected': Room.from_id(actual_id),
             }, room=request.sid)
+            return {'status': 'success'}
+        else:
+            # Should never happen, but let's cover for it anyway.
+            return {'status': 'failed'}
 
 
 @socketio.on('inviteroom')  # type: ignore
@@ -1109,70 +1115,76 @@ def lastaction(json: dict[str, object]) -> None:
 
 
 @socketio.on('updateroom')  # type: ignore
-def updateroom(json: dict[str, object]) -> None:
+def updateroom(json: dict[str, object]) -> dict[str, object]:
     with Data.spawn(config) as data:
         messageservice = MessageService(config, data)
 
         # Try to associate with a user if there is one.
         user = recover_user(data, request.sid)
         if user is None:
-            return
+            return {'status': 'failed'}
 
         # Grab all rooms that match this search result
         roomid = Room.to_id(str(json.get('roomid')))
-        if roomid is not None:
-            room = messageservice.lookup_room(roomid, user.id)
-            if room is None:
-                # Trying to update a non-existent room?
-                return
+        if roomid is None:
+            return {'status': 'failed'}
 
-            occupants = [o for o in room.occupants if o.userid == user.id]
-            if len(occupants) != 1:
-                # Trying to update a room we're not in or more than one match?
-                return
-            myself = occupants[0]
+        room = messageservice.lookup_room(roomid, user.id)
+        if room is None:
+            # Trying to update a non-existent room?
+            return {'status': 'failed'}
 
-            # Now, if it's a moderated room, make sure we're a moderator.
-            if room.moderated and not myself.moderator:
-                # Nice try buck-o.
-                return
+        occupants = [o for o in room.occupants if o.userid == user.id]
+        if len(occupants) != 1:
+            # Trying to update a room we're not in or more than one match?
+            flash('error', 'You are not allowed to update this room!', room=request.sid)
+            return {'status': 'failed'}
+        myself = occupants[0]
 
-            details = cast(dict[str, object], json.get('details', {}))
-            newname = str(details.get('name', '')).strip()
-            newtopic = str(details.get('topic', '')).strip()
-            newicon = str(details.get('icon', '')).strip()
-            icondelete = bool(details.get('icon_delete', ''))
+        # Now, if it's a moderated room, make sure we're a moderator.
+        if room.moderated and not myself.moderator:
+            # Nice try buck-o.
+            flash('error', 'You are not allowed to update this room!', room=request.sid)
+            return {'status': 'failed'}
 
-            newmoderated: bool | None = None
-            if UserPermission.ADMINISTRATOR in user.permissions:
-                newmoderated = bool(details.get('moderated', ''))
+        details = cast(dict[str, object], json.get('details', {}))
+        newname = str(details.get('name', '')).strip()
+        newtopic = str(details.get('topic', '')).strip()
+        newicon = str(details.get('icon', '')).strip()
+        icondelete = bool(details.get('icon_delete', ''))
 
-            newautojoin: bool | None = None
-            if UserPermission.ADMINISTRATOR in user.permissions:
-                newautojoin = bool(details.get('autojoin', ''))
+        newmoderated: bool | None = None
+        if UserPermission.ADMINISTRATOR in user.permissions:
+            newmoderated = bool(details.get('moderated', ''))
 
-            if not represents_real_text(newname):
-                newname = ""
-            if not represents_real_text(newtopic):
-                newtopic = ""
+        newautojoin: bool | None = None
+        if UserPermission.ADMINISTRATOR in user.permissions:
+            newautojoin = bool(details.get('autojoin', ''))
 
-            icon: AttachmentID | None = None
-            if newicon:
-                icon = Attachment.to_id(newicon)
+        if not represents_real_text(newname):
+            newname = ""
+        if not represents_real_text(newtopic):
+            newtopic = ""
 
-            try:
-                messageservice.update_room(
-                    roomid,
-                    user.id,
-                    name=newname,
-                    topic=newtopic,
-                    moderated=newmoderated,
-                    autojoin=newautojoin,
-                    icon=icon,
-                    icon_delete=icondelete,
-                )
-            except MessageServiceException as e:
-                error(str(e), room=request.sid)
+        icon: AttachmentID | None = None
+        if newicon:
+            icon = Attachment.to_id(newicon)
+
+        try:
+            messageservice.update_room(
+                roomid,
+                user.id,
+                name=newname,
+                topic=newtopic,
+                moderated=newmoderated,
+                autojoin=newautojoin,
+                icon=icon,
+                icon_delete=icondelete,
+            )
+            return {'status': 'success'}
+        except MessageServiceException as e:
+            error(str(e), room=request.sid)
+            return {'status': 'failed'}
 
 
 @socketio.on('admin')  # type: ignore

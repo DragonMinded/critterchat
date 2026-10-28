@@ -908,11 +908,25 @@ export function manager(socket: Socket) {
             // Need to upload the new icon and get the attachment ID back.
             uploader.uploadIcon(details.icon, (iconid: ID) => {
                 details.icon = iconid;
-                socket.emit('newroom', details);
+                socket.emit('newroom', details, (response: Acknowledgement) => {
+                    if (response.status == "success") {
+                        eventBus.emit('createorupdateroomack', {'status': 'success'});
+                    } else {
+                        eventBus.emit('createorupdateroomack', {'status': 'failure'});
+                    }
+                });
+            }, () => {
+                eventBus.emit('createorupdateroomack', {'status': 'failure'});
             });
         } else {
             // No need to upload anything, no icon changes.
-            socket.emit('newroom', details);
+            socket.emit('newroom', details, (response: Acknowledgement) => {
+                if (response.status == "success") {
+                    eventBus.emit('createorupdateroomack', {'status': 'success'});
+                } else {
+                    eventBus.emit('createorupdateroomack', {'status': 'failure'});
+                }
+            });
         }
     });
 
@@ -924,11 +938,33 @@ export function manager(socket: Socket) {
             // Need to upload the new icon and get the attachment ID back.
             uploader.uploadIcon(details.icon, (iconid: ID) => {
                 details.icon = iconid;
-                socket.emit('updateroom', {'roomid': roomid, 'details': details});
+                socket.emit('updateroom', {'roomid': roomid, 'details': details}, (response: Acknowledgement) => {
+                    if (response.status == "success") {
+                        eventBus.emit('createorupdateroomack', {'status': 'success'});
+                    } else {
+                        eventBus.emit('createorupdateroomack', {'status': 'failure'});
+                    }
+                });
+            }, () => {
+                // At least attempt to save the rest, don't report success so we don't close the dialog.
+                details.icon = null;
+                socket.emit('updateroom', {'roomid': roomid, 'details': details}, (response: Acknowledgement) => {
+                    if (response.status == "success") {
+                        eventBus.emit('createorupdateroomack', {'status': 'partial'});
+                    } else {
+                        eventBus.emit('createorupdateroomack', {'status': 'failure'});
+                    }
+                });
             });
         } else {
             // No need to upload anything, no icon changes.
-            socket.emit('updateroom', {'roomid': roomid, 'details': details});
+            socket.emit('updateroom', {'roomid': roomid, 'details': details}, (response: Acknowledgement) => {
+                if (response.status == "success") {
+                    eventBus.emit('createorupdateroomack', {'status': 'success'});
+                } else {
+                    eventBus.emit('createorupdateroomack', {'status': 'failure'});
+                }
+            });
         }
     });
 

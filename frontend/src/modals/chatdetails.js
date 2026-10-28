@@ -23,8 +23,9 @@ class ChatDetails {
 
         $( '#chatdetails-confirm' ).on( 'click', (event) => {
             event.preventDefault();
-            $.modal.close();
-            this.inputState.setState("empty");
+
+            // Stop double updates.
+            $( '#chatdetails-confirm' ).prop('disabled', true);
 
             if (this.action == "edit") {
                 this.eventBus.emit('updateroom', {'roomid': this.room.id, 'details': {
@@ -35,8 +36,6 @@ class ChatDetails {
                     'icon': this.icon,
                     'icon_delete': this.iconDelete,
                 }});
-
-                this.action = undefined;
             }
 
             if (this.action == "create") {
@@ -48,8 +47,21 @@ class ChatDetails {
                     'icon': this.icon,
                     'type': 'room',
                 });
+            }
+        });
 
+        eventBus.on('createorupdateroomack', (info) => {
+            // Regardless of success or failure, allow clicking again.
+            $( '#chatdetails-confirm' ).prop('disabled', false);
+
+            // Close if it was successful.
+            if (info.status == "success") {
+                $.modal.close();
+                this.inputState.setState("empty");
                 this.action = undefined;
+            }
+            else if (info.status == "partial") {
+                flash('warning', 'Only some room details have been updated!');
             }
         });
 
@@ -226,6 +238,7 @@ class ChatDetails {
             $("form#chatdetails-form dl.autojoin").hide();
         }
 
+        $('#chatdetails-confirm').prop('disabled', false);
         $('#chatdetails-name').val(this.room.customname);
         $('#chatdetails-topic').val(this.room.topic);
         $('#chatdetails-icon').attr('src', this.lowMotion == 'on' ? this.room.lmicon : this.room.icon);
