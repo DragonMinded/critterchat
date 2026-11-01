@@ -15,13 +15,11 @@ import {
     getExt,
     getFilename,
     getAttachmentImage,
-    isPendingMessageSensitive,
 } from "./utils";
 import { EmojiSearch } from "./components/emojisearch.js";
 import { autocomplete } from "./components/autocomplete.js";
-import { UploadPicker } from "./components/uploadpicker.js";
+import { Composer } from "./components/composer";
 import { Reactions } from "./components/reactions.js";
-import { displayInfo } from "./modals/infomodal.js";
 
 const linkifyOptions = { defaultProtocol: "http", target: "_blank", validate: { email: () => false } };
 
@@ -54,12 +52,10 @@ class Messages {
         this.lowMotion = initialLowMotion;
         this.nonce = 1;
         this.previews = new Map();
-        this.connected = false;
         this.messages = [];
         this.occupants = [];
         this.myself = undefined;
         this.rooms = new Map();
-        this.pending = new Map();
         this.pendingroomid = "";
         this.roomid = "";
         this.loadTime = undefined;
@@ -71,58 +67,10 @@ class Messages {
         this.roomsLoaded = false;
         this.occupantsLoaded = false;
 
-        // Handles making sure you can't mess with or double-post a message when one is sending.
-        this.awaitingResponse = new Map();
-
         // Handles only updating the server with the last action if we're really viewing
         // the message.
         this.lastActionUpdate = {};
         this.lastActionPending = false;
-
-        $( '#message-actions' ).on( 'submit', (event) => {
-            event.preventDefault();
-
-            this.inputState.setState("empty");
-
-            var roomid = $( '#message-actions' ).attr('roomid');
-            if (roomid) {
-                if (this.awaitingResponse.has(roomid) && this.awaitingResponse.get(roomid)) {
-                    // Skip out on this, we're waiting for a server response so we shouldn't duplicate
-                    // the message.
-                    return;
-                }
-
-                // Grab message, focus on the message box if we clicked send.
-                var message = $( 'input#message' ).val();
-                $( 'input#message' ).focus();
-
-                if (message && message.length > window.maxmessage) {
-                    displayInfo(
-                        'Your message is too long to be sent, please type fewer things!',
-                        'okay!',
-                    );
-                } else {
-                    // First, grab any attachments that should go with the message.
-                    const files = this.uploadPicker.files( roomid );
-
-                    if (message.length > 0 || files.length > 0) {
-                        // Prevent double-click from causing a double-send of messages.
-                        this.awaitingResponse.set(roomid, true);
-
-                        // Now, send the event.
-                        this.eventBus.emit(
-                            'message',
-                            {
-                                'roomid': roomid,
-                                'message': message,
-                                'sensitive': isPendingMessageSensitive(),
-                                'attachments': files,
-                            },
-                        );
-                    }
-                }
-            }
-        });
 
         $( 'div.chat > div.conversation-wrapper' ).on( 'click', () => {
             this.inputState.setState("empty");
@@ -267,33 +215,6 @@ class Messages {
             });
         }
 
-        $( document ).on( 'keydown', (evt) => {
-            // Figure out if the user started typing, so we can redirect to the input control.
-            const key = evt.key;
-            const control = (key.length != 1) || (key == " ") || evt.ctrlKey || evt.metaKey || evt.altKey;
-            const isBody = $(evt.target).is("body");
-            const isPaste = (
-                // Windows/linux paste.
-                ((key == "v" || key == "V") && evt.ctrlKey) ||
-                // Old style shift-insert paste.
-                (key == "Insert" && evt.shiftKey) ||
-                // OSX paste.
-                ((key == "v" || key == "V") && evt.metaKey)
-            );
-
-            // Ignore events not to the global body.
-            if (!isBody) {
-                return;
-            }
-            // Ignore non-paste control and non-printable keys.
-            if (control && !isPaste) {
-                return;
-            }
-
-            // It is, and it's to the general body since no control is focused.
-            $( 'input#message' ).focus();
-        });
-
         $(window).resize(() => {
             var box = $( 'div.chat > div.conversation-wrapper' );
             if (this.autoscroll) {
@@ -310,38 +231,6 @@ class Messages {
         $( 'div.chat > div.conversation-wrapper' ).scroll(() => {
             if (isInViewport($( ".scrolled-top.untriggered" ))) {
                 this._loadOlderMessages();
-            }
-        });
-
-        $( '#message' ).on('keydown', () => {
-            // Let user press "ESC" on the main input box to close search box.
-            if(this.inputState.current == "search") {
-                this.inputState.setState("empty");
-            }
-        });
-
-        // Don't allow attachments if they're disabled.
-        if (window.maxattachments <= 0) {
-            $( 'button.attachment-picker' ).prop('disabled', true);
-        } else {
-            $( 'button.attachment-picker' ).on( 'click', () => {
-                if (this.roomid && this.rooms.has(this.roomid)) {
-                    var supportedList = ["image/*", "text/*"];
-                    supportedList.push.apply(supportedList, window.mimetypes);
-                    this.uploadPicker.selectFiles(this.roomid, supportedList.join(","));
-                }
-            });
-        }
-
-        $( 'button.message-visibility' ).on( 'click', () => {
-            event.preventDefault();
-            event.stopPropagation();
-            event.stopImmediatePropagation();
-
-            if (isPendingMessageSensitive()) {
-                $( 'button.message-visibility' ).addClass('message-visible').removeClass('message-sensitive');
-            } else {
-                $( 'button.message-visibility' ).addClass('message-sensitive').removeClass('message-visible');
             }
         });
 
@@ -362,38 +251,6 @@ class Messages {
             this._ensureScrolled(false);
         });
 
-        // Ensure we only clear user input on successful message acknowledgement.
-        eventBus.on('messageack', (info) => {
-            if (info.status == "success") {
-                if (info.roomid == this.roomid) {
-                    // Now reset the input.
-                    $( 'input#message' ).val( '' );
-                    $( 'button.message-visibility' ).addClass('message-visible').removeClass('message-sensitive');
-                }
-
-                // Always clear the attachment store for the room.
-                this.pending.set(info.roomid, {"message": "", "sensitive": false});
-                this.awaitingResponse.set(info.roomid, false);
-
-                // Reset our physical controls.
-                this.uploadPicker.clearRoom( info.roomid );
-            } else {
-                // Just unblock the control to try again.
-                this.awaitingResponse.set(info.roomid, false);
-            }
-        });
-
-        // Ensure that we don't let any messages get sent during downtime.
-        eventBus.on('connected', () => {
-            this.awaitingResponse = new Map();
-            this.connected = true;
-            this._recalculateSendEnabled();
-        });
-        eventBus.on('disconnected', () => {
-            this.connected = false;
-            this._recalculateSendEnabled();
-        });
-
         this.screenState.registerStateChangeCallback((newState) => {
             this._updateSize();
             this._sendPendingUpdates();
@@ -410,9 +267,6 @@ class Messages {
         });
 
         this._updateSize();
-
-        // Set up the upload picker popover.
-        this.uploadPicker = new UploadPicker( eventBus, screenState, '#message' );
 
         if (window.reactionsenabled) {
             // Set up our reactions popover.
@@ -474,14 +328,14 @@ class Messages {
             this.reactionSearchUpdate = undefined;
         }
 
+        // Hook up message composer.
+        this.composer = new Composer(this.eventBus, this.screenState, this.inputState);
+
         // Support tab-completing users as well.
         this.autocompleteUpdate = autocomplete(this.inputState, '#message', this.autocompleteOptions);
 
         // Set up the emoji search itself.
         $(".emoji-search").html(twemoji.parse(String.fromCodePoint(0x1F600), twemojiOptions));
-
-        // Ensure that the input box itself doesn't allow messages to be too long.
-        $('#message').attr("maxlength", window.maxmessage);
     }
 
     /**
@@ -510,29 +364,6 @@ class Messages {
         });
 
         return message;
-    }
-
-    /**
-     * Called when we need to resolve whether to enable or disable the send button. This only needs to
-     * happen when moving between a muted and unmuted room, or when disconnecting or reconnecting.
-     */
-    _recalculateSendEnabled() {
-        // Start with the assumption we're unmuted, and only disable if we're disconnected.
-        var disabled = !this.connected;
-
-        // Also disable if we're not in any active room.
-        if (!this.roomid) {
-            disabled = true;
-        }
-
-        if (this.myself) {
-            if (this.myself.muted) {
-                // Always be disabled in this chat, even if we're connected.
-                disabled = true;
-            }
-        }
-
-        $( 'button#sendmessage' ).prop('disabled', disabled);
     }
 
     /**
@@ -610,7 +441,7 @@ class Messages {
         }
         this._combineMessages(true);
         this._updateTabOrder();
-        this.uploadPicker.resizeRooms();
+        this.composer.setPreferences(preferences);
     }
 
     /**
@@ -635,7 +466,6 @@ class Messages {
             this.occupantsLoaded = true;
             this._recalculateSelf();
             this._updateUsers();
-            this._recalculateSendEnabled();
         }
     }
 
@@ -652,8 +482,10 @@ class Messages {
             });
 
             this.myself = occupant;
+            this.composer.setSelf(occupant);
         } else {
             this.myself = undefined;
+            this.composer.setSelf(undefined);
         }
     }
 
@@ -665,6 +497,9 @@ class Messages {
      * trigger that room switch upon loading.
      */
     setRooms( rooms ) {
+        // Inform our composer that we got rooms as well.
+        this.composer.setRooms(rooms);
+
         // Make a copy instead of keeping a reference, so we can safely mutate.
         const newRooms = new Map();
         rooms.forEach((room) => {
@@ -689,33 +524,14 @@ class Messages {
      */
     setRoom( roomid ) {
         if (this.roomsLoaded) {
+            // We no longer have a pending room ID to ask for and set since we are setting the room.
             this.pendingroomid = "";
-            if (roomid != this.roomid) {
-                // First, save any old room message.
-                if (this.roomid) {
-                    this.pending.set(
-                        this.roomid,
-                        {
-                            "message": $( 'input#message' ).val(),
-                            "sensitive": isPendingMessageSensitive(),
-                        },
-                    );
-                    this.uploadPicker.hideRoom( this.roomid );
-                }
 
-                // Now, show new room's message.
-                if (this.pending.has(roomid)) {
-                    $( 'input#message' ).val(this.pending.get(roomid).message);
-                    if ( this.pending.get(roomid).sensitive ) {
-                        $( 'button.message-visibility' ).addClass('message-sensitive').removeClass('message-visible');
-                    } else {
-                        $( 'button.message-visibility' ).addClass('message-visible').removeClass('message-sensitive');
-                    }
-                } else {
-                    $( 'input#message' ).val('');
-                    $( 'button.message-visibility' ).addClass('message-visible').removeClass('message-sensitive');
-                }
-                this.uploadPicker.showRoom( roomid );
+            // First, ask the composer to save and restore it's state.
+            this.composer.setRoom(roomid);
+
+            // Now, swap to it here.
+            if (roomid != this.roomid) {
 
                 // Now, swap to that room.
                 if (this.rooms.has(roomid)) {
@@ -729,7 +545,6 @@ class Messages {
                     this.lastActionPending = false;
                     this.roomType = this.rooms.get(roomid).type;
                     this._updateUsers();
-                    this._recalculateSendEnabled();
 
                     $('div.chat > div.conversation-wrapper > div.conversation').empty().html(
                         '<div class="loading-wrapper">' +
@@ -738,8 +553,6 @@ class Messages {
                         '    </div>' +
                         '</div>'
                     );
-
-                    $( '#message-actions' ).attr('roomid', roomid);
                 }
             }
 
@@ -760,11 +573,8 @@ class Messages {
      * added the manager will call this function as well.
      */
     closeRoom( roomid ) {
-        // Nuke pending message since we're closing the room.
-        this.pending.set(roomid, {'message': '', 'sensitive': false});
-        $( 'button.message-visibility' ).addClass('message-visible').removeClass('message-sensitive');
-
-        this.uploadPicker.hideRoom( roomid );
+        // Ask composer to nuke pending message since we're closing the room.
+        this.composer.closeRoom(roomid);
 
         if (roomid == this.roomid) {
             this.message = [];
@@ -777,7 +587,6 @@ class Messages {
             this.occupantsLoaded = false;
             this.lastActionPending = false;
             this._updateUsers();
-            this._recalculateSendEnabled();
             if (this.reactions) {
                 this.reactions.hide( true );
             }
@@ -945,7 +754,6 @@ class Messages {
                         changed = true;
                     } else if (message.action == "leave") {
                         this.occupants = this.occupants.filter((occupant) => occupant.id != message.occupant.id);
-                        this._recalculateSelf();
                         changed = true;
                     }
                 }
@@ -977,8 +785,8 @@ class Messages {
 
         if (changed) {
             this.occupants.sort((a, b) => { return a.username.localeCompare(b.username); });
+            this._recalculateSelf();
             this._updateUsers();
-            this._recalculateSendEnabled();
         }
 
         this._drawActions( actions );
